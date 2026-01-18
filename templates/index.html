@@ -535,7 +535,9 @@
         <h1>🖥️ Projekt-Dashboard</h1>
         <div class="header-info">
             <a href="/containers" class="header-icon" title="Container-Übersicht">🐳</a>
+            <a href="/dependencies" class="header-icon" title="Projekt-Abhängigkeiten">🔗</a>
             <a href="/vorlagen" class="header-icon" title="Vorlagen-Sammlung">📦</a>
+            <span class="header-icon" onclick="openIdeasModal()" title="Ideen & Notizen" style="cursor:pointer">💡</span>
             <a href="http://192.168.100.93:9000" target="_blank" class="header-icon" title="Portainer">⚙️</a>
             <a href="http://192.168.100.93:3000" target="_blank" class="header-icon" title="Gitea">🦊</a>
             <span class="timestamp" id="timestamp"></span>
@@ -1986,6 +1988,298 @@
         // Stille Auto-Refresh Intervalle
         setInterval(loadData, 15000);  // Projekt-Daten alle 15 Sekunden
         setInterval(loadNews, 30000);  // News alle 30 Sekunden
+
+        // ============== IDEEN / NOTIZEN ==============
+        let ideasData = { ideas: [], categories: [] };
+        let currentEditIdea = null;
+
+        async function loadIdeas() {
+            const resp = await fetch('/api/ideas');
+            ideasData = await resp.json();
+            renderIdeasList();
+        }
+
+        function openIdeasModal() {
+            document.getElementById('ideasModal').style.display = 'flex';
+            loadIdeas();
+        }
+
+        function closeIdeasModal() {
+            document.getElementById('ideasModal').style.display = 'none';
+            currentEditIdea = null;
+            resetIdeaForm();
+        }
+
+        function resetIdeaForm() {
+            document.getElementById('ideaTitle').value = '';
+            document.getElementById('ideaContent').value = '';
+            document.getElementById('ideaCategory').value = 'note';
+            document.getElementById('ideaPriority').value = 'normal';
+            document.getElementById('ideaProject').value = '';
+            document.getElementById('ideaFormTitle').textContent = 'Neue Idee';
+            document.getElementById('ideaSaveBtn').textContent = 'Speichern';
+            currentEditIdea = null;
+        }
+
+        function renderIdeasList() {
+            const container = document.getElementById('ideasList');
+            const filterCategory = document.getElementById('ideasFilterCategory').value;
+            const filterStatus = document.getElementById('ideasFilterStatus').value;
+
+            let filtered = ideasData.ideas;
+            if (filterCategory) {
+                filtered = filtered.filter(i => i.category === filterCategory);
+            }
+            if (filterStatus) {
+                filtered = filtered.filter(i => i.status === filterStatus);
+            }
+
+            if (filtered.length === 0) {
+                container.innerHTML = '<div style="text-align:center;color:#666;padding:40px;">Keine Ideen vorhanden</div>';
+                return;
+            }
+
+            container.innerHTML = filtered.map(idea => {
+                const cat = ideasData.categories.find(c => c.id === idea.category) || {icon: '📝', color: '#666'};
+                const priorityIcon = idea.priority === 'high' ? '🔴' : idea.priority === 'low' ? '🟢' : '';
+                const statusClass = idea.status === 'done' ? 'idea-done' : idea.status === 'archived' ? 'idea-archived' : '';
+                const date = new Date(idea.created).toLocaleDateString('de-DE');
+                return `
+                    <div class="idea-card ${statusClass}" onclick="editIdea('${idea.id}')">
+                        <div class="idea-header">
+                            <span class="idea-cat" style="background:${cat.color}30;color:${cat.color}">${cat.icon}</span>
+                            <span class="idea-title">${priorityIcon} ${idea.title}</span>
+                            <span class="idea-date">${date}</span>
+                        </div>
+                        ${idea.content ? `<div class="idea-content">${idea.content.substring(0, 150)}${idea.content.length > 150 ? '...' : ''}</div>` : ''}
+                        ${idea.project ? `<div class="idea-project">📁 ${idea.project}</div>` : ''}
+                        <div class="idea-actions">
+                            <button class="idea-status-btn" onclick="event.stopPropagation();toggleIdeaStatus('${idea.id}','${idea.status}')">${idea.status === 'done' ? '↩️ Öffnen' : '✅ Erledigt'}</button>
+                            <button class="idea-delete-btn" onclick="event.stopPropagation();deleteIdea('${idea.id}')">🗑️</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            // Kategorien für Filter
+            document.getElementById('ideasFilterCategory').innerHTML = '<option value="">Alle Kategorien</option>' +
+                ideasData.categories.map(c => `<option value="${c.id}">${c.icon} ${c.name}</option>`).join('');
+
+            // Kategorien für Form
+            document.getElementById('ideaCategory').innerHTML = ideasData.categories.map(c =>
+                `<option value="${c.id}">${c.icon} ${c.name}</option>`
+            ).join('');
+
+            // Projekte für Form (aus cachedData)
+            if (cachedData && cachedData.projects) {
+                const projectOptions = cachedData.projects
+                    .filter(p => p.project_type !== 'subproject')
+                    .map(p => `<option value="${p.name}">${p.name}</option>`)
+                    .join('');
+                document.getElementById('ideaProject').innerHTML = '<option value="">Kein Projekt</option>' + projectOptions;
+            }
+        }
+
+        function editIdea(ideaId) {
+            const idea = ideasData.ideas.find(i => i.id === ideaId);
+            if (!idea) return;
+
+            currentEditIdea = ideaId;
+            document.getElementById('ideaTitle').value = idea.title;
+            document.getElementById('ideaContent').value = idea.content || '';
+            document.getElementById('ideaCategory').value = idea.category;
+            document.getElementById('ideaPriority').value = idea.priority;
+            document.getElementById('ideaProject').value = idea.project || '';
+            document.getElementById('ideaFormTitle').textContent = 'Idee bearbeiten';
+            document.getElementById('ideaSaveBtn').textContent = 'Aktualisieren';
+        }
+
+        async function saveIdea() {
+            const title = document.getElementById('ideaTitle').value.trim();
+            const content = document.getElementById('ideaContent').value.trim();
+            const category = document.getElementById('ideaCategory').value;
+            const priority = document.getElementById('ideaPriority').value;
+            const project = document.getElementById('ideaProject').value || null;
+
+            if (!title) {
+                alert('Bitte einen Titel eingeben');
+                return;
+            }
+
+            const data = { title, content, category, priority, project };
+
+            if (currentEditIdea) {
+                // Update
+                await fetch(`/api/ideas/${currentEditIdea}`, {
+                    method: 'PUT',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data)
+                });
+            } else {
+                // Create
+                await fetch('/api/ideas', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data)
+                });
+            }
+
+            resetIdeaForm();
+            loadIdeas();
+        }
+
+        async function deleteIdea(ideaId) {
+            if (!confirm('Idee wirklich löschen?')) return;
+            await fetch(`/api/ideas/${ideaId}`, { method: 'DELETE' });
+            loadIdeas();
+        }
+
+        async function toggleIdeaStatus(ideaId, currentStatus) {
+            const newStatus = currentStatus === 'done' ? 'open' : 'done';
+            await fetch(`/api/ideas/${ideaId}`, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ status: newStatus })
+            });
+            loadIdeas();
+        }
+
+        function filterIdeas() {
+            renderIdeasList();
+        }
     </script>
+
+    <!-- Ideen Modal -->
+    <div id="ideasModal" class="modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);z-index:2000;align-items:center;justify-content:center;">
+        <div style="background:#2d2d2d;width:900px;max-width:95%;max-height:90vh;border-radius:10px;display:flex;flex-direction:column;overflow:hidden;">
+            <!-- Header -->
+            <div style="background:#0078d4;padding:15px 20px;display:flex;justify-content:space-between;align-items:center;">
+                <h2 style="margin:0;font-size:20px;">💡 Ideen & Notizen</h2>
+                <button onclick="closeIdeasModal()" style="background:none;border:none;color:white;font-size:24px;cursor:pointer;">×</button>
+            </div>
+
+            <!-- Content -->
+            <div style="display:grid;grid-template-columns:1fr 300px;flex:1;overflow:hidden;">
+                <!-- Liste -->
+                <div style="padding:20px;overflow-y:auto;border-right:1px solid #404040;">
+                    <div style="display:flex;gap:10px;margin-bottom:15px;">
+                        <select id="ideasFilterCategory" onchange="filterIdeas()" style="flex:1;padding:8px;background:#1e1e1e;border:1px solid #404040;border-radius:4px;color:#fff;">
+                            <option value="">Alle Kategorien</option>
+                        </select>
+                        <select id="ideasFilterStatus" onchange="filterIdeas()" style="padding:8px;background:#1e1e1e;border:1px solid #404040;border-radius:4px;color:#fff;">
+                            <option value="">Alle Status</option>
+                            <option value="open">Offen</option>
+                            <option value="done">Erledigt</option>
+                            <option value="archived">Archiviert</option>
+                        </select>
+                    </div>
+                    <div id="ideasList" style="display:flex;flex-direction:column;gap:10px;"></div>
+                </div>
+
+                <!-- Formular -->
+                <div style="padding:20px;background:#252525;">
+                    <h3 id="ideaFormTitle" style="margin:0 0 15px 0;font-size:16px;">Neue Idee</h3>
+                    <div style="margin-bottom:12px;">
+                        <label style="display:block;font-size:12px;color:#aaa;margin-bottom:4px;">Titel *</label>
+                        <input type="text" id="ideaTitle" placeholder="Was ist die Idee?" style="width:100%;padding:8px;background:#1e1e1e;border:1px solid #404040;border-radius:4px;color:#fff;">
+                    </div>
+                    <div style="margin-bottom:12px;">
+                        <label style="display:block;font-size:12px;color:#aaa;margin-bottom:4px;">Beschreibung</label>
+                        <textarea id="ideaContent" rows="4" placeholder="Details, Gedanken, Links..." style="width:100%;padding:8px;background:#1e1e1e;border:1px solid #404040;border-radius:4px;color:#fff;resize:vertical;"></textarea>
+                    </div>
+                    <div style="margin-bottom:12px;">
+                        <label style="display:block;font-size:12px;color:#aaa;margin-bottom:4px;">Kategorie</label>
+                        <select id="ideaCategory" style="width:100%;padding:8px;background:#1e1e1e;border:1px solid #404040;border-radius:4px;color:#fff;"></select>
+                    </div>
+                    <div style="margin-bottom:12px;">
+                        <label style="display:block;font-size:12px;color:#aaa;margin-bottom:4px;">Priorität</label>
+                        <select id="ideaPriority" style="width:100%;padding:8px;background:#1e1e1e;border:1px solid #404040;border-radius:4px;color:#fff;">
+                            <option value="low">🟢 Niedrig</option>
+                            <option value="normal" selected>Normal</option>
+                            <option value="high">🔴 Hoch</option>
+                        </select>
+                    </div>
+                    <div style="margin-bottom:15px;">
+                        <label style="display:block;font-size:12px;color:#aaa;margin-bottom:4px;">Projekt (optional)</label>
+                        <select id="ideaProject" style="width:100%;padding:8px;background:#1e1e1e;border:1px solid #404040;border-radius:4px;color:#fff;">
+                            <option value="">Kein Projekt</option>
+                        </select>
+                    </div>
+                    <div style="display:flex;gap:10px;">
+                        <button onclick="resetIdeaForm()" style="flex:1;padding:10px;background:#404040;border:none;border-radius:4px;color:#fff;cursor:pointer;">Abbrechen</button>
+                        <button id="ideaSaveBtn" onclick="saveIdea()" style="flex:1;padding:10px;background:#2d6a4f;border:none;border-radius:4px;color:#fff;cursor:pointer;">Speichern</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .idea-card {
+            background: #363636;
+            border-radius: 6px;
+            padding: 12px 15px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .idea-card:hover { background: #404040; }
+        .idea-card.idea-done { opacity: 0.6; }
+        .idea-card.idea-done .idea-title { text-decoration: line-through; }
+        .idea-card.idea-archived { opacity: 0.4; }
+        .idea-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+        .idea-cat {
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        .idea-title {
+            flex: 1;
+            font-weight: 500;
+            font-size: 14px;
+        }
+        .idea-date {
+            color: #666;
+            font-size: 11px;
+        }
+        .idea-content {
+            color: #aaa;
+            font-size: 12px;
+            margin-bottom: 8px;
+            line-height: 1.4;
+        }
+        .idea-project {
+            color: #4dabf7;
+            font-size: 11px;
+            margin-bottom: 8px;
+        }
+        .idea-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        .idea-status-btn, .idea-delete-btn {
+            padding: 4px 10px;
+            border: none;
+            border-radius: 4px;
+            font-size: 11px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .idea-status-btn {
+            background: #2d5a2d;
+            color: #fff;
+        }
+        .idea-status-btn:hover { background: #3d7a3d; }
+        .idea-delete-btn {
+            background: #5a2d2d;
+            color: #fff;
+        }
+        .idea-delete-btn:hover { background: #7a3d3d; }
+    </style>
 </body>
 </html>

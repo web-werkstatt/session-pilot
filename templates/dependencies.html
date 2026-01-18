@@ -1,0 +1,1283 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <title>Projekt-Abhängigkeiten</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #1e1e1e;
+            color: #fff;
+            min-height: 100vh;
+        }
+        .header {
+            background: linear-gradient(135deg, #0078d4, #005a9e);
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+        .header h1 { font-size: 24px; }
+        .header-left { display: flex; align-items: center; gap: 15px; }
+        .header-right { display: flex; align-items: center; gap: 10px; }
+        .back-btn {
+            color: white;
+            text-decoration: none;
+            font-size: 20px;
+            opacity: 0.8;
+            transition: opacity 0.2s;
+        }
+        .back-btn:hover { opacity: 1; }
+        .btn {
+            background: #005a9e;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+        .btn:hover { background: #004080; }
+        .btn-success { background: #2d6a4f; }
+        .btn-success:hover { background: #40916c; }
+        .btn-danger { background: #c0392b; }
+        .btn-danger:hover { background: #e74c3c; }
+        .btn-small { padding: 6px 12px; font-size: 12px; }
+        .container { padding: 20px 30px; }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 5px;
+            background: #2d2d2d;
+            padding: 10px 30px;
+            border-bottom: 1px solid #404040;
+        }
+        .tab-btn {
+            background: transparent;
+            color: #aaa;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            font-size: 14px;
+            border-radius: 5px 5px 0 0;
+            transition: all 0.2s;
+        }
+        .tab-btn:hover { color: #fff; background: #363636; }
+        .tab-btn.active { color: #4dabf7; background: #363636; border-bottom: 2px solid #4dabf7; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* Stats */
+        .stats-bar {
+            background: #2d2d2d;
+            padding: 15px 30px;
+            display: flex;
+            gap: 30px;
+            border-bottom: 1px solid #404040;
+        }
+        .stat { display: flex; align-items: center; gap: 8px; }
+        .stat-value { font-weight: bold; font-size: 18px; }
+        .stat-label { color: #aaa; font-size: 13px; }
+
+        /* Layout */
+        .page-layout {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 20px;
+        }
+        @media (max-width: 1200px) {
+            .page-layout { grid-template-columns: 1fr; }
+        }
+
+        /* Relations Liste */
+        .relations-list {
+            background: #2d2d2d;
+            border-radius: 8px;
+            padding: 20px;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        .relation-card {
+            background: #363636;
+            border-radius: 6px;
+            padding: 12px 15px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: background 0.2s;
+            flex-wrap: wrap;
+        }
+        .relation-card:hover { background: #404040; }
+        .relation-source, .relation-target {
+            background: #2d2d2d;
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-weight: 500;
+            font-size: 13px;
+            max-width: 180px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .relation-type {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+        .relation-arrow { color: #666; font-size: 16px; }
+        .relation-note {
+            color: #aaa;
+            font-size: 11px;
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .relation-delete {
+            background: transparent;
+            border: none;
+            color: #666;
+            cursor: pointer;
+            font-size: 16px;
+            padding: 5px;
+            transition: color 0.2s;
+        }
+        .relation-delete:hover { color: #e74c3c; }
+
+        /* Add Panel */
+        .add-panel {
+            background: #2d2d2d;
+            border-radius: 8px;
+            padding: 20px;
+        }
+        .add-panel h3 {
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+        .form-group { margin-bottom: 12px; }
+        .form-group label {
+            display: block;
+            margin-bottom: 4px;
+            color: #aaa;
+            font-size: 12px;
+        }
+        .form-group select, .form-group input, .form-group textarea {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid #404040;
+            border-radius: 4px;
+            background: #1e1e1e;
+            color: #fff;
+            font-size: 13px;
+        }
+        .form-group select:focus, .form-group input:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: #0078d4;
+        }
+        .form-group textarea { resize: vertical; min-height: 50px; }
+        .type-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #404040;
+        }
+        .type-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+        .type-badge:hover { transform: scale(1.05); }
+
+        /* Autocomplete */
+        .autocomplete-wrapper {
+            position: relative;
+        }
+        .autocomplete-input {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid #404040;
+            border-radius: 4px;
+            background: #1e1e1e;
+            color: #fff;
+            font-size: 13px;
+        }
+        .autocomplete-input:focus {
+            outline: none;
+            border-color: #0078d4;
+        }
+        .autocomplete-input.has-value {
+            border-color: #2ecc71;
+            background: #1e2e1e;
+        }
+        .autocomplete-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: #2d2d2d;
+            border: 1px solid #404040;
+            border-top: none;
+            border-radius: 0 0 4px 4px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 100;
+            display: none;
+        }
+        .autocomplete-dropdown.show {
+            display: block;
+        }
+        .autocomplete-item {
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 12px;
+            border-bottom: 1px solid #363636;
+            transition: background 0.1s;
+        }
+        .autocomplete-item:hover, .autocomplete-item.highlighted {
+            background: #404040;
+        }
+        .autocomplete-item:last-child {
+            border-bottom: none;
+        }
+        .autocomplete-item .project-type {
+            color: #666;
+            font-size: 10px;
+            margin-left: 8px;
+        }
+        .autocomplete-no-results, .autocomplete-loading {
+            padding: 12px;
+            color: #666;
+            font-size: 12px;
+            text-align: center;
+        }
+        .autocomplete-loading {
+            color: #4dabf7;
+        }
+        .autocomplete-item .project-name {
+            font-weight: 500;
+        }
+        .autocomplete-item .project-desc {
+            font-size: 10px;
+            color: #888;
+            margin-top: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Filter */
+        .filter-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        .filter-input {
+            flex: 1;
+            min-width: 150px;
+            padding: 8px 10px;
+            border: 1px solid #404040;
+            border-radius: 4px;
+            background: #1e1e1e;
+            color: #fff;
+            font-size: 13px;
+        }
+        .filter-select {
+            padding: 8px 10px;
+            border: 1px solid #404040;
+            border-radius: 4px;
+            background: #1e1e1e;
+            color: #fff;
+            font-size: 13px;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #666;
+        }
+        .empty-state .icon { font-size: 40px; margin-bottom: 10px; }
+
+        /* ==================== GRAPH VIEW ==================== */
+        .graph-wrapper {
+            display: grid;
+            grid-template-columns: 1fr 280px;
+            gap: 20px;
+            height: calc(100vh - 220px);
+            min-height: 500px;
+        }
+        @media (max-width: 1000px) {
+            .graph-wrapper { grid-template-columns: 1fr; }
+        }
+
+        .graph-container {
+            background: #252525;
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+            border: 2px solid #404040;
+        }
+        .graph-container.drag-over { border-color: #0078d4; }
+
+        .graph-svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+        .graph-svg line {
+            stroke-width: 2;
+            pointer-events: stroke;
+            cursor: pointer;
+        }
+        .graph-svg line:hover { stroke-width: 4; }
+        .graph-svg text {
+            font-size: 10px;
+            fill: #aaa;
+            pointer-events: none;
+        }
+        .graph-svg .arrow-head {
+            fill: currentColor;
+        }
+
+        .graph-node {
+            position: absolute;
+            background: #404040;
+            padding: 8px 14px;
+            border-radius: 6px;
+            cursor: grab;
+            user-select: none;
+            font-size: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+            z-index: 10;
+            transition: box-shadow 0.2s, transform 0.1s;
+            white-space: nowrap;
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .graph-node:hover {
+            box-shadow: 0 4px 16px rgba(0,0,0,0.6);
+            z-index: 20;
+        }
+        .graph-node.dragging {
+            cursor: grabbing;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.8);
+            transform: scale(1.05);
+            z-index: 100;
+        }
+        .graph-node.selected {
+            outline: 2px solid #4dabf7;
+            outline-offset: 2px;
+        }
+        .graph-node.connect-source {
+            outline: 2px solid #2ecc71;
+            outline-offset: 2px;
+        }
+        .graph-node.connect-target {
+            outline: 2px dashed #f39c12;
+            outline-offset: 2px;
+        }
+
+        /* Graph Sidebar */
+        .graph-sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .graph-panel {
+            background: #2d2d2d;
+            border-radius: 8px;
+            padding: 15px;
+        }
+        .graph-panel h4 {
+            font-size: 13px;
+            margin-bottom: 10px;
+            color: #aaa;
+        }
+        .project-list {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .project-item {
+            padding: 6px 10px;
+            margin-bottom: 4px;
+            background: #363636;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: grab;
+            transition: background 0.2s;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .project-item:hover { background: #454545; }
+        .project-item.in-graph { opacity: 0.5; cursor: default; }
+
+        .connect-mode-info {
+            background: #2d5a2d;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            display: none;
+        }
+        .connect-mode-info.active { display: block; }
+
+        .graph-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 11px;
+            color: #aaa;
+        }
+        .legend-color {
+            width: 20px;
+            height: 3px;
+            border-radius: 2px;
+        }
+
+        /* Graph Instructions */
+        .graph-instructions {
+            position: absolute;
+            bottom: 15px;
+            left: 15px;
+            background: rgba(0,0,0,0.7);
+            padding: 10px 15px;
+            border-radius: 6px;
+            font-size: 11px;
+            color: #aaa;
+            z-index: 5;
+        }
+        .graph-instructions kbd {
+            background: #404040;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: inherit;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal.show { display: flex; }
+        .modal-content {
+            background: #2d2d2d;
+            padding: 25px;
+            border-radius: 8px;
+            width: 400px;
+            max-width: 90%;
+        }
+        .modal-content h3 { margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-left">
+            <a href="/" class="back-btn">←</a>
+            <h1>🔗 Projekt-Abhängigkeiten</h1>
+        </div>
+        <div class="header-right">
+            <button class="btn btn-small" onclick="showAddTypeModal()">+ Beziehungstyp</button>
+        </div>
+    </div>
+
+    <div class="stats-bar">
+        <div class="stat">
+            <span class="stat-value" id="totalRelations">0</span>
+            <span class="stat-label">Beziehungen</span>
+        </div>
+        <div class="stat">
+            <span class="stat-value" id="totalProjects">0</span>
+            <span class="stat-label">Verknüpfte Projekte</span>
+        </div>
+        <div id="typeStats"></div>
+    </div>
+
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('list')">📋 Liste</button>
+        <button class="tab-btn" onclick="switchTab('graph')">🕸️ Graph</button>
+    </div>
+
+    <!-- ==================== LIST VIEW ==================== -->
+    <div id="listView" class="tab-content active">
+        <div class="container">
+            <div class="page-layout">
+                <div class="main-content">
+                    <div class="filter-bar">
+                        <input type="text" class="filter-input" id="searchFilter" placeholder="🔍 Projekt suchen..." oninput="filterRelations()">
+                        <select class="filter-select" id="typeFilter" onchange="filterRelations()">
+                            <option value="">Alle Typen</option>
+                        </select>
+                    </div>
+                    <div class="relations-list" id="relationsList"></div>
+                </div>
+                <div class="add-panel">
+                    <h3>➕ Neue Beziehung</h3>
+                    <div class="form-group">
+                        <label>Quell-Projekt</label>
+                        <div class="autocomplete-wrapper">
+                            <input type="text" id="sourceProjectInput" class="autocomplete-input" placeholder="Projekt eingeben..." oninput="onProjectSearch('source')" onfocus="onProjectSearch('source')">
+                            <input type="hidden" id="sourceProject">
+                            <div class="autocomplete-dropdown" id="sourceDropdown"></div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Beziehungstyp</label>
+                        <select id="relationType"></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Ziel-Projekt</label>
+                        <div class="autocomplete-wrapper">
+                            <input type="text" id="targetProjectInput" class="autocomplete-input" placeholder="Projekt eingeben..." oninput="onProjectSearch('target')" onfocus="onProjectSearch('target')">
+                            <input type="hidden" id="targetProject">
+                            <div class="autocomplete-dropdown" id="targetDropdown"></div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Notiz (optional)</label>
+                        <textarea id="relationNote" placeholder="z.B. 'Nutzt API für Datenabfrage'"></textarea>
+                    </div>
+                    <button class="btn btn-success" style="width: 100%;" onclick="addRelation()">Beziehung erstellen</button>
+                    <div class="type-list" id="typeList"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== GRAPH VIEW ==================== -->
+    <div id="graphView" class="tab-content">
+        <div class="container">
+            <div class="graph-wrapper">
+                <div class="graph-container" id="graphContainer">
+                    <svg class="graph-svg" id="graphSvg">
+                        <defs>
+                            <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                                <polygon points="0 0, 10 3.5, 0 7" fill="#666"/>
+                            </marker>
+                        </defs>
+                    </svg>
+                    <div class="graph-instructions">
+                        <strong>Bedienung:</strong><br>
+                        • Projekt aus Liste ziehen zum Hinzufügen<br>
+                        • <kbd>Klick</kbd> auf Knoten = Auswählen<br>
+                        • <kbd>Shift+Klick</kbd> auf 2. Knoten = Verbinden<br>
+                        • <kbd>Doppelklick</kbd> auf Linie = Löschen<br>
+                        • Knoten ziehen = Verschieben
+                    </div>
+                </div>
+                <div class="graph-sidebar">
+                    <div class="graph-panel connect-mode-info" id="connectInfo">
+                        <strong>🔗 Verbindungsmodus</strong><br>
+                        <span id="connectSource">-</span><br>
+                        Klicken Sie auf das Ziel-Projekt oder <kbd>Esc</kbd> zum Abbrechen
+                    </div>
+                    <div class="graph-panel">
+                        <h4>Beziehungstyp für neue Verbindung</h4>
+                        <select id="graphRelationType" style="width: 100%; padding: 8px; background: #1e1e1e; border: 1px solid #404040; border-radius: 4px; color: #fff;"></select>
+                    </div>
+                    <div class="graph-panel">
+                        <h4>Projekte (zum Graph ziehen)</h4>
+                        <input type="text" id="projectSearch" placeholder="🔍 Filtern..." style="width: 100%; padding: 6px 8px; margin-bottom: 8px; background: #1e1e1e; border: 1px solid #404040; border-radius: 4px; color: #fff; font-size: 12px;" oninput="filterProjectList()">
+                        <div class="project-list" id="projectList"></div>
+                    </div>
+                    <div class="graph-panel">
+                        <h4>Legende</h4>
+                        <div class="graph-legend" id="graphLegend"></div>
+                    </div>
+                    <button class="btn btn-small" onclick="autoLayoutGraph()" style="width: 100%;">🔄 Auto-Layout</button>
+                    <button class="btn btn-small btn-danger" onclick="clearGraph()" style="width: 100%;">🗑️ Graph leeren</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Type Modal -->
+    <div id="addTypeModal" class="modal">
+        <div class="modal-content">
+            <h3>Neuen Beziehungstyp erstellen</h3>
+            <div class="form-group">
+                <label>Name</label>
+                <input type="text" id="newTypeName" placeholder="z.B. 'basiert auf'">
+            </div>
+            <div class="form-group">
+                <label>Icon (Emoji)</label>
+                <input type="text" id="newTypeIcon" placeholder="z.B. 🔧" value="🔗">
+            </div>
+            <div class="form-group">
+                <label>Farbe</label>
+                <input type="color" id="newTypeColor" value="#3498db">
+            </div>
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button class="btn" style="flex: 1;" onclick="hideAddTypeModal()">Abbrechen</button>
+                <button class="btn btn-success" style="flex: 1;" onclick="addRelationType()">Erstellen</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Connect Modal -->
+    <div id="connectModal" class="modal">
+        <div class="modal-content">
+            <h3>🔗 Verbindung erstellen</h3>
+            <p style="margin-bottom: 15px; color: #aaa;" id="connectModalInfo"></p>
+            <div class="form-group">
+                <label>Beziehungstyp</label>
+                <select id="connectModalType"></select>
+            </div>
+            <div class="form-group">
+                <label>Notiz (optional)</label>
+                <textarea id="connectModalNote" placeholder="Beschreibung der Beziehung..."></textarea>
+            </div>
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button class="btn" style="flex: 1;" onclick="hideConnectModal()">Abbrechen</button>
+                <button class="btn btn-success" style="flex: 1;" onclick="confirmConnection()">Verbinden</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let allProjects = [];
+        let allRelations = [];
+        let relationTypes = [];
+
+        // Graph state
+        let graphNodes = {};  // {projectName: {x, y, element}}
+        let selectedNode = null;
+        let connectSourceNode = null;
+        let draggedNode = null;
+        let dragOffset = {x: 0, y: 0};
+
+        // Positions persistence
+        const STORAGE_KEY = 'dependency-graph-positions';
+
+        function loadSavedPositions() {
+            try {
+                return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+            } catch { return {}; }
+        }
+
+        function savePositions() {
+            const positions = {};
+            for (const [name, node] of Object.entries(graphNodes)) {
+                positions[name] = {x: node.x, y: node.y};
+            }
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(positions));
+        }
+
+        // ==================== DATA LOADING ====================
+        async function loadData() {
+            const dataResp = await fetch('/api/data');
+            const data = await dataResp.json();
+            allProjects = data.projects.map(p => p.name).sort();
+
+            const relResp = await fetch('/api/relations');
+            const relData = await relResp.json();
+            allRelations = relData.relations || [];
+            relationTypes = relData.relation_types || [];
+
+            populateSelects();
+            renderRelations();
+            updateStats();
+            renderProjectList();
+            renderGraphLegend();
+            initGraphFromRelations();
+        }
+
+        function populateSelects() {
+            const typeSelect = document.getElementById('relationType');
+            const typeFilter = document.getElementById('typeFilter');
+            const graphTypeSelect = document.getElementById('graphRelationType');
+            const connectModalType = document.getElementById('connectModalType');
+
+            const typeOptions = relationTypes.map(t =>
+                `<option value="${t.id}">${t.icon} ${t.name}</option>`
+            ).join('');
+            typeSelect.innerHTML = typeOptions;
+            graphTypeSelect.innerHTML = typeOptions;
+            connectModalType.innerHTML = typeOptions;
+
+            typeFilter.innerHTML = '<option value="">Alle Typen</option>' + typeOptions;
+
+            document.getElementById('typeList').innerHTML = relationTypes.map(t =>
+                `<span class="type-badge" style="background: ${t.color}20; border: 1px solid ${t.color};">${t.icon} ${t.name}</span>`
+            ).join('');
+        }
+
+        // ==================== AJAX AUTOCOMPLETE ====================
+        let highlightedIndex = -1;
+        let searchDebounceTimers = {};
+        let currentSearchController = null;
+
+        function onProjectSearch(type) {
+            const input = document.getElementById(type + 'ProjectInput');
+            const dropdown = document.getElementById(type + 'Dropdown');
+            const hiddenInput = document.getElementById(type + 'Project');
+            const searchTerm = input.value.trim();
+
+            // Clear hidden value when typing
+            hiddenInput.value = '';
+            input.classList.remove('has-value');
+
+            // Debounce: warte 200ms nach letztem Tastendruck
+            clearTimeout(searchDebounceTimers[type]);
+            searchDebounceTimers[type] = setTimeout(() => {
+                fetchProjects(type, searchTerm);
+            }, 200);
+        }
+
+        async function fetchProjects(type, query) {
+            const dropdown = document.getElementById(type + 'Dropdown');
+
+            // Zeige Lade-Indikator
+            dropdown.innerHTML = '<div class="autocomplete-loading">🔍 Suche...</div>';
+            dropdown.classList.add('show');
+
+            // Abbrechen vorheriger Anfrage
+            if (currentSearchController) {
+                currentSearchController.abort();
+            }
+            currentSearchController = new AbortController();
+
+            try {
+                const resp = await fetch(`/api/projects/search?q=${encodeURIComponent(query)}&limit=15`, {
+                    signal: currentSearchController.signal
+                });
+                const results = await resp.json();
+
+                if (results.length === 0) {
+                    dropdown.innerHTML = '<div class="autocomplete-no-results">Keine Projekte gefunden</div>';
+                    return;
+                }
+
+                dropdown.innerHTML = results.map((p, i) => {
+                    const typeIcon = p.type === 'subproject' ? '📂' : p.type === 'monorepo' ? '📦' : '📁';
+                    const desc = p.description ? `<div class="project-desc">${p.description}</div>` : '';
+                    return `<div class="autocomplete-item" data-value="${p.name}" onclick="selectProject('${type}', '${p.name}')">
+                        <div class="project-name">${typeIcon} ${p.name}</div>
+                        ${desc}
+                    </div>`;
+                }).join('');
+
+                highlightedIndex = -1;
+            } catch (err) {
+                if (err.name !== 'AbortError') {
+                    dropdown.innerHTML = '<div class="autocomplete-no-results">Fehler beim Laden</div>';
+                }
+            }
+        }
+
+        function selectProject(type, value) {
+            const input = document.getElementById(type + 'ProjectInput');
+            const dropdown = document.getElementById(type + 'Dropdown');
+            const hiddenInput = document.getElementById(type + 'Project');
+
+            input.value = value;
+            hiddenInput.value = value;
+            input.classList.add('has-value');
+            dropdown.classList.remove('show');
+        }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            const activeDropdown = document.querySelector('.autocomplete-dropdown.show');
+            if (!activeDropdown) return;
+
+            const items = activeDropdown.querySelectorAll('.autocomplete-item');
+            if (items.length === 0) return;
+
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                highlightedIndex = Math.min(highlightedIndex + 1, items.length - 1);
+                updateHighlight(items);
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                highlightedIndex = Math.max(highlightedIndex - 1, 0);
+                updateHighlight(items);
+            } else if (e.key === 'Enter' && highlightedIndex >= 0) {
+                e.preventDefault();
+                items[highlightedIndex].click();
+            } else if (e.key === 'Escape') {
+                activeDropdown.classList.remove('show');
+            }
+        });
+
+        function updateHighlight(items) {
+            items.forEach((item, i) => {
+                item.classList.toggle('highlighted', i === highlightedIndex);
+            });
+            if (highlightedIndex >= 0) {
+                items[highlightedIndex].scrollIntoView({ block: 'nearest' });
+            }
+        }
+
+        // Close dropdown on outside click
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.autocomplete-wrapper')) {
+                document.querySelectorAll('.autocomplete-dropdown').forEach(d => d.classList.remove('show'));
+            }
+        });
+
+        // ==================== LIST VIEW ====================
+        function renderRelations() {
+            const container = document.getElementById('relationsList');
+            const searchTerm = document.getElementById('searchFilter').value.toLowerCase();
+            const typeFilterVal = document.getElementById('typeFilter').value;
+
+            let filtered = allRelations;
+            if (searchTerm) {
+                filtered = filtered.filter(r =>
+                    r.source.toLowerCase().includes(searchTerm) ||
+                    r.target.toLowerCase().includes(searchTerm) ||
+                    (r.note && r.note.toLowerCase().includes(searchTerm))
+                );
+            }
+            if (typeFilterVal) {
+                filtered = filtered.filter(r => r.type === typeFilterVal);
+            }
+
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">🔗</div>
+                        <div>${allRelations.length === 0 ? 'Keine Beziehungen' : 'Keine Treffer'}</div>
+                    </div>`;
+                return;
+            }
+
+            container.innerHTML = filtered.map(rel => {
+                const type = relationTypes.find(t => t.id === rel.type) || {icon: '🔗', name: rel.type, color: '#666'};
+                return `
+                    <div class="relation-card">
+                        <div class="relation-source" title="${rel.source}">${rel.source}</div>
+                        <span class="relation-arrow">→</span>
+                        <span class="relation-type" style="background: ${type.color}30; color: ${type.color};">${type.icon} ${type.name}</span>
+                        <span class="relation-arrow">→</span>
+                        <div class="relation-target" title="${rel.target}">${rel.target}</div>
+                        ${rel.note ? `<span class="relation-note" title="${rel.note}">📝 ${rel.note}</span>` : ''}
+                        <button class="relation-delete" onclick="deleteRelation('${rel.id}')" title="Löschen">✕</button>
+                    </div>`;
+            }).join('');
+        }
+
+        function filterRelations() { renderRelations(); }
+
+        function updateStats() {
+            document.getElementById('totalRelations').textContent = allRelations.length;
+            const linkedProjects = new Set();
+            allRelations.forEach(r => { linkedProjects.add(r.source); linkedProjects.add(r.target); });
+            document.getElementById('totalProjects').textContent = linkedProjects.size;
+
+            const typeCounts = {};
+            allRelations.forEach(r => { typeCounts[r.type] = (typeCounts[r.type] || 0) + 1; });
+            document.getElementById('typeStats').innerHTML = relationTypes.map(t => {
+                const count = typeCounts[t.id] || 0;
+                if (count === 0) return '';
+                return `<div class="stat"><span class="stat-value" style="color: ${t.color};">${count}</span><span class="stat-label">${t.icon} ${t.name}</span></div>`;
+            }).join('');
+        }
+
+        // ==================== GRAPH VIEW ====================
+        function renderProjectList() {
+            const container = document.getElementById('projectList');
+            const search = document.getElementById('projectSearch').value.toLowerCase();
+
+            let projects = allProjects;
+            if (search) {
+                projects = projects.filter(p => p.toLowerCase().includes(search));
+            }
+
+            container.innerHTML = projects.map(p => {
+                const inGraph = graphNodes[p] ? 'in-graph' : '';
+                return `<div class="project-item ${inGraph}" draggable="${!inGraph}" ondragstart="onProjectDragStart(event, '${p}')">${p}</div>`;
+            }).join('');
+        }
+
+        function filterProjectList() { renderProjectList(); }
+
+        function renderGraphLegend() {
+            document.getElementById('graphLegend').innerHTML = relationTypes.map(t =>
+                `<div class="legend-item"><div class="legend-color" style="background: ${t.color};"></div>${t.icon} ${t.name}</div>`
+            ).join('');
+        }
+
+        function initGraphFromRelations() {
+            const savedPositions = loadSavedPositions();
+            const container = document.getElementById('graphContainer');
+            const rect = container.getBoundingClientRect();
+
+            // Collect all projects in relations
+            const projectsInRelations = new Set();
+            allRelations.forEach(r => {
+                projectsInRelations.add(r.source);
+                projectsInRelations.add(r.target);
+            });
+
+            // Add nodes for projects in relations
+            let index = 0;
+            projectsInRelations.forEach(projName => {
+                if (!graphNodes[projName]) {
+                    const saved = savedPositions[projName];
+                    const x = saved ? saved.x : 100 + (index % 5) * 180;
+                    const y = saved ? saved.y : 80 + Math.floor(index / 5) * 100;
+                    addNodeToGraph(projName, x, y);
+                    index++;
+                }
+            });
+
+            drawConnections();
+            renderProjectList();
+        }
+
+        function addNodeToGraph(projectName, x, y) {
+            if (graphNodes[projectName]) return;
+
+            const container = document.getElementById('graphContainer');
+            const node = document.createElement('div');
+            node.className = 'graph-node';
+            node.textContent = projectName;
+            node.style.left = x + 'px';
+            node.style.top = y + 'px';
+            node.dataset.project = projectName;
+
+            node.addEventListener('mousedown', (e) => onNodeMouseDown(e, projectName));
+            node.addEventListener('click', (e) => onNodeClick(e, projectName));
+
+            container.appendChild(node);
+            graphNodes[projectName] = {x, y, element: node};
+            savePositions();
+        }
+
+        function onNodeMouseDown(e, projectName) {
+            if (e.shiftKey) return; // Don't drag when shift-clicking for connection
+            e.preventDefault();
+            draggedNode = projectName;
+            const node = graphNodes[projectName];
+            dragOffset.x = e.clientX - node.x;
+            dragOffset.y = e.clientY - node.y;
+            node.element.classList.add('dragging');
+        }
+
+        function onNodeClick(e, projectName) {
+            e.stopPropagation();
+
+            if (e.shiftKey && selectedNode && selectedNode !== projectName) {
+                // Connect mode: create connection
+                showConnectModal(selectedNode, projectName);
+                clearSelection();
+                return;
+            }
+
+            // Select node
+            clearSelection();
+            selectedNode = projectName;
+            graphNodes[projectName].element.classList.add('selected');
+        }
+
+        function clearSelection() {
+            if (selectedNode && graphNodes[selectedNode]) {
+                graphNodes[selectedNode].element.classList.remove('selected');
+            }
+            selectedNode = null;
+            connectSourceNode = null;
+            document.getElementById('connectInfo').classList.remove('active');
+            Object.values(graphNodes).forEach(n => {
+                n.element.classList.remove('connect-source', 'connect-target');
+            });
+        }
+
+        function showConnectModal(source, target) {
+            document.getElementById('connectModalInfo').textContent = `${source} → ${target}`;
+            document.getElementById('connectModal').classList.add('show');
+            document.getElementById('connectModal').dataset.source = source;
+            document.getElementById('connectModal').dataset.target = target;
+        }
+
+        function hideConnectModal() {
+            document.getElementById('connectModal').classList.remove('show');
+        }
+
+        async function confirmConnection() {
+            const modal = document.getElementById('connectModal');
+            const source = modal.dataset.source;
+            const target = modal.dataset.target;
+            const type = document.getElementById('connectModalType').value;
+            const note = document.getElementById('connectModalNote').value;
+
+            const resp = await fetch('/api/relations', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({source, target, type, note})
+            });
+
+            const result = await resp.json();
+            if (result.error) {
+                alert(result.error);
+                return;
+            }
+
+            hideConnectModal();
+            document.getElementById('connectModalNote').value = '';
+            loadData();
+        }
+
+        function drawConnections() {
+            const svg = document.getElementById('graphSvg');
+            // Clear existing lines
+            svg.querySelectorAll('line, text.edge-label').forEach(el => el.remove());
+
+            allRelations.forEach(rel => {
+                const sourceNode = graphNodes[rel.source];
+                const targetNode = graphNodes[rel.target];
+                if (!sourceNode || !targetNode) return;
+
+                const type = relationTypes.find(t => t.id === rel.type) || {color: '#666'};
+
+                // Calculate positions (center of nodes)
+                const sourceEl = sourceNode.element;
+                const targetEl = targetNode.element;
+                const x1 = sourceNode.x + sourceEl.offsetWidth / 2;
+                const y1 = sourceNode.y + sourceEl.offsetHeight / 2;
+                const x2 = targetNode.x + targetEl.offsetWidth / 2;
+                const y2 = targetNode.y + targetEl.offsetHeight / 2;
+
+                // Calculate angle and shorten line to not overlap with node
+                const angle = Math.atan2(y2 - y1, x2 - x1);
+                const sourceRadius = Math.max(sourceEl.offsetWidth, sourceEl.offsetHeight) / 2 + 5;
+                const targetRadius = Math.max(targetEl.offsetWidth, targetEl.offsetHeight) / 2 + 5;
+
+                const startX = x1 + Math.cos(angle) * sourceRadius;
+                const startY = y1 + Math.sin(angle) * sourceRadius;
+                const endX = x2 - Math.cos(angle) * targetRadius;
+                const endY = y2 - Math.sin(angle) * targetRadius;
+
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('x1', startX);
+                line.setAttribute('y1', startY);
+                line.setAttribute('x2', endX);
+                line.setAttribute('y2', endY);
+                line.setAttribute('stroke', type.color);
+                line.setAttribute('marker-end', 'url(#arrowhead)');
+                line.dataset.relationId = rel.id;
+                line.style.pointerEvents = 'stroke';
+                line.style.cursor = 'pointer';
+                line.addEventListener('dblclick', () => {
+                    if (confirm(`Beziehung "${rel.source} → ${rel.target}" löschen?`)) {
+                        deleteRelation(rel.id);
+                    }
+                });
+                svg.appendChild(line);
+
+                // Update arrow color
+                const marker = svg.querySelector('#arrowhead polygon');
+                if (marker) marker.setAttribute('fill', type.color);
+            });
+        }
+
+        // Drag & Drop from project list
+        function onProjectDragStart(e, projectName) {
+            if (graphNodes[projectName]) {
+                e.preventDefault();
+                return;
+            }
+            e.dataTransfer.setData('text/plain', projectName);
+            e.dataTransfer.effectAllowed = 'copy';
+        }
+
+        // Mouse move handler for node dragging
+        document.addEventListener('mousemove', (e) => {
+            if (draggedNode && graphNodes[draggedNode]) {
+                const container = document.getElementById('graphContainer');
+                const rect = container.getBoundingClientRect();
+                const x = e.clientX - rect.left - dragOffset.x + container.scrollLeft;
+                const y = e.clientY - rect.top - dragOffset.y + container.scrollTop;
+
+                graphNodes[draggedNode].x = Math.max(0, x);
+                graphNodes[draggedNode].y = Math.max(0, y);
+                graphNodes[draggedNode].element.style.left = graphNodes[draggedNode].x + 'px';
+                graphNodes[draggedNode].element.style.top = graphNodes[draggedNode].y + 'px';
+
+                drawConnections();
+            }
+        });
+
+        document.addEventListener('mouseup', () => {
+            if (draggedNode && graphNodes[draggedNode]) {
+                graphNodes[draggedNode].element.classList.remove('dragging');
+                savePositions();
+            }
+            draggedNode = null;
+        });
+
+        // Graph container drop zone
+        const graphContainer = document.getElementById('graphContainer');
+        graphContainer.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            graphContainer.classList.add('drag-over');
+        });
+        graphContainer.addEventListener('dragleave', () => {
+            graphContainer.classList.remove('drag-over');
+        });
+        graphContainer.addEventListener('drop', (e) => {
+            e.preventDefault();
+            graphContainer.classList.remove('drag-over');
+            const projectName = e.dataTransfer.getData('text/plain');
+            if (projectName && !graphNodes[projectName]) {
+                const rect = graphContainer.getBoundingClientRect();
+                const x = e.clientX - rect.left - 50;
+                const y = e.clientY - rect.top - 15;
+                addNodeToGraph(projectName, x, y);
+                renderProjectList();
+            }
+        });
+
+        // Click on container to deselect
+        graphContainer.addEventListener('click', (e) => {
+            if (e.target === graphContainer) {
+                clearSelection();
+            }
+        });
+
+        // Escape to cancel
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                clearSelection();
+                hideConnectModal();
+                hideAddTypeModal();
+            }
+        });
+
+        function autoLayoutGraph() {
+            const nodes = Object.keys(graphNodes);
+            const cols = Math.ceil(Math.sqrt(nodes.length));
+            nodes.forEach((name, i) => {
+                const x = 80 + (i % cols) * 200;
+                const y = 60 + Math.floor(i / cols) * 90;
+                graphNodes[name].x = x;
+                graphNodes[name].y = y;
+                graphNodes[name].element.style.left = x + 'px';
+                graphNodes[name].element.style.top = y + 'px';
+            });
+            drawConnections();
+            savePositions();
+        }
+
+        function clearGraph() {
+            if (!confirm('Alle Knoten aus dem Graph entfernen?')) return;
+            Object.values(graphNodes).forEach(n => n.element.remove());
+            graphNodes = {};
+            localStorage.removeItem(STORAGE_KEY);
+            drawConnections();
+            renderProjectList();
+        }
+
+        // ==================== CRUD ====================
+        async function addRelation() {
+            const source = document.getElementById('sourceProject').value;
+            const target = document.getElementById('targetProject').value;
+            const type = document.getElementById('relationType').value;
+            const note = document.getElementById('relationNote').value;
+
+            if (!source || !target || !type) { alert('Bitte alle Pflichtfelder ausfüllen'); return; }
+            if (source === target) { alert('Projekte müssen unterschiedlich sein'); return; }
+
+            const resp = await fetch('/api/relations', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({source, target, type, note})
+            });
+
+            const result = await resp.json();
+            if (result.error) { alert(result.error); return; }
+
+            // Reset form
+            document.getElementById('sourceProject').value = '';
+            document.getElementById('sourceProjectInput').value = '';
+            document.getElementById('sourceProjectInput').classList.remove('has-value');
+            document.getElementById('targetProject').value = '';
+            document.getElementById('targetProjectInput').value = '';
+            document.getElementById('targetProjectInput').classList.remove('has-value');
+            document.getElementById('relationNote').value = '';
+            loadData();
+        }
+
+        async function deleteRelation(id) {
+            await fetch(`/api/relations/${id}`, {method: 'DELETE'});
+            loadData();
+        }
+
+        function showAddTypeModal() { document.getElementById('addTypeModal').classList.add('show'); }
+        function hideAddTypeModal() { document.getElementById('addTypeModal').classList.remove('show'); }
+
+        async function addRelationType() {
+            const name = document.getElementById('newTypeName').value.trim();
+            const icon = document.getElementById('newTypeIcon').value.trim() || '🔗';
+            const color = document.getElementById('newTypeColor').value;
+
+            if (!name) { alert('Bitte Namen eingeben'); return; }
+
+            const id = name.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+            const resp = await fetch('/api/relations/types', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({id, name, icon, color})
+            });
+
+            const result = await resp.json();
+            if (result.error) { alert(result.error); return; }
+
+            hideAddTypeModal();
+            document.getElementById('newTypeName').value = '';
+            loadData();
+        }
+
+        // Tab switching
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.querySelector(`.tab-btn[onclick*="${tab}"]`).classList.add('active');
+            document.getElementById(tab + 'View').classList.add('active');
+
+            if (tab === 'graph') {
+                setTimeout(drawConnections, 100);
+            }
+        }
+
+        // Init
+        loadData();
+    </script>
+</body>
+</html>

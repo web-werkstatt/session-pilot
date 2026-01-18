@@ -632,6 +632,140 @@ def extract_description(project_path, project_name):
     return description
 
 
+def extract_dependencies(project_path, all_project_names=None):
+    """Extrahiert Abhängigkeiten aus verschiedenen Package-Dateien
+
+    Returns:
+        dict mit 'internal' (Projekte im Dashboard) und 'external' (npm/pip packages)
+    """
+    dependencies = {
+        "internal": [],      # Andere Projekte im Dashboard
+        "external": [],      # npm/pip/etc. packages
+        "dev": [],           # Dev-Dependencies
+        "frameworks": []     # Erkannte Frameworks
+    }
+
+    all_projects = all_project_names or []
+    all_projects_lower = [p.lower() for p in all_projects]
+
+    # 1. package.json (Node.js)
+    pkg_path = os.path.join(project_path, "package.json")
+    if os.path.exists(pkg_path):
+        try:
+            with open(pkg_path, 'r', encoding='utf-8') as f:
+                pkg = json.load(f)
+
+                # Production dependencies
+                for dep in pkg.get("dependencies", {}).keys():
+                    dep_lower = dep.lower().replace('@', '').replace('/', '-')
+                    # Prüfe ob es ein internes Projekt ist
+                    if any(dep_lower in p or p in dep_lower for p in all_projects_lower):
+                        dependencies["internal"].append(dep)
+                    else:
+                        dependencies["external"].append(dep)
+
+                    # Framework-Erkennung
+                    if dep in ["react", "vue", "angular", "svelte", "next", "nuxt", "astro"]:
+                        dependencies["frameworks"].append(dep)
+
+                # Dev dependencies
+                for dep in pkg.get("devDependencies", {}).keys():
+                    dependencies["dev"].append(dep)
+
+                # Workspaces (Monorepo-interne Deps)
+                workspaces = pkg.get("workspaces", [])
+                if isinstance(workspaces, dict):
+                    workspaces = workspaces.get("packages", [])
+                for ws in workspaces:
+                    if isinstance(ws, str) and not ws.startswith("!"):
+                        ws_name = ws.replace("packages/", "").replace("apps/", "").replace("/*", "")
+                        if ws_name:
+                            dependencies["internal"].append(f"workspace:{ws_name}")
+        except:
+            pass
+
+    # 2. requirements.txt (Python)
+    req_path = os.path.join(project_path, "requirements.txt")
+    if os.path.exists(req_path):
+        try:
+            with open(req_path, 'r', encoding='utf-8') as f:
+                for line in f:
+                    line = line.strip()
+                    if not line or line.startswith('#') or line.startswith('-'):
+                        continue
+                    # Package-Name extrahieren (vor ==, >=, etc.)
+                    import re
+                    match = re.match(r'^([a-zA-Z0-9_-]+)', line)
+                    if match:
+                        dep = match.group(1)
+                        dep_lower = dep.lower().replace('_', '-')
+
+                        if any(dep_lower in p or p in dep_lower for p in all_projects_lower):
+                            dependencies["internal"].append(dep)
+                        else:
+                            dependencies["external"].append(dep)
+
+                        # Framework-Erkennung
+                        if dep.lower() in ["flask", "django", "fastapi", "tornado", "bottle", "pyramid"]:
+                            dependencies["frameworks"].append(dep)
+        except:
+            pass
+
+    # 3. pyproject.toml (Python modern)
+    pyproject_path = os.path.join(project_path, "pyproject.toml")
+    if os.path.exists(pyproject_path):
+        try:
+            with open(pyproject_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+                import re
+                # dependencies = ["package1", "package2"]
+                deps_match = re.search(r'dependencies\s*=\s*\[(.*?)\]', content, re.DOTALL)
+                if deps_match:
+                    deps_str = deps_match.group(1)
+                    for match in re.findall(r'["\']([a-zA-Z0-9_-]+)', deps_str):
+                        if match.lower() not in [d.lower() for d in dependencies["external"]]:
+                            dependencies["external"].append(match)
+        except:
+            pass
+
+    # 4. composer.json (PHP)
+    composer_path = os.path.join(project_path, "composer.json")
+    if os.path.exists(composer_path):
+        try:
+            with open(composer_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                for dep in data.get("require", {}).keys():
+                    if dep != "php" and not dep.startswith("ext-"):
+                        dependencies["external"].append(dep)
+                        if "laravel" in dep or "symfony" in dep:
+                            dependencies["frameworks"].append(dep.split("/")[-1])
+                for dep in data.get("require-dev", {}).keys():
+                    dependencies["dev"].append(dep)
+        except:
+            pass
+
+    # 5. go.mod (Go)
+    gomod_path = os.path.join(project_path, "go.mod")
+    if os.path.exists(gomod_path):
+        try:
+            with open(gomod_path, 'r', encoding='utf-8') as f:
+                import re
+                for line in f:
+                    match = re.match(r'^\t([^\s]+)', line)
+                    if match:
+                        dependencies["external"].append(match.group(1))
+        except:
+            pass
+
+    # Duplikate entfernen und sortieren
+    dependencies["internal"] = sorted(list(set(dependencies["internal"])))
+    dependencies["external"] = sorted(list(set(dependencies["external"])))[:50]  # Limit für große Projekte
+    dependencies["dev"] = sorted(list(set(dependencies["dev"])))[:30]
+    dependencies["frameworks"] = sorted(list(set(dependencies["frameworks"])))
+
+    return dependencies
+
+
 def generate_description_from_name(project_path, project_name):
     """Generiert eine Beschreibung basierend auf Projektname und Struktur"""
     import re
@@ -1181,6 +1315,22 @@ def scan_projects(auto_generate=True):
     # Cache speichern wenn modifiziert
     if cache_modified:
         save_cache(cache)
+
+    # Dependencies extrahieren (zweiter Durchlauf, benötigt alle Projektnamen)
+    all_project_names = list(projects.keys())
+    for proj_name, proj_data in projects.items():
+        # Projektpfad ermitteln
+        if proj_data.get("parent_project"):
+            # Sub-Projekt
+            parent = proj_data["parent_project"]
+            sub_path = proj_data.get("subproject_path", "")
+            proj_path = os.path.join(PROJECTS_DIR, parent, sub_path)
+        else:
+            proj_path = os.path.join(PROJECTS_DIR, proj_name)
+
+        if os.path.isdir(proj_path):
+            deps = extract_dependencies(proj_path, all_project_names)
+            proj_data["dependencies"] = deps
 
     # Nach letzter Aktivität sortieren
     sorted_projects = dict(sorted(

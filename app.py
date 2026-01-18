@@ -71,6 +71,31 @@ def containers():
     return render_template('containers.html')
 
 
+@app.route('/api/projects/search')
+def search_projects():
+    """Ajax-Suche für Projekte"""
+    query = request.args.get('q', '').lower().strip()
+    limit = int(request.args.get('limit', 15))
+
+    projects = scan_projects()
+    results = []
+
+    for name, data in projects.items():
+        if query and query not in name.lower():
+            continue
+        results.append({
+            'name': name,
+            'type': data.get('project_type', 'project'),
+            'description': data.get('function', '')[:60],
+            'group': data.get('group')
+        })
+
+    # Sortieren: exakte Matches zuerst, dann alphabetisch
+    results.sort(key=lambda x: (0 if x['name'].lower().startswith(query) else 1, x['name'].lower()))
+
+    return jsonify(results[:limit])
+
+
 @app.route('/api/data')
 def get_data():
     projects = scan_projects()
@@ -171,8 +196,11 @@ def save_project():
         parts = project_name.split('/', 1)
         parent_name = parts[0]
         sub_path = parts[1]
-        # Suche Sub-Projekt in bekannten Ordnern
+        # Suche Sub-Projekt in bekannten Ordnern UND im Root des Parent-Projekts
         possible_paths = [
+            # Root-Level Sub-Projekt (z.B. python_extractor direkt im Projekt)
+            os.path.join(PROJECTS_DIR, parent_name, sub_path),
+            # Standard Sub-Projekt-Ordner
             os.path.join(PROJECTS_DIR, parent_name, "apps", sub_path),
             os.path.join(PROJECTS_DIR, parent_name, "packages", sub_path),
             os.path.join(PROJECTS_DIR, parent_name, "services", sub_path),
@@ -269,6 +297,285 @@ def refresh_all_projects():
         "projects": updated,
         "errors": errors
     })
+
+
+# ============== RELATIONS / ABHÄNGIGKEITEN ==============
+
+RELATIONS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'relations.json')
+
+
+def load_relations():
+    """Lädt die Projekt-Beziehungen"""
+    if os.path.exists(RELATIONS_FILE):
+        try:
+            with open(RELATIONS_FILE, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except:
+            pass
+    return {
+        "relations": [],
+        "relation_types": [
+            {"id": "depends_on", "name": "hängt ab von", "icon": "🔗", "color": "#3498db"},
+            {"id": "replaces", "name": "ersetzt", "icon": "🔄", "color": "#e74c3c"},
+            {"id": "extends", "name": "erweitert", "icon": "➕", "color": "#2ecc71"},
+            {"id": "uses", "name": "nutzt", "icon": "⚙️", "color": "#9b59b6"},
+            {"id": "related", "name": "verwandt mit", "icon": "🔀", "color": "#f39c12"},
+            {"id": "fork_of", "name": "Fork von", "icon": "🍴", "color": "#1abc9c"}
+        ]
+    }
+
+
+def save_relations(data):
+    """Speichert die Projekt-Beziehungen"""
+    with open(RELATIONS_FILE, 'w', encoding='utf-8') as f:
+        json.dump(data, f, indent=2, ensure_ascii=False)
+
+
+@app.route('/dependencies')
+def dependencies_page():
+    """Projekt-Abhängigkeiten Seite"""
+    return render_template('dependencies.html')
+
+
+@app.route('/api/relations')
+def get_relations():
+    """Gibt alle Projekt-Beziehungen zurück"""
+    data = load_relations()
+    return jsonify(data)
+
+
+@app.route('/api/relations', methods=['POST'])
+def add_relation():
+    """Fügt eine neue Beziehung hinzu"""
+    req = request.get_json()
+    if not req:
+        return jsonify({"error": "Keine Daten"}), 400
+
+    source = req.get("source")
+    target = req.get("target")
+    relation_type = req.get("type")
+    note = req.get("note", "")
+
+    if not source or not target or not relation_type:
+        return jsonify({"error": "source, target und type sind erforderlich"}), 400
+
+    if source == target:
+        return jsonify({"error": "Projekt kann nicht mit sich selbst verknüpft werden"}), 400
+
+    data = load_relations()
+
+    # Prüfe ob Beziehung bereits existiert
+    for rel in data["relations"]:
+        if rel["source"] == source and rel["target"] == target and rel["type"] == relation_type:
+            return jsonify({"error": "Diese Beziehung existiert bereits"}), 400
+
+    # Neue Beziehung hinzufügen
+    new_relation = {
+        "id": f"{source}_{target}_{relation_type}_{datetime.now().timestamp()}",
+        "source": source,
+        "target": target,
+        "type": relation_type,
+        "note": note,
+        "created": datetime.now().isoformat()
+    }
+    data["relations"].append(new_relation)
+    save_relations(data)
+
+    return jsonify({"success": True, "relation": new_relation})
+
+
+@app.route('/api/relations/<relation_id>', methods=['DELETE'])
+def delete_relation(relation_id):
+    """Löscht eine Beziehung"""
+    data = load_relations()
+    original_count = len(data["relations"])
+    data["relations"] = [r for r in data["relations"] if r.get("id") != relation_id]
+
+    if len(data["relations"]) == original_count:
+        return jsonify({"error": "Beziehung nicht gefunden"}), 404
+
+    save_relations(data)
+    return jsonify({"success": True})
+
+
+@app.route('/api/relations/types')
+def get_relation_types():
+    """Gibt alle Beziehungstypen zurück"""
+    data = load_relations()
+    return jsonify(data.get("relation_types", []))
+
+
+@app.route('/api/relations/types', methods=['POST'])
+def add_relation_type():
+    """Fügt einen neuen Beziehungstyp hinzu"""
+    req = request.get_json()
+    if not req:
+        return jsonify({"error": "Keine Daten"}), 400
+
+    type_id = req.get("id", "").lower().replace(" ", "_")
+    name = req.get("name")
+    icon = req.get("icon", "🔗")
+    color = req.get("color", "#666666")
+
+    if not type_id or not name:
+        return jsonify({"error": "id und name sind erforderlich"}), 400
+
+    data = load_relations()
+
+    # Prüfe ob Typ bereits existiert
+    if any(t["id"] == type_id for t in data["relation_types"]):
+        return jsonify({"error": "Dieser Beziehungstyp existiert bereits"}), 400
+
+    new_type = {"id": type_id, "name": name, "icon": icon, "color": color}
+    data["relation_types"].append(new_type)
+    save_relations(data)
+
+    return jsonify({"success": True, "type": new_type})
+
+
+@app.route('/api/project/<path:project_name>/relations')
+def get_project_relations(project_name):
+    """Gibt alle Beziehungen für ein bestimmtes Projekt zurück"""
+    data = load_relations()
+    project_relations = {
+        "outgoing": [],  # Dieses Projekt → andere
+        "incoming": []   # Andere → dieses Projekt
+    }
+
+    for rel in data["relations"]:
+        if rel["source"] == project_name:
+            project_relations["outgoing"].append(rel)
+        elif rel["target"] == project_name:
+            project_relations["incoming"].append(rel)
+
+    return jsonify(project_relations)
+
+
+# ============== IDEAS / NOTIZEN ==============
+
+IDEAS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'ideas.json')
+
+
+def load_ideas():
+    """Lädt die Ideen/Notizen"""
+    if os.path.exists(IDEAS_FILE):
+        try:
+            with open(IDEAS_FILE, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except:
+            pass
+    return {
+        "ideas": [],
+        "categories": [
+            {"id": "feature", "name": "Feature-Idee", "icon": "💡", "color": "#f1c40f"},
+            {"id": "improvement", "name": "Verbesserung", "icon": "🔧", "color": "#3498db"},
+            {"id": "bug", "name": "Bug/Problem", "icon": "🐛", "color": "#e74c3c"},
+            {"id": "note", "name": "Notiz", "icon": "📝", "color": "#9b59b6"},
+            {"id": "research", "name": "Recherche", "icon": "🔍", "color": "#1abc9c"},
+            {"id": "question", "name": "Frage", "icon": "❓", "color": "#e67e22"}
+        ]
+    }
+
+
+def save_ideas(data):
+    """Speichert die Ideen/Notizen"""
+    with open(IDEAS_FILE, 'w', encoding='utf-8') as f:
+        json.dump(data, f, indent=2, ensure_ascii=False)
+
+
+@app.route('/api/ideas')
+def get_ideas():
+    """Gibt alle Ideen zurück"""
+    data = load_ideas()
+    # Nach Datum sortieren (neueste zuerst)
+    data["ideas"] = sorted(data["ideas"], key=lambda x: x.get("created", ""), reverse=True)
+    return jsonify(data)
+
+
+@app.route('/api/ideas', methods=['POST'])
+def add_idea():
+    """Fügt eine neue Idee hinzu"""
+    req = request.get_json()
+    if not req:
+        return jsonify({"error": "Keine Daten"}), 400
+
+    title = req.get("title", "").strip()
+    content = req.get("content", "").strip()
+    category = req.get("category", "note")
+    project = req.get("project")  # Optional: zugehöriges Projekt
+    priority = req.get("priority", "normal")  # low, normal, high
+
+    if not title:
+        return jsonify({"error": "Titel ist erforderlich"}), 400
+
+    data = load_ideas()
+
+    new_idea = {
+        "id": f"idea_{datetime.now().timestamp()}",
+        "title": title,
+        "content": content,
+        "category": category,
+        "project": project,
+        "priority": priority,
+        "status": "open",  # open, in_progress, done, archived
+        "created": datetime.now().isoformat(),
+        "updated": datetime.now().isoformat()
+    }
+    data["ideas"].append(new_idea)
+    save_ideas(data)
+
+    return jsonify({"success": True, "idea": new_idea})
+
+
+@app.route('/api/ideas/<idea_id>', methods=['PUT'])
+def update_idea(idea_id):
+    """Aktualisiert eine Idee"""
+    req = request.get_json()
+    if not req:
+        return jsonify({"error": "Keine Daten"}), 400
+
+    data = load_ideas()
+
+    for idea in data["ideas"]:
+        if idea["id"] == idea_id:
+            if "title" in req:
+                idea["title"] = req["title"]
+            if "content" in req:
+                idea["content"] = req["content"]
+            if "category" in req:
+                idea["category"] = req["category"]
+            if "project" in req:
+                idea["project"] = req["project"]
+            if "priority" in req:
+                idea["priority"] = req["priority"]
+            if "status" in req:
+                idea["status"] = req["status"]
+            idea["updated"] = datetime.now().isoformat()
+            save_ideas(data)
+            return jsonify({"success": True, "idea": idea})
+
+    return jsonify({"error": "Idee nicht gefunden"}), 404
+
+
+@app.route('/api/ideas/<idea_id>', methods=['DELETE'])
+def delete_idea(idea_id):
+    """Löscht eine Idee"""
+    data = load_ideas()
+    original_count = len(data["ideas"])
+    data["ideas"] = [i for i in data["ideas"] if i.get("id") != idea_id]
+
+    if len(data["ideas"]) == original_count:
+        return jsonify({"error": "Idee nicht gefunden"}), 404
+
+    save_ideas(data)
+    return jsonify({"success": True})
+
+
+@app.route('/api/ideas/categories')
+def get_idea_categories():
+    """Gibt alle Ideen-Kategorien zurück"""
+    data = load_ideas()
+    return jsonify(data.get("categories", []))
 
 
 @app.route('/news')
@@ -525,7 +832,11 @@ def get_project(name):
         parts = name.split('/', 1)
         parent_name = parts[0]
         sub_path = parts[1]
+        # Suche Sub-Projekt in Root UND bekannten Ordnern
         possible_paths = [
+            # Root-Level Sub-Projekt (z.B. python_extractor direkt im Projekt)
+            os.path.join(PROJECTS_DIR, parent_name, sub_path),
+            # Standard Sub-Projekt-Ordner
             os.path.join(PROJECTS_DIR, parent_name, "apps", sub_path),
             os.path.join(PROJECTS_DIR, parent_name, "packages", sub_path),
             os.path.join(PROJECTS_DIR, parent_name, "services", sub_path),
