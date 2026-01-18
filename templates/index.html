@@ -306,6 +306,83 @@
             border-bottom: 1px solid #404040;
         }
         .modal-header h2 { font-size: 20px; }
+        .modal-tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #404040;
+            padding-bottom: 10px;
+        }
+        .modal-tab {
+            background: transparent;
+            border: none;
+            color: #888;
+            padding: 8px 16px;
+            cursor: pointer;
+            font-size: 14px;
+            border-radius: 4px 4px 0 0;
+            transition: all 0.2s;
+        }
+        .modal-tab:hover { color: #fff; background: #363636; }
+        .modal-tab.active { color: #4dabf7; background: #363636; border-bottom: 2px solid #4dabf7; }
+        .edit-tab-content { display: none; }
+        .edit-tab-content.active { display: block; }
+        .relations-section { margin-bottom: 20px; }
+        .relations-section h4 { margin-bottom: 10px; font-size: 14px; }
+        .project-relations-list { min-height: 40px; }
+        .project-relation-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 12px;
+            background: #363636;
+            border-radius: 4px;
+            margin-bottom: 6px;
+            font-size: 13px;
+        }
+        .project-relation-item:hover { background: #404040; }
+        .project-relation-item .rel-project { flex: 1; font-weight: 500; }
+        .project-relation-item .rel-type {
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-size: 11px;
+        }
+        .project-relation-item .rel-delete {
+            background: none;
+            border: none;
+            color: #666;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .project-relation-item .rel-delete:hover { color: #e74c3c; }
+
+        /* Relations im Edit-Modal */
+        .relation-item {
+            display: flex; align-items: center; gap: 8px;
+            padding: 8px 12px; background: #363636; border-radius: 4px;
+            margin-bottom: 6px; font-size: 13px;
+        }
+        .relation-item:hover { background: #404040; }
+        .relation-item .relation-type { font-size: 12px; opacity: 0.8; }
+        .relation-item .relation-target { flex: 1; font-weight: 500; }
+        .relation-item .relation-note { color: #888; font-size: 11px; }
+        .relation-item .btn-remove {
+            background: none; border: none; color: #666; cursor: pointer;
+            font-size: 16px; padding: 2px 6px;
+        }
+        .relation-item .btn-remove:hover { color: #e74c3c; }
+        .relation-direction { display: flex; gap: 15px; margin-bottom: 10px; }
+        .radio-label { display: flex; align-items: center; gap: 5px; cursor: pointer; font-size: 13px; }
+        .relation-direction { display: flex; gap: 15px; }
+        .radio-label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        .radio-label input { cursor: pointer; }
+        .no-relations { color: #666; font-size: 12px; padding: 10px; text-align: center; }
         .modal-close {
             background: none;
             border: none;
@@ -333,6 +410,14 @@
             font-weight: 500;
         }
         .badge-new { background: #2d5a2d; color: #7fff7f; }
+
+        /* Beziehungs-Badges in Tabelle */
+        .relation-badges { margin-left: 8px; display: inline-flex; gap: 2px; vertical-align: middle; }
+        .relation-badge {
+            display: inline-block; padding: 1px 4px; border-radius: 4px;
+            font-size: 10px; cursor: help; opacity: 0.9;
+        }
+        .relation-badge.incoming { border: 1px dashed rgba(255,255,255,0.3); }
         .loading {
             text-align: center;
             padding: 50px;
@@ -606,12 +691,19 @@
 
     <!-- Modal für Projekt-Bearbeitung -->
     <div class="modal-overlay" id="editModal" onclick="if(event.target===this)closeEditModal()">
-        <div class="modal-content" style="max-width:600px">
+        <div class="modal-content" style="max-width:700px">
             <div class="modal-header">
-                <h2>Projekt bearbeiten: <span id="editProjectName"></span></h2>
+                <h2>Projekt: <span id="editProjectName"></span></h2>
                 <button class="modal-close" onclick="closeEditModal()">&times;</button>
             </div>
+            <!-- Tab Navigation -->
+            <div class="modal-tabs">
+                <button class="modal-tab active" onclick="switchEditTab('general')">📝 Allgemein</button>
+                <button class="modal-tab" onclick="switchEditTab('relations')">🔗 Beziehungen</button>
+            </div>
             <div class="modal-body">
+                <!-- Tab: Allgemein -->
+                <div id="editTabGeneral" class="edit-tab-content active">
                 <form class="edit-form" id="editForm">
                     <label>Beschreibung</label>
                     <textarea id="editDescription" rows="2" placeholder="Kurze Projektbeschreibung..."></textarea>
@@ -707,6 +799,55 @@
                         <button type="submit" class="btn-save">Speichern</button>
                     </div>
                 </form>
+                </div>
+
+                <!-- Tab: Beziehungen -->
+                <div id="editTabRelations" class="edit-tab-content">
+                    <div class="relations-section">
+                        <h4>📤 Ausgehende Beziehungen <small style="color:#888">(dieses Projekt → andere)</small></h4>
+                        <div id="outgoingRelations" class="project-relations-list"></div>
+                    </div>
+                    <div class="relations-section">
+                        <h4>📥 Eingehende Beziehungen <small style="color:#888">(andere → dieses Projekt)</small></h4>
+                        <div id="incomingRelations" class="project-relations-list"></div>
+                    </div>
+                    <div class="relations-section" style="border-top:1px solid #404040;padding-top:15px;margin-top:15px;">
+                        <h4>➕ Neue Beziehung erstellen</h4>
+                        <div class="add-relation-form">
+                            <div class="relation-direction">
+                                <label class="radio-label">
+                                    <input type="radio" name="relationDirection" value="outgoing" checked onchange="updateRelationForm()">
+                                    <span>Dieses Projekt → Anderes</span>
+                                </label>
+                                <label class="radio-label">
+                                    <input type="radio" name="relationDirection" value="incoming" onchange="updateRelationForm()">
+                                    <span>Anderes → Dieses Projekt</span>
+                                </label>
+                            </div>
+                            <div class="row" style="margin-top:10px">
+                                <div style="flex:2">
+                                    <label id="relationTargetLabel">Ziel-Projekt</label>
+                                    <div class="autocomplete-wrapper">
+                                        <input type="text" id="editRelationProject" class="autocomplete-input" placeholder="Projekt suchen..." oninput="onEditRelationSearch()" onfocus="onEditRelationSearch()">
+                                        <div class="autocomplete-dropdown" id="editRelationDropdown"></div>
+                                    </div>
+                                </div>
+                                <div style="flex:1">
+                                    <label>Typ</label>
+                                    <select id="editRelationType"></select>
+                                </div>
+                            </div>
+                            <div style="margin-top:10px">
+                                <label>Notiz (optional)</label>
+                                <input type="text" id="editRelationNote" placeholder="z.B. 'Nutzt deren API'">
+                            </div>
+                            <button type="button" class="btn-save" style="margin-top:12px;width:100%" onclick="addProjectRelation()">Beziehung hinzufügen</button>
+                        </div>
+                    </div>
+                    <div style="text-align:center;margin-top:15px;padding-top:15px;border-top:1px solid #404040;">
+                        <a href="/dependencies" style="color:#4dabf7">🕸️ Zum Gesamt-Graph →</a>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -850,6 +991,7 @@
 
     <script>
         let firstLoad = true;
+        let allRelations = [];  // Globale Variable für Beziehungen
         let groupsData = { groups: [] };  // Speichert die benutzerdefinierten Gruppen
 
         // Gruppen laden
@@ -1171,9 +1313,16 @@
                 document.getElementById('projectTable').style.display = 'none';
             }
 
-            fetch('/api/data')
-                .then(r => r.json())
-                .then(data => {
+            // Daten und Relations parallel laden
+            Promise.all([
+                fetch('/api/data').then(r => r.json()),
+                fetch('/api/relations').then(r => r.json())
+            ])
+                .then(([data, relationsData]) => {
+                    allRelations = relationsData.relations || [];
+                    if (relationTypes.length === 0 && relationsData.relation_types) {
+                        relationTypes = relationsData.relation_types;
+                    }
                     renderData(data);
                     if (firstLoad) {
                         document.getElementById('loading').style.display = 'none';
@@ -1278,6 +1427,28 @@
             ).join('');
         }
 
+        function getRelationBadges(projectName) {
+            const outgoing = allRelations.filter(r => r.source === projectName);
+            const incoming = allRelations.filter(r => r.target === projectName);
+            const total = outgoing.length + incoming.length;
+
+            if (total === 0) return '';
+
+            let badges = '';
+
+            outgoing.forEach(rel => {
+                const typeInfo = relationTypes.find(t => t.id === rel.type) || {icon: '🔗', color: '#888'};
+                badges += `<span class="relation-badge" style="background:${typeInfo.color}" title="${typeInfo.icon} → ${rel.target}${rel.note ? ': ' + rel.note : ''}">${typeInfo.icon}</span>`;
+            });
+
+            incoming.forEach(rel => {
+                const typeInfo = relationTypes.find(t => t.id === rel.type) || {icon: '🔗', color: '#888'};
+                badges += `<span class="relation-badge incoming" style="background:${typeInfo.color}" title="${typeInfo.icon} ← ${rel.source}${rel.note ? ': ' + rel.note : ''}">${typeInfo.icon}</span>`;
+            });
+
+            return `<span class="relation-badges">${badges}</span>`;
+        }
+
         function renderProject(proj, isNew) {
             const tr = document.createElement('tr');
             tr.dataset.group = proj.group || '';
@@ -1340,8 +1511,10 @@
             const projInfoIcon = `<span class="info-icon" onclick="showInfo('project','${proj.name}')" title="Details">ℹ️</span>`;
             const editBtn = `<span class="info-icon" onclick="openEditModal('${proj.name}')" title="Bearbeiten" style="cursor:pointer">✏️</span>`;
 
+            const relationBadges = getRelationBadges(proj.name);
+
             tr.innerHTML = `
-                <td class="project-name">${projInfoIcon}${namePrefix}${isNew ? '<span class="badge badge-new">NEU</span> ' : ''}${displayName}${typeBadge}</td>
+                <td class="project-name">${projInfoIcon}${namePrefix}${isNew ? '<span class="badge badge-new">NEU</span> ' : ''}${displayName}${typeBadge}${relationBadges}</td>
                 <td class="project-function">${proj.function || '-'}</td>
                 <td>${getGroupBadge(proj.group)}</td>
                 <td>${getPriorityBadge(proj.priority)}</td>
@@ -1876,6 +2049,14 @@
             // Gruppen-Dropdown aktualisieren
             updateGroupDropdown();
 
+            // Relation Types laden (falls noch nicht geladen)
+            if (relationTypes.length === 0) {
+                loadRelationTypes();
+            }
+
+            // Tab auf Allgemein setzen
+            switchEditTab('general');
+
             fetch(`/api/project/${encodeURIComponent(projectName)}`)
                 .then(r => r.json())
                 .then(data => {
@@ -1910,7 +2091,184 @@
                 document.getElementById('inlineGroupIcon').value = '📁';
                 document.getElementById('inlineGroupColor').value = '#666666';
             }
+            // Relations-Tab zurücksetzen
+            switchEditTab('general');
+            document.getElementById('editRelationProject').value = '';
+            document.getElementById('editRelationNote').value = '';
+            document.getElementById('editRelationDropdown').innerHTML = '';
+            document.getElementById('editRelationDropdown').style.display = 'none';
         }
+
+        // === RELATIONS TAB FUNKTIONEN ===
+        let relationTypes = [];
+        let editRelationSearchTimeout = null;
+        let editRelationAbortController = null;
+
+        function switchEditTab(tab) {
+            document.querySelectorAll('.modal-tab').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.edit-tab-content').forEach(content => content.classList.remove('active'));
+
+            if (tab === 'general') {
+                document.querySelector('.modal-tab:first-child').classList.add('active');
+                document.getElementById('editTabGeneral').classList.add('active');
+            } else {
+                document.querySelector('.modal-tab:last-child').classList.add('active');
+                document.getElementById('editTabRelations').classList.add('active');
+                loadProjectRelations();
+            }
+        }
+
+        async function loadRelationTypes() {
+            const resp = await fetch('/api/relations/types');
+            relationTypes = await resp.json();
+            const select = document.getElementById('editRelationType');
+            select.innerHTML = relationTypes.map(t =>
+                `<option value="${t.id}">${t.icon} ${t.name}</option>`
+            ).join('');
+        }
+
+        async function loadProjectRelations() {
+            if (!currentEditProject) return;
+
+            const resp = await fetch(`/api/project/${encodeURIComponent(currentEditProject)}/relations`);
+            const data = await resp.json();
+
+            const outgoingDiv = document.getElementById('outgoingRelations');
+            const incomingDiv = document.getElementById('incomingRelations');
+
+            if (data.outgoing.length === 0) {
+                outgoingDiv.innerHTML = '<div style="color:#666;font-style:italic">Keine ausgehenden Beziehungen</div>';
+            } else {
+                outgoingDiv.innerHTML = data.outgoing.map(rel => {
+                    const typeInfo = relationTypes.find(t => t.id === rel.type) || {icon: '🔗', name: rel.type, color: '#888'};
+                    return `
+                        <div class="relation-item" style="border-left:3px solid ${typeInfo.color}">
+                            <span class="relation-type">${typeInfo.icon} ${typeInfo.name}</span>
+                            <span class="relation-target">→ ${rel.target}</span>
+                            ${rel.note ? `<span class="relation-note">(${rel.note})</span>` : ''}
+                            <button class="btn-remove" onclick="deleteProjectRelation('${rel.id}')" title="Löschen">×</button>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            if (data.incoming.length === 0) {
+                incomingDiv.innerHTML = '<div style="color:#666;font-style:italic">Keine eingehenden Beziehungen</div>';
+            } else {
+                incomingDiv.innerHTML = data.incoming.map(rel => {
+                    const typeInfo = relationTypes.find(t => t.id === rel.type) || {icon: '🔗', name: rel.type, color: '#888'};
+                    return `
+                        <div class="relation-item" style="border-left:3px solid ${typeInfo.color}">
+                            <span class="relation-type">${typeInfo.icon} ${typeInfo.name}</span>
+                            <span class="relation-target">← ${rel.source}</span>
+                            ${rel.note ? `<span class="relation-note">(${rel.note})</span>` : ''}
+                            <button class="btn-remove" onclick="deleteProjectRelation('${rel.id}')" title="Löschen">×</button>
+                        </div>
+                    `;
+                }).join('');
+            }
+        }
+
+        function updateRelationForm() {
+            const direction = document.querySelector('input[name="relationDirection"]:checked').value;
+            document.getElementById('relationTargetLabel').textContent =
+                direction === 'outgoing' ? 'Ziel-Projekt' : 'Quell-Projekt';
+        }
+
+        function onEditRelationSearch() {
+            clearTimeout(editRelationSearchTimeout);
+            if (editRelationAbortController) editRelationAbortController.abort();
+
+            const query = document.getElementById('editRelationProject').value.trim();
+            const dropdown = document.getElementById('editRelationDropdown');
+
+            if (query.length < 1) {
+                dropdown.style.display = 'none';
+                return;
+            }
+
+            editRelationSearchTimeout = setTimeout(async () => {
+                editRelationAbortController = new AbortController();
+                try {
+                    const resp = await fetch(`/api/projects/search?q=${encodeURIComponent(query)}&limit=10`, {
+                        signal: editRelationAbortController.signal
+                    });
+                    const results = await resp.json();
+
+                    // Aktuelles Projekt aus der Liste entfernen
+                    const filtered = results.filter(p => p.name !== currentEditProject);
+
+                    if (filtered.length === 0) {
+                        dropdown.innerHTML = '<div class="dropdown-item" style="color:#888">Keine Treffer</div>';
+                    } else {
+                        dropdown.innerHTML = filtered.map(p => `
+                            <div class="dropdown-item" onclick="selectEditRelationProject('${p.name}')">
+                                <strong>${p.name}</strong>
+                                ${p.description ? `<small style="color:#888;margin-left:8px">${p.description}</small>` : ''}
+                            </div>
+                        `).join('');
+                    }
+                    dropdown.style.display = 'block';
+                } catch (e) {
+                    if (e.name !== 'AbortError') console.error(e);
+                }
+            }, 200);
+        }
+
+        function selectEditRelationProject(name) {
+            document.getElementById('editRelationProject').value = name;
+            document.getElementById('editRelationDropdown').style.display = 'none';
+        }
+
+        async function addProjectRelation() {
+            const targetProject = document.getElementById('editRelationProject').value.trim();
+            const relationType = document.getElementById('editRelationType').value;
+            const note = document.getElementById('editRelationNote').value.trim();
+            const direction = document.querySelector('input[name="relationDirection"]:checked').value;
+
+            if (!targetProject) {
+                alert('Bitte ein Projekt auswählen');
+                return;
+            }
+
+            const source = direction === 'outgoing' ? currentEditProject : targetProject;
+            const target = direction === 'outgoing' ? targetProject : currentEditProject;
+
+            const resp = await fetch('/api/relations', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ source, target, type: relationType, note })
+            });
+
+            if (resp.ok) {
+                document.getElementById('editRelationProject').value = '';
+                document.getElementById('editRelationNote').value = '';
+                loadProjectRelations();
+                loadData(); // Dashboard aktualisieren
+            } else {
+                const err = await resp.json();
+                alert('Fehler: ' + (err.error || 'Unbekannter Fehler'));
+            }
+        }
+
+        async function deleteProjectRelation(id) {
+            if (!confirm('Beziehung wirklich löschen?')) return;
+
+            const resp = await fetch(`/api/relations/${id}`, { method: 'DELETE' });
+            if (resp.ok) {
+                loadProjectRelations();
+                loadData(); // Dashboard aktualisieren
+            }
+        }
+
+        // Dropdown schließen bei Klick außerhalb
+        document.addEventListener('click', function(e) {
+            const dropdown = document.getElementById('editRelationDropdown');
+            const input = document.getElementById('editRelationProject');
+            if (dropdown && !dropdown.contains(e.target) && e.target !== input) {
+                dropdown.style.display = 'none';
+            }
+        });
 
         function addMilestone() {
             const milestoneList = document.getElementById('milestoneList');

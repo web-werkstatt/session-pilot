@@ -1,5 +1,14 @@
 {
-  "relations": [],
+  "relations": [
+    {
+      "id": "autodns-domain-business/python_extractor_proj_loveable_standalone_1768730723.76309",
+      "source": "autodns-domain-business/python_extractor",
+      "target": "proj_loveable",
+      "type": "standalone",
+      "note": "",
+      "created": "2026-01-18T11:05:23.763109"
+    }
+  ],
   "relation_types": [
     {
       "id": "depends_on",
