@@ -1,0 +1,32 @@
+{
+  "groups": [
+    {
+      "id": "private",
+      "name": "Privat",
+      "icon": "🏠",
+      "color": "#6b5b95",
+      "description": "Private Projekte"
+    },
+    {
+      "id": "business",
+      "name": "Geschäftlich",
+      "icon": "🏢",
+      "color": "#0077b6",
+      "description": "Geschäftliche Projekte"
+    },
+    {
+      "id": "customer",
+      "name": "Kunde",
+      "icon": "👤",
+      "color": "#2d6a4f",
+      "description": "Kundenprojekte"
+    },
+    {
+      "id": "loveableneu",
+      "name": "Loveable Neu",
+      "icon": "🎨",
+      "color": "#e66100",
+      "description": ""
+    }
+  ]
+}

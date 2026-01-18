@@ -1,0 +1,677 @@
+#!/usr/bin/env python3
+"""
+Projekt-Dashboard: Web-GUI für Projekt- und Container-Übersicht
+Modulare Version
+"""
+import sys
+import os
+
+# Füge das Projektverzeichnis zum Pfad hinzu
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+from flask import Flask, render_template, jsonify, request
+from datetime import datetime
+import json
+
+from config import PROJECTS_DIR, HOST, PORT
+from services import (
+    get_gitea_repos,
+    get_gitea_repo_commits,
+    scan_projects,
+    load_project_json,
+    get_docker_containers,
+    load_cache,
+    save_cache,
+    update_project_json
+)
+
+app = Flask(__name__)
+
+# Pfad zur Gruppen-Konfiguration
+GROUPS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'groups.json')
+
+
+def load_groups():
+    """Lädt die benutzerdefinierten Gruppen"""
+    if os.path.exists(GROUPS_FILE):
+        try:
+            with open(GROUPS_FILE, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except:
+            pass
+    # Standard-Gruppen wenn Datei nicht existiert
+    return {
+        "groups": [
+            {"id": "private", "name": "Privat", "icon": "🏠", "color": "#6b5b95", "description": "Private Projekte"},
+            {"id": "business", "name": "Geschäftlich", "icon": "🏢", "color": "#0077b6", "description": "Geschäftliche Projekte"},
+            {"id": "customer", "name": "Kunde", "icon": "👤", "color": "#2d6a4f", "description": "Kundenprojekte"}
+        ]
+    }
+
+
+def save_groups(data):
+    """Speichert die benutzerdefinierten Gruppen"""
+    with open(GROUPS_FILE, 'w', encoding='utf-8') as f:
+        json.dump(data, f, indent=2, ensure_ascii=False)
+
+
+def get_valid_group_ids():
+    """Gibt Liste aller gültigen Gruppen-IDs zurück"""
+    groups_data = load_groups()
+    return [g['id'] for g in groups_data.get('groups', [])]
+
+
+@app.route('/')
+def index():
+    return render_template('index.html')
+
+
+@app.route('/containers')
+def containers():
+    return render_template('containers.html')
+
+
+@app.route('/api/data')
+def get_data():
+    projects = scan_projects()
+    containers = get_docker_containers()
+    gitea_repos = get_gitea_repos()
+    gitea_commits = get_gitea_repo_commits()
+
+    # Sync-Status für jedes Projekt berechnen
+    for proj_name, proj_info in projects.items():
+        if proj_info.get("has_gitea") and proj_info.get("gitea_repo"):
+            repo_name = proj_info["gitea_repo"]
+            if repo_name in gitea_commits:
+                remote_sha = gitea_commits[repo_name]["sha"]
+                local_sha = proj_info.get("local_sha", "")
+                if local_sha and remote_sha:
+                    if local_sha == remote_sha:
+                        proj_info["sync_status"] = "synced"
+                    else:
+                        proj_info["sync_status"] = "differs"
+                    proj_info["remote_sha"] = remote_sha
+                else:
+                    proj_info["sync_status"] = "unknown"
+            else:
+                proj_info["sync_status"] = "not_on_gitea"
+        else:
+            proj_info["sync_status"] = "no_remote"
+
+    # Cache laden und neue Projekte erkennen
+    cache = load_cache()
+    cached_projects = set(cache.get("projects", {}).keys())
+    current_projects = set(projects.keys())
+    new_projects = list(current_projects - cached_projects)
+
+    # Cache aktualisieren - Aktivitätsdaten werden in project_scanner.py verwaltet
+    # Hier nur last_update und neue Projekte registrieren
+    for proj_name in new_projects:
+        if proj_name not in cache.get("projects", {}):
+            if "projects" not in cache:
+                cache["projects"] = {}
+            cache["projects"][proj_name] = {"name": proj_name}
+    cache["last_update"] = datetime.now().isoformat()
+    save_cache(cache)
+
+    # Container-Stats
+    running = sum(1 for c in containers if "Running" in c.get("status", "") or "Healthy" in c.get("status", ""))
+    stopped = sum(1 for c in containers if "Stopped" in c.get("status", ""))
+    unhealthy = sum(1 for c in containers if "Unhealthy" in c.get("status", ""))
+
+    return jsonify({
+        "projects": list(projects.values()),
+        "containers": containers,
+        "gitea_repos": gitea_repos,
+        "new_projects": new_projects,
+        "stats": {
+            "total_projects": len(projects),
+            "total_containers": len(containers),
+            "running": running,
+            "stopped": stopped,
+            "unhealthy": unhealthy,
+            "gitea_repos": len(gitea_repos)
+        },
+        "timestamp": datetime.now().strftime("%d.%m.%Y %H:%M:%S")
+    })
+
+
+@app.route('/api/containers')
+def api_containers():
+    containers = get_docker_containers()
+    running = sum(1 for c in containers if "Running" in c.get("status", "") or "Healthy" in c.get("status", ""))
+    stopped = sum(1 for c in containers if "Stopped" in c.get("status", ""))
+    unhealthy = sum(1 for c in containers if "Unhealthy" in c.get("status", ""))
+
+    return jsonify({
+        "containers": containers,
+        "stats": {
+            "total": len(containers),
+            "running": running,
+            "stopped": stopped,
+            "unhealthy": unhealthy
+        },
+        "timestamp": datetime.now().strftime("%d.%m.%Y %H:%M:%S")
+    })
+
+
+@app.route('/api/project/save', methods=['POST'])
+def save_project():
+    """Speichert project.json für ein Projekt (inkl. Sub-Projekte)"""
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "Keine Daten erhalten"}), 400
+
+    project_name = data.get('name')
+    if not project_name:
+        return jsonify({"error": "Projektname fehlt"}), 400
+
+    # Unterstütze Sub-Projekte: "parent/subproject" -> PROJECTS_DIR/parent/apps/subproject etc.
+    if '/' in project_name:
+        parts = project_name.split('/', 1)
+        parent_name = parts[0]
+        sub_path = parts[1]
+        # Suche Sub-Projekt in bekannten Ordnern
+        possible_paths = [
+            os.path.join(PROJECTS_DIR, parent_name, "apps", sub_path),
+            os.path.join(PROJECTS_DIR, parent_name, "packages", sub_path),
+            os.path.join(PROJECTS_DIR, parent_name, "services", sub_path),
+            os.path.join(PROJECTS_DIR, parent_name, "modules", sub_path),
+            os.path.join(PROJECTS_DIR, parent_name, "libs", sub_path),
+            os.path.join(PROJECTS_DIR, parent_name, "plugins", sub_path),
+            os.path.join(PROJECTS_DIR, parent_name, "themes", sub_path),
+            os.path.join(PROJECTS_DIR, parent_name, "sites", sub_path),
+        ]
+        project_path = None
+        for p in possible_paths:
+            if os.path.isdir(p):
+                project_path = p
+                break
+        if not project_path:
+            return jsonify({"error": f"Sub-Projekt '{project_name}' nicht gefunden"}), 404
+    else:
+        project_path = os.path.join(PROJECTS_DIR, project_name)
+        if not os.path.isdir(project_path):
+            return jsonify({"error": "Projekt nicht gefunden"}), 404
+
+    json_path = os.path.join(project_path, "project.json")
+
+    # Bestehende project.json laden oder neue erstellen
+    existing = {}
+    if os.path.exists(json_path):
+        try:
+            with open(json_path, 'r', encoding='utf-8') as f:
+                existing = json.load(f)
+        except:
+            pass
+
+    # Felder aktualisieren
+    existing["name"] = project_name
+    if "description" in data:
+        existing["description"] = data["description"]
+    if "group" in data:
+        valid_groups = get_valid_group_ids()
+        existing["group"] = data["group"] if data["group"] in valid_groups else None
+    if "priority" in data:
+        existing["priority"] = data["priority"] if data["priority"] in ["high", "medium", "low"] else None
+    if "deadline" in data:
+        existing["deadline"] = data["deadline"] if data["deadline"] else None
+    if "progress" in data:
+        try:
+            existing["progress"] = int(data["progress"]) if data["progress"] is not None else None
+        except:
+            existing["progress"] = None
+    if "milestones" in data:
+        existing["milestones"] = data["milestones"]
+
+    # Speichern
+    try:
+        with open(json_path, 'w', encoding='utf-8') as f:
+            json.dump(existing, f, indent=2, ensure_ascii=False)
+        return jsonify({"success": True, "message": f"project.json für {project_name} gespeichert"})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/projects/refresh', methods=['POST'])
+def refresh_all_projects():
+    """Aktualisiert alle project.json Dateien mit neuen Erkennungen
+
+    Query-Parameter:
+        force_descriptions=true  - Überschreibt auch existierende Beschreibungen
+    """
+    force_descriptions = request.args.get('force_descriptions', 'false').lower() == 'true'
+    updated = []
+    errors = []
+
+    for item in os.listdir(PROJECTS_DIR):
+        item_path = os.path.join(PROJECTS_DIR, item)
+        if not os.path.isdir(item_path) or item.startswith('.'):
+            continue
+        if item == "project_dashboard":
+            continue
+
+        try:
+            result = update_project_json(item_path, item, force_description=force_descriptions)
+            if result:
+                updated.append({
+                    "name": item,
+                    "description": result.get("description", "")[:80],
+                    "topic": result.get("topic", "")
+                })
+        except Exception as e:
+            errors.append({"name": item, "error": str(e)})
+
+    return jsonify({
+        "success": True,
+        "updated": len(updated),
+        "force_descriptions": force_descriptions,
+        "projects": updated,
+        "errors": errors
+    })
+
+
+@app.route('/news')
+def news_page():
+    """News-Detailseite"""
+    return render_template('news.html')
+
+
+@app.route('/vorlagen')
+def vorlagen_page():
+    """Vorlagen-Sammlung"""
+    return render_template('vorlagen.html')
+
+
+@app.route('/api/vorlagen')
+def get_vorlagen():
+    """Listet alle verfügbaren Vorlagen"""
+    vorlagen_dir = os.path.join(PROJECTS_DIR, 'vorlagen')
+    vorlagen = []
+
+    if os.path.isdir(vorlagen_dir):
+        for item in os.listdir(vorlagen_dir):
+            item_path = os.path.join(vorlagen_dir, item)
+            if os.path.isdir(item_path) and not item.startswith('.'):
+                vorlage = {
+                    "name": item,
+                    "path": f"/mnt/projects/vorlagen/{item}",
+                    "files": [],
+                    "readme": None,
+                    "preview": None
+                }
+
+                # Dateien auflisten
+                for f in os.listdir(item_path):
+                    if not f.startswith('.'):
+                        vorlage["files"].append(f)
+                        if f.lower() == 'readme.md':
+                            try:
+                                with open(os.path.join(item_path, f), 'r') as rf:
+                                    vorlage["readme"] = rf.read()
+                            except:
+                                pass
+                        if f.endswith('.html'):
+                            vorlage["preview"] = f
+
+                vorlagen.append(vorlage)
+
+    return jsonify({
+        "vorlagen": vorlagen,
+        "total": len(vorlagen),
+        "path": vorlagen_dir
+    })
+
+
+@app.route('/api/news')
+def get_news():
+    """Sammelt aktuelle Neuigkeiten aus allen Projekten"""
+    projects = scan_projects(auto_generate=False)
+    gitea_commits = get_gitea_repo_commits()
+
+    news_items = []
+    now = datetime.now()
+
+    for proj_name, proj_info in projects.items():
+        # Letzte Commits als News
+        if proj_info.get("last_commit"):
+            try:
+                commit_date = datetime.strptime(proj_info["last_commit"][:16], "%Y-%m-%d %H:%M")
+                days_ago = (now - commit_date).days
+                if days_ago <= 7:  # Nur letzte 7 Tage
+                    news_items.append({
+                        "type": "commit",
+                        "project": proj_name,
+                        "title": f"Commit in {proj_name}",
+                        "message": proj_info.get("last_commit_msg", ""),
+                        "date": proj_info["last_commit"],
+                        "days_ago": days_ago,
+                        "icon": "git-commit"
+                    })
+            except:
+                pass
+
+        # Letzte Dateiänderungen
+        if proj_info.get("last_file_change"):
+            try:
+                change_date = datetime.strptime(proj_info["last_file_change"], "%Y-%m-%d %H:%M")
+                days_ago = (now - change_date).days
+                if days_ago <= 3:  # Nur letzte 3 Tage
+                    news_items.append({
+                        "type": "file_change",
+                        "project": proj_name,
+                        "title": f"Dateien geändert in {proj_name}",
+                        "message": f"Letzte Änderung: {proj_info['last_file_change']}",
+                        "date": proj_info["last_file_change"],
+                        "days_ago": days_ago,
+                        "icon": "file-edit"
+                    })
+            except:
+                pass
+
+        # Neue Projekte (auto_generated heute)
+        if proj_info.get("project_type") == "project":
+            project_path = os.path.join(PROJECTS_DIR, proj_name, "project.json")
+            if os.path.exists(project_path):
+                try:
+                    mtime = os.path.getmtime(project_path)
+                    create_date = datetime.fromtimestamp(mtime)
+                    days_ago = (now - create_date).days
+                    if days_ago <= 1:  # Neu erstellt heute/gestern
+                        news_items.append({
+                            "type": "new_project",
+                            "project": proj_name,
+                            "title": f"Neues Projekt: {proj_name}",
+                            "message": proj_info.get("function", "Keine Beschreibung"),
+                            "date": create_date.strftime("%Y-%m-%d %H:%M"),
+                            "days_ago": days_ago,
+                            "icon": "folder-plus"
+                        })
+                except:
+                    pass
+
+        # Sync-Status Probleme
+        if proj_info.get("sync_status") == "differs":
+            news_items.append({
+                "type": "sync_warning",
+                "project": proj_name,
+                "title": f"Sync-Konflikt: {proj_name}",
+                "message": "Lokale und Remote-Version unterscheiden sich",
+                "date": now.strftime("%Y-%m-%d %H:%M"),
+                "days_ago": 0,
+                "icon": "alert-triangle"
+            })
+
+    # Nach Datum sortieren (neueste zuerst)
+    news_items.sort(key=lambda x: x.get("date", ""), reverse=True)
+
+    # Limit auf 50 Items
+    news_items = news_items[:50]
+
+    # Headlines für Ticker (Top 5)
+    headlines = news_items[:5]
+
+    return jsonify({
+        "news": news_items,
+        "headlines": headlines,
+        "total": len(news_items),
+        "timestamp": now.strftime("%d.%m.%Y %H:%M:%S")
+    })
+
+
+@app.route('/api/news/detail/<project>')
+def get_news_detail(project):
+    """Holt detaillierte News-Informationen für ein Projekt"""
+    import subprocess
+
+    project_path = os.path.join(PROJECTS_DIR, project)
+    if not os.path.isdir(project_path):
+        return jsonify({"error": "Projekt nicht gefunden"}), 404
+
+    details = {
+        "project": project,
+        "path": project_path,
+        "commits": [],
+        "recent_files": [],
+        "project_info": {},
+        "git_status": None
+    }
+
+    # Projekt-Info laden
+    json_path = os.path.join(project_path, "project.json")
+    if os.path.exists(json_path):
+        try:
+            with open(json_path, 'r', encoding='utf-8') as f:
+                details["project_info"] = json.load(f)
+        except:
+            pass
+
+    # Letzte 5 Commits holen
+    try:
+        result = subprocess.run(
+            ["git", "log", "--oneline", "--format=%H|%s|%an|%ar", "-n", "5"],
+            cwd=project_path, capture_output=True, text=True, timeout=5
+        )
+        if result.returncode == 0:
+            for line in result.stdout.strip().split('\n'):
+                if line and '|' in line:
+                    parts = line.split('|', 3)
+                    if len(parts) >= 4:
+                        details["commits"].append({
+                            "sha": parts[0][:8],
+                            "message": parts[1],
+                            "author": parts[2],
+                            "when": parts[3]
+                        })
+    except:
+        pass
+
+    # Git Status
+    try:
+        result = subprocess.run(
+            ["git", "status", "--porcelain"],
+            cwd=project_path, capture_output=True, text=True, timeout=5
+        )
+        if result.returncode == 0:
+            changes = result.stdout.strip().split('\n') if result.stdout.strip() else []
+            details["git_status"] = {
+                "clean": len(changes) == 0,
+                "changes": len(changes),
+                "modified": len([c for c in changes if c.startswith(' M') or c.startswith('M ')]),
+                "untracked": len([c for c in changes if c.startswith('??')]),
+                "staged": len([c for c in changes if c.startswith('A ') or c.startswith('M ')])
+            }
+    except:
+        pass
+
+    # Kürzlich geänderte Dateien (letzte 10)
+    try:
+        result = subprocess.run(
+            ["find", ".", "-type", "f", "-mtime", "-3", "-not", "-path", "./.git/*",
+             "-not", "-name", "*.pyc", "-not", "-path", "./node_modules/*",
+             "-not", "-path", "./__pycache__/*"],
+            cwd=project_path, capture_output=True, text=True, timeout=10
+        )
+        if result.returncode == 0:
+            files = [f.lstrip('./') for f in result.stdout.strip().split('\n') if f and f != '.']
+            # Nach Änderungszeit sortieren
+            file_times = []
+            for f in files[:20]:
+                try:
+                    full_path = os.path.join(project_path, f)
+                    mtime = os.path.getmtime(full_path)
+                    file_times.append((f, mtime))
+                except:
+                    pass
+            file_times.sort(key=lambda x: x[1], reverse=True)
+            details["recent_files"] = [
+                {
+                    "name": f[0],
+                    "modified": datetime.fromtimestamp(f[1]).strftime("%d.%m.%Y %H:%M")
+                }
+                for f in file_times[:10]
+            ]
+    except:
+        pass
+
+    return jsonify(details)
+
+
+@app.route('/api/project/<path:name>')
+def get_project(name):
+    """Lädt project.json für ein Projekt (inkl. Sub-Projekte)"""
+    # Unterstütze Sub-Projekte: "parent/subproject"
+    if '/' in name:
+        parts = name.split('/', 1)
+        parent_name = parts[0]
+        sub_path = parts[1]
+        possible_paths = [
+            os.path.join(PROJECTS_DIR, parent_name, "apps", sub_path),
+            os.path.join(PROJECTS_DIR, parent_name, "packages", sub_path),
+            os.path.join(PROJECTS_DIR, parent_name, "services", sub_path),
+            os.path.join(PROJECTS_DIR, parent_name, "modules", sub_path),
+            os.path.join(PROJECTS_DIR, parent_name, "libs", sub_path),
+            os.path.join(PROJECTS_DIR, parent_name, "plugins", sub_path),
+            os.path.join(PROJECTS_DIR, parent_name, "themes", sub_path),
+            os.path.join(PROJECTS_DIR, parent_name, "sites", sub_path),
+        ]
+        project_path = None
+        for p in possible_paths:
+            if os.path.isdir(p):
+                project_path = p
+                break
+        if not project_path:
+            return jsonify({"error": f"Sub-Projekt '{name}' nicht gefunden"}), 404
+    else:
+        project_path = os.path.join(PROJECTS_DIR, name)
+        if not os.path.isdir(project_path):
+            return jsonify({"error": "Projekt nicht gefunden"}), 404
+
+    json_path = os.path.join(project_path, "project.json")
+    if os.path.exists(json_path):
+        try:
+            with open(json_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+            return jsonify(data)
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    # Leere Struktur zurückgeben wenn keine project.json existiert
+    return jsonify({
+        "name": name,
+        "description": "",
+        "group": None,
+        "priority": None,
+        "deadline": None,
+        "progress": None,
+        "milestones": []
+    })
+
+
+# === GRUPPEN API ===
+
+@app.route('/api/groups')
+def api_get_groups():
+    """Gibt alle benutzerdefinierten Gruppen zurück"""
+    return jsonify(load_groups())
+
+
+@app.route('/api/groups', methods=['POST'])
+def api_create_group():
+    """Erstellt eine neue Gruppe"""
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "Keine Daten erhalten"}), 400
+
+    group_id = data.get('id', '').strip().lower()
+    group_name = data.get('name', '').strip()
+    group_icon = data.get('icon', '📁')
+    group_color = data.get('color', '#666666')
+    group_desc = data.get('description', '')
+
+    if not group_id or not group_name:
+        return jsonify({"error": "ID und Name sind erforderlich"}), 400
+
+    # ID validieren (nur alphanumerisch und Unterstriche)
+    import re
+    if not re.match(r'^[a-z0-9_]+$', group_id):
+        return jsonify({"error": "ID darf nur Kleinbuchstaben, Zahlen und Unterstriche enthalten"}), 400
+
+    groups_data = load_groups()
+
+    # Prüfen ob ID bereits existiert
+    existing_ids = [g['id'] for g in groups_data['groups']]
+    if group_id in existing_ids:
+        return jsonify({"error": f"Gruppe mit ID '{group_id}' existiert bereits"}), 400
+
+    # Neue Gruppe hinzufügen
+    groups_data['groups'].append({
+        "id": group_id,
+        "name": group_name,
+        "icon": group_icon,
+        "color": group_color,
+        "description": group_desc
+    })
+
+    save_groups(groups_data)
+    return jsonify({"success": True, "message": f"Gruppe '{group_name}' erstellt"})
+
+
+@app.route('/api/groups/<group_id>', methods=['PUT'])
+def api_update_group(group_id):
+    """Aktualisiert eine bestehende Gruppe"""
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "Keine Daten erhalten"}), 400
+
+    groups_data = load_groups()
+
+    # Gruppe finden
+    group_idx = None
+    for i, g in enumerate(groups_data['groups']):
+        if g['id'] == group_id:
+            group_idx = i
+            break
+
+    if group_idx is None:
+        return jsonify({"error": f"Gruppe '{group_id}' nicht gefunden"}), 404
+
+    # Felder aktualisieren
+    if 'name' in data:
+        groups_data['groups'][group_idx]['name'] = data['name']
+    if 'icon' in data:
+        groups_data['groups'][group_idx]['icon'] = data['icon']
+    if 'color' in data:
+        groups_data['groups'][group_idx]['color'] = data['color']
+    if 'description' in data:
+        groups_data['groups'][group_idx]['description'] = data['description']
+
+    save_groups(groups_data)
+    return jsonify({"success": True, "message": f"Gruppe '{group_id}' aktualisiert"})
+
+
+@app.route('/api/groups/<group_id>', methods=['DELETE'])
+def api_delete_group(group_id):
+    """Löscht eine Gruppe"""
+    groups_data = load_groups()
+
+    # Gruppe finden
+    group_idx = None
+    for i, g in enumerate(groups_data['groups']):
+        if g['id'] == group_id:
+            group_idx = i
+            break
+
+    if group_idx is None:
+        return jsonify({"error": f"Gruppe '{group_id}' nicht gefunden"}), 404
+
+    # Gruppe entfernen
+    removed = groups_data['groups'].pop(group_idx)
+    save_groups(groups_data)
+
+    return jsonify({"success": True, "message": f"Gruppe '{removed['name']}' gelöscht"})
+
+
+if __name__ == '__main__':
+    print(f"🚀 Projekt-Dashboard startet auf http://{HOST}:{PORT}")
+    app.run(host=HOST, port=PORT, debug=False)
