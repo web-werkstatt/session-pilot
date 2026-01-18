@@ -333,7 +333,7 @@
             background: #252525;
             border-radius: 8px;
             position: relative;
-            overflow: hidden;
+            overflow: auto;
             border: 2px solid #404040;
         }
         .graph-container.drag-over { border-color: #0078d4; }
@@ -342,9 +342,14 @@
             position: absolute;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
+            min-width: 100%;
+            min-height: 100%;
             pointer-events: none;
+        }
+        .graph-canvas {
+            position: relative;
+            min-width: 100%;
+            min-height: 100%;
         }
         .graph-svg line {
             stroke-width: 2;
@@ -399,6 +404,48 @@
             outline: 2px dashed #f39c12;
             outline-offset: 2px;
         }
+        .graph-node .node-remove {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            width: 18px;
+            height: 18px;
+            background: #e74c3c;
+            border: none;
+            border-radius: 50%;
+            color: white;
+            font-size: 12px;
+            line-height: 18px;
+            text-align: center;
+            cursor: pointer;
+            display: none;
+            z-index: 30;
+        }
+        .graph-node:hover .node-remove { display: block; }
+
+        /* Node Color Picker */
+        .node-color-menu {
+            position: absolute;
+            background: #2d2d2d;
+            border: 1px solid #404040;
+            border-radius: 6px;
+            padding: 10px;
+            z-index: 200;
+            display: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+        }
+        .node-color-menu.show { display: block; }
+        .node-color-menu h5 { margin-bottom: 8px; font-size: 12px; color: #aaa; }
+        .color-options { display: flex; flex-wrap: wrap; gap: 5px; }
+        .color-option {
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: transform 0.1s;
+        }
+        .color-option:hover { transform: scale(1.15); border-color: #fff; }
 
         /* Graph Sidebar */
         .graph-sidebar {
@@ -591,13 +638,30 @@
                             </marker>
                         </defs>
                     </svg>
+                    <!-- Color Picker Menu -->
+                    <div class="node-color-menu" id="nodeColorMenu">
+                        <h5>Knoten-Farbe wählen</h5>
+                        <div class="color-options">
+                            <div class="color-option" style="background:#404040" onclick="setNodeColor('#404040')"></div>
+                            <div class="color-option" style="background:#e74c3c" onclick="setNodeColor('#e74c3c')"></div>
+                            <div class="color-option" style="background:#e67e22" onclick="setNodeColor('#e67e22')"></div>
+                            <div class="color-option" style="background:#f1c40f" onclick="setNodeColor('#f1c40f')"></div>
+                            <div class="color-option" style="background:#2ecc71" onclick="setNodeColor('#2ecc71')"></div>
+                            <div class="color-option" style="background:#1abc9c" onclick="setNodeColor('#1abc9c')"></div>
+                            <div class="color-option" style="background:#3498db" onclick="setNodeColor('#3498db')"></div>
+                            <div class="color-option" style="background:#9b59b6" onclick="setNodeColor('#9b59b6')"></div>
+                            <div class="color-option" style="background:#e91e63" onclick="setNodeColor('#e91e63')"></div>
+                            <div class="color-option" style="background:#795548" onclick="setNodeColor('#795548')"></div>
+                        </div>
+                    </div>
                     <div class="graph-instructions">
                         <strong>Bedienung:</strong><br>
                         • Projekt aus Liste ziehen zum Hinzufügen<br>
                         • <kbd>Klick</kbd> auf Knoten = Auswählen<br>
                         • <kbd>Shift+Klick</kbd> auf 2. Knoten = Verbinden<br>
+                        • <kbd>Rechtsklick</kbd> auf Knoten = Farbe ändern<br>
                         • <kbd>Doppelklick</kbd> auf Linie = Löschen<br>
-                        • Knoten ziehen = Verschieben
+                        • Knoten ziehen = Verschieben (auch nach unten)
                     </div>
                 </div>
                 <div class="graph-sidebar">
@@ -681,12 +745,20 @@
         let draggedNode = null;
         let dragOffset = {x: 0, y: 0};
 
-        // Positions persistence
+        // Positions & Colors persistence
         const STORAGE_KEY = 'dependency-graph-positions';
+        const COLORS_KEY = 'dependency-graph-colors';
+        let colorMenuTarget = null;
 
         function loadSavedPositions() {
             try {
                 return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+            } catch { return {}; }
+        }
+
+        function loadSavedColors() {
+            try {
+                return JSON.parse(localStorage.getItem(COLORS_KEY)) || {};
             } catch { return {}; }
         }
 
@@ -696,6 +768,16 @@
                 positions[name] = {x: node.x, y: node.y};
             }
             localStorage.setItem(STORAGE_KEY, JSON.stringify(positions));
+        }
+
+        function saveColors() {
+            const colors = {};
+            for (const [name, node] of Object.entries(graphNodes)) {
+                if (node.color && node.color !== '#404040') {
+                    colors[name] = node.color;
+                }
+            }
+            localStorage.setItem(COLORS_KEY, JSON.stringify(colors));
         }
 
         // ==================== DATA LOADING ====================
@@ -962,23 +1044,66 @@
             renderProjectList();
         }
 
-        function addNodeToGraph(projectName, x, y) {
+        function addNodeToGraph(projectName, x, y, color = null) {
             if (graphNodes[projectName]) return;
+
+            const savedColors = loadSavedColors();
+            const nodeColor = color || savedColors[projectName] || '#404040';
 
             const container = document.getElementById('graphContainer');
             const node = document.createElement('div');
             node.className = 'graph-node';
-            node.textContent = projectName;
             node.style.left = x + 'px';
             node.style.top = y + 'px';
+            node.style.background = nodeColor;
             node.dataset.project = projectName;
+
+            // Node content with remove button
+            node.innerHTML = `
+                <span class="node-text">${projectName}</span>
+                <button class="node-remove" onclick="removeNodeFromGraph('${projectName}')" title="Aus Graph entfernen">×</button>
+            `;
 
             node.addEventListener('mousedown', (e) => onNodeMouseDown(e, projectName));
             node.addEventListener('click', (e) => onNodeClick(e, projectName));
+            node.addEventListener('contextmenu', (e) => showColorMenu(e, projectName));
 
             container.appendChild(node);
-            graphNodes[projectName] = {x, y, element: node};
+            graphNodes[projectName] = {x, y, element: node, color: nodeColor};
             savePositions();
+        }
+
+        function showColorMenu(e, projectName) {
+            e.preventDefault();
+            e.stopPropagation();
+            colorMenuTarget = projectName;
+            const menu = document.getElementById('nodeColorMenu');
+            const container = document.getElementById('graphContainer');
+            const rect = container.getBoundingClientRect();
+
+            menu.style.left = (e.clientX - rect.left + container.scrollLeft) + 'px';
+            menu.style.top = (e.clientY - rect.top + container.scrollTop) + 'px';
+            menu.classList.add('show');
+        }
+
+        function setNodeColor(color) {
+            if (colorMenuTarget && graphNodes[colorMenuTarget]) {
+                graphNodes[colorMenuTarget].color = color;
+                graphNodes[colorMenuTarget].element.style.background = color;
+                saveColors();
+            }
+            document.getElementById('nodeColorMenu').classList.remove('show');
+            colorMenuTarget = null;
+        }
+
+        function removeNodeFromGraph(projectName) {
+            if (!graphNodes[projectName]) return;
+            graphNodes[projectName].element.remove();
+            delete graphNodes[projectName];
+            savePositions();
+            saveColors();
+            drawConnections();
+            renderProjectList();
         }
 
         function onNodeMouseDown(e, projectName) {
@@ -1054,7 +1179,24 @@
             loadData();
         }
 
+        function updateGraphSize() {
+            // Calculate max bounds based on node positions
+            let maxX = 800, maxY = 500;
+            Object.values(graphNodes).forEach(node => {
+                const nodeRight = node.x + (node.element.offsetWidth || 150) + 50;
+                const nodeBottom = node.y + (node.element.offsetHeight || 40) + 50;
+                maxX = Math.max(maxX, nodeRight);
+                maxY = Math.max(maxY, nodeBottom);
+            });
+
+            // Update SVG size
+            const svg = document.getElementById('graphSvg');
+            svg.style.width = maxX + 'px';
+            svg.style.height = maxY + 'px';
+        }
+
         function drawConnections() {
+            updateGraphSize();
             const svg = document.getElementById('graphSvg');
             // Clear existing lines
             svg.querySelectorAll('line, text.edge-label').forEach(el => el.remove());
@@ -1164,8 +1306,12 @@
             }
         });
 
-        // Click on container to deselect
+        // Click on container to deselect and close color menu
         graphContainer.addEventListener('click', (e) => {
+            if (e.target === graphContainer || e.target.classList.contains('graph-node')) {
+                document.getElementById('nodeColorMenu').classList.remove('show');
+                colorMenuTarget = null;
+            }
             if (e.target === graphContainer) {
                 clearSelection();
             }

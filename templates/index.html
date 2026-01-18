@@ -393,6 +393,17 @@
         .modal-close:hover { color: #fff; }
         .modal-body { line-height: 1.7; color: #ccc; }
         .modal-body h3 { color: #fff; margin: 15px 0 10px; }
+        .modal-body img {
+            max-width: 100%;
+            max-height: 300px;
+            object-fit: contain;
+            border-radius: 8px;
+            margin: 10px 0;
+            cursor: pointer;
+            transition: transform 0.2s;
+            border: 1px solid #404040;
+        }
+        .modal-body img:hover { transform: scale(1.02); box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
         .modal-body pre {
             background: #1e1e1e;
             padding: 12px;
@@ -992,6 +1003,7 @@
     <script>
         let firstLoad = true;
         let allRelations = [];  // Globale Variable für Beziehungen
+        let relationTypes = []; // Globale Variable für Beziehungstypen
         let groupsData = { groups: [] };  // Speichert die benutzerdefinierten Gruppen
 
         // Gruppen laden
@@ -2100,7 +2112,6 @@
         }
 
         // === RELATIONS TAB FUNKTIONEN ===
-        let relationTypes = [];
         let editRelationSearchTimeout = null;
         let editRelationAbortController = null;
 

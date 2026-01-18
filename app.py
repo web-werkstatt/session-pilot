@@ -9,7 +9,7 @@ import os
 # Füge das Projektverzeichnis zum Pfad hinzu
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from flask import Flask, render_template, jsonify, request
+from flask import Flask, render_template, jsonify, request, send_from_directory, abort
 from datetime import datetime
 import json
 
@@ -981,6 +981,48 @@ def api_delete_group(group_id):
     save_groups(groups_data)
 
     return jsonify({"success": True, "message": f"Gruppe '{removed['name']}' gelöscht"})
+
+
+# === PROJEKT-ASSETS (Bilder) ===
+
+@app.route('/<path:project_path>')
+def serve_project_asset(project_path):
+    """Serviert Bilder und andere Assets aus Projekten"""
+    # Erlaubte Dateiendungen
+    allowed_extensions = {'.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp', '.ico'}
+
+    # Sicherheitscheck: Keine Pfad-Traversal erlauben
+    if '..' in project_path:
+        abort(403)
+
+    # Dateiendung prüfen
+    ext = os.path.splitext(project_path)[1].lower()
+    if ext not in allowed_extensions:
+        abort(404)
+
+    # Voller Pfad zur Datei (direkt)
+    full_path = os.path.join(PROJECTS_DIR, project_path)
+
+    if os.path.isfile(full_path):
+        directory = os.path.dirname(full_path)
+        filename = os.path.basename(full_path)
+        return send_from_directory(directory, filename)
+
+    # Fallback: Suche in Sub-Verzeichnissen (für Sub-Projekte)
+    # z.B. /archon-ui-main/public/img.png -> /Archon/archon-ui-main/public/img.png
+    try:
+        for entry in os.listdir(PROJECTS_DIR):
+            subdir = os.path.join(PROJECTS_DIR, entry)
+            if os.path.isdir(subdir):
+                candidate = os.path.join(subdir, project_path)
+                if os.path.isfile(candidate):
+                    directory = os.path.dirname(candidate)
+                    filename = os.path.basename(candidate)
+                    return send_from_directory(directory, filename)
+    except Exception as e:
+        print(f"Asset-Fehler: {e}")
+
+    abort(404)
 
 
 if __name__ == '__main__':
