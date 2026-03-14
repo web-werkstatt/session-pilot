@@ -2,46 +2,52 @@
 
 ## Letztes Update: 2026-03-14
 
-## Implementierte Features (Session 2026-03-14)
+## Implementierte Features (Session 2026-03-14 Nachmittag)
+
+### 6. Dokumenten-System (NEU)
+- **Lazy-Loading Datei-Browser**: Baumstruktur mit on-demand Ordner-Expansion
+  - Nur Root-Verzeichnis wird initial geladen, Unterordner erst bei Klick
+  - Verhindert Browser-Freeze bei grossen Projekten (z.B. WordPress mit 314k Dateien)
+  - Suche innerhalb geladener Dateien
+- **Dokument-Viewer**: Markdown gerendert, Raw-Text, Bilder-Vorschau
+  - EasyMDE-Editor pro Datei (Bearbeiten/Speichern direkt im Browser)
+- **Bilder-Galerie**: Grid mit Thumbnails, Lade-Spinner pro Bild, "X Bilder geladen" Counter
+- **Export-Konfigurator**: Datei-Auswahl mit Checkboxen, 4 Formate:
+  - ZIP (Archiv), HTML Bundle (Base64-Bilder eingebettet), Markdown (zusammengefuegt), JSON
+- **Status-Bar**: Lade-Feedback auf allen Ebenen (Spinner, Erfolg, Fehler)
+- **API-Endpunkte**:
+  - `GET /api/project/<name>/documents?dir=.` - Lazy-Loading pro Verzeichnis
+  - `GET /api/project/<name>/document/<path>` - Einzeldokument (MD gerendert, Bilder als Base64)
+  - `PUT /api/project/<name>/document/<path>` - Dokument speichern
+  - `GET /api/project/<name>/document-image/<path>` - Bild direkt servieren
+  - `POST /api/project/<name>/export-bundle` - Export mit Auswahl
+
+### 7. Lightbox-Navigation (NEU)
+- **Vor/Zurueck-Pfeile** links/rechts (halbtransparent, Glasmorphismus)
+- **Tastatur**: Pfeiltasten links/rechts navigieren, Escape schliesst
+- **Counter**: "2 / 6" Anzeige unten mittig
+- **Dateiname** unter dem Bild
+- **Schliessen-Button** oben rechts (X)
+- Global auf allen Seiten (base.html)
+
+## Fruehere Features (Session 2026-03-14 Vormittag)
 
 ### 1. Claude Code Sessions
 - PostgreSQL-Import aller JSONL-Sessions (3 Accounts: claude, claude1, minimax)
 - 214+ Sessions importiert, automatischer Sync via systemd-Timer (alle 15min)
-- **Übersicht** `/sessions` - Filter (Account, Projekt, Datum), Sortierung, Pagination
-- **Detail** `/sessions/<uuid>` - Konversationsansicht, Copy-Buttons, Code-Block-Kopieren
-- **Export**: JSON, Markdown, HTML, XLSX, TXT
-- Breite-Slider für Konversationsansicht (persistent in localStorage)
+- Uebersicht, Detail, Export (JSON/MD/HTML/XLSX/TXT)
 
 ### 2. UX-Redesign
-- **Sidebar-Navigation** (Workspace/DevOps/Content/Extern) statt Icon-Header
-- **Command Palette** Ctrl+K mit Projekt-Suche und Schnellzugriff
-- **Base-Template** `base.html` - alle Seiten erben Sidebar, Topbar, Lightbox, Command Palette
-- **Stats als Modal** statt permanenter Anzeige
-- **Sticky Headers** (Topbar + Filter + Tabellen-Header) auf allen Seiten
-- **Topbar**: Breadcrumb, Suche, ⋯-Mehr-Menü (Scan/Docker/Gruppen)
+- Sidebar-Navigation, Command Palette Ctrl+K, Base-Template, Sticky Headers
 
 ### 3. Globale Architektur
-- CSS extrahiert: `static/css/dashboard.css` (globale Styles)
-- JS extrahiert: `static/js/dashboard.js` (Dashboard-Logik)
-- Alle Templates nutzen `base.html` (sessions, containers, news, vorlagen, dependencies)
-- Einheitliche Tabellen-Styles auf allen Seiten
-- Sticky thead per dynamischem JS (berechnet Höhen automatisch)
+- CSS/JS extrahiert, alle Templates nutzen base.html
 
 ### 4. UX-Features
-- **Lightbox** für Bilder (Thumbnails in Tabelle, Klick zum Vergrössern)
-- **Projekt-Favoriten** (⭐) mit eigener Sektion oben in der Tabelle
-- **Row-Context-Menu** (⋯) mit Details/Bearbeiten/Favorit
-- **Alternating Row Colors**, Hover-Highlight
-- **Datumsformate** vereinheitlicht (DD.MM.YY)
-- **Deadline** ohne Umbruch, mit Leerzeichen nach Icon
+- Lightbox, Favoriten, Row-Context-Menu, Alternating Rows
 
 ### 5. Projekt-Detailseite
-- **Route** `/project/<name>` - eigene Seite pro Projekt
-- **Sektionen**: Beschreibung, Details, Tech-Stack, Commits, README, Screenshots, Meilensteine, Beziehungen, Claude Sessions, Container
-- **README als Markdown** gerendert (Tabellen, Code-Blöcke, Blockquotes)
-- **WYSIWYG Editor** (EasyMDE) zum Bearbeiten der README.md direkt im Browser
-- **Export**: HTML (standalone, druckbar), Markdown, JSON
-- **Info-API** `/api/info` mit Bindestrich/Underscore Fallback
+- Route `/project/<name>`, README-Editor, Export (HTML/MD/JSON)
 
 ## Dateistruktur
 
@@ -56,7 +62,8 @@
 ├── groups.json                     # Benutzerdefinierte Gruppen
 ├── routes/
 │   ├── __init__.py                 # Blueprint-Registrierung
-│   └── session_routes.py           # Session-API + Seiten
+│   ├── session_routes.py           # Session-API + Seiten
+│   └── document_routes.py          # Dokumenten-System API (NEU)
 ├── services/
 │   ├── db_service.py               # PostgreSQL-Pool + Schema
 │   ├── session_import.py           # JSONL-Parser + Sync
@@ -67,67 +74,35 @@
 │   ├── git_service.py              # Git-Info
 │   └── cache_service.py            # JSON-Cache
 ├── templates/
-│   ├── base.html                   # Globales Base-Template (Sidebar, Topbar, Cmd Palette)
+│   ├── base.html                   # Globales Base-Template + Lightbox-Navigation
 │   ├── index.html                  # Dashboard (Projekt-Tabelle)
-│   ├── project_detail.html         # Projekt-Detailseite + README-Editor
-│   ├── sessions.html               # Claude Sessions Übersicht
+│   ├── project_detail.html         # Projekt-Detail + Dokumenten-Browser
+│   ├── sessions.html               # Claude Sessions Uebersicht
 │   ├── session_detail.html         # Session-Konversation
-│   ├── containers.html             # Container-Übersicht
-│   ├── dependencies.html           # Abhängigkeiten-Graph
+│   ├── containers.html             # Container-Uebersicht
+│   ├── dependencies.html           # Abhaengigkeiten-Graph
 │   ├── news.html                   # News-Seite
 │   └── vorlagen.html               # Vorlagen-Sammlung
 ├── static/
-│   ├── css/dashboard.css           # Globale CSS (Sidebar, Tabellen, Modals, etc.)
+│   ├── css/dashboard.css           # Globale CSS + Lightbox-Navigation
+│   ├── css/documents.css           # Dokumenten-Browser CSS (NEU)
 │   ├── js/dashboard.js             # Dashboard JS (Gruppen, Filter, Rendering)
+│   ├── js/documents.js             # Dokumenten-Browser JS (NEU)
 │   └── favicon.svg
 └── systemd/
     ├── claude-session-sync.service  # Sync-Service
     └── claude-session-sync.timer    # Timer (alle 15min)
 ```
 
-## Nächste Session: Dokumenten-System
+## Naechste Session: Ideen
 
-### Feature: Projekt-Dokumenten-System
-
-Die Projekt-Detailseite soll erweitert werden um ein vollständiges Dokumenten-System:
-
-#### 1. Dokument-Sammlung API
-- `GET /api/project/<name>/documents` - Sammelt rekursiv:
-  - Alle `.md` Dateien (README, CHANGELOG, docs/, etc.)
-  - Alle Bilder (.png, .jpg, .svg, .webp, etc.)
-  - Gruppiert nach Verzeichnis
-  - Mit Dateigrösse, Änderungsdatum, Typ
-
-#### 2. Dokumenten-Browser (UI)
-- **Baumstruktur** aller Dateien im linken Panel
-- **Viewer** rechts: MD-Dateien gerendert, Bilder als Preview
-- **Suche** innerhalb der Dokumente
-- Jede MD-Datei mit EasyMDE bearbeitbar (wie README)
-
-#### 3. Bilder-Gallery
-- Alle Bilder des Projekts als Grid-Gallery
-- Thumbnails mit Lightbox
-- Bilder-Upload Möglichkeit?
-
-#### 4. Export-Konfigurator
-- **Checkboxen** pro Dokument (auswählen was exportiert wird)
-- **Alle/Keine** Schnellauswahl
-- **Export-Formate**:
-  - HTML Bundle (alle ausgewählten Dateien in einem HTML, Bilder eingebettet als Base64)
-  - ZIP (Dateien + Bilder als Archiv)
-  - Markdown (alle MD-Dateien zusammengefügt)
-  - JSON (Struktur + Inhalte)
-- **Ziel**: Direkt auf Vermarktungsseiten einbettbar (mit Bildern!)
-
-#### 5. Implementierungsplan
-1. API: `/api/project/<name>/documents` - Datei-Sammlung
-2. API: `/api/project/<name>/document/<path>` - Einzelnes Dokument lesen/schreiben
-3. API: `/api/project/<name>/export-bundle` - Export mit Auswahl
-4. UI: Dokumenten-Browser in `project_detail.html` als neue Sektion
-5. UI: Export-Modal mit Checkboxen + Format-Auswahl
+- **Dokumenten-System erweitern**: Datei-Upload, Drag&Drop Bilder
+- **Volltextsuche**: Ueber alle Dokumente aller Projekte suchen
+- **Dashboard-Widgets**: Projekt-Aktivitaet als Heatmap/Chart
+- **Benachrichtigungen**: Neue Commits, Container-Status-Aenderungen
 
 ## Git Status
 
 - Branch: `main`
 - Remote: `origin` (git.webideas24.com)
-- Letzter Commit: `a6239e5` - README Editor + README API
+- Letzter Commit: `6512ee2` - Dokumenten-System + Lightbox-Navigation
