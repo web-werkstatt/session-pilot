@@ -5,6 +5,7 @@
 {% block breadcrumb %}<a href="/" style="color:#4fc3f7;text-decoration:none">Projekte</a> <span class="bc-sep">/</span> {{ project_name }}{% endblock %}
 
 {% block topbar_actions %}
+<a href="/" class="topbar-btn" style="text-decoration:none" title="Zurück zum Dashboard">← Zurück</a>
 <button class="topbar-btn" onclick="exportProject('html')" title="HTML Export">📄 HTML</button>
 <button class="topbar-btn" onclick="exportProject('md')" title="Markdown Export">📝 MD</button>
 <button class="topbar-btn" onclick="exportProject('json')" title="JSON Export">📋 JSON</button>
@@ -42,6 +43,30 @@
     .project-body a { color: #4fc3f7; text-decoration: none; }
     .project-body a:hover { text-decoration: underline; }
     .loading { text-align: center; padding: 60px; color: #666; }
+    /* README rendered */
+    .readme-rendered {
+        background: #141414; border: 1px solid #1e1e1e; border-radius: 8px;
+        padding: 20px 24px; font-size: 14px; line-height: 1.7; color: #ccc;
+    }
+    .readme-rendered h1 { font-size: 22px; color: #fff; margin: 20px 0 10px; border-bottom: 1px solid #2a2a2a; padding-bottom: 8px; }
+    .readme-rendered h2 { font-size: 18px; color: #e0e0e0; margin: 18px 0 8px; border-bottom: 1px solid #222; padding-bottom: 6px; }
+    .readme-rendered h3 { font-size: 15px; color: #ccc; margin: 14px 0 6px; border: none; text-transform: none; letter-spacing: 0; }
+    .readme-rendered pre { background: #0d0d0d; padding: 14px; border-radius: 6px; overflow-x: auto; font-size: 13px; }
+    .readme-rendered code { background: #1a1a1a; padding: 1px 5px; border-radius: 3px; font-size: 13px; color: #e0e0e0; display: inline; margin: 0; }
+    .readme-rendered pre code { background: none; padding: 0; }
+    .readme-rendered table { border-collapse: collapse; width: 100%; margin: 12px 0; }
+    .readme-rendered table th, .readme-rendered table td { border: 1px solid #2a2a2a; padding: 8px 12px; font-size: 13px; text-align: left; }
+    .readme-rendered table th { background: #1a1a1a; color: #aaa; }
+    .readme-rendered blockquote { border-left: 3px solid #4fc3f7; padding: 8px 16px; margin: 12px 0; color: #999; background: #1a1a1a; border-radius: 0 6px 6px 0; }
+    .readme-rendered ul, .readme-rendered ol { padding-left: 24px; margin: 8px 0; }
+    .readme-rendered a { color: #4fc3f7; }
+    .readme-actions { display: flex; gap: 10px; margin-bottom: 12px; align-items: center; }
+    .readme-actions .btn-edit { background: #1a1a1a; border: 1px solid #333; color: #ccc; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 12px; }
+    .readme-actions .btn-edit:hover { background: #222; border-color: #555; }
+    .readme-actions .btn-save { background: #1b4332; border: none; color: #fff; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 12px; }
+    .readme-actions .btn-cancel { background: #333; border: none; color: #ccc; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 12px; }
+    .readme-actions .status { color: #666; font-size: 12px; margin-left: auto; }
+    #readmeEditor { display: none; }
     .export-hint {
         background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 8px;
         padding: 16px; margin-top: 30px; font-size: 13px; color: #666;
@@ -65,37 +90,149 @@
 {% endblock %}
 
 {% block scripts %}
+<!-- EasyMDE Markdown Editor -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.css">
+<script src="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.js"></script>
+
 <script>
 const PROJECT_NAME = "{{ project_name }}";
+let readmeFilename = 'README.md';
+let easyMDE = null;
 
 async function loadProjectInfo() {
     try {
         const r = await fetch('/api/info?name=' + encodeURIComponent(PROJECT_NAME));
         const d = await r.json();
 
-        // Beschreibung aus erstem <p> extrahieren für Subtitle
         const match = d.description.match(/<h3>Beschreibung<\/h3><p>(.*?)<\/p>/);
-        if (match) {
-            document.getElementById('projectSubtitle').textContent = match[1];
-        } else {
-            document.getElementById('projectSubtitle').textContent = '';
-        }
+        document.getElementById('projectSubtitle').textContent = match ? match[1] : '';
 
-        // Body rendern
-        let html = d.description;
+        // README-Sektion aus der Info entfernen (wird separat geladen)
+        let html = d.description.replace(/<h3>README<\/h3>[\s\S]*?(?=<h3>|<div class="export-hint"|$)/, '');
 
-        // Export-Hinweis anhängen
+        // README-Bereich einfügen
+        html += `
+        <h3>README</h3>
+        <div class="readme-actions">
+            <button class="btn-edit" onclick="toggleReadmeEdit()" id="readmeEditBtn">✏️ Bearbeiten</button>
+            <button class="btn-save" onclick="saveReadme()" id="readmeSaveBtn" style="display:none">💾 Speichern</button>
+            <button class="btn-cancel" onclick="cancelReadmeEdit()" id="readmeCancelBtn" style="display:none">Abbrechen</button>
+            <span class="status" id="readmeStatus"></span>
+        </div>
+        <div id="readmeRendered" class="readme-rendered">Lade README...</div>
+        <div id="readmeEditor"><textarea id="readmeTextarea"></textarea></div>`;
+
+        // Export-Hinweis
         html += `<div class="export-hint">
-            <strong>Export-Optionen:</strong> Diese Seite kann als
-            <a href="/api/project/${encodeURIComponent(PROJECT_NAME)}/export?format=html" target="_blank">Standalone HTML</a>,
-            <a href="/api/project/${encodeURIComponent(PROJECT_NAME)}/export?format=md" target="_blank">Markdown</a> oder
-            <a href="/api/project/${encodeURIComponent(PROJECT_NAME)}/export?format=json" target="_blank">JSON</a>
-            exportiert werden. Die HTML-Version kann direkt auf Vermarktungsseiten eingebettet oder als PDF gedruckt werden.
+            <strong>Export-Optionen:</strong>
+            <a href="/api/project/${encodeURIComponent(PROJECT_NAME)}/export?format=html" target="_blank">📄 HTML</a> ·
+            <a href="/api/project/${encodeURIComponent(PROJECT_NAME)}/export?format=md" target="_blank">📝 Markdown</a> ·
+            <a href="/api/project/${encodeURIComponent(PROJECT_NAME)}/export?format=json" target="_blank">📋 JSON</a>
         </div>`;
 
         document.getElementById('projectBody').innerHTML = html;
+
+        // README separat laden (gerendert)
+        loadReadme();
     } catch(e) {
         document.getElementById('projectBody').innerHTML = '<div class="loading" style="color:#ff6666">Fehler: ' + e + '</div>';
+    }
+}
+
+async function loadReadme() {
+    try {
+        const r = await fetch('/api/project/' + encodeURIComponent(PROJECT_NAME) + '/readme');
+        const d = await r.json();
+        readmeFilename = d.filename || 'README.md';
+
+        if (d.html) {
+            document.getElementById('readmeRendered').innerHTML = d.html;
+        } else {
+            document.getElementById('readmeRendered').innerHTML = '<p style="color:#666;font-style:italic">Keine README.md vorhanden</p>';
+        }
+
+        // Raw-Markdown für Editor vorbereiten
+        document.getElementById('readmeTextarea').value = d.raw || '';
+    } catch(e) {
+        document.getElementById('readmeRendered').innerHTML = '<p style="color:#ff6666">Fehler: ' + e + '</p>';
+    }
+}
+
+function toggleReadmeEdit() {
+    const rendered = document.getElementById('readmeRendered');
+    const editor = document.getElementById('readmeEditor');
+    const editBtn = document.getElementById('readmeEditBtn');
+    const saveBtn = document.getElementById('readmeSaveBtn');
+    const cancelBtn = document.getElementById('readmeCancelBtn');
+
+    rendered.style.display = 'none';
+    editor.style.display = 'block';
+    editBtn.style.display = 'none';
+    saveBtn.style.display = 'inline-block';
+    cancelBtn.style.display = 'inline-block';
+
+    // EasyMDE initialisieren (nur einmal)
+    if (!easyMDE) {
+        easyMDE = new EasyMDE({
+            element: document.getElementById('readmeTextarea'),
+            spellChecker: false,
+            autofocus: true,
+            minHeight: '400px',
+            status: ['lines', 'words'],
+            toolbar: [
+                'bold', 'italic', 'heading', '|',
+                'code', 'quote', 'unordered-list', 'ordered-list', '|',
+                'link', 'image', 'table', 'horizontal-rule', '|',
+                'preview', 'side-by-side', 'fullscreen', '|',
+                'guide'
+            ],
+            previewRender: function(plainText) {
+                // Server-seitiges Rendering für exakte Vorschau
+                return this.parent.markdown(plainText);
+            }
+        });
+    }
+}
+
+function cancelReadmeEdit() {
+    document.getElementById('readmeRendered').style.display = 'block';
+    document.getElementById('readmeEditor').style.display = 'none';
+    document.getElementById('readmeEditBtn').style.display = 'inline-block';
+    document.getElementById('readmeSaveBtn').style.display = 'none';
+    document.getElementById('readmeCancelBtn').style.display = 'none';
+    document.getElementById('readmeStatus').textContent = '';
+    // Editor-Inhalt zurücksetzen
+    if (easyMDE) {
+        loadReadme();
+    }
+}
+
+async function saveReadme() {
+    const content = easyMDE ? easyMDE.value() : document.getElementById('readmeTextarea').value;
+    const status = document.getElementById('readmeStatus');
+    status.textContent = 'Speichern...';
+    status.style.color = '#888';
+
+    try {
+        const r = await fetch('/api/project/' + encodeURIComponent(PROJECT_NAME) + '/readme', {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({content: content, filename: readmeFilename})
+        });
+        const d = await r.json();
+        if (d.success) {
+            status.textContent = '✅ Gespeichert';
+            status.style.color = '#4caf50';
+            // Zurück zur Ansicht
+            await loadReadme();
+            cancelReadmeEdit();
+        } else {
+            status.textContent = '❌ ' + d.error;
+            status.style.color = '#ff4444';
+        }
+    } catch(e) {
+        status.textContent = '❌ Fehler: ' + e;
+        status.style.color = '#ff4444';
     }
 }
 
@@ -105,4 +242,26 @@ function exportProject(fmt) {
 
 loadProjectInfo();
 </script>
+
+<!-- EasyMDE Dark Theme Override -->
+<style>
+.EasyMDEContainer { border: 1px solid #333 !important; border-radius: 8px !important; }
+.EasyMDEContainer .CodeMirror { background: #141414 !important; color: #ccc !important; border: none !important; border-radius: 0 0 8px 8px !important; }
+.EasyMDEContainer .CodeMirror-cursor { border-left-color: #4fc3f7 !important; }
+.EasyMDEContainer .editor-toolbar { background: #1a1a1a !important; border-bottom: 1px solid #333 !important; border-radius: 8px 8px 0 0 !important; }
+.EasyMDEContainer .editor-toolbar button { color: #888 !important; }
+.EasyMDEContainer .editor-toolbar button:hover { background: #222 !important; color: #fff !important; }
+.EasyMDEContainer .editor-toolbar button.active { background: #0078d4 !important; color: #fff !important; }
+.EasyMDEContainer .editor-toolbar i.separator { border-left-color: #333 !important; }
+.EasyMDEContainer .editor-statusbar { color: #666 !important; background: #1a1a1a !important; border-top: 1px solid #333 !important; }
+.EasyMDEContainer .CodeMirror .CodeMirror-selected { background: #1a3a5c !important; }
+.EasyMDEContainer .CodeMirror .cm-header { color: #4fc3f7 !important; }
+.EasyMDEContainer .CodeMirror .cm-link { color: #4fc3f7 !important; }
+.EasyMDEContainer .CodeMirror .cm-string { color: #66bb6a !important; }
+.EasyMDEContainer .CodeMirror .cm-comment { color: #666 !important; }
+.EasyMDEContainer .editor-preview { background: #141414 !important; color: #ccc !important; }
+.EasyMDEContainer .editor-preview pre { background: #0d0d0d !important; }
+.EasyMDEContainer .CodeMirror-gutters { background: #141414 !important; border-right: 1px solid #222 !important; }
+.EasyMDEContainer .CodeMirror-linenumber { color: #444 !important; }
+</style>
 {% endblock %}

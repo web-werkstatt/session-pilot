@@ -324,6 +324,75 @@ def project_detail(name):
     return render_template('project_detail.html', project_name=name, active_page='dashboard')
 
 
+def _resolve_project_path(name):
+    """Löst Projektpfad auf inkl. Bindestrich/Underscore Fallback"""
+    if '/' in name:
+        parts = name.split('/', 1)
+        for sub_dir in ['', 'apps/', 'packages/', 'services/', 'modules/']:
+            p = os.path.join(PROJECTS_DIR, parts[0], sub_dir + parts[1])
+            if os.path.isdir(p):
+                return p
+        return None
+    p = os.path.join(PROJECTS_DIR, name)
+    if os.path.isdir(p):
+        return p
+    alt = name.replace('-', '_') if '-' in name else name.replace('_', '-')
+    p = os.path.join(PROJECTS_DIR, alt)
+    return p if os.path.isdir(p) else None
+
+
+@app.route('/api/project/<path:name>/readme')
+def get_readme(name):
+    """Gibt README.md als Raw-Markdown und gerenderten HTML zurück"""
+    project_path = _resolve_project_path(name)
+    if not project_path:
+        return jsonify({"error": "Projekt nicht gefunden"}), 404
+
+    raw = ""
+    filename = None
+    for readme in ["README.md", "readme.md", "Readme.md"]:
+        rpath = os.path.join(project_path, readme)
+        if os.path.exists(rpath):
+            try:
+                with open(rpath, 'r', encoding='utf-8') as f:
+                    raw = f.read()
+                filename = readme
+            except Exception as e:
+                return jsonify({"error": str(e)}), 500
+            break
+
+    html = ""
+    if raw:
+        import markdown as md_lib
+        html = md_lib.markdown(raw, extensions=["fenced_code", "tables", "toc"])
+
+    return jsonify({"raw": raw, "html": html, "filename": filename or "README.md", "path": project_path})
+
+
+@app.route('/api/project/<path:name>/readme', methods=['PUT'])
+def save_readme(name):
+    """Speichert README.md"""
+    project_path = _resolve_project_path(name)
+    if not project_path:
+        return jsonify({"error": "Projekt nicht gefunden"}), 404
+
+    data = request.get_json()
+    content = data.get('content', '')
+    filename = data.get('filename', 'README.md')
+
+    # Nur erlaubte Dateinamen
+    if filename not in ["README.md", "readme.md", "Readme.md"]:
+        filename = "README.md"
+
+    filepath = os.path.join(project_path, filename)
+    try:
+        with open(filepath, 'w', encoding='utf-8') as f:
+            f.write(content)
+        return jsonify({"success": True, "message": f"{filename} gespeichert", "path": filepath})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 @app.route('/api/project/<path:name>/export')
 def export_project(name):
     """Exportiert Projekt-Infos als HTML/MD/JSON"""
