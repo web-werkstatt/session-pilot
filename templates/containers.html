@@ -1,55 +1,34 @@
-<!DOCTYPE html>
-<html lang="de">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
-    <title>Container-Übersicht</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Arial, sans-serif; background: #1e1e1e; color: #fff; min-height: 100vh; }
-        .header {
-            background: linear-gradient(135deg, #2d5a2d, #1a3d1a);
-            padding: 20px 30px;
-            display: flex; justify-content: space-between; align-items: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-        }
-        .header h1 { font-size: 24px; }
-        .header-info { display: flex; gap: 20px; align-items: center; }
-        .btn { background: #1a3d1a; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 14px; text-decoration: none; }
-        .btn:hover { background: #0d1f0d; }
-        .stats-bar { background: #2d2d2d; padding: 15px 30px; display: flex; gap: 30px; border-bottom: 1px solid #404040; }
-        .stat { display: flex; align-items: center; gap: 8px; }
-        .stat-value { font-weight: bold; font-size: 18px; }
-        .stat-label { color: #aaa; font-size: 13px; }
-        .container { padding: 20px 30px; }
-        table { width: 100%; border-collapse: collapse; background: #2d2d2d; border-radius: 8px; overflow: hidden; }
-        th { background: #404040; padding: 15px; text-align: left; font-weight: 600; }
-        td { padding: 12px 15px; border-bottom: 1px solid #404040; }
-        tr:hover { background: #363636; }
-        .status-healthy { color: #4caf50; }
-        .status-running { color: #2196f3; }
-        .status-stopped { color: #f44336; }
-        .status-unhealthy { color: #ff9800; }
-        .container-name { font-family: monospace; font-size: 13px; }
-        .action-link { color: #4dabf7; text-decoration: none; padding: 4px 10px; border: 1px solid #4dabf7; border-radius: 4px; font-size: 12px; white-space: nowrap; display: inline-block; }
-        .action-link:hover { background: #4dabf7; color: #1e1e1e; }
-        .timestamp { color: #ccc; font-size: 14px; }
-        .filter-bar { background: #2d2d2d; padding: 10px 30px; display: flex; gap: 10px; align-items: center; }
-        .filter-btn { background: transparent; color: #aaa; border: 1px solid #555; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 13px; }
-        .filter-btn:hover, .filter-btn.active { background: #4dabf7; color: #1e1e1e; border-color: #4dabf7; }
-    </style>
-</head>
-<body>
-    <div class="header">
-        <h1>🐳 Container-Übersicht</h1>
-        <div class="header-info">
-            <a href="/" class="btn">← Zurück zum Dashboard</a>
-            <span class="timestamp" id="timestamp"></span>
-            <button class="btn" onclick="loadData()">🔄 Aktualisieren</button>
-        </div>
-    </div>
+{% extends "base.html" %}
 
+{% block title %}Container - Dashboard{% endblock %}
+
+{% block breadcrumb %}Container{% endblock %}
+
+{% block head_extra %}
+<style>
+    .stats-bar { background: #2d2d2d; padding: 15px 30px; display: flex; gap: 30px; border-bottom: 1px solid #404040; }
+    .stat { display: flex; align-items: center; gap: 8px; }
+    .stat-value { font-weight: bold; font-size: 18px; }
+    .stat-label { color: #aaa; font-size: 13px; }
+    .container-section { padding: 20px 30px; }
+    .status-healthy { color: #4caf50; }
+    .status-running { color: #2196f3; }
+    .status-stopped { color: #f44336; }
+    .status-unhealthy { color: #ff9800; }
+    .container-name { font-family: monospace; font-size: 13px; }
+    .action-link { color: #4dabf7; text-decoration: none; padding: 4px 10px; border: 1px solid #4dabf7; border-radius: 4px; font-size: 12px; white-space: nowrap; display: inline-block; }
+    .action-link:hover { background: #4dabf7; color: #1e1e1e; }
+    .filter-bar { background: #2d2d2d; padding: 10px 30px; display: flex; gap: 10px; align-items: center; }
+    .filter-btn { background: transparent; color: #aaa; border: 1px solid #555; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 13px; }
+    .filter-btn:hover, .filter-btn.active { background: #4dabf7; color: #1e1e1e; border-color: #4dabf7; }
+</style>
+{% endblock %}
+
+{% block topbar_actions %}
+<button class="btn" onclick="loadData()">🔄 Aktualisieren</button>
+{% endblock %}
+
+{% block content %}
     <div class="stats-bar">
         <div class="stat"><span class="stat-value" id="totalContainers">-</span><span class="stat-label">Container</span></div>
         <div class="stat"><span class="stat-value status-healthy" id="runningContainers">-</span><span class="stat-label">Aktiv</span></div>
@@ -64,7 +43,7 @@
         <button class="filter-btn" onclick="filterContainers('stopped', this)">Gestoppt</button>
     </div>
 
-    <div class="container">
+    <div class="container-section">
         <table id="containerTable">
             <thead>
                 <tr>
@@ -80,61 +59,62 @@
             <tbody id="tableBody"></tbody>
         </table>
     </div>
+{% endblock %}
 
-    <script>
-        let allContainers = [];
-        let currentFilter = 'all';
+{% block scripts %}
+<script>
+    let allContainers = [];
+    let currentFilter = 'all';
 
-        function loadData() {
-            fetch('/api/containers')
-                .then(r => r.json())
-                .then(data => {
-                    allContainers = data.containers;
-                    document.getElementById('totalContainers').textContent = data.stats.total;
-                    document.getElementById('runningContainers').textContent = data.stats.running;
-                    document.getElementById('unhealthyContainers').textContent = data.stats.unhealthy;
-                    document.getElementById('stoppedContainers').textContent = data.stats.stopped;
-                    document.getElementById('timestamp').textContent = 'Stand: ' + data.timestamp;
-                    renderContainers();
-                });
-        }
-
-        function filterContainers(filter, btn) {
-            currentFilter = filter;
-            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            renderContainers();
-        }
-
-        function renderContainers() {
-            const tbody = document.getElementById('tableBody');
-            tbody.innerHTML = '';
-
-            let filtered = allContainers;
-            if (currentFilter === 'running') {
-                filtered = allContainers.filter(c => c.status.includes('Running') || c.status.includes('Healthy'));
-            } else if (currentFilter === 'stopped') {
-                filtered = allContainers.filter(c => c.status.includes('Stopped'));
-            }
-
-            filtered.forEach(c => {
-                const tr = document.createElement('tr');
-                const portLink = c.port ? `<a href="http://192.168.100.93:${c.port}" target="_blank" class="action-link">🔗 Öffnen</a>` : '-';
-                tr.innerHTML = `
-                    <td class="container-name">${c.name}</td>
-                    <td>${c.status}</td>
-                    <td style="font-size:12px;color:#888">${c.image}</td>
-                    <td>${c.project || '-'}</td>
-                    <td>${c.port || '-'}</td>
-                    <td>${c.last_modified || '-'}</td>
-                    <td>${portLink}</td>
-                `;
-                tbody.appendChild(tr);
+    function loadData() {
+        fetch('/api/containers')
+            .then(r => r.json())
+            .then(data => {
+                allContainers = data.containers;
+                document.getElementById('totalContainers').textContent = data.stats.total;
+                document.getElementById('runningContainers').textContent = data.stats.running;
+                document.getElementById('unhealthyContainers').textContent = data.stats.unhealthy;
+                document.getElementById('stoppedContainers').textContent = data.stats.stopped;
+                document.getElementById('timestamp').textContent = 'Stand: ' + data.timestamp;
+                renderContainers();
             });
+    }
+
+    function filterContainers(filter, btn) {
+        currentFilter = filter;
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        renderContainers();
+    }
+
+    function renderContainers() {
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = '';
+
+        let filtered = allContainers;
+        if (currentFilter === 'running') {
+            filtered = allContainers.filter(c => c.status.includes('Running') || c.status.includes('Healthy'));
+        } else if (currentFilter === 'stopped') {
+            filtered = allContainers.filter(c => c.status.includes('Stopped'));
         }
 
-        loadData();
-        setInterval(loadData, 15000);
-    </script>
-</body>
-</html>
+        filtered.forEach(c => {
+            const tr = document.createElement('tr');
+            const portLink = c.port ? `<a href="http://192.168.100.93:${c.port}" target="_blank" class="action-link">🔗 Öffnen</a>` : '-';
+            tr.innerHTML = `
+                <td class="container-name">${c.name}</td>
+                <td>${c.status}</td>
+                <td style="font-size:12px;color:#888">${c.image}</td>
+                <td>${c.project || '-'}</td>
+                <td>${c.port || '-'}</td>
+                <td>${c.last_modified || '-'}</td>
+                <td>${portLink}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    loadData();
+    setInterval(loadData, 15000);
+</script>
+{% endblock %}

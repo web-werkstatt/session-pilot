@@ -1,0 +1,257 @@
+{% extends "base.html" %}
+
+{% block title %}Session Detail - Dashboard{% endblock %}
+
+{% block breadcrumb %}<a href="/sessions" style="color:#4fc3f7;text-decoration:none">Sessions</a> <span class="bc-sep">/</span> Detail{% endblock %}
+
+{% block head_extra %}
+<style>
+    .meta-bar { background: #2d2d2d; padding: 15px 30px; display: flex; gap: 25px; flex-wrap: wrap; border-bottom: 1px solid #404040; }
+    .meta-item { display: flex; flex-direction: column; }
+    .meta-label { color: #888; font-size: 11px; text-transform: uppercase; }
+    .meta-value { font-size: 14px; margin-top: 2px; }
+    .export-bar { background: #252525; padding: 10px 30px; display: flex; gap: 10px; border-bottom: 1px solid #333; }
+    .btn-export { background: #333; color: #ccc; border: 1px solid #555; padding: 6px 14px; border-radius: 4px; cursor: pointer; font-size: 13px; transition: all 0.2s; text-decoration: none; }
+    .btn-export:hover { background: #444; color: #fff; border-color: #0078d4; }
+    .conversation { margin: 20px auto; padding: 0 20px; transition: max-width 0.2s; }
+    .width-control { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+    .width-control label { color: #888; font-size: 12px; white-space: nowrap; }
+    .width-control input[type=range] { width: 120px; accent-color: #0078d4; cursor: pointer; }
+    .width-control span { color: #aaa; font-size: 12px; min-width: 40px; }
+    .msg { margin: 12px 0; padding: 15px 18px; border-radius: 8px; line-height: 1.6; }
+    .msg-user { background: #1a3a5c; border-left: 3px solid #4fc3f7; }
+    .msg-assistant { background: #2d2d2d; border-left: 3px solid #66bb6a; }
+    .msg-system { text-align: center; color: #666; font-size: 12px; padding: 5px; margin: 8px 0; border-bottom: 1px solid #333; }
+    .msg-role { font-weight: bold; color: #888; text-transform: uppercase; font-size: 11px; letter-spacing: 1px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+    .btn-copy { background: #333; color: #888; border: 1px solid #555; padding: 2px 8px; border-radius: 3px; cursor: pointer; font-size: 11px; transition: all 0.2s; }
+    .btn-copy:hover { background: #444; color: #fff; border-color: #0078d4; }
+    .btn-copy.copied { background: #2d6a4f; color: #6ff7b0; border-color: #2d6a4f; }
+    .msg-content { white-space: pre-wrap; word-wrap: break-word; }
+    .msg-content pre { background: #1a1a1a; padding: 12px; border-radius: 5px; overflow-x: auto; margin: 8px 0; font-size: 13px; position: relative; }
+    .pre-wrap { position: relative; }
+    .btn-copy-code { position: absolute; top: 4px; right: 4px; background: #333; color: #888; border: 1px solid #555; padding: 2px 8px; border-radius: 3px; cursor: pointer; font-size: 11px; transition: all 0.2s; opacity: 0; }
+    .pre-wrap:hover .btn-copy-code { opacity: 1; }
+    .btn-copy-code:hover { background: #444; color: #fff; border-color: #0078d4; }
+    .btn-copy-code.copied { background: #2d6a4f; color: #6ff7b0; border-color: #2d6a4f; opacity: 1; }
+    .msg-content code { font-family: 'Fira Code', 'Consolas', monospace; font-size: 13px; }
+    .msg-content p { margin: 5px 0; }
+    details { margin: 8px 0; }
+    details summary { cursor: pointer; color: #888; font-size: 13px; padding: 5px 10px; background: #1a1a1a; border-radius: 4px; }
+    details summary:hover { color: #ccc; }
+    details .tool-content { background: #1a1a1a; padding: 10px; border-radius: 0 0 4px 4px; font-size: 13px; max-height: 400px; overflow-y: auto; white-space: pre-wrap; word-break: break-all; }
+    .loading { text-align: center; padding: 60px; color: #888; font-size: 16px; }
+</style>
+{% endblock %}
+
+{% block topbar_actions %}
+<a class="btn-export" id="expJson">JSON</a>
+<a class="btn-export" id="expMd">Markdown</a>
+<a class="btn-export" id="expHtml">HTML</a>
+<a class="btn-export" id="expXlsx">XLSX</a>
+<a class="btn-export" id="expTxt">TXT</a>
+{% endblock %}
+
+{% block content %}
+    <div class="meta-bar" id="metaBar"></div>
+
+    <div class="export-bar">
+        <span style="color:#888;font-size:13px;line-height:30px">Export:</span>
+        <a class="btn-export" id="expJson2">JSON</a>
+        <a class="btn-export" id="expMd2">Markdown</a>
+        <a class="btn-export" id="expHtml2">HTML</a>
+        <a class="btn-export" id="expXlsx2">XLSX</a>
+        <a class="btn-export" id="expTxt2">TXT</a>
+        <div class="width-control">
+            <label>Breite:</label>
+            <input type="range" id="widthSlider" min="600" max="2400" step="100" oninput="setWidth(this.value)">
+            <span id="widthLabel"></span>
+        </div>
+    </div>
+
+    <div class="conversation" id="conversation">
+        <div class="loading">Lade Konversation...</div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const SESSION_UUID = "{{ session_uuid }}";
+
+function setWidth(val) {
+    const conv = document.getElementById('conversation');
+    if (val >= 2400) {
+        conv.style.maxWidth = '100%';
+        document.getElementById('widthLabel').textContent = 'Voll';
+    } else {
+        conv.style.maxWidth = val + 'px';
+        document.getElementById('widthLabel').textContent = val + 'px';
+    }
+    document.getElementById('widthSlider').value = val;
+    localStorage.setItem('session-width', val);
+}
+
+(function initWidth() {
+    const saved = localStorage.getItem('session-width') || '1000';
+    setWidth(saved);
+})();
+
+function escapeHtml(text) {
+    const d = document.createElement('div');
+    d.textContent = text;
+    return d.innerHTML;
+}
+
+function renderMarkdown(text) {
+    if (!text) return '';
+    // Basic markdown: code blocks, inline code, bold, headers
+    let html = escapeHtml(text);
+    // Fenced code blocks
+    html = html.replace(/```(\w*)\n([\s\S]*?)```/g, '<pre><code>$2</code></pre>');
+    // Inline code
+    html = html.replace(/`([^`]+)`/g, '<code style="background:#1a1a1a;padding:2px 5px;border-radius:3px">$1</code>');
+    // Bold
+    html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    // Headers
+    html = html.replace(/^### (.+)$/gm, '<h4 style="margin:10px 0 5px;color:#4fc3f7">$1</h4>');
+    html = html.replace(/^## (.+)$/gm, '<h3 style="margin:10px 0 5px;color:#4fc3f7">$1</h3>');
+    html = html.replace(/^# (.+)$/gm, '<h2 style="margin:10px 0 5px;color:#4fc3f7">$1</h2>');
+    // Line breaks
+    html = html.replace(/\n/g, '<br>');
+    // Fix code blocks (undo br inside pre) + wrap with copy button
+    html = html.replace(/<pre><code>([\s\S]*?)<\/code><\/pre>/g, (m, code) => {
+        const clean = code.replace(/<br>/g, '\n');
+        return `<div class="pre-wrap"><button class="btn-copy-code" onclick="copyCode(this)">Kopieren</button><pre><code>${clean}</code></pre></div>`;
+    });
+    return html;
+}
+
+function renderToolUse(contentJson) {
+    if (!contentJson) return '';
+    let blocks;
+    try { blocks = typeof contentJson === 'string' ? JSON.parse(contentJson) : contentJson; } catch { return ''; }
+    if (!Array.isArray(blocks)) return '';
+
+    let html = '';
+    for (const block of blocks) {
+        if (block.type === 'tool_use') {
+            const name = block.name || 'Tool';
+            const inputStr = JSON.stringify(block.input || {}, null, 2);
+            const summary = Object.values(block.input || {}).join(' ').substring(0, 80);
+            html += `<details><summary>🔧 ${escapeHtml(name)}: ${escapeHtml(summary)}...</summary><div class="tool-content">${escapeHtml(inputStr)}</div></details>`;
+        } else if (block.type === 'tool_result') {
+            const content = typeof block.content === 'string' ? block.content : JSON.stringify(block.content || '', null, 2);
+            const preview = (typeof content === 'string' ? content : '').substring(0, 60);
+            html += `<details><summary>📋 Ergebnis: ${escapeHtml(preview)}...</summary><div class="tool-content">${escapeHtml(content)}</div></details>`;
+        }
+    }
+    return html;
+}
+
+async function loadSession() {
+    try {
+        const r = await fetch(`/api/sessions/${SESSION_UUID}`);
+        if (!r.ok) { document.getElementById('conversation').innerHTML = '<div class="loading">Session nicht gefunden</div>'; return; }
+        const d = await r.json();
+        const s = d.session;
+
+        // Page title
+        document.title = `${s.project_name || 'Session'} - Dashboard`;
+
+        // Meta
+        const startDate = s.started_at ? new Date(s.started_at).toLocaleString('de-DE') : '-';
+        const metaItems = [
+            ['Account', s.account],
+            ['Datum', startDate],
+            ['Dauer', s.duration_formatted],
+            ['Model', (s.model || '-').replace('claude-', '')],
+            ['Input', formatTokens(s.total_input_tokens)],
+            ['Output', formatTokens(s.total_output_tokens)],
+            ['Branch', s.git_branch || '-'],
+            ['Version', s.claude_version || '-'],
+            ['Nachrichten', `${s.user_message_count || 0} / ${s.assistant_message_count || 0}`],
+        ];
+        document.getElementById('metaBar').innerHTML = metaItems.map(([l, v]) =>
+            `<div class="meta-item"><span class="meta-label">${l}</span><span class="meta-value">${v}</span></div>`
+        ).join('');
+
+        // Export-Links (topbar)
+        ['Json','Md','Html','Xlsx','Txt'].forEach(fmt => {
+            document.getElementById('exp' + fmt).href = `/api/sessions/${SESSION_UUID}/export?format=${fmt.toLowerCase()}`;
+        });
+        // Export-Links (export-bar)
+        ['Json','Md','Html','Xlsx','Txt'].forEach(fmt => {
+            document.getElementById('exp' + fmt + '2').href = `/api/sessions/${SESSION_UUID}/export?format=${fmt.toLowerCase()}`;
+        });
+
+        // Messages
+        renderMessages(d.messages);
+    } catch(e) {
+        console.error(e);
+        document.getElementById('conversation').innerHTML = '<div class="loading">Fehler beim Laden</div>';
+    }
+}
+
+function formatTokens(n) {
+    if (!n) return '0';
+    if (n >= 1000000) return (n/1000000).toFixed(1) + 'M';
+    if (n >= 1000) return (n/1000).toFixed(1) + 'K';
+    return String(n);
+}
+
+function renderMessages(messages) {
+    const conv = document.getElementById('conversation');
+    if (!messages || !messages.length) { conv.innerHTML = '<div class="loading">Keine Nachrichten</div>'; return; }
+
+    let html = '';
+    for (const msg of messages) {
+        if (msg.type === 'system') {
+            html += `<div class="msg-system">${escapeHtml(msg.content || '')}</div>`;
+            continue;
+        }
+
+        const cls = msg.type === 'user' ? 'msg-user' : 'msg-assistant';
+        const role = msg.type === 'user' ? 'User' : 'Assistant';
+
+        let contentHtml = '';
+        // Text content
+        if (msg.content) {
+            contentHtml += `<div class="msg-content">${renderMarkdown(msg.content)}</div>`;
+        }
+        // Tool-Use (collapsed)
+        if (msg.content_json) {
+            contentHtml += renderToolUse(msg.content_json);
+        }
+
+        const msgIdx = messages.indexOf(msg);
+        html += `<div class="msg ${cls}"><div class="msg-role"><span>${role}</span><button class="btn-copy" onclick="copyMsg(this, ${msgIdx})">Kopieren</button></div>${contentHtml}</div>`;
+    }
+    conv.innerHTML = html;
+    window._messages = messages;
+}
+
+function stripLineNumbers(text) {
+    // Entfernt Zeilennummern-Prefixe wie "     1→", "   42→", "  100\t"
+    return text.replace(/^[ \t]*\d+[→\t]/gm, '');
+}
+
+function copyToClipboard(btn, text) {
+    navigator.clipboard.writeText(text).then(() => {
+        btn.textContent = 'Kopiert!';
+        btn.classList.add('copied');
+        setTimeout(() => { btn.textContent = 'Kopieren'; btn.classList.remove('copied'); }, 1500);
+    });
+}
+
+function copyMsg(btn, idx) {
+    const msg = window._messages[idx];
+    copyToClipboard(btn, stripLineNumbers(msg.content || ''));
+}
+
+function copyCode(btn) {
+    const pre = btn.parentElement.querySelector('code');
+    copyToClipboard(btn, stripLineNumbers(pre.textContent));
+}
+
+loadSession();
+</script>
+{% endblock %}

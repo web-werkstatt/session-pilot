@@ -27,8 +27,30 @@ from services import (
 
 app = Flask(__name__)
 
+# Session-Blueprints registrieren
+from routes import register_blueprints
+register_blueprints(app)
+
 # Pfad zur Gruppen-Konfiguration
 GROUPS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'groups.json')
+
+# Favoriten
+FAVORITES_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'favorites.json')
+
+
+def load_favorites():
+    if os.path.exists(FAVORITES_FILE):
+        try:
+            with open(FAVORITES_FILE, 'r') as f:
+                return json.load(f)
+        except Exception:
+            pass
+    return []
+
+
+def save_favorites(favs):
+    with open(FAVORITES_FILE, 'w') as f:
+        json.dump(favs, f)
 
 
 def load_groups():
@@ -61,14 +83,184 @@ def get_valid_group_ids():
     return [g['id'] for g in groups_data.get('groups', [])]
 
 
+@app.route('/api/favorites')
+def get_favorites():
+    return jsonify(load_favorites())
+
+
+@app.route('/api/favorites', methods=['POST'])
+def toggle_favorite():
+    data = request.get_json()
+    name = data.get('name', '')
+    if not name:
+        return jsonify({"error": "Name fehlt"}), 400
+    favs = load_favorites()
+    if name in favs:
+        favs.remove(name)
+        action = "removed"
+    else:
+        favs.append(name)
+        action = "added"
+    save_favorites(favs)
+    return jsonify({"success": True, "action": action, "favorites": favs})
+
+
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return render_template('index.html', active_page='dashboard')
+
+
+@app.route('/api/info')
+def get_info():
+    """Gibt umfassende Info für ein Projekt zurück"""
+    import subprocess
+    name = request.args.get('name', '')
+
+    if not name:
+        return jsonify({"error": "Name fehlt"}), 400
+
+    # Projektpfad ermitteln (inkl. Sub-Projekte)
+    if '/' in name:
+        parts = name.split('/', 1)
+        parent = parts[0]
+        sub = parts[1]
+        possible = [
+            os.path.join(PROJECTS_DIR, parent, sub),
+            os.path.join(PROJECTS_DIR, parent, "apps", sub),
+            os.path.join(PROJECTS_DIR, parent, "packages", sub),
+            os.path.join(PROJECTS_DIR, parent, "services", sub),
+            os.path.join(PROJECTS_DIR, parent, "modules", sub),
+        ]
+        project_path = next((p for p in possible if os.path.isdir(p)), None)
+    else:
+        project_path = os.path.join(PROJECTS_DIR, name)
+        if not os.path.isdir(project_path):
+            project_path = None
+
+    if not project_path:
+        return jsonify({"description": f"Projekt '{name}' nicht gefunden.", "source": "", "name": name})
+
+    sections = []
+
+    # 1. project.json Metadaten
+    pj = {}
+    json_path = os.path.join(project_path, "project.json")
+    if os.path.exists(json_path):
+        try:
+            with open(json_path, 'r', encoding='utf-8') as f:
+                pj = json.load(f)
+        except Exception:
+            pass
+
+    if pj.get("description"):
+        sections.append(f"<h3>Beschreibung</h3><p>{pj['description']}</p>")
+
+    # Metadaten-Tabelle
+    meta = []
+    if pj.get("project_type"):
+        meta.append(("Typ", pj["project_type"]))
+    if pj.get("group"):
+        meta.append(("Gruppe", pj["group"]))
+    if pj.get("priority"):
+        icons = {"high": "🔴 Hoch", "medium": "🟡 Mittel", "low": "🟢 Niedrig"}
+        meta.append(("Priorität", icons.get(pj["priority"], pj["priority"])))
+    if pj.get("deadline"):
+        meta.append(("Deadline", pj["deadline"]))
+    if pj.get("progress") is not None:
+        meta.append(("Fortschritt", f"{pj['progress']}%"))
+    meta.append(("Pfad", project_path))
+
+    if meta:
+        rows = "".join(f"<tr><td style='color:#888;padding:4px 12px 4px 0'>{k}</td><td style='padding:4px 0'>{v}</td></tr>" for k, v in meta)
+        sections.append(f"<h3>Details</h3><table style='font-size:13px'>{rows}</table>")
+
+    # 2. Technologie-Stack erkennen
+    tech = []
+    markers = {
+        "package.json": "Node.js", "tsconfig.json": "TypeScript", "next.config": "Next.js",
+        "astro.config": "Astro", "nuxt.config": "Nuxt", "vite.config": "Vite",
+        "requirements.txt": "Python", "pyproject.toml": "Python", "Pipfile": "Python",
+        "app.py": "Flask", "manage.py": "Django", "Cargo.toml": "Rust",
+        "go.mod": "Go", "composer.json": "PHP", "Gemfile": "Ruby",
+        "Dockerfile": "Docker", "docker-compose.yml": "Docker Compose",
+        "docker-compose.yaml": "Docker Compose", ".env": "Env Config",
+        "tailwind.config": "Tailwind CSS", "CLAUDE.md": "Claude Code",
+    }
+    try:
+        for f in os.listdir(project_path):
+            for marker, label in markers.items():
+                if f.startswith(marker) and label not in tech:
+                    tech.append(label)
+    except Exception:
+        pass
+    if tech:
+        badges = " ".join(f"<code style='background:#1a3a5c;color:#4fc3f7;padding:2px 8px;border-radius:4px;font-size:12px'>{t}</code>" for t in tech)
+        sections.append(f"<h3>Tech-Stack</h3><p>{badges}</p>")
+
+    # 3. Git Info
+    try:
+        result = subprocess.run(
+            ["git", "log", "--oneline", "--format=%h|%s|%ar", "-n", "5"],
+            cwd=project_path, capture_output=True, text=True, timeout=5
+        )
+        if result.returncode == 0 and result.stdout.strip():
+            commits_html = ""
+            for line in result.stdout.strip().split('\n'):
+                if '|' in line:
+                    parts = line.split('|', 2)
+                    if len(parts) >= 3:
+                        commits_html += f"<div style='display:flex;gap:10px;padding:4px 0;font-size:13px'><code style='color:#888'>{parts[0]}</code><span style='flex:1'>{parts[1]}</span><span style='color:#666;font-size:11px'>{parts[2]}</span></div>"
+            if commits_html:
+                sections.append(f"<h3>Letzte Commits</h3>{commits_html}")
+
+        # Branch
+        branch = subprocess.run(["git", "branch", "--show-current"], cwd=project_path, capture_output=True, text=True, timeout=3)
+        if branch.returncode == 0 and branch.stdout.strip():
+            sections.append(f"<p style='font-size:12px;color:#888'>Branch: <code>{branch.stdout.strip()}</code></p>")
+    except Exception:
+        pass
+
+    # 4. README.md
+    for readme in ["README.md", "readme.md", "Readme.md"]:
+        rpath = os.path.join(project_path, readme)
+        if os.path.exists(rpath):
+            try:
+                with open(rpath, 'r', encoding='utf-8') as f:
+                    content = f.read()[:3000]
+                # Basic Markdown rendering
+                import html as html_mod
+                safe = html_mod.escape(content)
+                safe = safe.replace('\n\n', '</p><p>').replace('\n', '<br>')
+                sections.append(f"<h3>README</h3><div style='font-size:13px;color:#aaa;max-height:300px;overflow-y:auto;background:#141414;padding:12px;border-radius:6px'><p>{safe}</p></div>")
+            except Exception:
+                pass
+            break
+
+    # 5. Screenshots
+    try:
+        screenshots = [f"/{name}/{f}" for f in os.listdir(project_path)
+                       if f.lower().endswith(('.png', '.jpg', '.jpeg', '.webp', '.gif'))]
+        if screenshots:
+            imgs = "".join(f'<img src="{s}" alt="{os.path.basename(s)}" style="max-width:200px;max-height:150px;border-radius:6px;cursor:pointer;margin:4px">' for s in screenshots[:6])
+            sections.append(f"<h3>Screenshots</h3><div style='display:flex;flex-wrap:wrap;gap:8px'>{imgs}</div>")
+    except Exception:
+        pass
+
+    # 6. Meilensteine
+    if pj.get("milestones"):
+        ms_html = "".join(
+            f"<div style='padding:4px 0;font-size:13px'>{'✅' if m.get('done') else '⬜'} {m.get('name','')}</div>"
+            for m in pj["milestones"]
+        )
+        sections.append(f"<h3>Meilensteine</h3>{ms_html}")
+
+    description = "".join(sections) if sections else f"Keine Informationen für '{name}' gefunden."
+    return jsonify({"description": description, "source": "project", "name": name})
 
 
 @app.route('/containers')
 def containers():
-    return render_template('containers.html')
+    return render_template('containers.html', active_page='containers')
 
 
 @app.route('/api/projects/search')
@@ -334,7 +526,7 @@ def save_relations(data):
 @app.route('/dependencies')
 def dependencies_page():
     """Projekt-Abhängigkeiten Seite"""
-    return render_template('dependencies.html')
+    return render_template('dependencies.html', active_page='dependencies')
 
 
 @app.route('/api/relations')
@@ -581,13 +773,13 @@ def get_idea_categories():
 @app.route('/news')
 def news_page():
     """News-Detailseite"""
-    return render_template('news.html')
+    return render_template('news.html', active_page='news')
 
 
 @app.route('/vorlagen')
 def vorlagen_page():
     """Vorlagen-Sammlung"""
-    return render_template('vorlagen.html')
+    return render_template('vorlagen.html', active_page='vorlagen')
 
 
 @app.route('/api/vorlagen')

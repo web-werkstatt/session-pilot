@@ -1,0 +1,386 @@
+{% extends "base.html" %}
+
+{% block title %}Claude Sessions - Dashboard{% endblock %}
+
+{% block breadcrumb %}Claude Sessions{% endblock %}
+
+{% block topbar_actions %}
+<button class="topbar-btn" onclick="openSessionStats()" title="Statistiken">📊</button>
+<button class="topbar-btn btn-sync" onclick="syncSessions()" id="syncBtn" title="Sync">🔄 Sync</button>
+{% endblock %}
+
+{% block head_extra %}
+<style>
+        /* Sync button */
+        .btn-sync.syncing { opacity: 0.5; pointer-events: none; }
+
+        /* Stats Cards */
+        .stats-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; padding: 20px 30px; background: #1a1a1a; border-bottom: 1px solid #2a2a2a; }
+        .stat-card { background: #1e1e1e; border: 1px solid #2a2a2a; border-radius: 10px; padding: 16px 20px; transition: border-color 0.2s; }
+        .stat-card:hover { border-color: #0078d4; }
+        .stat-card .label { color: #888; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+        .stat-card .value { font-size: 24px; font-weight: 700; color: #fff; }
+        .stat-card .sub { color: #666; font-size: 11px; margin-top: 4px; }
+
+        /* Filter Bar */
+        .filter-bar { padding: 16px 30px; background: #161616; border-bottom: 1px solid #2a2a2a; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+        .filter-bar select, .filter-bar input { background: #1e1e1e; color: #ccc; border: 1px solid #333; padding: 7px 12px; border-radius: 6px; font-size: 13px; transition: border-color 0.2s; }
+        .filter-bar select:focus, .filter-bar input:focus { border-color: #0078d4; outline: none; }
+        .filter-bar input[type=date] { width: 145px; }
+        .filter-bar input[type=date]::-webkit-calendar-picker-indicator { filter: invert(0.7); }
+        .filter-pills { display: flex; gap: 6px; margin-left: auto; }
+        .pill { padding: 5px 14px; border-radius: 20px; font-size: 12px; cursor: pointer; border: 1px solid #333; background: transparent; color: #888; transition: all 0.2s; }
+        .pill:hover { border-color: #555; color: #ccc; }
+        .pill.active { background: #0078d4; border-color: #0078d4; color: #fff; }
+
+        /* Row hover actions */
+        .row-actions { opacity: 0; transition: opacity 0.15s; display: flex; gap: 6px; }
+        tr.row:hover .row-actions { opacity: 1; }
+        .row-action { background: #333; color: #aaa; border: none; padding: 3px 10px; border-radius: 4px; cursor: pointer; font-size: 11px; }
+        .row-action:hover { background: #0078d4; color: #fff; }
+
+        /* Project & Account */
+        .project-name { color: #4fc3f7; text-decoration: none; font-weight: 500; }
+        .project-name:hover { text-decoration: underline; }
+        .account-badge { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+        .account-claude { background: rgba(79,195,247,0.12); color: #4fc3f7; }
+        .account-claude1 { background: rgba(207,111,247,0.12); color: #cf6ff7; }
+        .account-minimax { background: rgba(111,247,176,0.12); color: #6ff7b0; }
+
+        /* Duration bar */
+        .dur-wrap { display: flex; align-items: center; gap: 8px; }
+        .dur-bar { height: 4px; border-radius: 2px; background: #0078d4; min-width: 2px; max-width: 60px; opacity: 0.6; }
+        .dur-text { white-space: nowrap; }
+
+        /* Tokens */
+        .token-cell { color: #777; font-size: 12px; font-variant-numeric: tabular-nums; }
+
+        /* Branch pill */
+        .branch { display: inline-block; background: #1e1e1e; border: 1px solid #333; padding: 1px 8px; border-radius: 4px; font-size: 11px; color: #999; font-family: 'Fira Code', monospace; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+        /* Pagination */
+        .pagination { display: flex; gap: 10px; justify-content: center; padding: 20px; align-items: center; }
+        .pagination button { background: #1e1e1e; color: #ccc; border: 1px solid #333; padding: 8px 18px; border-radius: 6px; cursor: pointer; font-size: 13px; transition: all 0.2s; }
+        .pagination button:hover { background: #2a2a2a; border-color: #555; }
+        .pagination button:disabled { opacity: 0.3; cursor: default; }
+        .pagination .page-info { color: #666; font-size: 13px; }
+
+        /* Hover preview */
+        .preview-tooltip { display: none; position: fixed; background: #1e1e1e; border: 1px solid #333; border-radius: 10px; padding: 16px; box-shadow: 0 8px 30px rgba(0,0,0,0.5); z-index: 100; width: 280px; pointer-events: none; }
+        .preview-tooltip.show { display: block; }
+        .preview-tooltip .pt-title { font-size: 14px; font-weight: 600; color: #fff; margin-bottom: 10px; }
+        .preview-tooltip .pt-row { display: flex; justify-content: space-between; padding: 3px 0; font-size: 12px; }
+        .preview-tooltip .pt-label { color: #888; }
+        .preview-tooltip .pt-value { color: #ccc; }
+
+        .loading { text-align: center; padding: 60px; color: #666; font-size: 14px; }
+        .empty-state { text-align: center; padding: 80px 20px; }
+        .empty-state .icon { font-size: 48px; margin-bottom: 16px; opacity: 0.3; }
+        .empty-state .title { font-size: 18px; color: #888; margin-bottom: 8px; }
+        .empty-state .desc { font-size: 13px; color: #555; }
+</style>
+{% endblock %}
+
+{% block content %}
+    <!-- Stats hidden, shown in modal -->
+    <div id="statsRow" style="display:none">
+        <span id="statSessions">-</span>
+        <span id="statProjects">-</span>
+        <span id="statDuration">-</span>
+        <span id="statTokensIn">-</span>
+        <span id="statTokensOut">-</span>
+        <span id="statAccountsSub"></span>
+        <span id="statMsgSub"></span>
+    </div>
+
+    <!-- Stats Modal -->
+    <div class="modal-overlay" id="sessionStatsModal" onclick="if(event.target===this)this.classList.remove('show')">
+        <div class="modal-content" style="max-width:500px">
+            <div class="modal-header">
+                <h2>📊 Session-Statistiken</h2>
+                <button class="modal-close" onclick="document.getElementById('sessionStatsModal').classList.remove('show')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="stats-grid" id="sessionStatsGrid"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="filter-bar">
+        <select id="filterAccount" onchange="resetAndLoad()">
+            <option value="">Alle Accounts</option>
+            <option value="claude">claude</option>
+            <option value="claude1">claude1</option>
+            <option value="minimax">minimax</option>
+        </select>
+        <select id="filterProject" onchange="resetAndLoad()">
+            <option value="">Alle Projekte</option>
+        </select>
+        <input type="text" id="filterSearch" placeholder="Suche..." oninput="debounceSearch()" style="width:180px">
+        <input type="date" id="filterDateFrom" onchange="resetAndLoad()" title="Von">
+        <input type="date" id="filterDateTo" onchange="resetAndLoad()" title="Bis">
+        <div class="filter-pills">
+            <button class="pill active" onclick="setQuickFilter('all', this)">Alle</button>
+            <button class="pill" onclick="setQuickFilter('today', this)">Heute</button>
+            <button class="pill" onclick="setQuickFilter('week', this)">7 Tage</button>
+            <button class="pill" onclick="setQuickFilter('month', this)">30 Tage</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div id="loading" class="loading">Lade Sessions...</div>
+        <table id="sessionsTable" style="display:none">
+            <thead>
+                <tr>
+                    <th onclick="sortBy('project_name')">Projekt <span class="sort-icon" data-col="project_name"></span></th>
+                    <th onclick="sortBy('account')">Account <span class="sort-icon" data-col="account"></span></th>
+                    <th onclick="sortBy('started_at')">Datum <span class="sort-icon" data-col="started_at"></span></th>
+                    <th onclick="sortBy('duration_ms')">Dauer <span class="sort-icon" data-col="duration_ms"></span></th>
+                    <th onclick="sortBy('user_message_count')">Msgs <span class="sort-icon" data-col="user_message_count"></span></th>
+                    <th onclick="sortBy('model')">Model <span class="sort-icon" data-col="model"></span></th>
+                    <th onclick="sortBy('total_output_tokens')">Tokens <span class="sort-icon" data-col="total_output_tokens"></span></th>
+                    <th onclick="sortBy('git_branch')">Branch <span class="sort-icon" data-col="git_branch"></span></th>
+                    <th style="width:80px"></th>
+                </tr>
+            </thead>
+            <tbody id="sessionsBody"></tbody>
+        </table>
+        <div id="emptyState" class="empty-state" style="display:none">
+            <div class="icon">🔍</div>
+            <div class="title">Keine Sessions gefunden</div>
+            <div class="desc">Passe die Filter an oder starte einen Sync.</div>
+        </div>
+    </div>
+
+    <div class="pagination" id="pagination" style="display:none">
+        <button onclick="changePage(-1)" id="prevBtn">Zurück</button>
+        <span class="page-info" id="pageInfo"></span>
+        <button onclick="changePage(1)" id="nextBtn">Weiter</button>
+    </div>
+
+    <div class="preview-tooltip" id="previewTip"></div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function openSessionStats() {
+    var grid = document.getElementById('sessionStatsGrid');
+    grid.innerHTML = [
+        {label:'Sessions', id:'statSessions', color:'#4fc3f7'},
+        {label:'Projekte', id:'statProjects', color:'#fff'},
+        {label:'Gesamt-Dauer', id:'statDuration', color:'#66bb6a'},
+        {label:'Input-Tokens', id:'statTokensIn', color:'#ff9800'},
+        {label:'Output-Tokens', id:'statTokensOut', color:'#cf6ff7'},
+    ].map(function(s) {
+        var val = document.getElementById(s.id).textContent;
+        return '<div class="stat"><span class="stat-label">' + s.label + '</span><span class="stat-value" style="color:' + s.color + '">' + val + '</span></div>';
+    }).join('');
+    document.getElementById('sessionStatsModal').classList.add('show');
+}
+
+let currentOffset = 0;
+const pageSize = 50;
+let totalCount = 0;
+let searchTimer = null;
+let currentSort = 'started_at';
+let currentOrder = 'desc';
+let maxDuration = 1;
+let sessionsData = [];
+
+function sortBy(col) {
+    if (currentSort === col) {
+        currentOrder = currentOrder === 'desc' ? 'asc' : 'desc';
+    } else {
+        currentSort = col;
+        currentOrder = col === 'project_name' || col === 'account' ? 'asc' : 'desc';
+    }
+    currentOffset = 0;
+    updateSortIcons();
+    loadSessions();
+}
+
+function updateSortIcons() {
+    document.querySelectorAll('.sort-icon').forEach(el => {
+        el.textContent = el.dataset.col === currentSort ? (currentOrder === 'desc' ? '▼' : '▲') : '';
+    });
+}
+
+function debounceSearch() {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => { currentOffset = 0; loadSessions(); }, 250);
+}
+
+function resetAndLoad() { currentOffset = 0; loadSessions(); }
+
+function setQuickFilter(range, btn) {
+    document.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    const from = document.getElementById('filterDateFrom');
+    const to = document.getElementById('filterDateTo');
+    const now = new Date();
+    to.value = '';
+    if (range === 'all') { from.value = ''; }
+    else if (range === 'today') { from.value = now.toISOString().slice(0,10); }
+    else if (range === 'week') { now.setDate(now.getDate()-7); from.value = now.toISOString().slice(0,10); }
+    else if (range === 'month') { now.setDate(now.getDate()-30); from.value = now.toISOString().slice(0,10); }
+    resetAndLoad();
+}
+
+async function loadStats() {
+    try {
+        const r = await fetch('/api/sessions/stats');
+        if (!r.ok) throw new Error('Stats failed');
+        const d = await r.json();
+        document.getElementById('statSessions').textContent = d.total_sessions || 0;
+        document.getElementById('statProjects').textContent = d.projects || 0;
+        document.getElementById('statDuration').textContent = d.total_duration_formatted || '0s';
+        document.getElementById('statTokensIn').textContent = d.total_input_formatted || '0';
+        document.getElementById('statTokensOut').textContent = d.total_output_formatted || '0';
+
+        if (d.accounts) {
+            document.getElementById('statAccountsSub').textContent = d.accounts.map(a => `${a.account}: ${a.cnt}`).join(' · ');
+        }
+        if (d.total_user_messages) {
+            document.getElementById('statMsgSub').textContent = `${(d.total_user_messages||0).toLocaleString('de-DE')} Nachrichten`;
+        }
+
+        const sel = document.getElementById('filterProject');
+        if (d.top_projects && sel.options.length <= 1) {
+            d.top_projects.forEach(p => {
+                const opt = document.createElement('option');
+                opt.value = p.name;
+                opt.textContent = `${p.name} (${p.count})`;
+                sel.appendChild(opt);
+            });
+        }
+    } catch(e) { setTimeout(loadStats, 1500); }
+}
+
+async function loadSessions() {
+    const params = new URLSearchParams({ sort: currentSort, order: currentOrder, limit: pageSize, offset: currentOffset });
+    const account = document.getElementById('filterAccount').value;
+    const project = document.getElementById('filterProject').value;
+    const search = document.getElementById('filterSearch').value;
+    const dateFrom = document.getElementById('filterDateFrom').value;
+    const dateTo = document.getElementById('filterDateTo').value;
+    if (account) params.set('account', account);
+    if (project) params.set('project', project);
+    if (search) params.set('search', search);
+    if (dateFrom) params.set('date_from', dateFrom);
+    if (dateTo) params.set('date_to', dateTo);
+
+    try {
+        const r = await fetch('/api/sessions?' + params);
+        const d = await r.json();
+        totalCount = d.total;
+        sessionsData = d.sessions;
+        maxDuration = Math.max(1, ...d.sessions.map(s => s.duration_ms || 0));
+        renderSessions(d.sessions);
+        renderPagination();
+    } catch(e) { console.error(e); }
+}
+
+function renderSessions(sessions) {
+    document.getElementById('loading').style.display = 'none';
+    const table = document.getElementById('sessionsTable');
+    const empty = document.getElementById('emptyState');
+
+    if (!sessions.length) {
+        table.style.display = 'none';
+        empty.style.display = 'block';
+        return;
+    }
+    table.style.display = 'table';
+    empty.style.display = 'none';
+
+    const tbody = document.getElementById('sessionsBody');
+    tbody.innerHTML = sessions.map((s, i) => {
+        const date = s.started_at ? new Date(s.started_at) : null;
+        const dateStr = date ? date.toLocaleDateString('de-DE', {day:'2-digit',month:'2-digit',year:'2-digit'}) : '-';
+        const timeStr = date ? date.toLocaleTimeString('de-DE', {hour:'2-digit',minute:'2-digit'}) : '';
+        const acctClass = 'account-' + (s.account || '').replace(/[^a-z0-9]/g, '');
+        const durPct = Math.min(100, ((s.duration_ms || 0) / maxDuration) * 100);
+        const model = (s.model || '-').replace('claude-', '').replace('opus-4-6', 'Opus').replace('sonnet-4-6', 'Sonnet');
+        const msgCount = (s.user_message_count||0) + (s.assistant_message_count||0);
+        const branch = s.git_branch || '';
+
+        return `<tr class="row" onclick="location.href='/sessions/${s.session_uuid}'" onmouseenter="showPreview(event,${i})" onmouseleave="hidePreview()">
+            <td><a href="/sessions/${s.session_uuid}" class="project-name">${s.project_name || s.project_hash || '-'}</a></td>
+            <td><span class="account-badge ${acctClass}">${s.account}</span></td>
+            <td><span style="color:#ccc">${dateStr}</span> <span style="color:#666;font-size:11px">${timeStr}</span></td>
+            <td><div class="dur-wrap"><div class="dur-bar" style="width:${durPct}%"></div><span class="dur-text">${s.duration_formatted}</span></div></td>
+            <td>${msgCount}</td>
+            <td style="color:#888;font-size:12px">${model}</td>
+            <td class="token-cell">${s.tokens_formatted}</td>
+            <td>${branch ? `<span class="branch" title="${branch}">${branch}</span>` : ''}</td>
+            <td><div class="row-actions"><button class="row-action" onclick="event.stopPropagation();exportSession('${s.session_uuid}','json')">JSON</button><button class="row-action" onclick="event.stopPropagation();exportSession('${s.session_uuid}','md')">MD</button></div></td>
+        </tr>`;
+    }).join('');
+}
+
+function exportSession(uuid, fmt) {
+    window.open(`/api/sessions/${uuid}/export?format=${fmt}`, '_blank');
+}
+
+function showPreview(e, idx) {
+    const s = sessionsData[idx];
+    if (!s) return;
+    const tip = document.getElementById('previewTip');
+    const date = s.started_at ? new Date(s.started_at).toLocaleString('de-DE') : '-';
+    tip.innerHTML = `
+        <div class="pt-title">${s.project_name || '-'}</div>
+        <div class="pt-row"><span class="pt-label">Account</span><span class="pt-value">${s.account}</span></div>
+        <div class="pt-row"><span class="pt-label">Datum</span><span class="pt-value">${date}</span></div>
+        <div class="pt-row"><span class="pt-label">Dauer</span><span class="pt-value">${s.duration_formatted}</span></div>
+        <div class="pt-row"><span class="pt-label">Nachrichten</span><span class="pt-value">${(s.user_message_count||0)} User / ${(s.assistant_message_count||0)} Assistant</span></div>
+        <div class="pt-row"><span class="pt-label">Tokens</span><span class="pt-value">${s.tokens_formatted}</span></div>
+        <div class="pt-row"><span class="pt-label">Model</span><span class="pt-value">${s.model || '-'}</span></div>
+        <div class="pt-row"><span class="pt-label">Branch</span><span class="pt-value">${s.git_branch || '-'}</span></div>
+        <div class="pt-row"><span class="pt-label">Slug</span><span class="pt-value" style="font-style:italic">${s.slug || '-'}</span></div>
+    `;
+    tip.style.top = Math.min(e.clientY + 12, window.innerHeight - 260) + 'px';
+    tip.style.left = Math.min(e.clientX + 16, window.innerWidth - 300) + 'px';
+    tip.classList.add('show');
+}
+
+function hidePreview() { document.getElementById('previewTip').classList.remove('show'); }
+
+function renderPagination() {
+    const pag = document.getElementById('pagination');
+    if (totalCount <= pageSize) { pag.style.display = 'none'; return; }
+    pag.style.display = 'flex';
+    const page = Math.floor(currentOffset / pageSize) + 1;
+    const totalPages = Math.ceil(totalCount / pageSize);
+    document.getElementById('pageInfo').textContent = `${page} / ${totalPages}  (${totalCount})`;
+    document.getElementById('prevBtn').disabled = currentOffset === 0;
+    document.getElementById('nextBtn').disabled = currentOffset + pageSize >= totalCount;
+}
+
+function changePage(dir) {
+    currentOffset = Math.max(0, currentOffset + dir * pageSize);
+    loadSessions();
+    window.scrollTo({top: 0, behavior: 'smooth'});
+}
+
+async function syncSessions() {
+    const btn = document.getElementById('syncBtn');
+    btn.classList.add('syncing');
+    btn.textContent = '⏳ Sync...';
+    try {
+        const r = await fetch('/api/sessions/sync', {method: 'POST'});
+        const d = await r.json();
+        if (d.success) {
+            btn.textContent = `+${d.stats.imported} neu`;
+            loadStats();
+            loadSessions();
+        } else { btn.textContent = 'Fehler'; }
+    } catch(e) { btn.textContent = 'Fehler'; }
+    btn.classList.remove('syncing');
+    setTimeout(() => { btn.textContent = '🔄 Sync'; }, 3000);
+}
+
+loadStats();
+updateSortIcons();
+loadSessions();
+</script>
+{% endblock %}

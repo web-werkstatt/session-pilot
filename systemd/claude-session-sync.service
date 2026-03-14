@@ -1,0 +1,11 @@
+[Unit]
+Description=Claude Session Sync
+After=network.target postgresql.service
+
+[Service]
+Type=oneshot
+User=joshko
+WorkingDirectory=/mnt/projects/project_dashboard
+ExecStart=/usr/bin/python3 /mnt/projects/project_dashboard/sync_sessions.py
+StandardOutput=journal
+StandardError=journal

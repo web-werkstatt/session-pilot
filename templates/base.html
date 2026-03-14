@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <link rel="stylesheet" href="/static/css/dashboard.css">
+    {% block head_extra %}{% endblock %}
+    <title>{% block title %}Dashboard{% endblock %}</title>
+</head>
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-logo">
+            <span class="logo-icon">🖥️</span>
+            <span class="logo-text">Dashboard</span>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="nav-section">
+                <div class="nav-label">Workspace</div>
+                <a href="/" class="nav-item {% if active_page == 'dashboard' %}active{% endif %}">
+                    <span class="nav-icon">📊</span><span class="nav-text">Dashboard</span>
+                </a>
+                <a href="/sessions" class="nav-item {% if active_page == 'sessions' %}active{% endif %}">
+                    <span class="nav-icon">🤖</span><span class="nav-text">Claude Sessions</span>
+                </a>
+            </div>
+            <div class="nav-section">
+                <div class="nav-label">DevOps</div>
+                <a href="/containers" class="nav-item {% if active_page == 'containers' %}active{% endif %}">
+                    <span class="nav-icon">🐳</span><span class="nav-text">Container</span>
+                </a>
+                <a href="/dependencies" class="nav-item {% if active_page == 'dependencies' %}active{% endif %}">
+                    <span class="nav-icon">🔗</span><span class="nav-text">Abhängigkeiten</span>
+                </a>
+            </div>
+            <div class="nav-section">
+                <div class="nav-label">Content</div>
+                <a href="/vorlagen" class="nav-item {% if active_page == 'vorlagen' %}active{% endif %}">
+                    <span class="nav-icon">📦</span><span class="nav-text">Vorlagen</span>
+                </a>
+                <a href="/news" class="nav-item {% if active_page == 'news' %}active{% endif %}">
+                    <span class="nav-icon">📰</span><span class="nav-text">News</span>
+                </a>
+            </div>
+            <div class="nav-section">
+                <div class="nav-label">Extern</div>
+                <a href="http://192.168.100.93:9000" target="_blank" class="nav-item">
+                    <span class="nav-icon">⚙️</span><span class="nav-text">Portainer</span>
+                </a>
+                <a href="http://192.168.100.93:3000" target="_blank" class="nav-item">
+                    <span class="nav-icon">🦊</span><span class="nav-text">Gitea</span>
+                </a>
+            </div>
+        </nav>
+        <div class="sidebar-footer">
+            <span class="timestamp" id="timestamp"></span>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Top Bar -->
+        <header class="topbar">
+            <button class="sidebar-toggle" onclick="toggleSidebar()" title="Sidebar">☰</button>
+            <div class="breadcrumb">
+                <span>Workspace</span>
+                <span class="bc-sep">/</span>
+                <span class="bc-active">{% block breadcrumb %}Dashboard{% endblock %}</span>
+            </div>
+            <div class="topbar-search" onclick="openCommandPalette()">
+                <span>🔍</span>
+                <span class="topbar-search-text">Suche...</span>
+                <kbd>Ctrl+K</kbd>
+            </div>
+            <div class="topbar-actions">
+                {% block topbar_actions %}{% endblock %}
+            </div>
+        </header>
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Lightbox -->
+    <div class="lightbox" id="lightbox" onclick="closeLightbox()">
+        <img id="lightboxImg" src="" alt="">
+    </div>
+
+    <!-- Command Palette -->
+    <div class="cmd-overlay" id="cmdOverlay" onclick="if(event.target===this)closeCommandPalette()">
+        <div class="cmd-palette">
+            <div class="cmd-search">
+                <span>🔍</span>
+                <input type="text" id="cmdInput" placeholder="Suche Projekte, Sessions, Container..." oninput="handleCmdSearch()" autocomplete="off">
+            </div>
+            <div class="cmd-results" id="cmdResults"></div>
+        </div>
+    </div>
+
+    <script>
+    // Sidebar Toggle
+    function toggleSidebar() {
+        document.getElementById('sidebar').classList.toggle('collapsed');
+        document.querySelector('.main-content').classList.toggle('sidebar-collapsed');
+        localStorage.setItem('sidebar-collapsed', document.getElementById('sidebar').classList.contains('collapsed'));
+    }
+    if (localStorage.getItem('sidebar-collapsed') === 'true') {
+        document.getElementById('sidebar').classList.add('collapsed');
+        document.querySelector('.main-content').classList.add('sidebar-collapsed');
+    }
+
+    // Lightbox
+    function openLightbox(src) {
+        document.getElementById('lightboxImg').src = src;
+        document.getElementById('lightbox').classList.add('show');
+    }
+    function closeLightbox() { document.getElementById('lightbox').classList.remove('show'); }
+    document.addEventListener('click', function(e) {
+        if (e.target.tagName === 'IMG' && !e.target.closest('.lightbox') && !e.target.closest('.sidebar')) {
+            e.preventDefault(); e.stopPropagation(); openLightbox(e.target.src);
+        }
+    }, true);
+
+    // Command Palette
+    function openCommandPalette() {
+        document.getElementById('cmdOverlay').classList.add('show');
+        document.getElementById('cmdInput').value = '';
+        document.getElementById('cmdInput').focus();
+        resetCmdResults();
+    }
+    function closeCommandPalette() { document.getElementById('cmdOverlay').classList.remove('show'); }
+    function resetCmdResults() {
+        document.getElementById('cmdResults').innerHTML =
+            '<div class="cmd-group"><div class="cmd-group-label">Schnellzugriff</div>' +
+            '<div class="cmd-item" onclick="location.href=\'/\'">📊 Dashboard</div>' +
+            '<div class="cmd-item" onclick="location.href=\'/sessions\'">🤖 Claude Sessions</div>' +
+            '<div class="cmd-item" onclick="location.href=\'/containers\'">🐳 Container</div>' +
+            '<div class="cmd-item" onclick="location.href=\'/dependencies\'">🔗 Abhängigkeiten</div>' +
+            '<div class="cmd-item" onclick="location.href=\'/vorlagen\'">📦 Vorlagen</div>' +
+            '<div class="cmd-item" onclick="location.href=\'/news\'">📰 News</div></div>';
+    }
+    function handleCmdSearch() {
+        var q = document.getElementById('cmdInput').value.trim().toLowerCase();
+        if (!q) { resetCmdResults(); return; }
+        fetch('/api/projects/search?q=' + encodeURIComponent(q) + '&limit=8')
+            .then(function(r) { return r.json(); })
+            .then(function(results) {
+                var html = '';
+                if (results.length > 0) {
+                    html += '<div class="cmd-group"><div class="cmd-group-label">Projekte</div>';
+                    results.forEach(function(p) {
+                        html += '<div class="cmd-item" onclick="location.href=\'/\'">📁 ' + p.name + ' <span style="color:#666;font-size:11px;margin-left:8px">' + (p.description || '') + '</span></div>';
+                    });
+                    html += '</div>';
+                }
+                var statics = [
+                    {label:'📊 Dashboard', url:'/'},
+                    {label:'🤖 Claude Sessions', url:'/sessions'},
+                    {label:'🐳 Container', url:'/containers'},
+                    {label:'🔗 Abhängigkeiten', url:'/dependencies'},
+                    {label:'📦 Vorlagen', url:'/vorlagen'},
+                    {label:'📰 News', url:'/news'},
+                ].filter(function(s) { return s.label.toLowerCase().includes(q); });
+                if (statics.length > 0) {
+                    html += '<div class="cmd-group"><div class="cmd-group-label">Seiten</div>';
+                    statics.forEach(function(s) { html += '<div class="cmd-item" onclick="location.href=\'' + s.url + '\'">' + s.label + '</div>'; });
+                    html += '</div>';
+                }
+                if (!html) html = '<div style="padding:20px;text-align:center;color:#555">Keine Ergebnisse</div>';
+                document.getElementById('cmdResults').innerHTML = html;
+            });
+    }
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        if ((e.key === 'k' && (e.ctrlKey || e.metaKey)) || (e.key === '/' && !['INPUT','TEXTAREA'].includes(document.activeElement.tagName))) {
+            e.preventDefault();
+            document.getElementById('cmdOverlay').classList.contains('show') ? closeCommandPalette() : openCommandPalette();
+        }
+        if (e.key === 'Escape') {
+            if (document.getElementById('lightbox').classList.contains('show')) { closeLightbox(); e.stopPropagation(); }
+            else if (document.getElementById('cmdOverlay').classList.contains('show')) { closeCommandPalette(); e.stopPropagation(); }
+        }
+    }, true);
+
+    // Global: Sticky thead Position dynamisch berechnen
+    function updateStickyPositions() {
+        var topbar = document.querySelector('.topbar');
+        if (!topbar) return;
+        var t = topbar.offsetHeight;
+        var cumTop = t;
+        // Sticky-Elemente: nur sichtbare zaehlen
+        var stickyEls = ['.news-ticker-bar', '.tab-bar', '.stats-bar', '.stats-row', '.filter-bar'];
+        stickyEls.forEach(function(sel) {
+            document.querySelectorAll(sel).forEach(function(el) {
+                if (el && el.offsetHeight > 0 && el.offsetParent !== null) {
+                    el.style.top = cumTop + 'px';
+                    cumTop += el.offsetHeight;
+                }
+            });
+        });
+        // Jeder thead: berechne eigenen top basierend auf sichtbaren Geschwistern davor
+        document.querySelectorAll('thead').forEach(function(thead) {
+            // Finde den naechsten sichtbaren sticky-Eltern-Container
+            var table = thead.closest('table');
+            if (!table || table.offsetParent === null) return;
+            thead.style.top = cumTop + 'px';
+        });
+    }
+    window.addEventListener('resize', updateStickyPositions);
+    setInterval(updateStickyPositions, 500);
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

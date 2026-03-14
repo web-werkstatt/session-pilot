@@ -31,3 +31,13 @@ Thumbs.db
 
 # Local config
 *.local
+
+# Playwright screenshots
+.playwright-mcp/
+dashboard-full.png
+
+# User data
+favorites.json
+
+# Claude settings
+.claude/settings.local.json

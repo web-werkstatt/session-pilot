@@ -15,3 +15,19 @@ PORT = 5055
 GITEA_URL = "https://git.webideas24.com"
 GITEA_TOKEN = "b09199352f9f13608490a4736a89d76438aea320"
 GITEA_USER = "webideas24"
+
+# PostgreSQL
+DB_CONFIG = {
+    "host": "localhost",
+    "port": 5432,
+    "dbname": "project_dashboard",
+    "user": "autodns",
+    "password": "autodns_dev_2025"
+}
+
+# Claude Code Accounts
+CLAUDE_ACCOUNTS = [
+    {"name": "claude", "config_dir": os.path.expanduser("~/.claude")},
+    {"name": "claude1", "config_dir": os.path.expanduser("~/.claude-account1")},
+    {"name": "minimax", "config_dir": os.path.expanduser("~/.claude-minimax")},
+]
