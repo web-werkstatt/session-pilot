@@ -13,11 +13,13 @@
 {% endblock %}
 
 {% block head_extra %}
+<link rel="stylesheet" href="/static/css/documents.css">
 <style>
     .project-hero { padding: 24px; border-bottom: 1px solid #1e1e1e; }
     .project-hero h1 { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
     .project-hero .subtitle { color: #888; font-size: 14px; }
-    .project-body { padding: 24px; max-width: 900px; }
+    .project-body { padding: 24px; }
+    .project-body .project-info-section { max-width: 900px; }
     .project-body h3 {
         color: #4fc3f7; font-size: 14px; margin: 28px 0 12px;
         border-bottom: 1px solid #1e1e1e; padding-bottom: 6px;
@@ -67,11 +69,6 @@
     .readme-actions .btn-cancel { background: #333; border: none; color: #ccc; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 12px; }
     .readme-actions .status { color: #666; font-size: 12px; margin-left: auto; }
     #readmeEditor { display: none; }
-    .export-hint {
-        background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 8px;
-        padding: 16px; margin-top: 30px; font-size: 13px; color: #666;
-    }
-    .export-hint strong { color: #888; }
 </style>
 {% endblock %}
 
@@ -81,10 +78,81 @@
         <div class="subtitle" id="projectSubtitle">Lade Projekt-Informationen...</div>
     </div>
 
-    <div class="project-body" id="projectBody">
-        <div class="loading">
-            <div class="spinner"></div>
-            Lade...
+    <div class="project-body">
+        <div class="project-info-section" id="projectBody">
+            <div class="loading">
+                <div class="spinner"></div>
+                Lade...
+            </div>
+        </div>
+
+        <!-- Dokumenten-System -->
+        <h3>Dokumente</h3>
+        <div class="doc-status-bar" id="docStatusBar" style="display:none"></div>
+        <div class="doc-stats" id="docStatsBar"></div>
+        <div class="doc-tabs">
+            <button class="doc-tab active" data-tab="browser" onclick="switchDocTab('browser')">Browser</button>
+            <button class="doc-tab" data-tab="gallery" onclick="switchDocTab('gallery')">Galerie</button>
+            <button class="doc-tab" data-tab="export" onclick="switchDocTab('export'); renderExportFileList()">Export</button>
+        </div>
+
+        <!-- Tab: Browser -->
+        <div class="doc-tab-content active" id="docTab_browser">
+            <div class="doc-browser">
+                <div class="doc-tree">
+                    <div class="doc-tree-header">
+                        <input type="text" class="doc-tree-search" id="docTreeSearch" placeholder="Datei suchen..." oninput="filterDocTree()">
+                    </div>
+                    <div class="doc-tree-body" id="docTreeBody">
+                        <div style="padding:20px;text-align:center;color:#555;font-size:13px">Lade...</div>
+                    </div>
+                </div>
+                <div class="doc-viewer">
+                    <div class="doc-viewer-header">
+                        <span class="doc-viewer-path" id="docViewerPath">Datei auswählen...</span>
+                        <div class="doc-viewer-actions" id="docViewerActions"></div>
+                    </div>
+                    <div class="doc-viewer-body" id="docViewerBody">
+                        <div class="doc-viewer-empty">Datei im Baum auswählen</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Galerie -->
+        <div class="doc-tab-content" id="docTab_gallery">
+            <div class="doc-gallery" id="docGallery">
+                <div style="padding:30px;text-align:center;color:#555;font-size:13px">Lade...</div>
+            </div>
+        </div>
+
+        <!-- Tab: Export -->
+        <div class="doc-tab-content" id="docTab_export">
+            <div style="max-width:700px">
+                <div class="export-select-bar">
+                    <button class="export-select-btn" onclick="selectAllExport(true)">Alle</button>
+                    <button class="export-select-btn" onclick="selectAllExport(false)">Keine</button>
+                    <span class="export-count" id="exportCount"></span>
+                </div>
+                <div class="export-file-list" id="exportFileList"></div>
+                <div class="export-format-group">
+                    <button class="export-format-btn active" data-format="zip" onclick="selectExportFormat('zip')">
+                        <span class="format-icon">&#128230;</span>ZIP<br><span class="format-label">Archiv</span>
+                    </button>
+                    <button class="export-format-btn" data-format="html" onclick="selectExportFormat('html')">
+                        <span class="format-icon">&#127760;</span>HTML<br><span class="format-label">Bundle</span>
+                    </button>
+                    <button class="export-format-btn" data-format="markdown" onclick="selectExportFormat('markdown')">
+                        <span class="format-icon">&#128221;</span>Markdown<br><span class="format-label">Zusammengefügt</span>
+                    </button>
+                    <button class="export-format-btn" data-format="json" onclick="selectExportFormat('json')">
+                        <span class="format-icon">&#128203;</span>JSON<br><span class="format-label">Struktur</span>
+                    </button>
+                </div>
+                <div class="modal-actions">
+                    <button class="btn-save" onclick="executeExport()">Exportieren</button>
+                </div>
+            </div>
         </div>
     </div>
 {% endblock %}
@@ -93,6 +161,7 @@
 <!-- EasyMDE Markdown Editor -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.css">
 <script src="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.js"></script>
+<script src="/static/js/documents.js"></script>
 
 <script>
 const PROJECT_NAME = "{{ project_name }}";
@@ -122,18 +191,11 @@ async function loadProjectInfo() {
         <div id="readmeRendered" class="readme-rendered">Lade README...</div>
         <div id="readmeEditor"><textarea id="readmeTextarea"></textarea></div>`;
 
-        // Export-Hinweis
-        html += `<div class="export-hint">
-            <strong>Export-Optionen:</strong>
-            <a href="/api/project/${encodeURIComponent(PROJECT_NAME)}/export?format=html" target="_blank">📄 HTML</a> ·
-            <a href="/api/project/${encodeURIComponent(PROJECT_NAME)}/export?format=md" target="_blank">📝 Markdown</a> ·
-            <a href="/api/project/${encodeURIComponent(PROJECT_NAME)}/export?format=json" target="_blank">📋 JSON</a>
-        </div>`;
-
         document.getElementById('projectBody').innerHTML = html;
 
-        // README separat laden (gerendert)
+        // README + Dokumente parallel laden
         loadReadme();
+        loadDocuments();
     } catch(e) {
         document.getElementById('projectBody').innerHTML = '<div class="loading" style="color:#ff6666">Fehler: ' + e + '</div>';
     }
