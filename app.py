@@ -135,7 +135,11 @@ def get_info():
     else:
         project_path = os.path.join(PROJECTS_DIR, name)
         if not os.path.isdir(project_path):
-            project_path = None
+            # Fallback: Bindestrich <-> Underscore
+            alt = name.replace('-', '_') if '-' in name else name.replace('_', '-')
+            project_path = os.path.join(PROJECTS_DIR, alt)
+            if not os.path.isdir(project_path):
+                project_path = None
 
     if not project_path:
         return jsonify({"description": f"Projekt '{name}' nicht gefunden.", "source": "", "name": name})
@@ -254,8 +258,155 @@ def get_info():
         )
         sections.append(f"<h3>Meilensteine</h3>{ms_html}")
 
+    # 7. Beziehungen
+    try:
+        rel_data = load_relations()
+        outgoing = [r for r in rel_data.get("relations", []) if r.get("source") == name]
+        incoming = [r for r in rel_data.get("relations", []) if r.get("target") == name]
+        rel_types = {t["id"]: t for t in rel_data.get("relation_types", [])}
+        if outgoing or incoming:
+            rel_html = ""
+            for r in outgoing:
+                t = rel_types.get(r.get("type"), {})
+                rel_html += f"<div style='padding:4px 0;font-size:13px'>{t.get('icon','🔗')} {t.get('name',r.get('type',''))} → <strong>{r.get('target','')}</strong>{' — ' + r.get('note') if r.get('note') else ''}</div>"
+            for r in incoming:
+                t = rel_types.get(r.get("type"), {})
+                rel_html += f"<div style='padding:4px 0;font-size:13px'>{t.get('icon','🔗')} {t.get('name',r.get('type',''))} ← <strong>{r.get('source','')}</strong>{' — ' + r.get('note') if r.get('note') else ''}</div>"
+            sections.append(f"<h3>Beziehungen</h3>{rel_html}")
+    except Exception:
+        pass
+
+    # 8. Claude Sessions (letzte 5)
+    try:
+        from services.db_service import execute
+        sessions = execute(
+            """SELECT session_uuid, slug, started_at, duration_ms, model,
+                      user_message_count, assistant_message_count, total_input_tokens, total_output_tokens
+               FROM sessions WHERE project_name ILIKE %s
+               ORDER BY started_at DESC LIMIT 5""",
+            (f"%{name.replace('_','-').replace('proj-','proj_')}%",), fetch=True
+        )
+        if sessions:
+            sess_html = ""
+            for s in sessions:
+                dt = s["started_at"].strftime("%d.%m.%y %H:%M") if s.get("started_at") else "-"
+                dur_s = (s.get("duration_ms") or 0) // 1000
+                dur = f"{dur_s // 3600}h {(dur_s % 3600) // 60}m" if dur_s >= 3600 else f"{dur_s // 60}m {dur_s % 60}s" if dur_s >= 60 else f"{dur_s}s"
+                msgs = (s.get("user_message_count") or 0) + (s.get("assistant_message_count") or 0)
+                sess_html += f"<a href='/sessions/{s['session_uuid']}' style='display:flex;gap:12px;padding:6px 0;font-size:13px;color:#ccc;text-decoration:none'>"
+                sess_html += f"<span style='color:#888'>{dt}</span><span>{dur}</span><span style='color:#888'>{msgs} msgs</span>"
+                sess_html += f"<span style='color:#666;margin-left:auto'>{(s.get('model') or '').replace('claude-','')}</span></a>"
+            sections.append(f"<h3>Claude Sessions</h3>{sess_html}")
+    except Exception:
+        pass
+
+    # 9. Zugehörige Container
+    try:
+        from services.docker_service import get_docker_containers
+        containers = get_docker_containers()
+        proj_containers = [c for c in containers if name.lower().replace('_', '-') in c.get("name", "").lower() or name.lower().replace('-', '_') in c.get("name", "").lower()]
+        if proj_containers:
+            cont_html = ""
+            for c in proj_containers:
+                status_icon = "🟢" if "Running" in c.get("status", "") or "Healthy" in c.get("status", "") else "🔴"
+                port = f":{c['port']}" if c.get("port") else ""
+                cont_html += f"<div style='display:flex;gap:10px;padding:4px 0;font-size:13px'>{status_icon} <strong>{c.get('name','')}</strong><span style='color:#888'>{c.get('image','')}</span><span style='color:#666'>{port}</span></div>"
+            sections.append(f"<h3>Container</h3>{cont_html}")
+    except Exception:
+        pass
+
     description = "".join(sections) if sections else f"Keine Informationen für '{name}' gefunden."
     return jsonify({"description": description, "source": "project", "name": name})
+
+
+@app.route('/project/<path:name>')
+def project_detail(name):
+    return render_template('project_detail.html', project_name=name, active_page='dashboard')
+
+
+@app.route('/api/project/<path:name>/export')
+def export_project(name):
+    """Exportiert Projekt-Infos als HTML/MD/JSON"""
+    fmt = request.args.get('format', 'json')
+
+    # Info laden (intern)
+    import urllib.parse
+    with app.test_request_context(f'/api/info?name={urllib.parse.quote(name)}'):
+        info_resp = get_info()
+        info_data = info_resp.get_json()
+
+    if fmt == 'json':
+        # Projekt-Daten als JSON
+        pj = {}
+        project_path = os.path.join(PROJECTS_DIR, name)
+        if not os.path.isdir(project_path):
+            alt = name.replace('-', '_') if '-' in name else name.replace('_', '-')
+            project_path = os.path.join(PROJECTS_DIR, alt)
+        json_path = os.path.join(project_path, "project.json")
+        if os.path.exists(json_path):
+            try:
+                with open(json_path, 'r', encoding='utf-8') as f:
+                    pj = json.load(f)
+            except Exception:
+                pass
+        from flask import Response
+        return Response(
+            json.dumps({"project": pj, "info_html": info_data.get("description", "")}, indent=2, ensure_ascii=False, default=str),
+            mimetype="application/json",
+            headers={"Content-Disposition": f"attachment; filename={name}.json"}
+        )
+
+    elif fmt == 'md':
+        # Markdown Export
+        import re
+        html = info_data.get("description", "")
+        # Einfache HTML->MD Konvertierung
+        md = html
+        md = re.sub(r'<h3>(.*?)</h3>', r'\n## \1\n', md)
+        md = re.sub(r'<strong>(.*?)</strong>', r'**\1**', md)
+        md = re.sub(r'<code[^>]*>(.*?)</code>', r'`\1`', md)
+        md = re.sub(r'<img[^>]*src="([^"]*)"[^>]*>', r'![](\1)', md)
+        md = re.sub(r'<a[^>]*href="([^"]*)"[^>]*>(.*?)</a>', r'[\2](\1)', md)
+        md = re.sub(r'<br\s*/?>', '\n', md)
+        md = re.sub(r'<[^>]+>', '', md)
+        md = f"# {name}\n\n{md}"
+        from flask import Response
+        return Response(md, mimetype="text/markdown",
+                       headers={"Content-Disposition": f"attachment; filename={name}.md"})
+
+    elif fmt == 'html':
+        # Standalone HTML Export (Dark Theme, druckbar)
+        html_content = info_data.get("description", "")
+        export_html = f"""<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>{name}</title>
+<style>
+body {{ font-family: 'Segoe UI', sans-serif; background: #1e1e1e; color: #ddd; max-width: 900px; margin: 0 auto; padding: 30px; }}
+h1 {{ color: #4fc3f7; margin-bottom: 20px; }}
+h3 {{ color: #4fc3f7; margin: 25px 0 10px; border-bottom: 1px solid #333; padding-bottom: 5px; }}
+table {{ font-size: 14px; }}
+code {{ background: #141414; color: #4fc3f7; padding: 2px 8px; border-radius: 4px; font-size: 12px; }}
+img {{ max-width: 300px; border-radius: 8px; margin: 6px; cursor: pointer; }}
+a {{ color: #4fc3f7; text-decoration: none; }}
+pre {{ background: #141414; padding: 12px; border-radius: 6px; overflow-x: auto; font-size: 13px; }}
+@media print {{ body {{ background: white; color: black; }} h1,h3 {{ color: #0078d4; }} }}
+</style>
+</head>
+<body>
+<h1>{name}</h1>
+{html_content}
+<footer style="margin-top:40px;padding-top:20px;border-top:1px solid #333;color:#666;font-size:12px">
+Generiert am {datetime.now().strftime('%d.%m.%Y %H:%M')} — Projekt-Dashboard
+</footer>
+</body>
+</html>"""
+        from flask import Response
+        return Response(export_html, mimetype="text/html",
+                       headers={"Content-Disposition": f"attachment; filename={name}.html"})
+
+    return jsonify({"error": f"Unbekanntes Format: {fmt}"}), 400
 
 
 @app.route('/containers')

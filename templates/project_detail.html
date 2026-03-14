@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% block title %}{{ project_name }} - Dashboard{% endblock %}
+
+{% block breadcrumb %}<a href="/" style="color:#4fc3f7;text-decoration:none">Projekte</a> <span class="bc-sep">/</span> {{ project_name }}{% endblock %}
+
+{% block topbar_actions %}
+<button class="topbar-btn" onclick="exportProject('html')" title="HTML Export">📄 HTML</button>
+<button class="topbar-btn" onclick="exportProject('md')" title="Markdown Export">📝 MD</button>
+<button class="topbar-btn" onclick="exportProject('json')" title="JSON Export">📋 JSON</button>
+<button class="topbar-btn" onclick="openEditModal('{{ project_name }}')" title="Bearbeiten">✏️</button>
+{% endblock %}
+
+{% block head_extra %}
+<style>
+    .project-hero { padding: 24px; border-bottom: 1px solid #1e1e1e; }
+    .project-hero h1 { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
+    .project-hero .subtitle { color: #888; font-size: 14px; }
+    .project-body { padding: 24px; max-width: 900px; }
+    .project-body h3 {
+        color: #4fc3f7; font-size: 14px; margin: 28px 0 12px;
+        border-bottom: 1px solid #1e1e1e; padding-bottom: 6px;
+        text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .project-body table { margin-bottom: 12px; }
+    .project-body table td { padding: 5px 14px 5px 0; font-size: 13px; border: none; }
+    .project-body code {
+        background: #1a3a5c; color: #4fc3f7; padding: 2px 8px;
+        border-radius: 4px; font-size: 12px; display: inline-block; margin: 2px;
+    }
+    .project-body img {
+        max-width: 220px; max-height: 160px; border-radius: 8px;
+        cursor: pointer; margin: 4px; border: 1px solid #2a2a2a;
+        transition: transform 0.2s;
+    }
+    .project-body img:hover { transform: scale(1.03); }
+    .project-body pre {
+        background: #141414; padding: 12px; border-radius: 6px;
+        overflow-x: auto; font-size: 13px; max-height: 300px;
+        overflow-y: auto; color: #aaa;
+    }
+    .project-body a { color: #4fc3f7; text-decoration: none; }
+    .project-body a:hover { text-decoration: underline; }
+    .loading { text-align: center; padding: 60px; color: #666; }
+    .export-hint {
+        background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 8px;
+        padding: 16px; margin-top: 30px; font-size: 13px; color: #666;
+    }
+    .export-hint strong { color: #888; }
+</style>
+{% endblock %}
+
+{% block content %}
+    <div class="project-hero">
+        <h1 id="projectTitle">{{ project_name }}</h1>
+        <div class="subtitle" id="projectSubtitle">Lade Projekt-Informationen...</div>
+    </div>
+
+    <div class="project-body" id="projectBody">
+        <div class="loading">
+            <div class="spinner"></div>
+            Lade...
+        </div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const PROJECT_NAME = "{{ project_name }}";
+
+async function loadProjectInfo() {
+    try {
+        const r = await fetch('/api/info?name=' + encodeURIComponent(PROJECT_NAME));
+        const d = await r.json();
+
+        // Beschreibung aus erstem <p> extrahieren für Subtitle
+        const match = d.description.match(/<h3>Beschreibung<\/h3><p>(.*?)<\/p>/);
+        if (match) {
+            document.getElementById('projectSubtitle').textContent = match[1];
+        } else {
+            document.getElementById('projectSubtitle').textContent = '';
+        }
+
+        // Body rendern
+        let html = d.description;
+
+        // Export-Hinweis anhängen
+        html += `<div class="export-hint">
+            <strong>Export-Optionen:</strong> Diese Seite kann als
+            <a href="/api/project/${encodeURIComponent(PROJECT_NAME)}/export?format=html" target="_blank">Standalone HTML</a>,
+            <a href="/api/project/${encodeURIComponent(PROJECT_NAME)}/export?format=md" target="_blank">Markdown</a> oder
+            <a href="/api/project/${encodeURIComponent(PROJECT_NAME)}/export?format=json" target="_blank">JSON</a>
+            exportiert werden. Die HTML-Version kann direkt auf Vermarktungsseiten eingebettet oder als PDF gedruckt werden.
+        </div>`;
+
+        document.getElementById('projectBody').innerHTML = html;
+    } catch(e) {
+        document.getElementById('projectBody').innerHTML = '<div class="loading" style="color:#ff6666">Fehler: ' + e + '</div>';
+    }
+}
+
+function exportProject(fmt) {
+    window.open('/api/project/' + encodeURIComponent(PROJECT_NAME) + '/export?format=' + fmt, '_blank');
+}
+
+loadProjectInfo();
+</script>
+{% endblock %}

@@ -566,7 +566,7 @@ function renderProject(proj, isNew) {
 
     const isFav = favorites.includes(proj.name);
     const favBtn = `<button class="fav-btn ${isFav ? 'active' : ''}" onclick="event.stopPropagation();toggleFavorite('${proj.name}',this)" title="Favorit">${isFav ? '★' : '☆'}</button>`;
-    const projInfoIcon = `<span class="info-icon" onclick="showInfo('project','${proj.name}')" title="Details">ℹ️</span>`;
+    const projInfoIcon = `<span class="info-icon" onclick="event.stopPropagation();location.href='/project/${encodeURIComponent(proj.name)}'" title="Details">ℹ️</span>`;
 
     const relationBadges = getRelationBadges(proj.name);
 
@@ -576,7 +576,7 @@ function renderProject(proj, isNew) {
     const ctxMenu = `<div class="row-ctx">
         <button class="row-ctx-btn" onclick="openRowCtx(event,'${eName}')" title="Aktionen">⋯</button>
         <div class="row-ctx-menu">
-            <div class="row-ctx-item" onclick="event.stopPropagation();showInfo('project','${eName}')">ℹ️ Details</div>
+            <div class="row-ctx-item" onclick="event.stopPropagation();location.href='/project/${encodeURIComponent(eName)}'">ℹ️ Details</div>
             <div class="row-ctx-item" onclick="event.stopPropagation();openEditModal('${eName}')">✏️ Bearbeiten</div>
             <div class="row-ctx-item" onclick="event.stopPropagation();toggleFavorite('${eName}',null)">⭐ Favorit</div>
         </div>
