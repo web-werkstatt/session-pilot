@@ -1,0 +1,44 @@
+services:
+  dashboard:
+    build: .
+    container_name: project-dashboard
+    restart: unless-stopped
+    ports:
+      - "${DASHBOARD_PORT:-5055}:5055"
+    env_file:
+      - .env
+    volumes:
+      # Projekt-Verzeichnis einbinden (anpassen!)
+      - ${DASHBOARD_PROJECTS_DIR:-/mnt/projects}:/mnt/projects:ro
+      # JSON-Datenspeicher persistent halten
+      - ./groups.json:/app/groups.json
+      - ./relations.json:/app/relations.json
+      - ./ideas.json:/app/ideas.json
+      # Docker-Socket für Container-Status
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      # Claude Sessions einbinden (optional)
+      - ${HOME}/.claude:/home/user/.claude:ro
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:16-alpine
+    container_name: project-dashboard-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-project_dashboard}
+      POSTGRES_USER: ${DB_USER:-dashboard}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-changeme}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:${DB_PORT:-5433}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-dashboard}"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  pgdata:

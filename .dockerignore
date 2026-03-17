@@ -1,0 +1,14 @@
+.git
+.claude
+__pycache__
+*.pyc
+*.log
+*.png
+*.jpg
+.env
+.venv
+venv
+node_modules
+.playwright-mcp
+.project_dashboard_cache.json
+favorites.json
