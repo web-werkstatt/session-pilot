@@ -216,6 +216,17 @@ body {
     transition: background 0.1s;
 }
 .cmd-item:hover { background: #252525; }
+.cmd-search-result { flex-direction: column; gap: 2px; }
+.cmd-search-tabs {
+    display: flex; gap: 0; border-bottom: 1px solid #222; padding: 0 8px;
+}
+.cmd-tab {
+    padding: 6px 14px; font-size: 12px; color: #666; background: none;
+    border: none; border-bottom: 2px solid transparent; cursor: pointer;
+}
+.cmd-tab.active { color: #4fc3f7; border-bottom-color: #4fc3f7; }
+.cmd-tab:hover { color: #aaa; }
+.cmd-results { max-height: 400px; }
 
 /* ===== OLD HEADER (hidden, kept for compat) ===== */
 .header { display: none; }

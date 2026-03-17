@@ -100,6 +100,10 @@
                 <span>🔍</span>
                 <input type="text" id="cmdInput" placeholder="Suche Projekte, Sessions, Container..." oninput="handleCmdSearch()" autocomplete="off">
             </div>
+            <div class="cmd-search-tabs" id="cmdTabs" style="display:none">
+                <button class="cmd-tab active" data-tab="projects" onclick="switchCmdTab('projects')">Projekte</button>
+                <button class="cmd-tab" data-tab="fulltext" onclick="switchCmdTab('fulltext')">Volltextsuche</button>
+            </div>
             <div class="cmd-results" id="cmdResults"></div>
         </div>
     </div>
@@ -215,9 +219,35 @@
             '<div class="cmd-item" onclick="location.href=\'/vorlagen\'">📦 Vorlagen</div>' +
             '<div class="cmd-item" onclick="location.href=\'/news\'">📰 News</div></div>';
     }
+    var cmdActiveTab = 'projects';
+    var cmdSearchTimer = null;
+
+    function switchCmdTab(tab) {
+        cmdActiveTab = tab;
+        document.querySelectorAll('.cmd-tab').forEach(function(t) { t.classList.toggle('active', t.dataset.tab === tab); });
+        handleCmdSearch();
+    }
+
     function handleCmdSearch() {
         var q = document.getElementById('cmdInput').value.trim().toLowerCase();
-        if (!q) { resetCmdResults(); return; }
+        if (!q) {
+            resetCmdResults();
+            document.getElementById('cmdTabs').style.display = 'none';
+            return;
+        }
+
+        document.getElementById('cmdTabs').style.display = 'flex';
+
+        if (cmdActiveTab === 'fulltext') {
+            clearTimeout(cmdSearchTimer);
+            cmdSearchTimer = setTimeout(function() { doFulltextSearch(q); }, 400);
+            return;
+        }
+
+        doProjectSearch(q);
+    }
+
+    function doProjectSearch(q) {
         fetch('/api/projects/search?q=' + encodeURIComponent(q) + '&limit=8')
             .then(function(r) { return r.json(); })
             .then(function(results) {
@@ -225,25 +255,77 @@
                 if (results.length > 0) {
                     html += '<div class="cmd-group"><div class="cmd-group-label">Projekte</div>';
                     results.forEach(function(p) {
-                        html += '<div class="cmd-item" onclick="location.href=\'/\'">📁 ' + p.name + ' <span style="color:#666;font-size:11px;margin-left:8px">' + (p.description || '') + '</span></div>';
+                        html += '<div class="cmd-item" onclick="location.href=\'/project/' + encodeURIComponent(p.name) + '\'">&#128193; ' + p.name + ' <span style="color:#666;font-size:11px;margin-left:8px">' + (p.description || '') + '</span></div>';
                     });
                     html += '</div>';
                 }
                 var statics = [
-                    {label:'📊 Dashboard', url:'/'},
-                    {label:'🤖 Claude Sessions', url:'/sessions'},
-                    {label:'🐳 Container', url:'/containers'},
-                    {label:'🔗 Abhängigkeiten', url:'/dependencies'},
-                    {label:'📦 Vorlagen', url:'/vorlagen'},
-                    {label:'📰 News', url:'/news'},
+                    {label:'Dashboard', icon:'&#128202;', url:'/'},
+                    {label:'Claude Sessions', icon:'&#129302;', url:'/sessions'},
+                    {label:'Container', icon:'&#128051;', url:'/containers'},
+                    {label:'Abh\u00e4ngigkeiten', icon:'&#128279;', url:'/dependencies'},
+                    {label:'Vorlagen', icon:'&#128230;', url:'/vorlagen'},
+                    {label:'News', icon:'&#128240;', url:'/news'},
                 ].filter(function(s) { return s.label.toLowerCase().includes(q); });
                 if (statics.length > 0) {
                     html += '<div class="cmd-group"><div class="cmd-group-label">Seiten</div>';
-                    statics.forEach(function(s) { html += '<div class="cmd-item" onclick="location.href=\'' + s.url + '\'">' + s.label + '</div>'; });
+                    statics.forEach(function(s) { html += '<div class="cmd-item" onclick="location.href=\'' + s.url + '\'">' + s.icon + ' ' + s.label + '</div>'; });
                     html += '</div>';
                 }
                 if (!html) html = '<div style="padding:20px;text-align:center;color:#555">Keine Ergebnisse</div>';
                 document.getElementById('cmdResults').innerHTML = html;
+            });
+    }
+
+    function doFulltextSearch(q) {
+        if (q.length < 2) {
+            document.getElementById('cmdResults').innerHTML = '<div style="padding:20px;text-align:center;color:#555">Mindestens 2 Zeichen eingeben</div>';
+            return;
+        }
+        document.getElementById('cmdResults').innerHTML = '<div style="padding:20px;text-align:center;color:#555"><span class="doc-status-spinner" style="display:inline-block;width:16px;height:16px;border-width:2px;vertical-align:middle;margin-right:8px"></span>Suche in allen Projekten...</div>';
+
+        fetch('/api/search?q=' + encodeURIComponent(q) + '&limit=30')
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (data.error) {
+                    document.getElementById('cmdResults').innerHTML = '<div style="padding:20px;text-align:center;color:#ff4444">' + data.error + '</div>';
+                    return;
+                }
+                if (!data.results || data.results.length === 0) {
+                    document.getElementById('cmdResults').innerHTML = '<div style="padding:20px;text-align:center;color:#555">Keine Treffer fuer &quot;' + q + '&quot;</div>';
+                    return;
+                }
+                var html = '<div class="cmd-group"><div class="cmd-group-label">' + data.total + ' Dateien' + (data.truncated ? '+' : '') + ' gefunden</div>';
+                data.results.forEach(function(r) {
+                    var icon = '&#128196;';
+                    if (['.png','.jpg','.jpeg','.gif','.svg','.webp'].indexOf(r.extension) >= 0) icon = '&#128444;';
+                    else if (['.py','.js','.ts','.jsx','.tsx','.vue','.php'].indexOf(r.extension) >= 0) icon = '&#128187;';
+                    else if (['.json','.yml','.yaml','.toml'].indexOf(r.extension) >= 0) icon = '&#9881;';
+
+                    html += '<div class="cmd-item cmd-search-result" onclick="location.href=\'/project/' + encodeURIComponent(r.project) + '\'">';
+                    html += '<div style="display:flex;align-items:center;gap:8px;width:100%">';
+                    html += '<span>' + icon + '</span>';
+                    html += '<span style="color:#4fc3f7;font-size:11px;min-width:100px">' + r.project + '</span>';
+                    html += '<span style="flex:1;color:#ccc">' + r.file + '</span>';
+                    html += '</div>';
+
+                    if (r.matches && r.matches.length > 0) {
+                        r.matches.forEach(function(m) {
+                            var escaped = m.text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+                            var re = new RegExp('(' + q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
+                            escaped = escaped.replace(re, '<mark style="background:#4fc3f7;color:#000;padding:0 2px;border-radius:2px">$1</mark>');
+                            html += '<div style="font-size:11px;color:#666;padding:2px 0 2px 28px;font-family:monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">';
+                            html += '<span style="color:#444;margin-right:6px">L' + m.line + '</span>' + escaped;
+                            html += '</div>';
+                        });
+                    }
+                    html += '</div>';
+                });
+                html += '</div>';
+                document.getElementById('cmdResults').innerHTML = html;
+            })
+            .catch(function(e) {
+                document.getElementById('cmdResults').innerHTML = '<div style="padding:20px;text-align:center;color:#ff4444">Fehler: ' + e + '</div>';
             });
     }
 
