@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
     <link rel="stylesheet" href="/static/css/dashboard.css">
+    <link rel="stylesheet" href="/static/css/widgets.css">
     <title>Projekt-Dashboard</title>
 </head>
 <body>
@@ -116,6 +117,7 @@
         <!-- Tab Navigation -->
         <div class="tab-bar">
             <button class="tab-btn active" onclick="showTab('projects')">Projekte</button>
+            <button class="tab-btn" onclick="showTab('widgets')">Widgets</button>
             <button class="tab-btn" onclick="showTab('gitea')">Gitea Repositories</button>
         </div>
 
@@ -162,6 +164,57 @@
                     </thead>
                     <tbody id="tableBody"></tbody>
                 </table>
+            </div>
+
+            <!-- Widgets Tab -->
+            <div id="widgetsTab" class="tab-content">
+                <div class="widget-grid">
+                    <!-- Zahlen-Karten -->
+                    <div class="widget-card widget-sm" id="wTotalProjects">
+                        <div class="widget-card-label">Projekte</div>
+                        <div class="widget-card-value">-</div>
+                    </div>
+                    <div class="widget-card widget-sm" id="wActiveProjects">
+                        <div class="widget-card-label">Aktiv (7 Tage)</div>
+                        <div class="widget-card-value">-</div>
+                    </div>
+                    <div class="widget-card widget-sm" id="wContainers">
+                        <div class="widget-card-label">Container</div>
+                        <div class="widget-card-value">-</div>
+                    </div>
+                    <div class="widget-card widget-sm" id="wGitea">
+                        <div class="widget-card-label">Gitea Repos</div>
+                        <div class="widget-card-value">-</div>
+                    </div>
+
+                    <!-- Aktivitaets-Heatmap -->
+                    <div class="widget-card widget-wide">
+                        <div class="widget-card-title">Aktivitaet (30 Tage)</div>
+                        <div class="widget-heatmap" id="wHeatmap"></div>
+                    </div>
+
+                    <!-- Charts -->
+                    <div class="widget-card">
+                        <div class="widget-card-title">Projekttypen</div>
+                        <canvas id="chartTypes" height="220"></canvas>
+                    </div>
+                    <div class="widget-card">
+                        <div class="widget-card-title">Technologien</div>
+                        <canvas id="chartTech" height="220"></canvas>
+                    </div>
+
+                    <!-- Session-Chart -->
+                    <div class="widget-card widget-wide">
+                        <div class="widget-card-title">Claude Sessions (7 Tage)</div>
+                        <canvas id="chartSessions" height="140"></canvas>
+                    </div>
+
+                    <!-- Top Aktive Projekte -->
+                    <div class="widget-card widget-wide">
+                        <div class="widget-card-title">Top Aktive Projekte</div>
+                        <div class="widget-list" id="wTopActive"></div>
+                    </div>
+                </div>
             </div>
 
             <!-- Gitea Tab -->
@@ -371,7 +424,9 @@
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
     <script src="/static/js/dashboard.js"></script>
+    <script src="/static/js/widgets.js"></script>
     <script>
     // Lightbox
     function openLightbox(src) {

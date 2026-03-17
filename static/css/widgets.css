@@ -1,0 +1,68 @@
+/* ===== DASHBOARD WIDGETS ===== */
+.widget-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    padding: 16px 0;
+}
+
+/* Zahlen-Karten */
+.widget-card {
+    background: #1a1a1a;
+    border: 1px solid #252525;
+    border-radius: 10px;
+    padding: 20px;
+    transition: border-color 0.2s;
+}
+.widget-card:hover { border-color: #333; }
+.widget-card.widget-sm { text-align: center; padding: 16px; }
+.widget-card.widget-wide { grid-column: span 2; }
+.widget-card-label {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 1px;
+    color: #666; margin-bottom: 6px;
+}
+.widget-card-value {
+    font-size: 28px; font-weight: 700; color: #4fc3f7;
+}
+.widget-card-title {
+    font-size: 13px; font-weight: 600; color: #aaa;
+    margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid #222;
+}
+
+/* Heatmap */
+.widget-heatmap { overflow-x: auto; }
+.heatmap-row {
+    display: flex; gap: 3px; min-width: fit-content;
+}
+.heatmap-cell {
+    width: 28px; height: 28px; border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: default; transition: transform 0.1s;
+}
+.heatmap-cell:hover { transform: scale(1.3); z-index: 1; }
+.heatmap-day { font-size: 8px; color: rgba(255,255,255,0.3); }
+.heatmap-legend {
+    display: flex; align-items: center; gap: 4px;
+    margin-top: 8px; justify-content: flex-end;
+}
+
+/* Listen */
+.widget-list { max-height: 300px; overflow-y: auto; }
+.widget-list-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 12px; border-radius: 6px; cursor: pointer;
+    font-size: 13px; color: #ccc; transition: background 0.1s;
+}
+.widget-list-item:hover { background: #222; }
+.widget-list-name { flex: 1; }
+.widget-list-time { color: #555; font-size: 11px; font-family: monospace; }
+
+/* Responsive */
+@media (max-width: 1200px) {
+    .widget-grid { grid-template-columns: repeat(2, 1fr); }
+    .widget-card.widget-wide { grid-column: span 2; }
+}
+@media (max-width: 768px) {
+    .widget-grid { grid-template-columns: 1fr; }
+    .widget-card.widget-wide { grid-column: span 1; }
+}

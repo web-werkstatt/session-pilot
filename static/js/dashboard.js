@@ -397,6 +397,9 @@ function showTab(tabName) {
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     document.getElementById(tabName + 'Tab').classList.add('active');
     event.target.classList.add('active');
+    if (tabName === 'widgets' && !window._widgetsLoaded) {
+        loadWidgets();
+    }
 }
 
 function renderData(data) {
