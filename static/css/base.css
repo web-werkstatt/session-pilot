@@ -1,0 +1,80 @@
+/* ===== RESET & BASE ===== */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #121212;
+    color: #e0e0e0;
+    min-height: 100vh;
+    display: flex;
+}
+
+/* ===== LOADING ===== */
+.loading { text-align: center; padding: 60px; color: #666; }
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+.spinner {
+    border: 3px solid #2a2a2a;
+    border-top: 3px solid #0078d4;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 15px;
+}
+
+/* Priority */
+.priority-high { color: #ff4444; font-weight: bold; }
+.priority-medium { color: #ffaa00; }
+.priority-low { color: #44ff44; }
+
+/* Progress Bar */
+.progress-bar {
+    width: 80px;
+    height: 6px;
+    background: #2a2a2a;
+    border-radius: 3px;
+    overflow: hidden;
+    display: inline-block;
+    vertical-align: middle;
+}
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #4caf50, #8bc34a);
+    border-radius: 3px;
+    transition: width 0.3s;
+}
+.progress-text { font-size: 11px; color: #888; margin-left: 5px; }
+
+/* Milestones */
+.milestone { display: inline-block; margin-right: 6px; font-size: 11px; }
+.milestone-done { color: #4caf50; }
+.milestone-pending { color: #555; }
+
+/* Deadline */
+.deadline-urgent { color: #ff4444; font-weight: bold; font-size: 12px; }
+.deadline-soon { color: #ffaa00; font-size: 12px; }
+.deadline-ok { color: #666; font-size: 12px; }
+
+/* Badges */
+.badge {
+    display: inline-block;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 500;
+}
+.badge-new { background: #1b4332; color: #6ff7b0; }
+.relation-badges { margin-left: 6px; display: inline-flex; gap: 2px; vertical-align: middle; }
+.relation-badge {
+    display: inline-block; padding: 1px 4px; border-radius: 4px;
+    font-size: 9px; cursor: help; opacity: 0.8;
+}
+.relation-badge.incoming { border: 1px dashed rgba(255,255,255,0.2); }
+
+/* Status Colors */
+.status-healthy { color: #4caf50; }
+.status-unhealthy { color: #ff9800; }
+.status-stopped { color: #f44336; }
+.status-running { color: #2196f3; }
