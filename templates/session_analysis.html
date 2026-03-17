@@ -1,0 +1,243 @@
+{% extends "base.html" %}
+
+{% block title %}Session-Analyse - Dashboard{% endblock %}
+{% block breadcrumb %}Session-Analyse{% endblock %}
+
+{% block head_extra %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+    .analysis-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; padding: 20px 24px; }
+    .analysis-card { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 10px; padding: 20px; }
+    .analysis-card h3 { font-size: 13px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 14px; }
+    .cost-total { font-size: 36px; font-weight: 700; color: #4fc3f7; line-height: 1; }
+    .cost-sub { font-size: 12px; color: #666; margin-top: 6px; }
+    .model-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #222; font-size: 13px; }
+    .model-row:last-child { border: none; }
+    .model-name { color: #ccc; font-family: monospace; font-size: 12px; }
+    .model-cost { color: #4fc3f7; font-weight: 600; }
+    .model-tokens { color: #666; font-size: 11px; }
+    .tool-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 13px; border-bottom: 1px solid #222; }
+    .tool-row:last-child { border: none; }
+    .tool-name { color: #ccc; }
+    .tool-count { color: #888; font-family: monospace; }
+    .tool-bar { height: 4px; background: #222; border-radius: 2px; margin-top: 4px; }
+    .tool-bar-fill { height: 100%; background: #4fc3f7; border-radius: 2px; }
+    .chart-container { position: relative; height: 220px; }
+    .wide-card { grid-column: span 2; }
+    .period-btns { display: flex; gap: 6px; padding: 12px 24px; }
+    .period-btn { background: transparent; border: 1px solid #333; color: #888; padding: 6px 14px; border-radius: 20px; cursor: pointer; font-size: 12px; }
+    .period-btn:hover { border-color: #555; color: #ccc; }
+    .period-btn.active { background: #4fc3f7; border-color: #4fc3f7; color: #121212; }
+    .project-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 13px; border-bottom: 1px solid #222; }
+    .project-row:last-child { border: none; }
+    .project-name { color: #ccc; cursor: pointer; }
+    .project-name:hover { color: #4fc3f7; }
+    .project-cost { color: #4fc3f7; font-weight: 600; font-size: 12px; }
+    .weekday-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; text-align: center; }
+    .weekday-item { padding: 10px 0; }
+    .weekday-label { font-size: 11px; color: #666; margin-bottom: 6px; }
+    .weekday-value { font-size: 18px; font-weight: 700; color: #fff; }
+    .weekday-dur { font-size: 10px; color: #555; margin-top: 2px; }
+    @media (max-width: 768px) { .wide-card { grid-column: span 1; } }
+</style>
+{% endblock %}
+
+{% block content %}
+    <div class="period-btns">
+        <button class="period-btn" onclick="loadAnalysis(7, this)">7 Tage</button>
+        <button class="period-btn active" onclick="loadAnalysis(30, this)">30 Tage</button>
+        <button class="period-btn" onclick="loadAnalysis(90, this)">90 Tage</button>
+        <button class="period-btn" onclick="loadAnalysis(365, this)">1 Jahr</button>
+    </div>
+
+    <div class="analysis-grid" id="analysisGrid">
+        <div class="analysis-card">
+            <h3>Geschaetzte Kosten</h3>
+            <div class="cost-total" id="totalCost">-</div>
+            <div class="cost-sub" id="tokenSummary">-</div>
+        </div>
+
+        <div class="analysis-card">
+            <h3>Kosten nach Modell</h3>
+            <div id="modelList"></div>
+        </div>
+
+        <div class="analysis-card">
+            <h3>Wochentage</h3>
+            <div class="weekday-grid" id="weekdayGrid"></div>
+        </div>
+
+        <div class="analysis-card wide-card">
+            <h3>Aktivitaet</h3>
+            <div class="chart-container"><canvas id="activityChart"></canvas></div>
+        </div>
+
+        <div class="analysis-card">
+            <h3>Stunden-Verteilung</h3>
+            <div class="chart-container"><canvas id="hourlyChart"></canvas></div>
+        </div>
+
+        <div class="analysis-card">
+            <h3>Haeufigste Tools</h3>
+            <div id="toolList"></div>
+        </div>
+
+        <div class="analysis-card wide-card">
+            <h3>Top-Projekte nach Kosten</h3>
+            <div id="projectList"></div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let activityChart = null;
+    let hourlyChart = null;
+
+    function formatTokens(n) {
+        if (!n) return '0';
+        if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M';
+        if (n >= 1e3) return (n / 1e3).toFixed(0) + 'K';
+        return n.toString();
+    }
+
+    function formatDuration(ms) {
+        if (!ms) return '-';
+        const h = Math.floor(ms / 3600000);
+        const m = Math.floor((ms % 3600000) / 60000);
+        return h > 0 ? h + 'h ' + m + 'm' : m + 'm';
+    }
+
+    function loadAnalysis(days, btn) {
+        if (btn) {
+            document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        }
+
+        fetch('/api/sessions/analysis?days=' + days)
+            .then(r => r.json())
+            .then(render)
+            .catch(() => {
+                document.getElementById('totalCost').textContent = 'Fehler';
+            });
+    }
+
+    function render(data) {
+        // Kosten
+        document.getElementById('totalCost').textContent = '$' + data.cost.total_usd.toFixed(2);
+        document.getElementById('tokenSummary').textContent =
+            formatTokens(data.cost.total_input_tokens) + ' Input / ' +
+            formatTokens(data.cost.total_output_tokens) + ' Output Tokens';
+
+        // Modelle
+        const modelHtml = data.cost.by_model.map(m => `
+            <div class="model-row">
+                <div>
+                    <div class="model-name">${m.model.replace('claude-', '')}</div>
+                    <div class="model-tokens">${m.sessions} Sessions / ${formatTokens(m.input_tokens + m.output_tokens)} Tokens</div>
+                </div>
+                <div class="model-cost">$${m.cost_usd.toFixed(2)}</div>
+            </div>
+        `).join('');
+        document.getElementById('modelList').innerHTML = modelHtml || '<div style="color:#555">Keine Daten</div>';
+
+        // Wochentage
+        const wdHtml = data.weekdays.map(d => `
+            <div class="weekday-item">
+                <div class="weekday-label">${d.day}</div>
+                <div class="weekday-value">${d.sessions}</div>
+                <div class="weekday-dur">${formatDuration(d.duration_ms)}</div>
+            </div>
+        `).join('');
+        document.getElementById('weekdayGrid').innerHTML = wdHtml || '<div style="color:#555">-</div>';
+
+        // Tools
+        const maxToolCount = data.tools.length > 0 ? data.tools[0].count : 1;
+        const toolHtml = data.tools.slice(0, 12).map(t => `
+            <div class="tool-row">
+                <span class="tool-name">${t.name}</span>
+                <span class="tool-count">${t.count}</span>
+            </div>
+            <div class="tool-bar"><div class="tool-bar-fill" style="width:${(t.count / maxToolCount * 100).toFixed(0)}%"></div></div>
+        `).join('');
+        document.getElementById('toolList').innerHTML = toolHtml || '<div style="color:#555">Keine Tool-Daten</div>';
+
+        // Projekte
+        const projHtml = data.cost.by_project.map(p => `
+            <div class="project-row">
+                <span class="project-name" onclick="location.href='/project/${encodeURIComponent(p.project)}'">${p.project}</span>
+                <span style="color:#666;font-size:11px">${p.sessions} Sessions / ${formatDuration(p.duration_ms)}</span>
+                <span class="project-cost">$${p.cost_usd.toFixed(2)}</span>
+            </div>
+        `).join('');
+        document.getElementById('projectList').innerHTML = projHtml || '<div style="color:#555">Keine Daten</div>';
+
+        // Activity Chart
+        renderActivityChart(data.activity);
+        renderHourlyChart(data.hourly);
+    }
+
+    function renderActivityChart(activity) {
+        const ctx = document.getElementById('activityChart').getContext('2d');
+        if (activityChart) activityChart.destroy();
+
+        activityChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: activity.map(a => a.date.slice(5)),
+                datasets: [{
+                    label: 'Sessions',
+                    data: activity.map(a => a.sessions),
+                    backgroundColor: '#4fc3f740',
+                    borderColor: '#4fc3f7',
+                    borderWidth: 1,
+                    borderRadius: 3,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { ticks: { color: '#555', maxTicksLimit: 15, font: { size: 10 } }, grid: { display: false } },
+                    y: { ticks: { color: '#555', font: { size: 10 } }, grid: { color: '#222' }, beginAtZero: true }
+                }
+            }
+        });
+    }
+
+    function renderHourlyChart(hourly) {
+        const ctx = document.getElementById('hourlyChart').getContext('2d');
+        if (hourlyChart) hourlyChart.destroy();
+
+        const labels = Array.from({length: 24}, (_, i) => i + ':00');
+        const values = labels.map((_, i) => hourly[i] ? hourly[i].sessions : 0);
+
+        hourlyChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [{
+                    label: 'Sessions',
+                    data: values,
+                    backgroundColor: values.map(v => v > 0 ? '#4fc3f760' : '#222'),
+                    borderColor: values.map(v => v > 0 ? '#4fc3f7' : '#333'),
+                    borderWidth: 1,
+                    borderRadius: 2,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { ticks: { color: '#555', maxTicksLimit: 12, font: { size: 10 } }, grid: { display: false } },
+                    y: { ticks: { color: '#555', font: { size: 10 } }, grid: { color: '#222' }, beginAtZero: true }
+                }
+            }
+        });
+    }
+
+    loadAnalysis(30);
+</script>
+{% endblock %}

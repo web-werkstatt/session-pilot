@@ -61,6 +61,50 @@ def get_docker_containers():
         return []
 
 
+def container_action(name, action):
+    """Fuehrt eine Aktion auf einem Container aus (start/stop/restart)"""
+    if action not in ('start', 'stop', 'restart'):
+        return {"success": False, "error": f"Unbekannte Aktion: {action}"}
+
+    # Sicherheit: Container-Name validieren (nur alphanumerisch, Bindestrich, Unterstrich, Punkt)
+    if not re.match(r'^[a-zA-Z0-9][a-zA-Z0-9._-]*$', name):
+        return {"success": False, "error": "Ungueltiger Container-Name"}
+
+    try:
+        result = subprocess.run(
+            ["docker", action, name],
+            capture_output=True, text=True, timeout=30
+        )
+        if result.returncode == 0:
+            return {"success": True, "message": f"Container '{name}' {action} erfolgreich"}
+        else:
+            error = result.stderr.strip() or result.stdout.strip()
+            return {"success": False, "error": error}
+    except subprocess.TimeoutExpired:
+        return {"success": False, "error": f"Timeout bei {action} von '{name}'"}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+def get_container_logs(name, tail=50):
+    """Holt die letzten Log-Zeilen eines Containers"""
+    if not re.match(r'^[a-zA-Z0-9][a-zA-Z0-9._-]*$', name):
+        return {"success": False, "error": "Ungueltiger Container-Name"}
+
+    try:
+        result = subprocess.run(
+            ["docker", "logs", "--tail", str(tail), name],
+            capture_output=True, text=True, timeout=10
+        )
+        # Docker logs gehen oft auf stderr
+        output = result.stdout + result.stderr
+        return {"success": True, "logs": output}
+    except subprocess.TimeoutExpired:
+        return {"success": False, "error": "Timeout beim Laden der Logs"}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
 def load_yaml_simple(filepath):
     """Einfacher YAML-Parser für docker-compose"""
     try:

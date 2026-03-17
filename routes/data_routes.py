@@ -1,13 +1,14 @@
 """
-Daten-Aggregation Routes: /api/data, /api/containers
+Daten-Aggregation Routes: /api/data, /api/containers, Container-Aktionen
 """
 from datetime import datetime
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, request
 
 from services import (
     scan_projects, get_docker_containers,
     load_cache, save_cache,
     get_gitea_repos, get_gitea_repo_commits,
+    container_action, get_container_logs,
 )
 
 data_bp = Blueprint('data', __name__)
@@ -101,3 +102,21 @@ def api_containers():
         "stats": _container_stats(containers),
         "timestamp": datetime.now().strftime("%d.%m.%Y %H:%M:%S")
     })
+
+
+@data_bp.route('/api/container/<name>/<action>', methods=['POST'])
+def api_container_action(name, action):
+    """Container starten/stoppen/neustarten"""
+    result = container_action(name, action)
+    status_code = 200 if result["success"] else 400
+    return jsonify(result), status_code
+
+
+@data_bp.route('/api/container/<name>/logs')
+def api_container_logs(name):
+    """Container-Logs abrufen"""
+    tail = request.args.get('tail', 50, type=int)
+    tail = min(tail, 500)  # Max 500 Zeilen
+    result = get_container_logs(name, tail=tail)
+    status_code = 200 if result["success"] else 400
+    return jsonify(result), status_code

@@ -21,6 +21,30 @@
     .filter-bar { background: #2d2d2d; padding: 10px 30px; display: flex; gap: 10px; align-items: center; }
     .filter-btn { background: transparent; color: #aaa; border: 1px solid #555; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 13px; }
     .filter-btn:hover, .filter-btn.active { background: #4dabf7; color: #1e1e1e; border-color: #4dabf7; }
+    .act-btn { background: none; border: 1px solid #444; color: #aaa; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 11px; transition: all 0.15s; }
+    .act-btn:hover { border-color: #888; color: #fff; }
+    .act-btn.start { border-color: #2e7d32; color: #4caf50; }
+    .act-btn.start:hover { background: #2e7d32; color: #fff; }
+    .act-btn.stop { border-color: #c62828; color: #ef5350; }
+    .act-btn.stop:hover { background: #c62828; color: #fff; }
+    .act-btn.restart { border-color: #e65100; color: #ff9800; }
+    .act-btn.restart:hover { background: #e65100; color: #fff; }
+    .act-btn.logs { border-color: #1565c0; color: #42a5f5; }
+    .act-btn.logs:hover { background: #1565c0; color: #fff; }
+    .act-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .actions-cell { display: flex; gap: 4px; align-items: center; flex-wrap: wrap; }
+    .log-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.75); z-index: 1000; justify-content: center; align-items: center; backdrop-filter: blur(2px); }
+    .log-overlay.show { display: flex; }
+    .log-modal { background: #1e1e1e; border: 1px solid #333; border-radius: 12px; width: 80vw; max-width: 900px; max-height: 80vh; display: flex; flex-direction: column; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
+    .log-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid #333; }
+    .log-header h3 { font-size: 15px; color: #e0e0e0; }
+    .log-close { background: none; border: none; color: #666; font-size: 20px; cursor: pointer; padding: 4px 8px; border-radius: 4px; }
+    .log-close:hover { color: #fff; background: #333; }
+    .log-body { flex: 1; overflow-y: auto; padding: 16px 20px; font-family: 'Fira Code', monospace; font-size: 12px; line-height: 1.6; color: #aaa; white-space: pre-wrap; word-break: break-all; }
+    .toast { position: fixed; bottom: 24px; right: 24px; padding: 12px 20px; border-radius: 8px; font-size: 13px; z-index: 2000; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+    .toast.show { opacity: 1; }
+    .toast.success { background: #1b5e20; color: #a5d6a7; border: 1px solid #2e7d32; }
+    .toast.error { background: #b71c1c; color: #ef9a9a; border: 1px solid #c62828; }
 </style>
 {% endblock %}
 
@@ -50,7 +74,6 @@
                     <th>Container</th>
                     <th>Status</th>
                     <th>Image</th>
-                    <th>Projekt</th>
                     <th>Port</th>
                     <th>Erstellt</th>
                     <th>Aktionen</th>
@@ -59,6 +82,17 @@
             <tbody id="tableBody"></tbody>
         </table>
     </div>
+
+    <div class="log-overlay" id="logOverlay" onclick="if(event.target===this)closeLogModal()">
+        <div class="log-modal">
+            <div class="log-header">
+                <h3 id="logTitle">Container Logs</h3>
+                <button class="log-close" onclick="closeLogModal()">&times;</button>
+            </div>
+            <div class="log-body" id="logBody">Lade Logs...</div>
+        </div>
+    </div>
+    <div class="toast" id="toast"></div>
 {% endblock %}
 
 {% block scripts %}
@@ -87,32 +121,93 @@
         renderContainers();
     }
 
+    function isRunning(status) {
+        return status.includes('Running') || status.includes('Healthy');
+    }
+
     function renderContainers() {
         const tbody = document.getElementById('tableBody');
         tbody.innerHTML = '';
 
         let filtered = allContainers;
         if (currentFilter === 'running') {
-            filtered = allContainers.filter(c => c.status.includes('Running') || c.status.includes('Healthy'));
+            filtered = allContainers.filter(c => isRunning(c.status));
         } else if (currentFilter === 'stopped') {
             filtered = allContainers.filter(c => c.status.includes('Stopped'));
         }
 
         filtered.forEach(c => {
             const tr = document.createElement('tr');
-            const portLink = c.port ? `<a href="http://192.168.100.93:${c.port}" target="_blank" class="action-link">🔗 Öffnen</a>` : '-';
+            const running = isRunning(c.status);
+            const portLink = c.port ? `<a href="http://192.168.100.93:${c.port}" target="_blank" class="action-link">Oeffnen</a>` : '';
+            const actions = `<div class="actions-cell">
+                ${running
+                    ? `<button class="act-btn stop" onclick="doAction('${c.name}','stop')">Stop</button>
+                       <button class="act-btn restart" onclick="doAction('${c.name}','restart')">Restart</button>`
+                    : `<button class="act-btn start" onclick="doAction('${c.name}','start')">Start</button>`}
+                <button class="act-btn logs" onclick="showLogs('${c.name}')">Logs</button>
+                ${portLink}
+            </div>`;
             tr.innerHTML = `
                 <td class="container-name">${c.name}</td>
                 <td>${c.status}</td>
                 <td style="font-size:12px;color:#888">${c.image}</td>
-                <td>${c.project || '-'}</td>
                 <td>${c.port || '-'}</td>
-                <td>${c.last_modified || '-'}</td>
-                <td>${portLink}</td>
+                <td style="font-size:12px;color:#666">${c.last_modified || '-'}</td>
+                <td>${actions}</td>
             `;
             tbody.appendChild(tr);
         });
     }
+
+    function doAction(name, action) {
+        const labels = {start: 'Starte', stop: 'Stoppe', restart: 'Neustarte'};
+        showToast(`${labels[action]} ${name}...`, 'success');
+
+        fetch(`/api/container/${encodeURIComponent(name)}/${action}`, {method: 'POST'})
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    showToast(data.message, 'success');
+                    setTimeout(loadData, 1000);
+                } else {
+                    showToast(data.error || 'Fehler', 'error');
+                }
+            })
+            .catch(() => showToast('Netzwerkfehler', 'error'));
+    }
+
+    function showLogs(name) {
+        document.getElementById('logTitle').textContent = `Logs: ${name}`;
+        document.getElementById('logBody').textContent = 'Lade Logs...';
+        document.getElementById('logOverlay').classList.add('show');
+
+        fetch(`/api/container/${encodeURIComponent(name)}/logs?tail=100`)
+            .then(r => r.json())
+            .then(data => {
+                const body = document.getElementById('logBody');
+                body.textContent = data.success ? (data.logs || '(keine Logs)') : data.error;
+                body.scrollTop = body.scrollHeight;
+            })
+            .catch(() => {
+                document.getElementById('logBody').textContent = 'Fehler beim Laden der Logs';
+            });
+    }
+
+    function closeLogModal() {
+        document.getElementById('logOverlay').classList.remove('show');
+    }
+
+    function showToast(msg, type) {
+        const t = document.getElementById('toast');
+        t.textContent = msg;
+        t.className = `toast show ${type}`;
+        setTimeout(() => t.classList.remove('show'), 3000);
+    }
+
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') closeLogModal();
+    });
 
     loadData();
     setInterval(loadData, 15000);
