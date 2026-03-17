@@ -507,3 +507,117 @@ async function executeExport() {
 document.addEventListener('change', function(e) {
     if (e.target.classList.contains('export-check')) updateExportCount();
 });
+
+// === UPLOAD ===
+
+function initUpload() {
+    var dropzone = document.getElementById('uploadDropzone');
+    var fileInput = document.getElementById('uploadFileInput');
+    if (!dropzone || !fileInput) return;
+
+    dropzone.addEventListener('click', function() { fileInput.click(); });
+
+    fileInput.addEventListener('change', function() {
+        if (fileInput.files.length > 0) uploadFiles(fileInput.files);
+    });
+
+    dropzone.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        dropzone.classList.add('dragover');
+    });
+    dropzone.addEventListener('dragleave', function() {
+        dropzone.classList.remove('dragover');
+    });
+    dropzone.addEventListener('drop', function(e) {
+        e.preventDefault();
+        dropzone.classList.remove('dragover');
+        if (e.dataTransfer.files.length > 0) uploadFiles(e.dataTransfer.files);
+    });
+}
+
+async function uploadFiles(fileList) {
+    var files = Array.from(fileList);
+    if (files.length === 0) return;
+    if (files.length > 20) {
+        setDocStatus('Maximal 20 Dateien pro Upload', 'error');
+        return;
+    }
+
+    var customDir = document.getElementById('uploadCustomDir').value.trim();
+    var selectDir = document.getElementById('uploadTargetDir').value;
+    var targetDir = customDir || selectDir;
+
+    var progressEl = document.getElementById('uploadProgress');
+    var progressBar = document.getElementById('uploadProgressBar');
+    var progressText = document.getElementById('uploadProgressText');
+    var resultsEl = document.getElementById('uploadResults');
+
+    progressEl.style.display = 'block';
+    progressBar.style.width = '0%';
+    progressText.textContent = 'Hochladen: 0 / ' + files.length + ' Dateien...';
+    resultsEl.innerHTML = '';
+    setDocStatus('Upload laeuft...', 'loading');
+
+    var formData = new FormData();
+    formData.append('directory', targetDir);
+    files.forEach(function(f) { formData.append('files', f); });
+
+    try {
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', '/api/project/' + encodeURIComponent(PROJECT_NAME) + '/upload');
+
+        xhr.upload.addEventListener('progress', function(e) {
+            if (e.lengthComputable) {
+                var pct = Math.round((e.loaded / e.total) * 100);
+                progressBar.style.width = pct + '%';
+                progressText.textContent = 'Hochladen: ' + pct + '%';
+            }
+        });
+
+        xhr.onload = function() {
+            var d = JSON.parse(xhr.responseText);
+            progressBar.style.width = '100%';
+
+            var html = '';
+            (d.results || []).forEach(function(r) {
+                if (r.success) {
+                    var icon = r.type === 'image' ? '&#128444;' : '&#128196;';
+                    html += '<div class="upload-result-item success">' +
+                        '<span class="upload-result-icon">' + icon + '</span>' +
+                        '<span class="upload-result-name">' + escapeHtml(r.name) + '</span>' +
+                        '<span class="upload-result-status" style="color:#4caf50">' + r.size_human + '</span></div>';
+                } else {
+                    html += '<div class="upload-result-item error">' +
+                        '<span class="upload-result-icon">&#10007;</span>' +
+                        '<span class="upload-result-name">' + escapeHtml(r.name) + '</span>' +
+                        '<span class="upload-result-status" style="color:#ff4444">' + escapeHtml(r.error) + '</span></div>';
+                }
+            });
+            resultsEl.innerHTML = html;
+
+            progressText.textContent = d.uploaded + ' hochgeladen' + (d.failed > 0 ? ', ' + d.failed + ' fehlgeschlagen' : '');
+            setDocStatus(d.uploaded + ' Dateien hochgeladen nach ' + targetDir, 'success');
+
+            // Browser-Baum neu laden
+            if (d.uploaded > 0) {
+                setTimeout(function() { loadDocuments(); }, 500);
+            }
+
+            // File-Input zuruecksetzen
+            document.getElementById('uploadFileInput').value = '';
+        };
+
+        xhr.onerror = function() {
+            progressText.textContent = 'Upload fehlgeschlagen';
+            setDocStatus('Upload fehlgeschlagen', 'error');
+        };
+
+        xhr.send(formData);
+    } catch(e) {
+        progressText.textContent = 'Fehler: ' + e;
+        setDocStatus('Upload fehlgeschlagen: ' + e, 'error');
+    }
+}
+
+// Upload initialisieren wenn DOM bereit
+document.addEventListener('DOMContentLoaded', function() { initUpload(); });

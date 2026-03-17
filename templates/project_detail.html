@@ -93,6 +93,7 @@
         <div class="doc-tabs">
             <button class="doc-tab active" data-tab="browser" onclick="switchDocTab('browser')">Browser</button>
             <button class="doc-tab" data-tab="gallery" onclick="switchDocTab('gallery')">Galerie</button>
+            <button class="doc-tab" data-tab="upload" onclick="switchDocTab('upload')">Upload</button>
             <button class="doc-tab" data-tab="export" onclick="switchDocTab('export'); renderExportFileList()">Export</button>
         </div>
 
@@ -123,6 +124,34 @@
         <div class="doc-tab-content" id="docTab_gallery">
             <div class="doc-gallery" id="docGallery">
                 <div style="padding:30px;text-align:center;color:#555;font-size:13px">Lade...</div>
+            </div>
+        </div>
+
+        <!-- Tab: Upload -->
+        <div class="doc-tab-content" id="docTab_upload">
+            <div style="max-width:700px">
+                <div class="upload-target-dir">
+                    <label style="color:#888;font-size:12px">Zielverzeichnis:</label>
+                    <select id="uploadTargetDir" style="background:#1a1a1a;border:1px solid #333;color:#ddd;padding:6px 10px;border-radius:6px;margin-left:8px;font-size:13px">
+                        <option value=".">/ (Projekt-Root)</option>
+                        <option value="docs">docs/</option>
+                        <option value="images">images/</option>
+                        <option value="assets">assets/</option>
+                    </select>
+                    <input type="text" id="uploadCustomDir" placeholder="oder eigenen Pfad eingeben..." style="background:#1a1a1a;border:1px solid #333;color:#ddd;padding:6px 10px;border-radius:6px;margin-left:8px;font-size:13px;flex:1">
+                </div>
+                <div class="upload-dropzone" id="uploadDropzone">
+                    <div class="upload-dropzone-icon">&#128228;</div>
+                    <div class="upload-dropzone-text">Dateien hierher ziehen</div>
+                    <div class="upload-dropzone-sub">oder klicken zum Auswaehlen</div>
+                    <div class="upload-dropzone-formats">.md .txt .rst .adoc .png .jpg .jpeg .gif .svg .webp</div>
+                    <input type="file" id="uploadFileInput" multiple accept=".md,.txt,.rst,.adoc,.png,.jpg,.jpeg,.gif,.svg,.webp,.ico,.bmp" style="display:none">
+                </div>
+                <div class="upload-progress" id="uploadProgress" style="display:none">
+                    <div class="upload-progress-bar" id="uploadProgressBar"></div>
+                    <div class="upload-progress-text" id="uploadProgressText">Hochladen...</div>
+                </div>
+                <div class="upload-results" id="uploadResults"></div>
             </div>
         </div>
 

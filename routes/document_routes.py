@@ -236,6 +236,96 @@ def serve_document_image(name, img_path):
     return send_from_directory(directory, filename)
 
 
+@documents_bp.route('/api/project/<path:name>/upload', methods=['POST'])
+def upload_files(name):
+    """Upload von Dateien (Dokumente + Bilder) in ein Projekt-Verzeichnis"""
+    project_path = _resolve_project_path(name)
+    if not project_path:
+        return jsonify({"error": "Projekt nicht gefunden"}), 404
+
+    target_dir = request.form.get('directory', '.')
+    if target_dir and target_dir != '.':
+        abs_target = os.path.join(project_path, target_dir)
+    else:
+        abs_target = project_path
+
+    # Sicherheitscheck
+    real_project = os.path.realpath(project_path)
+    real_target = os.path.realpath(abs_target)
+    if not real_target.startswith(real_project):
+        return jsonify({"error": "Zugriff verweigert"}), 403
+
+    if not os.path.isdir(abs_target):
+        os.makedirs(abs_target, exist_ok=True)
+
+    files = request.files.getlist('files')
+    if not files:
+        return jsonify({"error": "Keine Dateien gesendet"}), 400
+
+    # Max 20 Dateien pro Upload
+    if len(files) > 20:
+        return jsonify({"error": "Maximal 20 Dateien pro Upload"}), 400
+
+    results = []
+    for f in files:
+        if not f.filename:
+            continue
+
+        # Dateiname bereinigen
+        filename = os.path.basename(f.filename)
+        # Doppelpunkte, Backslashes etc. entfernen
+        filename = filename.replace('\\', '/').split('/')[-1]
+        if not filename or filename.startswith('.'):
+            results.append({"name": f.filename, "error": "Ungueltiger Dateiname"})
+            continue
+
+        ext = os.path.splitext(filename)[1].lower()
+        if ext not in ALL_EXTENSIONS:
+            results.append({"name": filename, "error": f"Dateityp {ext} nicht erlaubt"})
+            continue
+
+        # Dateigroesse pruefen (max 10 MB)
+        f.seek(0, 2)
+        size = f.tell()
+        f.seek(0)
+        if size > 10 * 1024 * 1024:
+            results.append({"name": filename, "error": "Datei zu gross (max 10 MB)"})
+            continue
+
+        filepath = os.path.join(abs_target, filename)
+
+        # Sicherheitscheck fuer finale Datei
+        real_file = os.path.realpath(filepath)
+        if not real_file.startswith(real_project):
+            results.append({"name": filename, "error": "Pfad nicht erlaubt"})
+            continue
+
+        try:
+            f.save(filepath)
+            rel_path = filename if target_dir == '.' else os.path.join(target_dir, filename)
+            file_type = 'document' if ext in DOC_EXTENSIONS else 'image'
+            results.append({
+                "name": filename,
+                "path": rel_path,
+                "type": file_type,
+                "size": size,
+                "size_human": _human_size(size),
+                "success": True,
+            })
+        except OSError as e:
+            results.append({"name": filename, "error": str(e)})
+
+    successful = [r for r in results if r.get("success")]
+    failed = [r for r in results if r.get("error")]
+
+    return jsonify({
+        "success": len(successful) > 0,
+        "uploaded": len(successful),
+        "failed": len(failed),
+        "results": results,
+    })
+
+
 @documents_bp.route('/api/project/<path:name>/export-bundle', methods=['POST'])
 def export_bundle(name):
     """Exportiert ausgewaehlte Dokumente als Bundle"""
