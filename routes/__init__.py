@@ -9,6 +9,7 @@ from routes.idea_routes import idea_bp
 from routes.news_routes import news_bp
 from routes.search_routes import search_bp
 from routes.widget_routes import widget_bp
+from routes.notification_routes import notification_bp
 
 
 def register_blueprints(app):
@@ -22,3 +23,4 @@ def register_blueprints(app):
     app.register_blueprint(news_bp)
     app.register_blueprint(search_bp)
     app.register_blueprint(widget_bp)
+    app.register_blueprint(notification_bp)

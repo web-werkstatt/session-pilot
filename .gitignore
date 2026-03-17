@@ -38,6 +38,8 @@ dashboard-full.png
 
 # User data
 favorites.json
+notifications.json
+.notification_state.json
 
 # Claude settings
 .claude/settings.local.json

@@ -29,6 +29,10 @@ app = Flask(__name__)
 from routes import register_blueprints
 register_blueprints(app)
 
+# Notification Checker starten (Background-Thread)
+from services.notification_checker import start_checker
+start_checker()
+
 # Favoriten
 FAVORITES_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'favorites.json')
 

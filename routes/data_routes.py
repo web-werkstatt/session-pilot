@@ -57,6 +57,27 @@ def get_data():
     cache["last_update"] = datetime.now().isoformat()
     save_cache(cache)
 
+    # Commit-Detection fuer Notifications
+    try:
+        from services.notification_service import load_state, save_state, add_notification
+        state = load_state()
+        prev_commits = state.get("last_commits", {})
+        for proj_name, proj_info in projects.items():
+            sha = proj_info.get("local_sha", "")
+            if sha and prev_commits.get(proj_name) and prev_commits[proj_name] != sha:
+                add_notification(
+                    "new_commit", "info",
+                    f"Neuer Commit: {proj_name}",
+                    proj_info.get("last_commit_msg", "")[:80],
+                    project=proj_name
+                )
+            if sha:
+                prev_commits[proj_name] = sha
+        state["last_commits"] = prev_commits
+        save_state(state)
+    except Exception:
+        pass  # Notifications duerfen /api/data nicht blockieren
+
     stats = _container_stats(containers)
     stats["total_projects"] = len(projects)
     stats["total_containers"] = stats.pop("total")
