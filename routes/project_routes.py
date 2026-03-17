@@ -266,6 +266,37 @@ Generiert am {datetime.now().strftime('%d.%m.%Y %H:%M')} — Projekt-Dashboard
     return jsonify({"error": f"Unbekanntes Format: {fmt}"}), 400
 
 
+@project_bp.route('/api/project/<path:name>/archive', methods=['POST'])
+def archive_project(name):
+    """Archiviert oder stellt ein Projekt wieder her"""
+    project_path = resolve_project_path(name)
+    if not project_path:
+        return jsonify({"error": "Projekt nicht gefunden"}), 404
+
+    data = request.get_json() or {}
+    archived = data.get('archived', True)
+
+    json_path = os.path.join(project_path, "project.json")
+    existing = {}
+    if os.path.exists(json_path):
+        try:
+            with open(json_path, 'r', encoding='utf-8') as f:
+                existing = json.load(f)
+        except (json.JSONDecodeError, OSError):
+            pass
+
+    existing["archived"] = bool(archived)
+    existing.setdefault("name", name)
+
+    try:
+        with open(json_path, 'w', encoding='utf-8') as f:
+            json.dump(existing, f, indent=2, ensure_ascii=False)
+        action = "archiviert" if archived else "wiederhergestellt"
+        return jsonify({"success": True, "message": f"Projekt '{name}' {action}"})
+    except OSError as e:
+        return jsonify({"error": str(e)}), 500
+
+
 # === PROJEKT-ASSETS (Bilder) ===
 
 ALLOWED_ASSET_EXTENSIONS = {'.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp', '.ico'}

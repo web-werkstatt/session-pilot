@@ -3,6 +3,7 @@ let allRelations = [];
 let relationTypes = [];
 let groupsData = { groups: [] };
 let favorites = [];
+let showArchived = false;
 
 // Favoriten laden
 function loadFavorites() {
@@ -28,6 +29,32 @@ function toggleFavorite(name, btn) {
             if (allProjectsData.projects) renderProjectsTable(allProjectsData);
         }
     });
+}
+
+function toggleArchive(name, archived) {
+    closeAllCtx();
+    fetch('/api/project/' + encodeURIComponent(name) + '/archive', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({archived: archived})
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            // Daten neu laden
+            loadData();
+        }
+    });
+}
+
+function toggleShowArchived() {
+    showArchived = !showArchived;
+    const btn = document.getElementById('archiveToggle');
+    if (btn) {
+        btn.classList.toggle('active', showArchived);
+        btn.textContent = showArchived ? '📦 Archiv ausblenden' : '📦 Archiv anzeigen';
+    }
+    applyFiltersAndSort();
 }
 
 // Row-Context-Menu
@@ -511,6 +538,8 @@ function renderProject(proj, isNew) {
     tr.dataset.priority = proj.priority || '';
     tr.dataset.projecttype = proj.project_type || 'project';
     tr.dataset.parent = proj.parent_project || '';
+    tr.dataset.archived = proj.archived ? '1' : '';
+    if (proj.archived) tr.style.opacity = '0.45';
 
     // Suchbarer Text: Name + Beschreibung + Tags + Parent
     tr.dataset.searchtext = [
@@ -582,6 +611,7 @@ function renderProject(proj, isNew) {
             <div class="row-ctx-item" onclick="event.stopPropagation();location.href='/project/${encodeURIComponent(eName)}'">ℹ️ Details</div>
             <div class="row-ctx-item" onclick="event.stopPropagation();openEditModal('${eName}')">✏️ Bearbeiten</div>
             <div class="row-ctx-item" onclick="event.stopPropagation();toggleFavorite('${eName}',null)">⭐ Favorit</div>
+            <div class="row-ctx-item" onclick="event.stopPropagation();toggleArchive('${eName}', ${!proj.archived})">${proj.archived ? '📂 Wiederherstellen' : '📦 Archivieren'}</div>
         </div>
     </div>`;
 
@@ -1051,18 +1081,23 @@ function applyFiltersAndSort() {
         const group = row.dataset.group || '';
         const priority = row.dataset.priority || '';
         const searchText = row.dataset.searchtext || '';
+        const isArchived = row.dataset.archived === '1';
         let visible = true;
 
-        // Gruppenfilter - dynamisch basierend auf Gruppen
-        if (currentGroupFilter === 'all') {
-            // Alle anzeigen
-        } else if (currentGroupFilter === 'priority') {
-            if (!priority) visible = false;
-        } else if (currentGroupFilter === 'none') {
-            if (group) visible = false;
-        } else {
-            // Spezifische Gruppe filtern
-            if (group !== currentGroupFilter) visible = false;
+        // Archiv-Filter: standardmaessig ausblenden
+        if (isArchived && !showArchived) {
+            visible = false;
+        }
+
+        // Gruppenfilter
+        if (visible && currentGroupFilter !== 'all') {
+            if (currentGroupFilter === 'priority') {
+                if (!priority) visible = false;
+            } else if (currentGroupFilter === 'none') {
+                if (group) visible = false;
+            } else if (group !== currentGroupFilter) {
+                visible = false;
+            }
         }
 
         // Suchfilter

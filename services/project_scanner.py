@@ -266,6 +266,7 @@ def scan_projects(auto_generate=True):
             project["progress"] = project_meta.get("progress")
             project["milestones"] = project_meta.get("milestones", [])
             project["container_patterns"] = project_meta.get("container_patterns", [])
+            project["archived"] = project_meta.get("archived", False)
             if project_meta.get("port"):
                 project["port"] = project_meta["port"]
             project["project_type"] = detect_project_type(item_path, item)
