@@ -63,16 +63,23 @@ def execute_many(sql, params_list):
 
 def ensure_database():
     """Erstellt die Datenbank und Tabellen falls noetig"""
+    import re
     # Erst pruefen ob DB existiert
     cfg = DB_CONFIG.copy()
     cfg["dbname"] = "postgres"
+    dbname = DB_CONFIG["dbname"]
+    # DB-Name validieren: nur alphanumerisch und Unterstriche
+    if not re.match(r'^[a-zA-Z_][a-zA-Z0-9_]*$', dbname):
+        raise ValueError(f"Ungültiger Datenbankname: {dbname}")
     try:
         conn = psycopg2.connect(**cfg)
         conn.autocommit = True
         with conn.cursor() as cur:
-            cur.execute("SELECT 1 FROM pg_database WHERE datname = %s", (DB_CONFIG["dbname"],))
+            cur.execute("SELECT 1 FROM pg_database WHERE datname = %s", (dbname,))
             if not cur.fetchone():
-                cur.execute(f'CREATE DATABASE {DB_CONFIG["dbname"]}')
+                # psycopg2.sql für sichere Identifier
+                from psycopg2 import sql
+                cur.execute(sql.SQL("CREATE DATABASE {}").format(sql.Identifier(dbname)))
         conn.close()
     except Exception as e:
         print(f"DB-Erstellung fehlgeschlagen: {e}")

@@ -10,7 +10,7 @@ import mimetypes
 from datetime import datetime
 from flask import Blueprint, jsonify, request, Response, send_from_directory
 
-from config import PROJECTS_DIR
+from services.path_resolver import resolve_project_path as _resolve_project_path
 
 documents_bp = Blueprint('documents', __name__)
 
@@ -28,23 +28,6 @@ SKIP_DIRS = {
 
 # Max Dateigroesse fuer Inhalts-Anzeige (5 MB)
 MAX_FILE_SIZE = 5 * 1024 * 1024
-
-
-def _resolve_project_path(name):
-    """Loest Projektpfad auf inkl. Bindestrich/Underscore Fallback"""
-    if '/' in name:
-        parts = name.split('/', 1)
-        for sub_dir in ['', 'apps/', 'packages/', 'services/', 'modules/']:
-            p = os.path.join(PROJECTS_DIR, parts[0], sub_dir + parts[1])
-            if os.path.isdir(p):
-                return p
-        return None
-    p = os.path.join(PROJECTS_DIR, name)
-    if os.path.isdir(p):
-        return p
-    alt = name.replace('-', '_') if '-' in name else name.replace('_', '-')
-    p = os.path.join(PROJECTS_DIR, alt)
-    return p if os.path.isdir(p) else None
 
 
 def _human_size(size):
