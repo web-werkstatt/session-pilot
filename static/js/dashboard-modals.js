@@ -1,0 +1,316 @@
+// === DASHBOARD MODALS ===
+// Edit modal, relations tab, milestones, keyboard shortcuts, dropdown close handler
+
+function openEditModal(projectName) {
+    currentEditProject = projectName;
+    document.getElementById('editProjectName').textContent = projectName;
+    document.getElementById('editModal').classList.add('show');
+
+    // Gruppen-Dropdown aktualisieren
+    updateGroupDropdown();
+
+    // Relation Types laden (falls noch nicht geladen)
+    if (relationTypes.length === 0) {
+        loadRelationTypes();
+    }
+
+    // Tab auf Allgemein setzen
+    switchEditTab('general');
+
+    fetch(`/api/project/${encodeURIComponent(projectName)}`)
+        .then(r => r.json())
+        .then(data => {
+            document.getElementById('editDescription').value = data.description || '';
+            document.getElementById('editGroup').value = data.group || '';
+            document.getElementById('editPriority').value = data.priority || '';
+            document.getElementById('editDeadline').value = data.deadline || '';
+            document.getElementById('editProgress').value = data.progress !== null ? data.progress : '';
+
+            const milestoneList = document.getElementById('milestoneList');
+            milestoneList.innerHTML = '';
+            if (data.milestones && data.milestones.length > 0) {
+                data.milestones.forEach((m, i) => {
+                    addMilestoneRow(m.name, m.done, i);
+                });
+            }
+        })
+        .catch(err => {
+            console.error('Fehler beim Laden:', err);
+        });
+}
+
+function closeEditModal() {
+    document.getElementById('editModal').classList.remove('show');
+    currentEditProject = null;
+    // Inline-Gruppen-Formular zurücksetzen
+    const inlineForm = document.getElementById('inlineGroupForm');
+    if (inlineForm) {
+        inlineForm.style.display = 'none';
+        document.getElementById('inlineGroupId').value = '';
+        document.getElementById('inlineGroupName').value = '';
+        document.getElementById('inlineGroupIcon').value = '📁';
+        document.getElementById('inlineGroupColor').value = '#666666';
+    }
+    // Relations-Tab zurücksetzen
+    switchEditTab('general');
+    document.getElementById('editRelationProject').value = '';
+    document.getElementById('editRelationNote').value = '';
+    document.getElementById('editRelationDropdown').innerHTML = '';
+    document.getElementById('editRelationDropdown').style.display = 'none';
+}
+
+// === RELATIONS TAB FUNKTIONEN ===
+
+function switchEditTab(tab) {
+    document.querySelectorAll('.modal-tab').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.edit-tab-content').forEach(content => content.classList.remove('active'));
+
+    if (tab === 'general') {
+        document.querySelector('.modal-tab:first-child').classList.add('active');
+        document.getElementById('editTabGeneral').classList.add('active');
+    } else {
+        document.querySelector('.modal-tab:last-child').classList.add('active');
+        document.getElementById('editTabRelations').classList.add('active');
+        loadProjectRelations();
+    }
+}
+
+async function loadRelationTypes() {
+    const resp = await fetch('/api/relations/types');
+    relationTypes = await resp.json();
+    const select = document.getElementById('editRelationType');
+    select.innerHTML = relationTypes.map(t =>
+        `<option value="${t.id}">${t.icon} ${t.name}</option>`
+    ).join('');
+}
+
+async function loadProjectRelations() {
+    if (!currentEditProject) return;
+
+    const resp = await fetch(`/api/project/${encodeURIComponent(currentEditProject)}/relations`);
+    const data = await resp.json();
+
+    const outgoingDiv = document.getElementById('outgoingRelations');
+    const incomingDiv = document.getElementById('incomingRelations');
+
+    if (data.outgoing.length === 0) {
+        outgoingDiv.innerHTML = '<div style="color:#666;font-style:italic">Keine ausgehenden Beziehungen</div>';
+    } else {
+        outgoingDiv.innerHTML = data.outgoing.map(rel => {
+            const typeInfo = relationTypes.find(t => t.id === rel.type) || {icon: '🔗', name: rel.type, color: '#888'};
+            return `
+                <div class="relation-item" style="border-left:3px solid ${typeInfo.color}">
+                    <span class="relation-type">${typeInfo.icon} ${typeInfo.name}</span>
+                    <span class="relation-target">→ ${rel.target}</span>
+                    ${rel.note ? `<span class="relation-note">(${rel.note})</span>` : ''}
+                    <button class="btn-remove" onclick="deleteProjectRelation('${rel.id}')" title="Löschen">×</button>
+                </div>
+            `;
+        }).join('');
+    }
+
+    if (data.incoming.length === 0) {
+        incomingDiv.innerHTML = '<div style="color:#666;font-style:italic">Keine eingehenden Beziehungen</div>';
+    } else {
+        incomingDiv.innerHTML = data.incoming.map(rel => {
+            const typeInfo = relationTypes.find(t => t.id === rel.type) || {icon: '🔗', name: rel.type, color: '#888'};
+            return `
+                <div class="relation-item" style="border-left:3px solid ${typeInfo.color}">
+                    <span class="relation-type">${typeInfo.icon} ${typeInfo.name}</span>
+                    <span class="relation-target">← ${rel.source}</span>
+                    ${rel.note ? `<span class="relation-note">(${rel.note})</span>` : ''}
+                    <button class="btn-remove" onclick="deleteProjectRelation('${rel.id}')" title="Löschen">×</button>
+                </div>
+            `;
+        }).join('');
+    }
+}
+
+function updateRelationForm() {
+    const direction = document.querySelector('input[name="relationDirection"]:checked').value;
+    document.getElementById('relationTargetLabel').textContent =
+        direction === 'outgoing' ? 'Ziel-Projekt' : 'Quell-Projekt';
+}
+
+function onEditRelationSearch() {
+    clearTimeout(editRelationSearchTimeout);
+    if (editRelationAbortController) editRelationAbortController.abort();
+
+    const query = document.getElementById('editRelationProject').value.trim();
+    const dropdown = document.getElementById('editRelationDropdown');
+
+    if (query.length < 1) {
+        dropdown.style.display = 'none';
+        return;
+    }
+
+    editRelationSearchTimeout = setTimeout(async () => {
+        editRelationAbortController = new AbortController();
+        try {
+            const resp = await fetch(`/api/projects/search?q=${encodeURIComponent(query)}&limit=10`, {
+                signal: editRelationAbortController.signal
+            });
+            const results = await resp.json();
+
+            // Aktuelles Projekt aus der Liste entfernen
+            const filtered = results.filter(p => p.name !== currentEditProject);
+
+            if (filtered.length === 0) {
+                dropdown.innerHTML = '<div class="dropdown-item" style="color:#888">Keine Treffer</div>';
+            } else {
+                dropdown.innerHTML = filtered.map(p => `
+                    <div class="dropdown-item" onclick="selectEditRelationProject('${p.name}')">
+                        <strong>${p.name}</strong>
+                        ${p.description ? `<small style="color:#888;margin-left:8px">${p.description}</small>` : ''}
+                    </div>
+                `).join('');
+            }
+            dropdown.style.display = 'block';
+        } catch (e) {
+            if (e.name !== 'AbortError') console.error(e);
+        }
+    }, 200);
+}
+
+function selectEditRelationProject(name) {
+    document.getElementById('editRelationProject').value = name;
+    document.getElementById('editRelationDropdown').style.display = 'none';
+}
+
+async function addProjectRelation() {
+    const targetProject = document.getElementById('editRelationProject').value.trim();
+    const relationType = document.getElementById('editRelationType').value;
+    const note = document.getElementById('editRelationNote').value.trim();
+    const direction = document.querySelector('input[name="relationDirection"]:checked').value;
+
+    if (!targetProject) {
+        alert('Bitte ein Projekt auswählen');
+        return;
+    }
+
+    const source = direction === 'outgoing' ? currentEditProject : targetProject;
+    const target = direction === 'outgoing' ? targetProject : currentEditProject;
+
+    const resp = await fetch('/api/relations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ source, target, type: relationType, note })
+    });
+
+    if (resp.ok) {
+        document.getElementById('editRelationProject').value = '';
+        document.getElementById('editRelationNote').value = '';
+        loadProjectRelations();
+        loadData(); // Dashboard aktualisieren
+    } else {
+        const err = await resp.json();
+        alert('Fehler: ' + (err.error || 'Unbekannter Fehler'));
+    }
+}
+
+async function deleteProjectRelation(id) {
+    if (!confirm('Beziehung wirklich löschen?')) return;
+
+    const resp = await fetch(`/api/relations/${id}`, { method: 'DELETE' });
+    if (resp.ok) {
+        loadProjectRelations();
+        loadData(); // Dashboard aktualisieren
+    }
+}
+
+// Dropdown schließen bei Klick außerhalb
+document.addEventListener('click', function(e) {
+    const dropdown = document.getElementById('editRelationDropdown');
+    const input = document.getElementById('editRelationProject');
+    if (dropdown && !dropdown.contains(e.target) && e.target !== input) {
+        dropdown.style.display = 'none';
+    }
+});
+
+function addMilestone() {
+    const milestoneList = document.getElementById('milestoneList');
+    const idx = milestoneList.children.length;
+    addMilestoneRow('', false, idx);
+}
+
+function addMilestoneRow(name, done, idx) {
+    const milestoneList = document.getElementById('milestoneList');
+    const div = document.createElement('div');
+    div.className = 'milestone-item';
+    div.innerHTML = `
+        <input type="checkbox" ${done ? 'checked' : ''} data-idx="${idx}">
+        <input type="text" value="${name}" placeholder="Meilenstein-Name" data-idx="${idx}">
+        <button type="button" class="btn-remove" onclick="this.parentElement.remove()">×</button>
+    `;
+    milestoneList.appendChild(div);
+}
+
+function removeMilestone(btn) {
+    btn.parentElement.remove();
+}
+
+// Edit form submit handler
+document.getElementById('editForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const milestones = [];
+    document.querySelectorAll('#milestoneList .milestone-item').forEach(item => {
+        const checkbox = item.querySelector('input[type="checkbox"]');
+        const textInput = item.querySelector('input[type="text"]');
+        if (textInput.value.trim()) {
+            milestones.push({
+                name: textInput.value.trim(),
+                done: checkbox.checked
+            });
+        }
+    });
+
+    const data = {
+        name: currentEditProject,
+        description: document.getElementById('editDescription').value,
+        group: document.getElementById('editGroup').value || null,
+        priority: document.getElementById('editPriority').value || null,
+        deadline: document.getElementById('editDeadline').value || null,
+        progress: document.getElementById('editProgress').value ? parseInt(document.getElementById('editProgress').value) : null,
+        milestones: milestones
+    };
+
+    fetch('/api/project/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    })
+    .then(r => r.json())
+    .then(result => {
+        if (result.success) {
+            closeEditModal();
+            loadData();
+        } else {
+            alert('Fehler: ' + result.error);
+        }
+    })
+    .catch(err => {
+        alert('Fehler beim Speichern: ' + err);
+    });
+});
+
+// Keyboard shortcuts (Escape, Ctrl+K, /)
+document.addEventListener('keydown', e => {
+    // Escape: Modal schließen oder Suche leeren
+    if (e.key === 'Escape') {
+        if (document.getElementById('groupsModal').classList.contains('show')) {
+            closeGroupsModal();
+        } else if (document.getElementById('infoModal').classList.contains('show')) {
+            closeModal();
+        } else if (document.getElementById('editModal').classList.contains('show')) {
+            closeEditModal();
+        } else if (currentSearchTerm) {
+            clearSearch();
+        }
+    }
+    // Strg+K oder / für Suchfokus (wenn nicht in Input)
+    if ((e.key === 'k' && (e.ctrlKey || e.metaKey)) || (e.key === '/' && !['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName))) {
+        e.preventDefault();
+        document.getElementById('searchInput').focus();
+    }
+});

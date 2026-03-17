@@ -1,0 +1,188 @@
+<!-- Stats Modal -->
+<div class="modal-overlay" id="statsModal" onclick="if(event.target===this)closeStatsModal()">
+    <div class="modal-content" style="max-width:500px">
+        <div class="modal-header">
+            <h2>System-Statistiken</h2>
+            <button class="modal-close" onclick="closeStatsModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="stats-grid" id="statsGrid"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Lightbox fuer Bilder -->
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+    <img id="lightboxImg" src="" alt="">
+</div>
+
+<!-- Command Palette -->
+<div class="cmd-overlay" id="cmdOverlay" onclick="if(event.target===this)closeCommandPalette()">
+    <div class="cmd-palette">
+        <div class="cmd-search">
+            <span>&#128269;</span>
+            <input type="text" id="cmdInput" placeholder="Suche Projekte, Sessions, Container..." oninput="handleCmdSearch()" autocomplete="off">
+        </div>
+        <div class="cmd-results" id="cmdResults">
+            <div class="cmd-group">
+                <div class="cmd-group-label">Schnellzugriff</div>
+                <div class="cmd-item" onclick="location.href='/sessions'">Claude Sessions</div>
+                <div class="cmd-item" onclick="location.href='/containers'">Container</div>
+                <div class="cmd-item" onclick="location.href='/dependencies'">Abhaengigkeiten</div>
+                <div class="cmd-item" onclick="openIdeasModal();closeCommandPalette()">Ideen & Notizen</div>
+                <div class="cmd-item" onclick="loadData();closeCommandPalette()">Daten aktualisieren</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal fuer Beschreibung -->
+<div class="modal-overlay" id="infoModal" onclick="if(event.target===this)closeModal()">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="modalTitle">Details</h2>
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+        </div>
+        <div class="modal-body" id="modalBody">Lade...</div>
+    </div>
+</div>
+
+<!-- Modal fuer Projekt-Bearbeitung -->
+<div class="modal-overlay" id="editModal" onclick="if(event.target===this)closeEditModal()">
+    <div class="modal-content" style="max-width:700px">
+        <div class="modal-header">
+            <h2>Projekt: <span id="editProjectName"></span></h2>
+            <button class="modal-close" onclick="closeEditModal()">&times;</button>
+        </div>
+        <div class="modal-tabs">
+            <button class="modal-tab active" onclick="switchEditTab('general')">Allgemein</button>
+            <button class="modal-tab" onclick="switchEditTab('relations')">Beziehungen</button>
+        </div>
+        <div class="modal-body">
+            <div id="editTabGeneral" class="edit-tab-content active">
+            <form class="edit-form" id="editForm">
+                <label>Beschreibung</label>
+                <textarea id="editDescription" rows="2" placeholder="Kurze Projektbeschreibung..."></textarea>
+                <div class="row">
+                    <div>
+                        <label>Gruppe</label>
+                        <div style="display:flex;gap:8px">
+                            <select id="editGroup" style="flex:1"><option value="">-- Keine --</option></select>
+                            <button type="button" onclick="toggleInlineGroupForm()" class="btn-add" title="Neue Gruppe erstellen" style="padding:8px 12px">+</button>
+                        </div>
+                    </div>
+                    <div>
+                        <label>Prioritaet</label>
+                        <select id="editPriority">
+                            <option value="">-- Keine --</option>
+                            <option value="high">Hoch</option>
+                            <option value="medium">Mittel</option>
+                            <option value="low">Niedrig</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="inlineGroupForm" style="display:none;background:#141414;padding:15px;border-radius:8px;margin:10px 0;border:1px solid #333">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+                        <strong style="color:#4fc3f7">Neue Gruppe erstellen</strong>
+                        <button type="button" onclick="toggleInlineGroupForm()" style="background:none;border:none;color:#666;font-size:18px;cursor:pointer">&times;</button>
+                    </div>
+                    <div class="row">
+                        <div><label style="margin-top:0">Kurzname</label><input type="text" id="inlineGroupId" placeholder="z.B. kunden_web" style="text-transform:lowercase"></div>
+                        <div><label style="margin-top:0">Anzeigename</label><input type="text" id="inlineGroupName" placeholder="z.B. Web-Kunden"></div>
+                    </div>
+                    <div class="row" style="margin-top:10px">
+                        <div><label style="margin-top:0">Icon</label><select id="inlineGroupIcon" style="font-size:16px"><option value="📁">📁</option><option value="🏠">🏠</option><option value="🏢">🏢</option><option value="👤">👤</option><option value="🚀">🚀</option><option value="⭐">⭐</option><option value="🌐">🌐</option><option value="🎨">🎨</option><option value="🤖">🤖</option><option value="📦">📦</option><option value="💰">💰</option></select></div>
+                        <div><label style="margin-top:0">Farbe</label><input type="color" id="inlineGroupColor" value="#666666" style="height:38px;padding:3px"></div>
+                    </div>
+                    <div style="margin-top:12px;text-align:right"><button type="button" class="btn-save" onclick="createInlineGroup()" style="padding:8px 20px">Erstellen</button></div>
+                </div>
+                <div class="row">
+                    <div><label>Deadline</label><input type="date" id="editDeadline"></div>
+                    <div><label>Fortschritt (%)</label><input type="number" id="editProgress" min="0" max="100" placeholder="0-100"></div>
+                </div>
+                <label>Meilensteine</label>
+                <div class="milestone-list" id="milestoneList"></div>
+                <button type="button" class="btn-add" onclick="addMilestone()" style="margin-top:5px">+ Meilenstein</button>
+                <div class="modal-actions">
+                    <button type="button" class="btn-cancel" onclick="closeEditModal()">Abbrechen</button>
+                    <button type="submit" class="btn-save">Speichern</button>
+                </div>
+            </form>
+            </div>
+            <div id="editTabRelations" class="edit-tab-content">
+                <div class="relations-section"><h4>Ausgehend (dieses Projekt ->)</h4><div id="outgoingRelations" class="project-relations-list"></div></div>
+                <div class="relations-section"><h4>Eingehend (-> dieses Projekt)</h4><div id="incomingRelations" class="project-relations-list"></div></div>
+                <div class="relations-section" style="border-top:1px solid #2a2a2a;padding-top:15px;margin-top:15px;">
+                    <h4>Neue Beziehung</h4>
+                    <div class="relation-direction">
+                        <label class="radio-label"><input type="radio" name="relationDirection" value="outgoing" checked onchange="updateRelationForm()"> Dieses -> Anderes</label>
+                        <label class="radio-label"><input type="radio" name="relationDirection" value="incoming" onchange="updateRelationForm()"> Anderes -> Dieses</label>
+                    </div>
+                    <div class="row" style="margin-top:10px">
+                        <div style="flex:2"><label id="relationTargetLabel" style="margin-top:0">Ziel-Projekt</label><div class="autocomplete-wrapper"><input type="text" id="editRelationProject" placeholder="Projekt suchen..." oninput="onEditRelationSearch()" autocomplete="off"><div class="autocomplete-dropdown" id="editRelationDropdown"></div></div></div>
+                        <div style="flex:1"><label style="margin-top:0">Typ</label><select id="editRelationType"></select></div>
+                    </div>
+                    <div style="margin-top:10px"><label style="margin-top:0">Notiz</label><input type="text" id="editRelationNote" placeholder="z.B. Shared DB..."></div>
+                    <div style="margin-top:10px"><button type="button" class="btn-save" onclick="addProjectRelation()" style="padding:8px 20px">Hinzufuegen</button></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal fuer Gruppen-Verwaltung -->
+<div class="modal-overlay" id="groupsModal" onclick="if(event.target===this)closeGroupsModal()">
+    <div class="modal-content" style="max-width:700px">
+        <div class="modal-header">
+            <h2>Gruppen verwalten</h2>
+            <button class="modal-close" onclick="closeGroupsModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div id="groupsList" class="groups-list"></div>
+            <div style="margin-top:20px;padding-top:20px;border-top:1px solid #2a2a2a">
+                <h3 style="margin-bottom:15px">Neue Gruppe erstellen</h3>
+                <div class="edit-form">
+                    <div class="row">
+                        <div><label>Kurzname</label><input type="text" id="newGroupId" placeholder="z.B. kunden_web" style="text-transform:lowercase"></div>
+                        <div><label>Anzeigename</label><input type="text" id="newGroupName" placeholder="z.B. Web-Kunden"></div>
+                    </div>
+                    <div class="row">
+                        <div><label>Icon</label><select id="newGroupIcon" style="font-size:18px"><option value="📁">📁</option><option value="🏠">🏠</option><option value="🏢">🏢</option><option value="👤">👤</option><option value="🚀">🚀</option><option value="⭐">⭐</option><option value="🌐">🌐</option><option value="🎨">🎨</option><option value="🤖">🤖</option><option value="📦">📦</option><option value="💰">💰</option></select></div>
+                        <div><label>Farbe</label><input type="color" id="newGroupColor" value="#666666" style="height:42px;padding:5px"></div>
+                    </div>
+                    <label>Beschreibung</label>
+                    <input type="text" id="newGroupDesc" placeholder="Optionale Beschreibung">
+                    <div style="margin-top:15px"><button type="button" class="btn-save" onclick="createGroup()">Gruppe erstellen</button></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Ideen Modal -->
+<div id="ideasModal" class="modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.75);z-index:2000;align-items:center;justify-content:center;backdrop-filter:blur(2px)">
+    <div style="background:#1e1e1e;width:900px;max-width:95%;max-height:90vh;border-radius:12px;display:flex;flex-direction:column;overflow:hidden;border:1px solid #2a2a2a">
+        <div style="background:#0078d4;padding:15px 20px;display:flex;justify-content:space-between;align-items:center;">
+            <h2 style="margin:0;font-size:18px;">Ideen & Notizen</h2>
+            <button onclick="closeIdeasModal()" style="background:none;border:none;color:white;font-size:24px;cursor:pointer;">x</button>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 300px;flex:1;overflow:hidden;">
+            <div style="padding:20px;overflow-y:auto;border-right:1px solid #2a2a2a;">
+                <div style="display:flex;gap:10px;margin-bottom:15px;">
+                    <select id="ideasFilterCategory" onchange="filterIdeas()" style="flex:1;padding:8px;background:#141414;border:1px solid #333;border-radius:6px;color:#ccc;font-size:13px;"><option value="">Alle Kategorien</option></select>
+                    <select id="ideasFilterStatus" onchange="filterIdeas()" style="padding:8px;background:#141414;border:1px solid #333;border-radius:6px;color:#ccc;font-size:13px;"><option value="">Alle Status</option><option value="open">Offen</option><option value="done">Erledigt</option><option value="archived">Archiviert</option></select>
+                </div>
+                <div id="ideasList" style="display:flex;flex-direction:column;gap:10px;"></div>
+            </div>
+            <div style="padding:20px;background:#161616;">
+                <h3 id="ideaFormTitle" style="margin:0 0 15px 0;font-size:15px;">Neue Idee</h3>
+                <div style="margin-bottom:12px;"><label style="display:block;font-size:11px;color:#666;margin-bottom:4px;">Titel *</label><input type="text" id="ideaTitle" placeholder="Was ist die Idee?" style="width:100%;padding:8px;background:#141414;border:1px solid #333;border-radius:6px;color:#ccc;font-size:13px;"></div>
+                <div style="margin-bottom:12px;"><label style="display:block;font-size:11px;color:#666;margin-bottom:4px;">Beschreibung</label><textarea id="ideaContent" rows="4" placeholder="Details..." style="width:100%;padding:8px;background:#141414;border:1px solid #333;border-radius:6px;color:#ccc;font-size:13px;resize:vertical;"></textarea></div>
+                <div style="margin-bottom:12px;"><label style="display:block;font-size:11px;color:#666;margin-bottom:4px;">Kategorie</label><select id="ideaCategory" style="width:100%;padding:8px;background:#141414;border:1px solid #333;border-radius:6px;color:#ccc;font-size:13px;"></select></div>
+                <div style="margin-bottom:12px;"><label style="display:block;font-size:11px;color:#666;margin-bottom:4px;">Prioritaet</label><select id="ideaPriority" style="width:100%;padding:8px;background:#141414;border:1px solid #333;border-radius:6px;color:#ccc;font-size:13px;"><option value="low">Niedrig</option><option value="normal" selected>Normal</option><option value="high">Hoch</option></select></div>
+                <div style="margin-bottom:15px;"><label style="display:block;font-size:11px;color:#666;margin-bottom:4px;">Projekt</label><select id="ideaProject" style="width:100%;padding:8px;background:#141414;border:1px solid #333;border-radius:6px;color:#ccc;font-size:13px;"><option value="">Kein Projekt</option></select></div>
+                <div style="display:flex;gap:10px;"><button onclick="resetIdeaForm()" style="flex:1;padding:10px;background:#333;border:none;border-radius:6px;color:#ccc;cursor:pointer;font-size:13px;">Abbrechen</button><button id="ideaSaveBtn" onclick="saveIdea()" style="flex:1;padding:10px;background:#1b4332;border:none;border-radius:6px;color:#fff;cursor:pointer;font-size:13px;">Speichern</button></div>
+            </div>
+        </div>
+    </div>
+</div>
