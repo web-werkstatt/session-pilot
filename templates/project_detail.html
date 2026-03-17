@@ -14,62 +14,7 @@
 
 {% block head_extra %}
 <link rel="stylesheet" href="/static/css/documents.css">
-<style>
-    .project-hero { padding: 24px; border-bottom: 1px solid #1e1e1e; }
-    .project-hero h1 { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
-    .project-hero .subtitle { color: #888; font-size: 14px; }
-    .project-body { padding: 24px; }
-    .project-body .project-info-section { max-width: 900px; }
-    .project-body h3 {
-        color: #4fc3f7; font-size: 14px; margin: 28px 0 12px;
-        border-bottom: 1px solid #1e1e1e; padding-bottom: 6px;
-        text-transform: uppercase; letter-spacing: 0.5px;
-    }
-    .project-body table { margin-bottom: 12px; }
-    .project-body table td { padding: 5px 14px 5px 0; font-size: 13px; border: none; }
-    .project-body code {
-        background: #1a3a5c; color: #4fc3f7; padding: 2px 8px;
-        border-radius: 4px; font-size: 12px; display: inline-block; margin: 2px;
-    }
-    .project-body img {
-        max-width: 220px; max-height: 160px; border-radius: 8px;
-        cursor: pointer; margin: 4px; border: 1px solid #2a2a2a;
-        transition: transform 0.2s;
-    }
-    .project-body img:hover { transform: scale(1.03); }
-    .project-body pre {
-        background: #141414; padding: 12px; border-radius: 6px;
-        overflow-x: auto; font-size: 13px; max-height: 300px;
-        overflow-y: auto; color: #aaa;
-    }
-    .project-body a { color: #4fc3f7; text-decoration: none; }
-    .project-body a:hover { text-decoration: underline; }
-    .loading { text-align: center; padding: 60px; color: #666; }
-    /* README rendered */
-    .readme-rendered {
-        background: #141414; border: 1px solid #1e1e1e; border-radius: 8px;
-        padding: 20px 24px; font-size: 14px; line-height: 1.7; color: #ccc;
-    }
-    .readme-rendered h1 { font-size: 22px; color: #fff; margin: 20px 0 10px; border-bottom: 1px solid #2a2a2a; padding-bottom: 8px; }
-    .readme-rendered h2 { font-size: 18px; color: #e0e0e0; margin: 18px 0 8px; border-bottom: 1px solid #222; padding-bottom: 6px; }
-    .readme-rendered h3 { font-size: 15px; color: #ccc; margin: 14px 0 6px; border: none; text-transform: none; letter-spacing: 0; }
-    .readme-rendered pre { background: #0d0d0d; padding: 14px; border-radius: 6px; overflow-x: auto; font-size: 13px; }
-    .readme-rendered code { background: #1a1a1a; padding: 1px 5px; border-radius: 3px; font-size: 13px; color: #e0e0e0; display: inline; margin: 0; }
-    .readme-rendered pre code { background: none; padding: 0; }
-    .readme-rendered table { border-collapse: collapse; width: 100%; margin: 12px 0; }
-    .readme-rendered table th, .readme-rendered table td { border: 1px solid #2a2a2a; padding: 8px 12px; font-size: 13px; text-align: left; }
-    .readme-rendered table th { background: #1a1a1a; color: #aaa; }
-    .readme-rendered blockquote { border-left: 3px solid #4fc3f7; padding: 8px 16px; margin: 12px 0; color: #999; background: #1a1a1a; border-radius: 0 6px 6px 0; }
-    .readme-rendered ul, .readme-rendered ol { padding-left: 24px; margin: 8px 0; }
-    .readme-rendered a { color: #4fc3f7; }
-    .readme-actions { display: flex; gap: 10px; margin-bottom: 12px; align-items: center; }
-    .readme-actions .btn-edit { background: #1a1a1a; border: 1px solid #333; color: #ccc; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 12px; }
-    .readme-actions .btn-edit:hover { background: #222; border-color: #555; }
-    .readme-actions .btn-save { background: #1b4332; border: none; color: #fff; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 12px; }
-    .readme-actions .btn-cancel { background: #333; border: none; color: #ccc; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 12px; }
-    .readme-actions .status { color: #666; font-size: 12px; margin-left: auto; }
-    #readmeEditor { display: none; }
-</style>
+<link rel="stylesheet" href="/static/css/project-detail.css">
 {% endblock %}
 
 {% block content %}
@@ -79,6 +24,8 @@
     </div>
 
     <div class="project-body">
+        <div class="git-panel" id="gitPanel">Lade Git-Status...</div>
+
         <div class="project-info-section" id="projectBody">
             <div class="loading">
                 <div class="spinner"></div>
@@ -191,6 +138,7 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.css">
 <script src="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.js"></script>
 <script src="/static/js/documents.js"></script>
+<script src="/static/js/git-actions.js"></script>
 
 <script>
 const PROJECT_NAME = "{{ project_name }}";
@@ -332,27 +280,7 @@ function exportProject(fmt) {
 }
 
 loadProjectInfo();
+initGitPanel(PROJECT_NAME);
 </script>
 
-<!-- EasyMDE Dark Theme Override -->
-<style>
-.EasyMDEContainer { border: 1px solid #333 !important; border-radius: 8px !important; }
-.EasyMDEContainer .CodeMirror { background: #141414 !important; color: #ccc !important; border: none !important; border-radius: 0 0 8px 8px !important; }
-.EasyMDEContainer .CodeMirror-cursor { border-left-color: #4fc3f7 !important; }
-.EasyMDEContainer .editor-toolbar { background: #1a1a1a !important; border-bottom: 1px solid #333 !important; border-radius: 8px 8px 0 0 !important; }
-.EasyMDEContainer .editor-toolbar button { color: #888 !important; }
-.EasyMDEContainer .editor-toolbar button:hover { background: #222 !important; color: #fff !important; }
-.EasyMDEContainer .editor-toolbar button.active { background: #0078d4 !important; color: #fff !important; }
-.EasyMDEContainer .editor-toolbar i.separator { border-left-color: #333 !important; }
-.EasyMDEContainer .editor-statusbar { color: #666 !important; background: #1a1a1a !important; border-top: 1px solid #333 !important; }
-.EasyMDEContainer .CodeMirror .CodeMirror-selected { background: #1a3a5c !important; }
-.EasyMDEContainer .CodeMirror .cm-header { color: #4fc3f7 !important; }
-.EasyMDEContainer .CodeMirror .cm-link { color: #4fc3f7 !important; }
-.EasyMDEContainer .CodeMirror .cm-string { color: #66bb6a !important; }
-.EasyMDEContainer .CodeMirror .cm-comment { color: #666 !important; }
-.EasyMDEContainer .editor-preview { background: #141414 !important; color: #ccc !important; }
-.EasyMDEContainer .editor-preview pre { background: #0d0d0d !important; }
-.EasyMDEContainer .CodeMirror-gutters { background: #141414 !important; border-right: 1px solid #222 !important; }
-.EasyMDEContainer .CodeMirror-linenumber { color: #444 !important; }
-</style>
 {% endblock %}
