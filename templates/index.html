@@ -1,242 +1,172 @@
-<!DOCTYPE html>
-<html lang="de">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
-    <link rel="stylesheet" href="/static/css/dashboard.css">
-    <link rel="stylesheet" href="/static/css/widgets.css">
-    <title>Projekt-Dashboard</title>
-</head>
-<body>
-    <!-- Sidebar -->
-    <aside class="sidebar" id="sidebar">
-        <div class="sidebar-logo">
-            <span class="logo-icon">🖥️</span>
-            <span class="logo-text">Dashboard</span>
-        </div>
-        <nav class="sidebar-nav">
-            <div class="nav-section">
-                <div class="nav-label">Workspace</div>
-                <a href="/" class="nav-item active">
-                    <span class="nav-icon">📊</span><span class="nav-text">Dashboard</span>
-                </a>
-                <a href="/sessions" class="nav-item">
-                    <span class="nav-icon">🤖</span><span class="nav-text">Claude Sessions</span>
-                </a>
-            </div>
-            <div class="nav-section">
-                <div class="nav-label">DevOps</div>
-                <a href="/containers" class="nav-item">
-                    <span class="nav-icon">🐳</span><span class="nav-text">Container</span>
-                </a>
-                <a href="/dependencies" class="nav-item">
-                    <span class="nav-icon">🔗</span><span class="nav-text">Abhängigkeiten</span>
-                </a>
-            </div>
-            <div class="nav-section">
-                <div class="nav-label">Content</div>
-                <a href="/vorlagen" class="nav-item">
-                    <span class="nav-icon">📦</span><span class="nav-text">Vorlagen</span>
-                </a>
-                <a href="/news" class="nav-item">
-                    <span class="nav-icon">📰</span><span class="nav-text">News</span>
-                </a>
-                <a class="nav-item" onclick="openIdeasModal()" style="cursor:pointer">
-                    <span class="nav-icon">💡</span><span class="nav-text">Ideen & Notizen</span>
-                </a>
-            </div>
-            <div class="nav-section">
-                <div class="nav-label">Extern</div>
-                <a href="http://192.168.100.93:9000" target="_blank" class="nav-item">
-                    <span class="nav-icon">⚙️</span><span class="nav-text">Portainer</span>
-                </a>
-                <a href="http://192.168.100.93:3000" target="_blank" class="nav-item">
-                    <span class="nav-icon">🦊</span><span class="nav-text">Gitea</span>
-                </a>
-            </div>
-        </nav>
-        <div class="sidebar-footer">
-            <span class="timestamp" id="timestamp"></span>
-        </div>
-    </aside>
+{% extends "base.html" %}
 
-    <!-- Main Content -->
-    <main class="main-content">
-        <!-- Top Bar -->
-        <header class="topbar">
-            <button class="sidebar-toggle" onclick="toggleSidebar()" title="Sidebar">☰</button>
-            <div class="breadcrumb">
-                <span>Workspace</span>
-                <span class="bc-sep">/</span>
-                <span class="bc-active" id="breadcrumbPage">Projekte</span>
+{% block title %}Projekt-Dashboard{% endblock %}
+
+{% block breadcrumb %}Projekte{% endblock %}
+
+{% block head_extra %}
+<link rel="stylesheet" href="/static/css/widgets.css">
+{% endblock %}
+
+{% block topbar_actions %}
+<button class="topbar-btn" onclick="openStatsModal()" title="Statistiken"><i data-lucide="bar-chart-2" class="icon icon-sm"></i></button>
+<button class="topbar-btn" onclick="loadData()" title="Aktualisieren"><i data-lucide="refresh-cw" class="icon icon-sm"></i></button>
+<div class="topbar-more">
+    <button class="topbar-btn" onclick="toggleMoreMenu()" title="Mehr"><i data-lucide="more-horizontal" class="icon icon-sm"></i></button>
+    <div class="more-menu" id="moreMenu">
+        <div class="more-item" onclick="refreshDescriptions();toggleMoreMenu()"><i data-lucide="file-text" class="icon icon-sm"></i> Beschreibungen scannen</div>
+        <div class="more-item" onclick="cleanupDocker();toggleMoreMenu()"><i data-lucide="trash-2" class="icon icon-sm"></i> Docker aufraeumen</div>
+        <div class="more-item" onclick="openGroupsModal();toggleMoreMenu()"><i data-lucide="settings" class="icon icon-sm"></i> Gruppen verwalten</div>
+    </div>
+</div>
+<span class="topbar-time" id="timestamp"></span>
+{% endblock %}
+
+{% block content %}
+    <!-- News Ticker -->
+    <div class="news-ticker-bar" id="newsTickerBar">
+        <span class="news-label">NEWS</span>
+        <div class="news-ticker">
+            <div class="news-ticker-content" id="newsTickerContent">
+                <span class="news-item">Lade Neuigkeiten...</span>
             </div>
-            <div class="topbar-search" onclick="openCommandPalette()">
-                <span>🔍</span>
-                <span class="topbar-search-text">Suche...</span>
-                <kbd>Ctrl+K</kbd>
-            </div>
-            <div class="topbar-actions">
-                <button class="topbar-btn" onclick="openStatsModal()" title="Statistiken">📊</button>
-                <button class="topbar-btn" onclick="loadData()" title="Aktualisieren">🔄</button>
-                <div class="topbar-more">
-                    <button class="topbar-btn" onclick="toggleMoreMenu()" title="Mehr">⋯</button>
-                    <div class="more-menu" id="moreMenu">
-                        <div class="more-item" onclick="refreshDescriptions();toggleMoreMenu()">📝 Beschreibungen scannen</div>
-                        <div class="more-item" onclick="cleanupDocker();toggleMoreMenu()">🧹 Docker aufräumen</div>
-                        <div class="more-item" onclick="openGroupsModal();toggleMoreMenu()">⚙️ Gruppen verwalten</div>
-                    </div>
+        </div>
+        <a href="/news" class="news-link">Alle News &rarr;</a>
+    </div>
+
+    <div class="new-projects-bar" id="newProjectsBar"></div>
+
+    <!-- Stats (hidden, in modal) -->
+    <div id="statsBar" style="display:none">
+        <span id="totalProjects">-</span>
+        <span id="totalContainers">-</span>
+        <span id="runningContainers">-</span>
+        <span id="unhealthyContainers">-</span>
+        <span id="stoppedContainers">-</span>
+        <span id="giteaRepos">-</span>
+    </div>
+
+    <!-- Tab Navigation -->
+    <div class="tab-bar">
+        <button class="tab-btn active" onclick="showTab('projects')">Projekte</button>
+        <button class="tab-btn" onclick="showTab('widgets')">Widgets</button>
+        <button class="tab-btn" onclick="showTab('gitea')">Gitea Repositories</button>
+    </div>
+
+    <!-- Filter-Bar -->
+    <div class="filter-bar" id="filterBar">
+        <div class="search-box">
+            <i data-lucide="search" class="icon icon-sm" style="color:var(--text-ghost);margin-right:8px"></i>
+            <input type="text" id="searchInput" placeholder="Projekt suchen..." oninput="handleSearch()" autocomplete="off">
+            <span class="search-clear" id="searchClear" onclick="clearSearch()">&times;</span>
+        </div>
+        <select class="filter-select" id="groupFilterSelect" onchange="setGroupFilter(this.value)" style="background:var(--bg-elevated);color:var(--text-secondary);border:1px solid var(--border-muted);padding:7px 12px;border-radius:var(--radius-md);font-size:var(--text-base);font-family:var(--font-sans);">
+            <option value="all">Alle Gruppen</option>
+        </select>
+        <div class="filter-sep"></div>
+        <button class="filter-btn active" id="viewPriorityBtn" onclick="setViewMode('priority')">Prioritaet</button>
+        <button class="filter-btn" id="viewGroupBtn" onclick="setViewMode('groups')">Gruppen</button>
+        <div class="filter-sep"></div>
+        <button class="filter-btn" id="archiveToggle" onclick="toggleShowArchived()"><i data-lucide="archive" class="icon icon-sm"></i> Archiv</button>
+        <span class="search-results" id="searchResults"></span>
+        <!-- Hidden container for JS compat -->
+        <div id="groupFilterButtons" style="display:none"></div>
+    </div>
+
+    <!-- Content Area -->
+    <div class="container">
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <div id="loadingText">Lade Projektdaten...</div>
+            <div id="funnyQuote" style="margin-top:15px;font-style:italic;color:var(--text-ghost);font-size:var(--text-base);"></div>
+        </div>
+
+        <!-- Projekte Tab -->
+        <div id="projectsTab" class="tab-content active">
+            <table id="projectTable" style="display:none">
+                <thead>
+                    <tr>
+                        <th class="sortable" data-sort="name" style="width:22%">Projekt</th>
+                        <th style="width:25%">Beschreibung</th>
+                        <th style="width:36px">Grp</th>
+                        <th class="sortable" data-sort="priority" style="width:32px">Prio</th>
+                        <th class="sortable" data-sort="deadline" style="width:80px">Deadline</th>
+                        <th class="sortable" data-sort="progress" style="width:90px">Fortschritt</th>
+                        <th style="width:12%">Meilensteine</th>
+                        <th style="width:32px">Git</th>
+                        <th class="sortable" data-sort="activity" style="width:76px">Aktivitaet</th>
+                        <th style="width:32px"></th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+        </div>
+
+        <!-- Widgets Tab -->
+        <div id="widgetsTab" class="tab-content">
+            <div class="widget-grid">
+                <div class="widget-card widget-sm" id="wTotalProjects">
+                    <div class="widget-card-label">Projekte</div>
+                    <div class="widget-card-value">-</div>
                 </div>
-                <span class="topbar-time" id="timestamp"></span>
-            </div>
-        </header>
-
-        <!-- News Ticker -->
-        <div class="news-ticker-bar" id="newsTickerBar">
-            <span class="news-label">NEWS</span>
-            <div class="news-ticker">
-                <div class="news-ticker-content" id="newsTickerContent">
-                    <span class="news-item">Lade Neuigkeiten...</span>
+                <div class="widget-card widget-sm" id="wActiveProjects">
+                    <div class="widget-card-label">Aktiv (7 Tage)</div>
+                    <div class="widget-card-value">-</div>
                 </div>
-            </div>
-            <a href="/news" class="news-link">Alle News →</a>
-        </div>
+                <div class="widget-card widget-sm" id="wContainers">
+                    <div class="widget-card-label">Container</div>
+                    <div class="widget-card-value">-</div>
+                </div>
+                <div class="widget-card widget-sm" id="wGitea">
+                    <div class="widget-card-label">Gitea Repos</div>
+                    <div class="widget-card-value">-</div>
+                </div>
 
-        <div class="new-projects-bar" id="newProjectsBar"></div>
+                <div class="widget-card widget-wide">
+                    <div class="widget-card-title">Aktivitaet (30 Tage)</div>
+                    <div class="widget-heatmap" id="wHeatmap"></div>
+                </div>
 
-        <!-- Stats (hidden, in modal) -->
-        <div id="statsBar" style="display:none">
-            <span id="totalProjects">-</span>
-            <span id="totalContainers">-</span>
-            <span id="runningContainers">-</span>
-            <span id="unhealthyContainers">-</span>
-            <span id="stoppedContainers">-</span>
-            <span id="giteaRepos">-</span>
-        </div>
+                <div class="widget-card">
+                    <div class="widget-card-title">Projekttypen</div>
+                    <canvas id="chartTypes" height="220"></canvas>
+                </div>
+                <div class="widget-card">
+                    <div class="widget-card-title">Technologien</div>
+                    <canvas id="chartTech" height="220"></canvas>
+                </div>
 
-        <!-- Tab Navigation -->
-        <div class="tab-bar">
-            <button class="tab-btn active" onclick="showTab('projects')">Projekte</button>
-            <button class="tab-btn" onclick="showTab('widgets')">Widgets</button>
-            <button class="tab-btn" onclick="showTab('gitea')">Gitea Repositories</button>
-        </div>
+                <div class="widget-card widget-wide">
+                    <div class="widget-card-title">Claude Sessions (7 Tage)</div>
+                    <canvas id="chartSessions" height="140"></canvas>
+                </div>
 
-        <!-- Filter-Bar -->
-        <div class="filter-bar" id="filterBar">
-            <div class="search-box">
-                <span class="search-icon">🔍</span>
-                <input type="text" id="searchInput" placeholder="Projekt suchen..." oninput="handleSearch()" autocomplete="off">
-                <span class="search-clear" id="searchClear" onclick="clearSearch()">×</span>
-            </div>
-            <div class="filter-group" id="groupFilterButtons"></div>
-            <button class="filter-btn" onclick="setGroupFilter('priority')">🔥 Priorität</button>
-            <button class="filter-btn" onclick="setGroupFilter('none')">📁 Ungrouped</button>
-            <div class="filter-sep"></div>
-            <button class="filter-btn active" id="viewPriorityBtn" onclick="setViewMode('priority')">Priorität</button>
-            <button class="filter-btn" id="viewGroupBtn" onclick="setViewMode('groups')">Gruppen</button>
-            <div class="filter-sep"></div>
-            <button class="filter-btn" id="archiveToggle" onclick="toggleShowArchived()">📦 Archiv anzeigen</button>
-            <span class="search-results" id="searchResults"></span>
-        </div>
-
-        <!-- Content Area -->
-        <div class="container">
-            <div id="loading" class="loading">
-                <div class="spinner"></div>
-                <div id="loadingText">Lade Projektdaten...</div>
-                <div id="funnyQuote" style="margin-top:15px;font-style:italic;color:#555;font-size:13px;"></div>
-            </div>
-
-            <!-- Projekte Tab -->
-            <div id="projectsTab" class="tab-content active">
-                <table id="projectTable" style="display:none">
-                    <thead>
-                        <tr>
-                            <th class="sortable" data-sort="name" style="width:22%">Projekt</th>
-                            <th style="width:25%">Beschreibung</th>
-                            <th style="width:36px">Grp</th>
-                            <th class="sortable" data-sort="priority" style="width:32px">🚦</th>
-                            <th class="sortable" data-sort="deadline" style="width:80px">Deadline</th>
-                            <th class="sortable" data-sort="progress" style="width:90px">Fortschritt</th>
-                            <th style="width:12%">Meilensteine</th>
-                            <th style="width:32px">Git</th>
-                            <th class="sortable" data-sort="activity" style="width:76px">Aktivität</th>
-                            <th style="width:32px"></th>
-                        </tr>
-                    </thead>
-                    <tbody id="tableBody"></tbody>
-                </table>
-            </div>
-
-            <!-- Widgets Tab -->
-            <div id="widgetsTab" class="tab-content">
-                <div class="widget-grid">
-                    <!-- Zahlen-Karten -->
-                    <div class="widget-card widget-sm" id="wTotalProjects">
-                        <div class="widget-card-label">Projekte</div>
-                        <div class="widget-card-value">-</div>
-                    </div>
-                    <div class="widget-card widget-sm" id="wActiveProjects">
-                        <div class="widget-card-label">Aktiv (7 Tage)</div>
-                        <div class="widget-card-value">-</div>
-                    </div>
-                    <div class="widget-card widget-sm" id="wContainers">
-                        <div class="widget-card-label">Container</div>
-                        <div class="widget-card-value">-</div>
-                    </div>
-                    <div class="widget-card widget-sm" id="wGitea">
-                        <div class="widget-card-label">Gitea Repos</div>
-                        <div class="widget-card-value">-</div>
-                    </div>
-
-                    <!-- Aktivitaets-Heatmap -->
-                    <div class="widget-card widget-wide">
-                        <div class="widget-card-title">Aktivitaet (30 Tage)</div>
-                        <div class="widget-heatmap" id="wHeatmap"></div>
-                    </div>
-
-                    <!-- Charts -->
-                    <div class="widget-card">
-                        <div class="widget-card-title">Projekttypen</div>
-                        <canvas id="chartTypes" height="220"></canvas>
-                    </div>
-                    <div class="widget-card">
-                        <div class="widget-card-title">Technologien</div>
-                        <canvas id="chartTech" height="220"></canvas>
-                    </div>
-
-                    <!-- Session-Chart -->
-                    <div class="widget-card widget-wide">
-                        <div class="widget-card-title">Claude Sessions (7 Tage)</div>
-                        <canvas id="chartSessions" height="140"></canvas>
-                    </div>
-
-                    <!-- Top Aktive Projekte -->
-                    <div class="widget-card widget-wide">
-                        <div class="widget-card-title">Top Aktive Projekte</div>
-                        <div class="widget-list" id="wTopActive"></div>
-                    </div>
+                <div class="widget-card widget-wide">
+                    <div class="widget-card-title">Top Aktive Projekte</div>
+                    <div class="widget-list" id="wTopActive"></div>
                 </div>
             </div>
-
-            <!-- Gitea Tab -->
-            <div id="giteaTab" class="tab-content">
-                <table id="giteaTable">
-                    <thead>
-                        <tr>
-                            <th>Repository</th>
-                            <th>Beschreibung</th>
-                            <th>Letzte Änderung</th>
-                            <th>Issues</th>
-                            <th>Aktionen</th>
-                        </tr>
-                    </thead>
-                    <tbody id="giteaTableBody"></tbody>
-                </table>
-            </div>
         </div>
-    </main>
 
+        <!-- Gitea Tab -->
+        <div id="giteaTab" class="tab-content">
+            <table id="giteaTable">
+                <thead>
+                    <tr>
+                        <th>Repository</th>
+                        <th>Beschreibung</th>
+                        <th>Letzte Aenderung</th>
+                        <th>Issues</th>
+                        <th>Aktionen</th>
+                    </tr>
+                </thead>
+                <tbody id="giteaTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
     {% include 'partials/index_modals.html' %}
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
@@ -252,5 +182,4 @@
     <script src="/static/js/dashboard-core.js"></script>
     <script src="/static/js/widgets.js"></script>
     <script src="/static/js/index-ui.js"></script>
-</body>
-</html>
+{% endblock %}

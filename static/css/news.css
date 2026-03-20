@@ -1,0 +1,106 @@
+/* ===== NEWS PAGE ===== */
+.news-container { padding: 20px 30px; }
+
+/* Type indicators */
+tr.type-commit { border-left: 3px solid var(--accent-link); }
+tr.type-file_change { border-left: 3px solid #9b59b6; }
+tr.type-new_project { border-left: 3px solid #2ecc71; }
+tr.type-sync_warning { border-left: 3px solid #e74c3c; }
+.news-icon { font-size: 20px; }
+.news-page .project-name { font-weight: 600; color: var(--accent-link); }
+.news-message { color: var(--text-muted); font-size: var(--text-base); max-width: 400px; }
+
+/* News Badges */
+.badge-commit { background: #1e3a5f; color: var(--accent-link); }
+.badge-file_change { background: #3d2a4d; color: #bb8fce; }
+.badge-new_project { background: #1e4d2b; color: #58d68d; }
+.badge-sync_warning { background: #4d1e1e; color: #ec7063; }
+
+.date-cell { color: var(--text-muted); font-size: var(--text-base); white-space: nowrap; }
+.days-ago { color: var(--text-faint); font-size: 11px; display: block; margin-top: 3px; }
+
+/* Clickable rows */
+tr.clickable { cursor: pointer; }
+tr.clickable:hover { background: var(--bg-hover); }
+
+/* Detail Modal overrides for news */
+.detail-section { margin-bottom: 25px; }
+.detail-section h3 {
+    color: var(--text-muted);
+    font-size: var(--text-sm);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.detail-card {
+    background: var(--bg-elevated);
+    border-radius: var(--radius-lg);
+    padding: 15px;
+}
+.detail-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border-muted);
+}
+.detail-row:last-child { border-bottom: none; }
+.detail-label { color: var(--text-muted); }
+.detail-value { color: var(--text-heading); font-weight: 500; }
+
+.commit-item {
+    padding: 12px;
+    background: var(--bg-hover);
+    border-radius: var(--radius-md);
+    margin-bottom: 8px;
+    border-left: 3px solid var(--accent-link);
+}
+.commit-item:last-child { margin-bottom: 0; }
+.commit-sha {
+    font-family: var(--font-mono);
+    color: var(--accent-link);
+    font-size: var(--text-sm);
+    background: var(--bg-elevated);
+    padding: 2px 6px;
+    border-radius: 3px;
+}
+.commit-msg { margin: 8px 0 4px; }
+.commit-meta { font-size: var(--text-sm); color: var(--text-faint); }
+
+.file-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: var(--bg-hover);
+    border-radius: var(--radius-sm);
+    margin-bottom: 4px;
+    font-family: var(--font-mono);
+    font-size: var(--text-base);
+}
+.file-item:last-child { margin-bottom: 0; }
+.file-name { color: #9b59b6; }
+.file-time { color: var(--text-faint); font-size: 11px; }
+
+.git-status-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+.git-stat {
+    background: var(--bg-hover);
+    padding: 12px;
+    border-radius: var(--radius-md);
+    text-align: center;
+}
+.git-stat-value { font-size: var(--text-2xl); font-weight: bold; }
+.git-stat-label { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+.git-clean { color: #2ecc71; }
+.git-dirty { color: #e74c3c; }
+
+.tag-list { display: flex; flex-wrap: wrap; gap: 6px; }
+.tag {
+    background: var(--border-hover);
+    color: var(--text-muted);
+    padding: 4px 10px;
+    border-radius: var(--radius-full);
+    font-size: var(--text-sm);
+}
+.no-data { color: var(--text-faint); font-style: italic; }

@@ -109,20 +109,20 @@
                 </div>
             </form>
             </div>
-            <div id="editTabRelations" class="edit-tab-content">
-                <div class="relations-section"><h4>Ausgehend (dieses Projekt ->)</h4><div id="outgoingRelations" class="project-relations-list"></div></div>
-                <div class="relations-section"><h4>Eingehend (-> dieses Projekt)</h4><div id="incomingRelations" class="project-relations-list"></div></div>
-                <div class="relations-section" style="border-top:1px solid #2a2a2a;padding-top:15px;margin-top:15px;">
+            <div id="editTabRelations" class="edit-tab-content edit-form">
+                <div class="relations-section"><h4>Ausgehend (dieses Projekt &rarr;)</h4><div id="outgoingRelations" class="project-relations-list"></div></div>
+                <div class="relations-section"><h4>Eingehend (&rarr; dieses Projekt)</h4><div id="incomingRelations" class="project-relations-list"></div></div>
+                <div class="relations-section" style="border-top:1px solid var(--border-subtle);padding-top:15px;margin-top:15px;">
                     <h4>Neue Beziehung</h4>
                     <div class="relation-direction">
-                        <label class="radio-label"><input type="radio" name="relationDirection" value="outgoing" checked onchange="updateRelationForm()"> Dieses -> Anderes</label>
-                        <label class="radio-label"><input type="radio" name="relationDirection" value="incoming" onchange="updateRelationForm()"> Anderes -> Dieses</label>
+                        <label class="radio-label"><input type="radio" name="relationDirection" value="outgoing" checked onchange="updateRelationForm()"> Dieses &rarr; Anderes</label>
+                        <label class="radio-label"><input type="radio" name="relationDirection" value="incoming" onchange="updateRelationForm()"> Anderes &rarr; Dieses</label>
                     </div>
                     <div class="row" style="margin-top:10px">
-                        <div style="flex:2"><label id="relationTargetLabel" style="margin-top:0">Ziel-Projekt</label><div class="autocomplete-wrapper"><input type="text" id="editRelationProject" placeholder="Projekt suchen..." oninput="onEditRelationSearch()" autocomplete="off"><div class="autocomplete-dropdown" id="editRelationDropdown"></div></div></div>
-                        <div style="flex:1"><label style="margin-top:0">Typ</label><select id="editRelationType"></select></div>
+                        <div style="flex:2"><label id="relationTargetLabel">Ziel-Projekt</label><div class="autocomplete-wrapper"><input type="text" id="editRelationProject" placeholder="Projekt suchen..." oninput="onEditRelationSearch()" autocomplete="off"><div class="autocomplete-dropdown" id="editRelationDropdown"></div></div></div>
+                        <div style="flex:1"><label>Typ</label><select id="editRelationType"></select></div>
                     </div>
-                    <div style="margin-top:10px"><label style="margin-top:0">Notiz</label><input type="text" id="editRelationNote" placeholder="z.B. Shared DB..."></div>
+                    <div><label>Notiz</label><input type="text" id="editRelationNote" placeholder="z.B. Shared DB..."></div>
                     <div style="margin-top:10px"><button type="button" class="btn-save" onclick="addProjectRelation()" style="padding:8px 20px">Hinzufuegen</button></div>
                 </div>
             </div>

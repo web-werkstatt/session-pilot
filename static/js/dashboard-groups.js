@@ -16,16 +16,19 @@ function loadGroups() {
         });
 }
 
-// Gruppen-Filter-Buttons dynamisch rendern
+// Gruppen-Filter als Dropdown rendern
 function renderGroupFilterButtons() {
-    const container = document.getElementById('groupFilterButtons');
-    let html = '<button class="filter-btn active" onclick="setGroupFilter(\'all\')">Alle</button>';
+    const select = document.getElementById('groupFilterSelect');
+    if (!select) return;
+    let html = '<option value="all">Alle Gruppen</option>';
+    html += '<option value="priority">Prioritaet</option>';
+    html += '<option value="none">Ungrouped</option>';
 
     groupsData.groups.forEach(group => {
-        html += `<button class="filter-btn" onclick="setGroupFilter('${group.id}')">${group.icon} ${group.name}</button>`;
+        html += `<option value="${group.id}">${group.icon} ${group.name}</option>`;
     });
 
-    container.innerHTML = html;
+    select.innerHTML = html;
 }
 
 // Gruppen-Dropdown im Edit-Modal aktualisieren

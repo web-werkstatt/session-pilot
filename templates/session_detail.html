@@ -2,58 +2,10 @@
 
 {% block title %}Session Detail - Dashboard{% endblock %}
 
-{% block breadcrumb %}<a href="/sessions" style="color:#4fc3f7;text-decoration:none">Sessions</a> <span class="bc-sep">/</span> Detail{% endblock %}
+{% block breadcrumb %}<a href="/sessions" style="color:var(--accent-light);text-decoration:none">Sessions</a> <span class="bc-sep">/</span> Detail{% endblock %}
 
 {% block head_extra %}
-<style>
-    .meta-bar { background: #2d2d2d; padding: 15px 30px; display: flex; gap: 25px; flex-wrap: wrap; border-bottom: 1px solid #404040; }
-    .meta-item { display: flex; flex-direction: column; }
-    .meta-label { color: #888; font-size: 11px; text-transform: uppercase; }
-    .meta-value { font-size: 14px; margin-top: 2px; }
-    .export-bar { background: #252525; padding: 10px 30px; display: flex; gap: 10px; border-bottom: 1px solid #333; }
-    .btn-export { background: #333; color: #ccc; border: 1px solid #555; padding: 6px 14px; border-radius: 4px; cursor: pointer; font-size: 13px; transition: all 0.2s; text-decoration: none; }
-    .btn-export:hover { background: #444; color: #fff; border-color: #0078d4; }
-    .conversation { margin: 20px auto; padding: 0 20px; transition: max-width 0.2s; }
-    .width-control { display: flex; align-items: center; gap: 8px; margin-left: auto; }
-    .width-control label { color: #888; font-size: 12px; white-space: nowrap; }
-    .width-control input[type=range] { width: 120px; accent-color: #0078d4; cursor: pointer; }
-    .width-control span { color: #aaa; font-size: 12px; min-width: 40px; }
-    .msg { margin: 12px 0; padding: 15px 18px; border-radius: 8px; line-height: 1.6; }
-    .msg-user { background: #1a3a5c; border-left: 3px solid #4fc3f7; }
-    .msg-assistant { background: #2d2d2d; border-left: 3px solid #66bb6a; }
-    .msg-system { text-align: center; color: #666; font-size: 12px; padding: 5px; margin: 8px 0; border-bottom: 1px solid #333; }
-    .msg-role { font-weight: bold; color: #888; text-transform: uppercase; font-size: 11px; letter-spacing: 1px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
-    .btn-copy { background: #333; color: #888; border: 1px solid #555; padding: 2px 8px; border-radius: 3px; cursor: pointer; font-size: 11px; transition: all 0.2s; }
-    .btn-copy:hover { background: #444; color: #fff; border-color: #0078d4; }
-    .btn-copy.copied { background: #2d6a4f; color: #6ff7b0; border-color: #2d6a4f; }
-    .msg-content { white-space: pre-wrap; word-wrap: break-word; }
-    .msg-content pre { background: #1a1a1a; padding: 12px; border-radius: 5px; overflow-x: auto; margin: 8px 0; font-size: 13px; position: relative; }
-    .pre-wrap { position: relative; }
-    .btn-copy-code { position: absolute; top: 4px; right: 4px; background: #333; color: #888; border: 1px solid #555; padding: 2px 8px; border-radius: 3px; cursor: pointer; font-size: 11px; transition: all 0.2s; opacity: 0; }
-    .pre-wrap:hover .btn-copy-code { opacity: 1; }
-    .btn-copy-code:hover { background: #444; color: #fff; border-color: #0078d4; }
-    .btn-copy-code.copied { background: #2d6a4f; color: #6ff7b0; border-color: #2d6a4f; opacity: 1; }
-    .msg-content code { font-family: 'Fira Code', 'Consolas', monospace; font-size: 13px; }
-    .msg-content p { margin: 5px 0; }
-    details { margin: 8px 0; }
-    details summary { cursor: pointer; color: #888; font-size: 13px; padding: 5px 10px; background: #1a1a1a; border-radius: 4px; }
-    details summary:hover { color: #ccc; }
-    details .tool-content { background: #1a1a1a; padding: 10px; border-radius: 0 0 4px 4px; font-size: 13px; max-height: 400px; overflow-y: auto; white-space: pre-wrap; word-break: break-all; }
-    .loading { text-align: center; padding: 60px; color: #888; font-size: 16px; }
-    .outcome-bar { background: #1a1a1a; padding: 12px 30px; display: flex; gap: 10px; align-items: center; border-bottom: 1px solid #2a2a2a; }
-    .outcome-label { color: #888; font-size: 12px; margin-right: 6px; }
-    .outcome-btn { padding: 6px 16px; border-radius: 20px; border: 1px solid #444; background: transparent; color: #aaa; cursor: pointer; font-size: 12px; transition: all 0.15s; }
-    .outcome-btn:hover { border-color: #888; color: #fff; }
-    .outcome-btn.active-ok { background: #2e7d32; border-color: #2e7d32; color: #fff; }
-    .outcome-btn.active-needs_fix { background: #e65100; border-color: #e65100; color: #fff; }
-    .outcome-btn.active-reverted { background: #c62828; border-color: #c62828; color: #fff; }
-    .outcome-btn.active-partial { background: #f9a825; border-color: #f9a825; color: #000; }
-    .outcome-note-wrap { margin-left: auto; display: flex; gap: 6px; align-items: center; }
-    .outcome-note-input { background: #161616; color: #ccc; border: 1px solid #333; padding: 5px 10px; border-radius: 4px; font-size: 12px; width: 250px; }
-    .outcome-note-input:focus { border-color: #0078d4; outline: none; }
-    .outcome-saved { color: #4caf50; font-size: 12px; opacity: 0; transition: opacity 0.3s; }
-    .outcome-saved.show { opacity: 1; }
-</style>
+<link rel="stylesheet" href="/static/css/sessions.css">
 {% endblock %}
 
 {% block topbar_actions %}

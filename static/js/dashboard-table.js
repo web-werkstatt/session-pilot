@@ -79,6 +79,13 @@ function renderProject(proj, isNew) {
 
     if (isNew) tr.classList.add('new-project');
 
+    // Klickbare Zeile -> Projekt-Detail
+    tr.style.cursor = 'pointer';
+    tr.addEventListener('click', (e) => {
+        if (e.target.closest('button, .row-ctx-menu, a, .fav-btn, .info-icon')) return;
+        location.href = '/project/' + encodeURIComponent(proj.name);
+    });
+
     // Sub-Projekt Styling
     const isSubproject = proj.project_type === 'subproject';
     if (isSubproject) {
@@ -142,7 +149,7 @@ function renderProject(proj, isNew) {
     </div>`;
 
     tr.innerHTML = `
-        <td class="project-name"><span class="pn-icons">${favBtn}${projInfoIcon}</span><span class="pn-text">${namePrefix}${isNew ? '<span class="badge badge-new">NEU</span> ' : ''}${displayName}${typeBadge}${relationBadges}</span></td>
+        <td class="project-name"><span class="pn-icons">${favBtn}</span><span class="pn-text">${namePrefix}${isNew ? '<span class="badge badge-new">NEU</span> ' : ''}${displayName}${typeBadge}${relationBadges}</span></td>
         <td class="project-function">${proj.function || '-'}</td>
         <td>${getGroupBadge(proj.group)}</td>
         <td>${getPriorityBadge(proj.priority)}</td>
@@ -151,7 +158,7 @@ function renderProject(proj, isNew) {
         <td style="max-width:200px;overflow:hidden">${getMilestones(proj.milestones)}</td>
         <td>${gitBadge}</td>
         <td>${lastActivity}</td>
-        <td>${ctxMenu}</td>
+        <td>${projInfoIcon}${ctxMenu}</td>
     `;
     return tr;
 }

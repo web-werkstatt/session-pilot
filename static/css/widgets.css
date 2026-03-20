@@ -8,25 +8,25 @@
 
 /* Zahlen-Karten */
 .widget-card {
-    background: #1a1a1a;
-    border: 1px solid #252525;
-    border-radius: 10px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
     padding: 20px;
-    transition: border-color 0.2s;
+    transition: border-color var(--transition-base);
 }
-.widget-card:hover { border-color: #333; }
+.widget-card:hover { border-color: var(--border-muted); }
 .widget-card.widget-sm { text-align: center; padding: 16px; }
 .widget-card.widget-wide { grid-column: span 2; }
 .widget-card-label {
     font-size: 11px; text-transform: uppercase; letter-spacing: 1px;
-    color: #666; margin-bottom: 6px;
+    color: var(--text-faint); margin-bottom: 6px;
 }
 .widget-card-value {
-    font-size: 28px; font-weight: 700; color: #4fc3f7;
+    font-size: 28px; font-weight: 700; color: var(--accent-light);
 }
 .widget-card-title {
-    font-size: 13px; font-weight: 600; color: #aaa;
-    margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid #222;
+    font-size: 13px; font-weight: 600; color: var(--text-muted);
+    margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid var(--bg-hover);
 }
 
 /* Heatmap */
@@ -51,11 +51,11 @@
 .widget-list-item {
     display: flex; align-items: center; gap: 8px;
     padding: 8px 12px; border-radius: 6px; cursor: pointer;
-    font-size: 13px; color: #ccc; transition: background 0.1s;
+    font-size: 13px; color: var(--text-secondary); transition: background 0.1s;
 }
-.widget-list-item:hover { background: #222; }
+.widget-list-item:hover { background: var(--bg-hover); }
 .widget-list-name { flex: 1; }
-.widget-list-time { color: #555; font-size: 11px; font-family: monospace; }
+.widget-list-time { color: var(--text-ghost); font-size: 11px; font-family: monospace; }
 
 /* Responsive */
 @media (max-width: 1200px) {

@@ -1,0 +1,112 @@
+/* ===== DESIGN TOKENS ===== */
+/* shadcn/ui-inspired dark theme based on container page reference */
+
+:root {
+    /* Background Layers */
+    --bg-base: #121212;
+    --bg-sidebar: #0d0d0d;
+    --bg-surface: #161616;
+    --bg-card: #1a1a1a;
+    --bg-elevated: #1e1e1e;
+    --bg-input: #141414;
+    --bg-hover: #222222;
+    --bg-active: #0a1929;
+
+    /* Accent Backgrounds */
+    --accent-bg: #1a2a3a;
+    --accent-bg-subtle: rgba(0, 120, 212, 0.08);
+    --success-bg: #1b4332;
+    --success-bg-hover: #2d6a4f;
+    --warning-bg: #3d2e00;
+    --error-bg: #3d1a1a;
+    --error-bg-hover: #5a2d2d;
+    --info-bg: #0f3460;
+
+    /* Borders */
+    --border: #1e1e1e;
+    --border-subtle: #2a2a2a;
+    --border-muted: #333333;
+    --border-hover: #444444;
+    --border-focus: #0078d4;
+
+    /* Text */
+    --text-primary: #e0e0e0;
+    --text-heading: #ffffff;
+    --text-secondary: #cccccc;
+    --text-muted: #888888;
+    --text-faint: #666666;
+    --text-ghost: #555555;
+    --text-disabled: #444444;
+
+    /* Accent / Brand */
+    --accent: #0078d4;
+    --accent-hover: #005a9e;
+    --accent-light: #4fc3f7;
+    --accent-link: #4dabf7;
+
+    /* Status Colors */
+    --status-success: #4caf50;
+    --status-success-text: #a5d6a7;
+    --status-success-border: #2e7d32;
+    --status-warning: #ff9800;
+    --status-warning-text: #ffcc80;
+    --status-error: #f44336;
+    --status-error-text: #ef9a9a;
+    --status-error-border: #c62828;
+    --status-info: #2196f3;
+    --status-running: #2196f3;
+    --status-healthy: #4caf50;
+    --status-stopped: #f44336;
+    --status-unhealthy: #ff9800;
+
+    /* Priority */
+    --priority-high: #ff4444;
+    --priority-medium: #ffaa00;
+    --priority-low: #44ff44;
+
+    /* Spacing */
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 12px;
+    --space-4: 16px;
+    --space-5: 20px;
+    --space-6: 24px;
+    --space-8: 32px;
+
+    /* Border Radius */
+    --radius-sm: 4px;
+    --radius-md: 6px;
+    --radius-lg: 8px;
+    --radius-xl: 12px;
+    --radius-2xl: 16px;
+    --radius-full: 9999px;
+
+    /* Shadows */
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 15px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.4);
+    --shadow-xl: 0 20px 60px rgba(0, 0, 0, 0.5);
+
+    /* Typography */
+    --font-sans: 'Inter', 'Segoe UI', Arial, sans-serif;
+    --font-mono: 'Fira Code', 'Consolas', monospace;
+    --text-xs: 10px;
+    --text-sm: 12px;
+    --text-base: 13px;
+    --text-md: 14px;
+    --text-lg: 15px;
+    --text-xl: 18px;
+    --text-2xl: 24px;
+    --text-3xl: 32px;
+    --line-height: 1.5;
+
+    /* Transitions */
+    --transition-fast: 0.15s ease;
+    --transition-base: 0.2s ease;
+    --transition-slow: 0.3s ease;
+
+    /* Focus Ring */
+    --ring-width: 2px;
+    --ring-color: var(--accent);
+    --ring-offset: 2px;
+}

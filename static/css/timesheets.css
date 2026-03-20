@@ -2,15 +2,15 @@
 
 /* Topbar Select */
 .topbar-select {
-    background: #1e1e1e;
-    color: #ccc;
-    border: 1px solid #333;
+    background: var(--bg-elevated);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-muted);
     padding: 6px 12px;
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     font-size: 13px;
     cursor: pointer;
 }
-.topbar-select:focus { border-color: #0078d4; outline: none; }
+.topbar-select:focus { border-color: var(--accent); outline: none; }
 
 /* Filter Bar */
 .ts-filter-bar {
@@ -18,20 +18,20 @@
     justify-content: space-between;
     align-items: center;
     padding: 14px 30px;
-    background: #161616;
-    border-bottom: 1px solid #2a2a2a;
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--border-subtle);
 }
 .ts-filters { display: flex; gap: 10px; }
 .ts-filters select {
-    background: #1e1e1e;
-    color: #ccc;
-    border: 1px solid #333;
+    background: var(--bg-elevated);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-muted);
     padding: 7px 12px;
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     font-size: 13px;
 }
-.ts-filters select:focus { border-color: #0078d4; outline: none; }
-.ts-period-label { color: #666; font-size: 13px; }
+.ts-filters select:focus { border-color: var(--accent); outline: none; }
+.ts-period-label { color: var(--text-faint); font-size: 13px; }
 
 /* KPI Cards */
 .ts-kpi-row {
@@ -39,19 +39,19 @@
     grid-template-columns: repeat(5, 1fr);
     gap: 16px;
     padding: 20px 30px;
-    background: #1a1a1a;
-    border-bottom: 1px solid #2a2a2a;
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border-subtle);
 }
 .ts-kpi {
-    background: #1e1e1e;
-    border: 1px solid #2a2a2a;
-    border-radius: 10px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
     padding: 16px 20px;
-    transition: border-color 0.2s;
+    transition: border-color var(--transition-base);
 }
-.ts-kpi:hover { border-color: #0078d4; }
+.ts-kpi:hover { border-color: var(--accent); }
 .ts-kpi-label {
-    color: #888;
+    color: var(--text-muted);
     font-size: 11px;
     text-transform: uppercase;
     letter-spacing: 1px;
@@ -60,17 +60,17 @@
 .ts-kpi-value {
     font-size: 26px;
     font-weight: 700;
-    color: #fff;
+    color: var(--text-heading);
 }
-.ts-kpi-cost { color: #4fc3f7; }
+.ts-kpi-cost { color: var(--accent-light); }
 .ts-kpi-trend {
     font-size: 12px;
     margin-top: 4px;
 }
 .ts-kpi-trend.up { color: #f44; }
-.ts-kpi-trend.down { color: #4caf50; }
-.ts-kpi-trend.neutral { color: #666; }
-.ts-kpi-sub { color: #666; font-size: 11px; margin-top: 4px; }
+.ts-kpi-trend.down { color: var(--status-success); }
+.ts-kpi-trend.neutral { color: var(--text-faint); }
+.ts-kpi-sub { color: var(--text-faint); font-size: 11px; margin-top: 4px; }
 
 /* Charts */
 .ts-charts-row {
@@ -79,13 +79,13 @@
     padding: 16px 30px;
 }
 .ts-chart-card {
-    background: #1e1e1e;
-    border: 1px solid #2a2a2a;
-    border-radius: 10px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
     padding: 20px;
 }
 .ts-chart-card h3 {
-    color: #ccc;
+    color: var(--text-secondary);
     font-size: 14px;
     font-weight: 600;
     margin-bottom: 16px;
@@ -105,23 +105,23 @@
 .ts-chart-toggle { display: flex; gap: 4px; }
 .ts-toggle {
     background: transparent;
-    color: #666;
-    border: 1px solid #333;
+    color: var(--text-faint);
+    border: 1px solid var(--border-muted);
     padding: 4px 12px;
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     font-size: 11px;
     cursor: pointer;
-    transition: all 0.15s;
+    transition: all var(--transition-fast);
 }
-.ts-toggle:hover { color: #ccc; border-color: #555; }
-.ts-toggle.active { background: #0078d4; border-color: #0078d4; color: #fff; }
+.ts-toggle:hover { color: var(--text-secondary); border-color: var(--border-hover); }
+.ts-toggle.active { background: var(--accent); border-color: var(--accent); color: var(--text-heading); }
 
 /* Project Table */
 .ts-table-section {
     padding: 16px 30px 30px;
 }
 .ts-table-section h3 {
-    color: #ccc;
+    color: var(--text-secondary);
     font-size: 14px;
     font-weight: 600;
     margin-bottom: 12px;
@@ -129,37 +129,37 @@
 .ts-table {
     width: 100%;
     border-collapse: collapse;
-    background: #1e1e1e;
-    border-radius: 10px;
+    background: var(--bg-elevated);
+    border-radius: var(--radius-lg);
     overflow: hidden;
-    border: 1px solid #2a2a2a;
+    border: 1px solid var(--border-subtle);
 }
 .ts-table th {
-    background: #161616;
-    color: #888;
+    background: var(--bg-surface);
+    color: var(--text-muted);
     font-size: 11px;
     text-transform: uppercase;
     letter-spacing: 1px;
     padding: 12px 16px;
     text-align: left;
     font-weight: 600;
-    border-bottom: 1px solid #2a2a2a;
+    border-bottom: 1px solid var(--border-subtle);
     user-select: none;
 }
 .ts-table th.sortable { cursor: pointer; }
-.ts-table th.sortable:hover { color: #ccc; }
-.ts-table th.active-sort { color: #4fc3f7; }
+.ts-table th.sortable:hover { color: var(--text-secondary); }
+.ts-table th.active-sort { color: var(--accent-light); }
 .ts-table td {
     padding: 12px 16px;
-    border-bottom: 1px solid #222;
+    border-bottom: 1px solid var(--bg-hover);
     font-size: 13px;
-    color: #ccc;
+    color: var(--text-secondary);
 }
-.ts-table tr:hover td { background: #252525; }
+.ts-table tr:hover td { background: var(--bg-hover); }
 .ts-table tr:last-child td { border-bottom: none; }
 
 .ts-project-link {
-    color: #4fc3f7;
+    color: var(--accent-light);
     text-decoration: none;
     font-weight: 500;
 }
@@ -170,33 +170,33 @@
     height: 6px;
     border-radius: 3px;
     overflow: hidden;
-    background: #2a2a2a;
+    background: var(--border-subtle);
     margin-top: 4px;
     max-width: 120px;
 }
-.ts-token-in { background: #0078d4; }
+.ts-token-in { background: var(--accent); }
 .ts-token-out { background: #4fc3f7; }
 
 .ts-account-tag {
     display: inline-block;
     padding: 2px 8px;
-    border-radius: 10px;
+    border-radius: var(--radius-lg);
     font-size: 11px;
     margin: 1px 2px;
     background: rgba(79,195,247,0.1);
-    color: #4fc3f7;
+    color: var(--accent-light);
 }
 
 /* Loading */
-.ts-table td.loading { text-align: center; color: #666; padding: 30px; }
+.ts-table td.loading { text-align: center; color: var(--text-faint); padding: 30px; }
 
 /* Context Effectiveness */
-.ts-section-desc { color: #666; font-size: 12px; margin-bottom: 16px; }
+.ts-section-desc { color: var(--text-faint); font-size: 12px; margin-bottom: 16px; }
 .ts-context-cards { display: flex; flex-direction: column; gap: 12px; }
 .ts-ctx-card {
-    background: #1e1e1e;
-    border: 1px solid #2a2a2a;
-    border-radius: 10px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
     padding: 16px 20px;
 }
 .ts-ctx-header {
@@ -205,10 +205,10 @@
     align-items: center;
     margin-bottom: 12px;
 }
-.ts-ctx-project { font-weight: 600; color: #4fc3f7; font-size: 14px; }
-.ts-ctx-file { color: #888; font-size: 12px; font-family: monospace; }
-.ts-ctx-date { color: #666; font-size: 11px; }
-.ts-ctx-commit { color: #888; font-size: 11px; font-family: monospace; }
+.ts-ctx-project { font-weight: 600; color: var(--accent-light); font-size: 14px; }
+.ts-ctx-file { color: var(--text-muted); font-size: 12px; font-family: var(--font-mono); }
+.ts-ctx-date { color: var(--text-faint); font-size: 11px; }
+.ts-ctx-commit { color: var(--text-muted); font-size: 11px; font-family: var(--font-mono); }
 .ts-ctx-metrics {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -217,13 +217,13 @@
 .ts-ctx-metric {
     text-align: center;
     padding: 10px;
-    background: #161616;
-    border-radius: 6px;
+    background: var(--bg-surface);
+    border-radius: var(--radius-md);
 }
-.ts-ctx-metric-label { font-size: 10px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+.ts-ctx-metric-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
 .ts-ctx-before-after { display: flex; justify-content: center; gap: 8px; align-items: center; }
-.ts-ctx-val { font-size: 14px; font-weight: 600; color: #aaa; }
-.ts-ctx-arrow { color: #666; }
+.ts-ctx-val { font-size: 14px; font-weight: 600; color: var(--text-muted); }
+.ts-ctx-arrow { color: var(--text-faint); }
 .ts-ctx-delta {
     font-size: 12px;
     font-weight: 700;
@@ -231,14 +231,14 @@
 }
 .ts-ctx-better { color: #66bb6a; }
 .ts-ctx-worse { color: #ef5350; }
-.ts-ctx-neutral { color: #888; }
-.ts-ctx-empty { color: #555; font-size: 13px; padding: 20px; text-align: center; }
-.ts-ctx-msg { color: #666; font-size: 11px; font-style: italic; margin-top: 2px; }
+.ts-ctx-neutral { color: var(--text-muted); }
+.ts-ctx-empty { color: var(--text-ghost); font-size: 13px; padding: 20px; text-align: center; }
+.ts-ctx-msg { color: var(--text-faint); font-size: 11px; font-style: italic; margin-top: 2px; }
 
 /* Rework */
 .ts-rework-kpis { display: flex; align-items: center; gap: 6px; }
-.ts-rework-kpi { font-weight: 700; color: #fff; font-size: 14px; }
-.ts-rework-label { color: #888; font-size: 11px; }
+.ts-rework-kpi { font-weight: 700; color: var(--text-heading); font-size: 14px; }
+.ts-rework-label { color: var(--text-muted); font-size: 11px; }
 .ts-rework-sep { color: #333; }
 .ts-cost-wasted { color: #ef5350; }
 
@@ -265,9 +265,9 @@
 }
 .ts-modal-overlay.show { display: flex; }
 .ts-modal {
-    background: #1e1e1e;
-    border: 1px solid #333;
-    border-radius: 12px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-muted);
+    border-radius: var(--radius-xl);
     width: 90vw;
     max-width: 800px;
     max-height: 80vh;
@@ -280,53 +280,53 @@
     justify-content: space-between;
     align-items: center;
     padding: 16px 20px;
-    border-bottom: 1px solid #333;
+    border-bottom: 1px solid var(--border-muted);
 }
-.ts-modal-header h3 { color: #e0e0e0; font-size: 15px; }
+.ts-modal-header h3 { color: var(--text-primary); font-size: 15px; }
 .ts-modal-header button {
-    background: none; border: none; color: #888;
+    background: none; border: none; color: var(--text-muted);
     font-size: 22px; cursor: pointer; padding: 0 4px;
 }
-.ts-modal-header button:hover { color: #fff; }
+.ts-modal-header button:hover { color: var(--text-heading); }
 .ts-modal-body {
     padding: 16px 20px;
     overflow-y: auto;
 }
 .ts-pricing-info {
-    color: #888;
+    color: var(--text-muted);
     font-size: 12px;
     margin-bottom: 12px;
 }
 .ts-pricing-table input {
-    background: #161616;
-    color: #ccc;
-    border: 1px solid #333;
+    background: var(--bg-surface);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-muted);
     padding: 6px 8px;
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     font-size: 12px;
     width: 100%;
 }
-.ts-pricing-table input:focus { border-color: #0078d4; outline: none; }
+.ts-pricing-table input:focus { border-color: var(--accent); outline: none; }
 .ts-pricing-table input[type=number] { width: 80px; }
 .ts-pricing-table td { padding: 6px 8px; vertical-align: middle; }
 .ts-btn {
-    background: #0078d4;
-    color: #fff;
+    background: var(--accent);
+    color: var(--text-heading);
     border: none;
     padding: 6px 14px;
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     font-size: 12px;
     cursor: pointer;
 }
-.ts-btn:hover { background: #006abc; }
+.ts-btn:hover { background: var(--accent-hover); }
 .ts-btn-add { margin-top: 10px; }
 .ts-btn-sm {
     padding: 4px 10px;
     font-size: 11px;
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
 }
-.ts-btn-save { background: #2e7d32; }
-.ts-btn-save:hover { background: #1b5e20; }
-.ts-btn-del { background: #c62828; }
+.ts-btn-save { background: var(--status-success-border); }
+.ts-btn-save:hover { background: var(--success-bg); }
+.ts-btn-del { background: var(--status-error-border); }
 .ts-btn-del:hover { background: #b71c1c; }
 .ts-btn-group { display: flex; gap: 4px; }

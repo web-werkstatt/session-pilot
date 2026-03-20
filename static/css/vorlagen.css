@@ -1,0 +1,107 @@
+/* ===== VORLAGEN PAGE ===== */
+.vorlagen-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+    gap: 25px;
+}
+.vorlage-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    transition: transform var(--transition-base), box-shadow var(--transition-base);
+}
+.vorlage-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--border-hover);
+}
+.vorlage-header {
+    background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+.vorlage-icon { font-size: 40px; }
+.vorlage-title { font-size: 20px; font-weight: 600; }
+.vorlage-body { padding: 20px; }
+.vorlage-description { color: var(--text-muted); margin-bottom: 15px; line-height: 1.6; }
+.vorlage-files { margin-bottom: 20px; }
+.vorlage-files h4 {
+    color: var(--text-muted);
+    font-size: var(--text-sm);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+}
+.file-list { display: flex; flex-wrap: wrap; gap: 8px; }
+.file-tag {
+    background: var(--bg-elevated);
+    padding: 5px 12px;
+    border-radius: 15px;
+    font-size: var(--text-sm);
+    font-family: var(--font-mono);
+    color: var(--accent-link);
+}
+.file-tag.html { color: #e34c26; }
+.file-tag.css { color: #264de4; }
+.file-tag.js { color: #f7df1e; }
+.file-tag.py { color: #3776ab; }
+.file-tag.md { color: var(--text-muted); }
+.vorlage-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.action-btn {
+    padding: 10px 20px;
+    border-radius: var(--radius-md);
+    font-size: var(--text-base);
+    cursor: pointer;
+    border: none;
+    transition: all var(--transition-base);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+.action-btn.primary { background: var(--accent); color: var(--text-heading); }
+.action-btn.primary:hover { background: var(--accent-hover); }
+.action-btn.secondary { background: var(--border-hover); color: var(--text-heading); }
+.action-btn.secondary:hover { background: var(--text-ghost); }
+.action-btn.copy { background: #2d5a2d; color: var(--text-heading); }
+.action-btn.copy:hover { background: #3d6a3d; }
+.path-display {
+    background: var(--bg-elevated);
+    padding: 10px 15px;
+    border-radius: var(--radius-md);
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    color: var(--text-muted);
+    margin-top: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.copy-icon { cursor: pointer; opacity: 0.6; transition: opacity var(--transition-base); }
+.copy-icon:hover { opacity: 1; }
+.code-block {
+    background: var(--bg-elevated);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    margin-bottom: 20px;
+}
+.code-header {
+    background: var(--border-muted);
+    padding: 10px 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: var(--text-base);
+    color: var(--text-muted);
+}
+.code-content {
+    padding: 15px;
+    font-family: var(--font-mono);
+    font-size: var(--text-base);
+    line-height: 1.6;
+    overflow-x: auto;
+    white-space: pre;
+    color: #d4d4d4;
+}

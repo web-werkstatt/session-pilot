@@ -5,88 +5,12 @@
 {% block breadcrumb %}Claude Sessions{% endblock %}
 
 {% block topbar_actions %}
-<button class="topbar-btn" onclick="openSessionStats()" title="Statistiken">📊</button>
-<button class="topbar-btn btn-sync" onclick="syncSessions()" id="syncBtn" title="Sync">🔄 Sync</button>
+<button class="topbar-btn" onclick="openSessionStats()" title="Statistiken"><i data-lucide="bar-chart-2" class="icon icon-sm"></i></button>
+<button class="topbar-btn btn-sync" onclick="syncSessions()" id="syncBtn" title="Sync"><i data-lucide="refresh-cw" class="icon icon-sm"></i> Sync</button>
 {% endblock %}
 
 {% block head_extra %}
-<style>
-        /* Sync button */
-        .btn-sync.syncing { opacity: 0.5; pointer-events: none; }
-
-        /* Stats Cards */
-        .stats-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; padding: 20px 30px; background: #1a1a1a; border-bottom: 1px solid #2a2a2a; }
-        .stat-card { background: #1e1e1e; border: 1px solid #2a2a2a; border-radius: 10px; padding: 16px 20px; transition: border-color 0.2s; }
-        .stat-card:hover { border-color: #0078d4; }
-        .stat-card .label { color: #888; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
-        .stat-card .value { font-size: 24px; font-weight: 700; color: #fff; }
-        .stat-card .sub { color: #666; font-size: 11px; margin-top: 4px; }
-
-        /* Filter Bar */
-        .filter-bar { padding: 16px 30px; background: #161616; border-bottom: 1px solid #2a2a2a; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
-        .filter-bar select, .filter-bar input { background: #1e1e1e; color: #ccc; border: 1px solid #333; padding: 7px 12px; border-radius: 6px; font-size: 13px; transition: border-color 0.2s; }
-        .filter-bar select:focus, .filter-bar input:focus { border-color: #0078d4; outline: none; }
-        .filter-bar input[type=date] { width: 145px; }
-        .filter-bar input[type=date]::-webkit-calendar-picker-indicator { filter: invert(0.7); }
-        .filter-pills { display: flex; gap: 6px; margin-left: auto; }
-        .pill { padding: 5px 14px; border-radius: 20px; font-size: 12px; cursor: pointer; border: 1px solid #333; background: transparent; color: #888; transition: all 0.2s; }
-        .pill:hover { border-color: #555; color: #ccc; }
-        .pill.active { background: #0078d4; border-color: #0078d4; color: #fff; }
-
-        /* Row hover actions */
-        .row-actions { opacity: 0; transition: opacity 0.15s; display: flex; gap: 6px; }
-        tr.row:hover .row-actions { opacity: 1; }
-        .row-action { background: #333; color: #aaa; border: none; padding: 3px 10px; border-radius: 4px; cursor: pointer; font-size: 11px; }
-        .row-action:hover { background: #0078d4; color: #fff; }
-
-        /* Project & Account */
-        .project-name { color: #4fc3f7; text-decoration: none; font-weight: 500; }
-        .project-name:hover { text-decoration: underline; }
-        .account-badge { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }
-        .account-claude { background: rgba(79,195,247,0.12); color: #4fc3f7; }
-        .account-claude1 { background: rgba(207,111,247,0.12); color: #cf6ff7; }
-        .account-minimax { background: rgba(111,247,176,0.12); color: #6ff7b0; }
-
-        /* Duration bar */
-        .dur-wrap { display: flex; align-items: center; gap: 8px; }
-        .dur-bar { height: 4px; border-radius: 2px; background: #0078d4; min-width: 2px; max-width: 60px; opacity: 0.6; }
-        .dur-text { white-space: nowrap; }
-
-        /* Tokens */
-        .token-cell { color: #777; font-size: 12px; font-variant-numeric: tabular-nums; }
-
-        /* Branch pill */
-        .branch { display: inline-block; background: #1e1e1e; border: 1px solid #333; padding: 1px 8px; border-radius: 4px; font-size: 11px; color: #999; font-family: 'Fira Code', monospace; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-
-        /* Outcome badges */
-        .outcome-badge { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }
-        .outcome-ok { background: rgba(46,125,50,0.2); color: #66bb6a; }
-        .outcome-needs_fix { background: rgba(230,81,0,0.2); color: #ff9800; }
-        .outcome-reverted { background: rgba(198,40,40,0.2); color: #ef5350; }
-        .outcome-partial { background: rgba(249,168,37,0.2); color: #f9a825; }
-        .outcome-unrated { color: #444; font-size: 11px; }
-
-        /* Pagination */
-        .pagination { display: flex; gap: 10px; justify-content: center; padding: 20px; align-items: center; }
-        .pagination button { background: #1e1e1e; color: #ccc; border: 1px solid #333; padding: 8px 18px; border-radius: 6px; cursor: pointer; font-size: 13px; transition: all 0.2s; }
-        .pagination button:hover { background: #2a2a2a; border-color: #555; }
-        .pagination button:disabled { opacity: 0.3; cursor: default; }
-        .pagination .page-info { color: #666; font-size: 13px; }
-
-        /* Hover preview */
-        .preview-tooltip { display: none; position: fixed; background: #1e1e1e; border: 1px solid #333; border-radius: 10px; padding: 16px; box-shadow: 0 8px 30px rgba(0,0,0,0.5); z-index: 100; width: 280px; pointer-events: none; }
-        .preview-tooltip.show { display: block; }
-        .preview-tooltip .pt-title { font-size: 14px; font-weight: 600; color: #fff; margin-bottom: 10px; }
-        .preview-tooltip .pt-row { display: flex; justify-content: space-between; padding: 3px 0; font-size: 12px; }
-        .preview-tooltip .pt-label { color: #888; }
-        .preview-tooltip .pt-value { color: #ccc; }
-
-        .loading { text-align: center; padding: 60px; color: #666; font-size: 14px; }
-        .empty-state { text-align: center; padding: 80px 20px; }
-        .empty-state .icon { font-size: 48px; margin-bottom: 16px; opacity: 0.3; }
-        .empty-state .title { font-size: 18px; color: #888; margin-bottom: 8px; }
-        .empty-state .desc { font-size: 13px; color: #555; }
-</style>
+<link rel="stylesheet" href="/static/css/sessions.css">
 {% endblock %}
 
 {% block content %}
@@ -140,16 +64,16 @@
         <table id="sessionsTable" style="display:none">
             <thead>
                 <tr>
-                    <th onclick="sortBy('project_name')">Projekt <span class="sort-icon" data-col="project_name"></span></th>
-                    <th onclick="sortBy('account')">Account <span class="sort-icon" data-col="account"></span></th>
-                    <th onclick="sortBy('started_at')">Datum <span class="sort-icon" data-col="started_at"></span></th>
-                    <th onclick="sortBy('duration_ms')">Dauer <span class="sort-icon" data-col="duration_ms"></span></th>
-                    <th onclick="sortBy('user_message_count')">Msgs <span class="sort-icon" data-col="user_message_count"></span></th>
-                    <th onclick="sortBy('model')">Model <span class="sort-icon" data-col="model"></span></th>
-                    <th onclick="sortBy('total_output_tokens')">Tokens <span class="sort-icon" data-col="total_output_tokens"></span></th>
-                    <th onclick="sortBy('git_branch')">Branch <span class="sort-icon" data-col="git_branch"></span></th>
-                    <th onclick="sortBy('outcome')">Outcome <span class="sort-icon" data-col="outcome"></span></th>
-                    <th style="width:80px"></th>
+                    <th style="width:18%" onclick="sortBy('project_name')">Projekt <span class="sort-icon" data-col="project_name"></span></th>
+                    <th style="width:8%" onclick="sortBy('account')">Account <span class="sort-icon" data-col="account"></span></th>
+                    <th style="width:12%" onclick="sortBy('started_at')">Datum <span class="sort-icon" data-col="started_at"></span></th>
+                    <th style="width:10%" onclick="sortBy('duration_ms')">Dauer <span class="sort-icon" data-col="duration_ms"></span></th>
+                    <th style="width:5%" onclick="sortBy('user_message_count')">Msgs <span class="sort-icon" data-col="user_message_count"></span></th>
+                    <th style="width:7%" onclick="sortBy('model')">Model <span class="sort-icon" data-col="model"></span></th>
+                    <th style="width:12%" onclick="sortBy('total_output_tokens')">Tokens <span class="sort-icon" data-col="total_output_tokens"></span></th>
+                    <th style="width:12%" onclick="sortBy('git_branch')">Branch <span class="sort-icon" data-col="git_branch"></span></th>
+                    <th style="width:10%" onclick="sortBy('outcome')">Outcome <span class="sort-icon" data-col="outcome"></span></th>
+                    <th style="width:6%"></th>
                 </tr>
             </thead>
             <tbody id="sessionsBody"></tbody>
