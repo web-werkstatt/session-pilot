@@ -13,6 +13,10 @@ from routes.session_analysis_routes import session_analysis_bp
 from routes.git_routes import git_bp
 from routes.widget_routes import widget_bp
 from routes.notification_routes import notification_bp
+from routes.timesheet_routes import timesheets_bp
+from routes.settings_routes import settings_bp
+from routes.scaffold_routes import scaffold_bp
+from routes.context_routes import context_bp
 
 
 def register_blueprints(app):
@@ -30,3 +34,7 @@ def register_blueprints(app):
     app.register_blueprint(session_analysis_bp)
     app.register_blueprint(git_bp)
     app.register_blueprint(notification_bp)
+    app.register_blueprint(timesheets_bp)
+    app.register_blueprint(settings_bp)
+    app.register_blueprint(scaffold_bp)
+    app.register_blueprint(context_bp)

@@ -1,18 +1,23 @@
 """
 PostgreSQL-Verbindung und Schema-Management fuer Claude Sessions
 """
+import threading
 import psycopg2
 from psycopg2 import pool, extras
 from config import DB_CONFIG
 
 _pool = None
+_pool_lock = threading.Lock()
 
 
 def get_pool():
-    """Gibt den Connection-Pool zurueck, erstellt ihn bei Bedarf"""
+    """Gibt den Connection-Pool zurueck, erstellt ihn bei Bedarf (thread-safe)"""
     global _pool
-    if _pool is None or _pool.closed:
-        _pool = pool.ThreadedConnectionPool(1, 5, **DB_CONFIG)
+    if _pool is not None and not _pool.closed:
+        return _pool
+    with _pool_lock:
+        if _pool is None or _pool.closed:
+            _pool = pool.ThreadedConnectionPool(3, 10, **DB_CONFIG)
     return _pool
 
 
@@ -23,7 +28,10 @@ def get_conn():
 
 def put_conn(conn):
     """Gibt eine Verbindung zurueck in den Pool"""
-    get_pool().putconn(conn)
+    try:
+        get_pool().putconn(conn)
+    except Exception:
+        pass
 
 
 def execute(sql, params=None, fetch=False, fetchone=False):
@@ -89,7 +97,7 @@ def ensure_database():
     execute("""
         CREATE TABLE IF NOT EXISTS sessions (
             id SERIAL PRIMARY KEY,
-            session_uuid VARCHAR(36) UNIQUE NOT NULL,
+            session_uuid VARCHAR(64) UNIQUE NOT NULL,
             account VARCHAR(20) NOT NULL,
             project_hash VARCHAR(255),
             project_name VARCHAR(255),
@@ -116,8 +124,8 @@ def ensure_database():
         CREATE TABLE IF NOT EXISTS messages (
             id SERIAL PRIMARY KEY,
             session_id INTEGER REFERENCES sessions(id) ON DELETE CASCADE,
-            uuid VARCHAR(36),
-            parent_uuid VARCHAR(36),
+            uuid VARCHAR(64),
+            parent_uuid VARCHAR(64),
             type VARCHAR(20),
             content TEXT,
             content_json JSONB,

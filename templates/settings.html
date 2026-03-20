@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block title %}Einstellungen - Dashboard{% endblock %}
+{% block breadcrumb %}Einstellungen{% endblock %}
+
+{% block head_extra %}
+<link rel="stylesheet" href="/static/css/settings.css">
+{% endblock %}
+
+{% block content %}
+<div class="settings-page">
+    <!-- Sidebar Tabs -->
+    <nav class="settings-nav">
+        <button class="settings-tab active" onclick="switchTab('pricing', this)">Modell-Preise</button>
+        <button class="settings-tab" onclick="switchTab('accounts', this)">AI Accounts</button>
+        <button class="settings-tab" onclick="switchTab('system', this)">System</button>
+    </nav>
+
+    <!-- Content Area -->
+    <div class="settings-content">
+
+        <!-- Pricing Section -->
+        <section class="settings-section" id="section-pricing">
+            <div class="settings-header">
+                <div>
+                    <h2>Modell-Preise</h2>
+                    <p class="settings-desc">Preise pro 1M Tokens (USD). Werden fuer die Kostenberechnung in AI Timesheets verwendet.</p>
+                </div>
+                <button class="s-btn s-btn-primary" onclick="addPricingRow()">+ Modell</button>
+            </div>
+
+            <div class="settings-filters">
+                <button class="s-filter active" onclick="filterProvider('all', this)">Alle</button>
+                <button class="s-filter" onclick="filterProvider('anthropic', this)">Anthropic</button>
+                <button class="s-filter" onclick="filterProvider('openai', this)">OpenAI</button>
+                <button class="s-filter" onclick="filterProvider('google', this)">Google</button>
+                <button class="s-filter" onclick="filterProvider('amazon', this)">Amazon</button>
+            </div>
+
+            <table class="s-table" id="pricingTable">
+                <thead>
+                    <tr>
+                        <th>Pattern</th>
+                        <th>Anzeigename</th>
+                        <th>Provider</th>
+                        <th>Input $/1M</th>
+                        <th>Output $/1M</th>
+                        <th>Cache Read</th>
+                        <th>Cache Write</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody id="pricingBody">
+                    <tr><td colspan="8" class="loading"><div class="spinner"></div>Lade...</td></tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Accounts Section -->
+        <section class="settings-section" id="section-accounts" style="display:none">
+            <div class="settings-header">
+                <div>
+                    <h2>AI Accounts</h2>
+                    <p class="settings-desc">Automatisch erkannte AI-Coding-Assistenten auf diesem System.</p>
+                </div>
+            </div>
+
+            <div class="s-cards" id="accountCards">
+                <div class="loading"><div class="spinner"></div>Lade...</div>
+            </div>
+        </section>
+
+        <!-- System Section -->
+        <section class="settings-section" id="section-system" style="display:none">
+            <div class="settings-header">
+                <div>
+                    <h2>System</h2>
+                    <p class="settings-desc">Server-Konfiguration und Datenbank-Statistiken.</p>
+                </div>
+            </div>
+
+            <div class="s-info-grid" id="systemInfo">
+                <div class="loading"><div class="spinner"></div>Lade...</div>
+            </div>
+        </section>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/settings.js"></script>
+{% endblock %}

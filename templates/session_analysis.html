@@ -50,7 +50,8 @@
         <button class="period-btn" onclick="loadAnalysis(365, this)">1 Jahr</button>
     </div>
 
-    <div class="analysis-grid" id="analysisGrid">
+    <div class="loading" id="analysisLoading"><div class="spinner"></div>Lade Analyse...</div>
+    <div class="analysis-grid" id="analysisGrid" style="display:none">
         <div class="analysis-card">
             <h3>Geschaetzte Kosten</h3>
             <div class="cost-total" id="totalCost">-</div>
@@ -113,16 +114,22 @@
             document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
         }
+        document.getElementById('analysisLoading').style.display = '';
+        document.getElementById('analysisGrid').style.display = 'none';
 
         fetch('/api/sessions/analysis?days=' + days)
             .then(r => r.json())
             .then(render)
             .catch(() => {
                 document.getElementById('totalCost').textContent = 'Fehler';
+                document.getElementById('analysisLoading').style.display = 'none';
+                document.getElementById('analysisGrid').style.display = '';
             });
     }
 
     function render(data) {
+        document.getElementById('analysisLoading').style.display = 'none';
+        document.getElementById('analysisGrid').style.display = '';
         // Kosten
         document.getElementById('totalCost').textContent = '$' + data.cost.total_usd.toFixed(2);
         document.getElementById('tokenSummary').textContent =

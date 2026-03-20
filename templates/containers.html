@@ -68,7 +68,8 @@
     </div>
 
     <div class="container-section">
-        <table id="containerTable">
+        <div class="loading" id="containerLoading"><div class="spinner"></div>Lade Container...</div>
+        <table id="containerTable" style="display:none">
             <thead>
                 <tr>
                     <th>Container</th>
@@ -110,7 +111,12 @@
                 document.getElementById('unhealthyContainers').textContent = data.stats.unhealthy;
                 document.getElementById('stoppedContainers').textContent = data.stats.stopped;
                 document.getElementById('timestamp').textContent = 'Stand: ' + data.timestamp;
+                document.getElementById('containerLoading').style.display = 'none';
+                document.getElementById('containerTable').style.display = '';
                 renderContainers();
+            })
+            .catch(() => {
+                document.getElementById('containerLoading').innerHTML = '<div style="color:#f44">Fehler beim Laden</div>';
             });
     }
 

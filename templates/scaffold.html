@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% block title %}Neues Projekt - Dashboard{% endblock %}
+{% block breadcrumb %}Neues Projekt{% endblock %}
+
+{% block head_extra %}
+<link rel="stylesheet" href="/static/css/scaffold.css">
+{% endblock %}
+
+{% block content %}
+<div class="scaffold-page">
+    <!-- Wizard Steps -->
+    <div class="wizard-steps">
+        <div class="wizard-step active" data-step="1"><span class="step-num">1</span><span class="step-label">Grundlagen</span></div>
+        <div class="wizard-step" data-step="2"><span class="step-num">2</span><span class="step-label">Template</span></div>
+        <div class="wizard-step" data-step="3"><span class="step-num">3</span><span class="step-label">AI & DevOps</span></div>
+        <div class="wizard-step" data-step="4"><span class="step-num">4</span><span class="step-label">Erstellen</span></div>
+    </div>
+
+    <!-- Step 1: Grundlagen -->
+    <div class="wizard-panel" id="step1">
+        <h2>Grundlagen</h2>
+        <div class="sc-field">
+            <label>Projektname *</label>
+            <input type="text" id="projName" placeholder="z.B. mein-projekt" oninput="validateName()">
+            <div class="sc-hint" id="nameHint">Kleinbuchstaben, Zahlen, Bindestriche</div>
+        </div>
+        <div class="sc-field">
+            <label>Beschreibung</label>
+            <textarea id="projDesc" placeholder="Kurzbeschreibung des Projekts" rows="3"></textarea>
+        </div>
+        <div class="sc-row">
+            <div class="sc-field">
+                <label>Typ</label>
+                <select id="projType">
+                    <option value="app">App</option>
+                    <option value="service">Service / API</option>
+                    <option value="tool">Tool / Script</option>
+                    <option value="library">Library</option>
+                </select>
+            </div>
+            <div class="sc-field">
+                <label>Gruppe</label>
+                <select id="projGroup">
+                    <option value="">Keine</option>
+                    <option value="privat">Privat</option>
+                    <option value="geschaeftlich">Geschaeftlich</option>
+                    <option value="kunde">Kunde</option>
+                </select>
+            </div>
+        </div>
+        <div class="wizard-nav">
+            <span></span>
+            <button class="sc-btn sc-btn-primary" onclick="goStep(2)" id="btnNext1" disabled>Weiter</button>
+        </div>
+    </div>
+
+    <!-- Step 2: Template -->
+    <div class="wizard-panel" id="step2" style="display:none">
+        <h2>Template waehlen</h2>
+        <div class="sc-templates" id="templateGrid">
+            <div class="loading"><div class="spinner"></div>Lade Templates...</div>
+        </div>
+        <div class="wizard-nav">
+            <button class="sc-btn" onclick="goStep(1)">Zurueck</button>
+            <button class="sc-btn sc-btn-primary" onclick="goStep(3)">Weiter</button>
+        </div>
+    </div>
+
+    <!-- Step 3: AI & DevOps -->
+    <div class="wizard-panel" id="step3" style="display:none">
+        <h2>AI & DevOps</h2>
+        <div class="sc-section">
+            <h3>AI-Instruktionsdateien</h3>
+            <div class="sc-checks">
+                <label class="sc-check"><input type="checkbox" id="aiClaude" checked> CLAUDE.md (Claude Code)</label>
+                <label class="sc-check"><input type="checkbox" id="aiCodex"> AGENTS.md (OpenAI Codex)</label>
+                <label class="sc-check"><input type="checkbox" id="aiGemini"> GEMINI.md (Google Gemini CLI)</label>
+            </div>
+        </div>
+        <div class="sc-section">
+            <h3>DevOps</h3>
+            <div class="sc-checks">
+                <label class="sc-check"><input type="checkbox" id="optDocker"> Docker-Setup generieren</label>
+                <label class="sc-check"><input type="checkbox" id="optGit" checked> Git initialisieren</label>
+                <label class="sc-check"><input type="checkbox" id="optGitea"> Gitea Repository erstellen</label>
+            </div>
+        </div>
+        <div class="wizard-nav">
+            <button class="sc-btn" onclick="goStep(2)">Zurueck</button>
+            <button class="sc-btn sc-btn-primary" onclick="goStep(4)">Weiter</button>
+        </div>
+    </div>
+
+    <!-- Step 4: Vorschau & Erstellen -->
+    <div class="wizard-panel" id="step4" style="display:none">
+        <h2>Vorschau</h2>
+        <div class="sc-preview">
+            <div class="sc-preview-header">
+                <span class="sc-preview-name" id="previewName">-</span>
+                <span class="sc-preview-type" id="previewType">-</span>
+            </div>
+            <div class="sc-preview-desc" id="previewDesc"></div>
+            <h3>Dateien die erstellt werden:</h3>
+            <div class="sc-file-tree" id="previewFiles">
+                <div class="loading"><div class="spinner"></div>Lade Vorschau...</div>
+            </div>
+        </div>
+        <div class="wizard-nav">
+            <button class="sc-btn" onclick="goStep(3)">Zurueck</button>
+            <button class="sc-btn sc-btn-create" onclick="createProject()" id="btnCreate">Projekt erstellen</button>
+        </div>
+    </div>
+
+    <!-- Result -->
+    <div class="wizard-panel" id="stepResult" style="display:none">
+        <div class="sc-result" id="resultContent"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/scaffold.js"></script>
+{% endblock %}

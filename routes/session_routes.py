@@ -25,6 +25,13 @@ def session_detail_page(uuid):
 @sessions_bp.route("/api/sessions")
 def api_sessions():
     """Session-Liste mit Filtern"""
+    try:
+        return _api_sessions_inner()
+    except Exception as e:
+        return jsonify({"error": f"Datenbankfehler: {e}", "sessions": [], "total": 0}), 500
+
+
+def _api_sessions_inner():
     account = request.args.get("account")
     project = request.args.get("project")
     search = request.args.get("search")
@@ -39,7 +46,7 @@ def api_sessions():
     allowed_sorts = {
         "started_at", "ended_at", "duration_ms", "project_name",
         "account", "user_message_count", "assistant_message_count",
-        "total_input_tokens", "total_output_tokens", "model", "git_branch"
+        "total_input_tokens", "total_output_tokens", "model", "git_branch", "outcome"
     }
     if sort not in allowed_sorts:
         sort = "started_at"
@@ -76,7 +83,7 @@ def api_sessions():
         f"""SELECT session_uuid, account, project_name, project_hash, cwd, git_branch,
                    model, claude_version, slug, started_at, ended_at, duration_ms,
                    user_message_count, assistant_message_count,
-                   total_input_tokens, total_output_tokens
+                   total_input_tokens, total_output_tokens, outcome
             FROM sessions {where}
             ORDER BY {sort} {order}
             LIMIT %s OFFSET %s""",
@@ -98,6 +105,13 @@ def api_sessions():
 @sessions_bp.route("/api/sessions/stats")
 def api_sessions_stats():
     """Aggregierte Statistiken"""
+    try:
+        return _api_sessions_stats_inner()
+    except Exception as e:
+        return jsonify({"error": f"Datenbankfehler: {e}"}), 500
+
+
+def _api_sessions_stats_inner():
     stats = execute("""
         SELECT
             COUNT(*) as total_sessions,
@@ -147,6 +161,13 @@ def api_sessions_stats():
 @sessions_bp.route("/api/sessions/<uuid>")
 def api_session_detail(uuid):
     """Einzelne Session mit Messages"""
+    try:
+        return _api_session_detail_inner(uuid)
+    except Exception as e:
+        return jsonify({"error": f"Datenbankfehler: {e}"}), 500
+
+
+def _api_session_detail_inner(uuid):
     session = execute(
         "SELECT * FROM sessions WHERE session_uuid = %s", (uuid,), fetchone=True
     )
@@ -201,6 +222,54 @@ def api_session_export(uuid):
         mimetype=content_type,
         headers={"Content-Disposition": f"attachment; filename={filename}"}
     )
+
+
+@sessions_bp.route("/api/sessions/<uuid>/outcome", methods=["POST"])
+def api_session_outcome(uuid):
+    """Session-Outcome bewerten"""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "JSON Body erforderlich"}), 400
+
+        outcome = data.get("outcome")
+        allowed = {"ok", "needs_fix", "reverted", "partial", None}
+        if outcome not in allowed:
+            return jsonify({"error": f"Ungueltiger Outcome: {outcome}"}), 400
+
+        execute("""
+            UPDATE sessions SET outcome = %s, outcome_note = %s, outcome_at = NOW()
+            WHERE session_uuid = %s
+        """, (outcome, data.get("note", ""), uuid))
+
+        return jsonify({"success": True})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@sessions_bp.route("/api/sessions/bulk-outcome", methods=["POST"])
+def api_sessions_bulk_outcome():
+    """Mehrere Sessions gleichzeitig bewerten"""
+    try:
+        data = request.get_json()
+        uuids = data.get("uuids", [])
+        outcome = data.get("outcome")
+
+        if not uuids:
+            return jsonify({"error": "uuids erforderlich"}), 400
+        allowed = {"ok", "needs_fix", "reverted", "partial", None}
+        if outcome not in allowed:
+            return jsonify({"error": f"Ungueltiger Outcome: {outcome}"}), 400
+
+        for uuid in uuids:
+            execute("""
+                UPDATE sessions SET outcome = %s, outcome_at = NOW()
+                WHERE session_uuid = %s
+            """, (outcome, uuid))
+
+        return jsonify({"success": True, "count": len(uuids)})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 @sessions_bp.route("/api/sessions/sync", methods=["POST"])
