@@ -131,6 +131,7 @@
         {% block content %}{% endblock %}
     </main>
 
+    {% block global_lightbox %}
     <!-- Lightbox mit Navigation -->
     <div class="lightbox" id="lightbox" onclick="if(event.target===this)closeLightbox()">
         <button class="lb-nav lb-prev" id="lbPrev" onclick="event.stopPropagation();lightboxNav(-1)" title="Vorheriges Bild">&#8249;</button>
@@ -142,6 +143,7 @@
         <button class="lb-close" onclick="closeLightbox()" title="Schliessen">&#10005;</button>
         <div class="lb-counter" id="lbCounter"></div>
     </div>
+    {% endblock %}
 
     <!-- Command Palette -->
     <div class="cmd-overlay" id="cmdOverlay" onclick="if(event.target===this)closeCommandPalette()">
@@ -149,10 +151,6 @@
             <div class="cmd-search">
                 <i data-lucide="search" class="icon"></i>
                 <input type="text" id="cmdInput" placeholder="Suche Projekte, Sessions, Container..." oninput="handleCmdSearch()" autocomplete="off">
-            </div>
-            <div class="cmd-search-tabs" id="cmdTabs" style="display:none">
-                <button class="cmd-tab active" data-tab="projects" onclick="switchCmdTab('projects')">Projekte</button>
-                <button class="cmd-tab" data-tab="fulltext" onclick="switchCmdTab('fulltext')">Volltextsuche</button>
             </div>
             <div class="cmd-results" id="cmdResults"></div>
         </div>

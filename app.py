@@ -6,6 +6,7 @@ Modulare Version mit Blueprint-Routing
 import sys
 import os
 import json
+import time
 
 # Füge das Projektverzeichnis zum Pfad hinzu
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -24,6 +25,7 @@ from flask import Flask, render_template, jsonify, request
 from config import HOST, PORT
 
 app = Flask(__name__)
+app.jinja_env.globals['cache_bust'] = int(time.time())
 
 # Alle Blueprints registrieren
 from routes import register_blueprints

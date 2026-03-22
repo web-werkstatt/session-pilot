@@ -142,3 +142,46 @@ def ensure_database():
     execute("CREATE INDEX IF NOT EXISTS idx_sessions_account ON sessions(account)")
     execute("CREATE INDEX IF NOT EXISTS idx_sessions_project ON sessions(project_name)")
     execute("CREATE INDEX IF NOT EXISTS idx_sessions_started ON sessions(started_at DESC)")
+
+
+_schema_ready = False
+_schema_lock = threading.Lock()
+
+
+def ensure_session_review_schema():
+    """Stellt Review-Spalten und Review-Notiz-Tabelle fuer Sessions bereit"""
+    global _schema_ready
+    if _schema_ready:
+        return
+    with _schema_lock:
+        if _schema_ready:
+            return
+        execute("ALTER TABLE sessions ADD COLUMN IF NOT EXISTS outcome VARCHAR(20)")
+        execute("ALTER TABLE sessions ADD COLUMN IF NOT EXISTS outcome_note TEXT")
+        execute("ALTER TABLE sessions ADD COLUMN IF NOT EXISTS outcome_at TIMESTAMPTZ")
+        execute("""
+            CREATE TABLE IF NOT EXISTS review_threads (
+                id SERIAL PRIMARY KEY,
+                project_name VARCHAR(255),
+                title VARCHAR(255) NOT NULL,
+                status VARCHAR(20) DEFAULT 'open',
+                created_at TIMESTAMPTZ DEFAULT NOW(),
+                updated_at TIMESTAMPTZ DEFAULT NOW()
+            )
+        """)
+        execute("""
+            CREATE TABLE IF NOT EXISTS session_reviews (
+                id SERIAL PRIMARY KEY,
+                session_id INTEGER REFERENCES sessions(id) ON DELETE CASCADE,
+                thread_id INTEGER REFERENCES review_threads(id) ON DELETE SET NULL,
+                outcome_snapshot VARCHAR(20),
+                note TEXT NOT NULL,
+                author VARCHAR(80) DEFAULT 'local',
+                created_at TIMESTAMPTZ DEFAULT NOW()
+            )
+        """)
+        execute("ALTER TABLE session_reviews ADD COLUMN IF NOT EXISTS thread_id INTEGER REFERENCES review_threads(id) ON DELETE SET NULL")
+        execute("CREATE INDEX IF NOT EXISTS idx_session_reviews_session_id ON session_reviews(session_id, created_at DESC)")
+        execute("CREATE INDEX IF NOT EXISTS idx_session_reviews_thread_id ON session_reviews(thread_id, created_at DESC)")
+        execute("CREATE INDEX IF NOT EXISTS idx_review_threads_project_name ON review_threads(project_name, updated_at DESC)")
+        _schema_ready = True

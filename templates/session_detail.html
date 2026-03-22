@@ -5,52 +5,171 @@
 {% block breadcrumb %}<a href="/sessions" style="color:var(--accent-light);text-decoration:none">Sessions</a> <span class="bc-sep">/</span> Detail{% endblock %}
 
 {% block head_extra %}
-<link rel="stylesheet" href="/static/css/sessions.css">
+<link rel="stylesheet" href="/static/css/sessions2.css?v={{ cache_bust }}">
 {% endblock %}
 
 {% block topbar_actions %}
-<a class="btn-export" id="expJson">JSON</a>
-<a class="btn-export" id="expMd">Markdown</a>
-<a class="btn-export" id="expHtml">HTML</a>
-<a class="btn-export" id="expXlsx">XLSX</a>
-<a class="btn-export" id="expTxt">TXT</a>
+<div class="session-topbar-actions">
+    <a class="btn-export btn-export-ghost" href="/sessions">Zur Liste</a>
+    <div class="export-menu">
+        <button class="btn-export export-menu-toggle" type="button">Export</button>
+        <div class="export-menu-list">
+            <a class="btn-export" id="expJson">JSON</a>
+            <a class="btn-export" id="expMd">Markdown</a>
+            <a class="btn-export" id="expHtml">HTML</a>
+            <a class="btn-export" id="expXlsx">XLSX</a>
+            <a class="btn-export" id="expTxt">TXT</a>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block content %}
-    <div class="meta-bar" id="metaBar"></div>
+<div class="session-shell">
+    <section class="session-hero">
+        <div class="session-hero-copy">
+            <div class="session-kicker">Session Review</div>
+            <h1 class="session-title" id="sessionTitle">Lade Session...</h1>
+            <p class="session-subtitle" id="sessionSubtitle">Metadaten und Konversation werden geladen.</p>
+        </div>
+        <div class="hero-stats" id="heroStats"></div>
+    </section>
 
-    <div class="outcome-bar" id="outcomeBar">
-        <span class="outcome-label">Bewertung:</span>
-        <button class="outcome-btn" data-outcome="ok" onclick="setOutcome('ok')">OK</button>
-        <button class="outcome-btn" data-outcome="needs_fix" onclick="setOutcome('needs_fix')">Needs Fix</button>
-        <button class="outcome-btn" data-outcome="reverted" onclick="setOutcome('reverted')">Reverted</button>
-        <button class="outcome-btn" data-outcome="partial" onclick="setOutcome('partial')">Partial</button>
-        <div class="outcome-note-wrap">
-            <input class="outcome-note-input" id="outcomeNote" placeholder="Notiz (optional)" onchange="saveOutcomeNote()">
-            <span class="outcome-saved" id="outcomeSaved">Gespeichert</span>
+    <section class="session-control-grid">
+        <div class="session-panel session-panel-review-summary">
+            <div class="session-panel-head">
+                <div>
+                    <div class="session-panel-kicker">Bewertung</div>
+                    <h2>Review</h2>
+                </div>
+                <button class="btn-export" type="button" onclick="openReviewModal()">Bearbeiten</button>
+            </div>
+            <div class="review-summary-grid" id="reviewSummary"></div>
+            <div class="linked-threads" id="linkedThreads"></div>
+        </div>
+
+        <div class="session-panel session-panel-exports">
+            <div class="session-panel-head">
+                <div>
+                    <div class="session-panel-kicker">Controls</div>
+                    <h2>Export & Ansicht</h2>
+                </div>
+                <button class="btn-export btn-export-ghost" type="button" onclick="openSnapshotModal()">Snapshot</button>
+            </div>
+            <div class="export-bar">
+                <a class="btn-export" id="expJson2">JSON</a>
+                <a class="btn-export" id="expMd2">Markdown</a>
+                <a class="btn-export" id="expHtml2">HTML</a>
+                <a class="btn-export" id="expXlsx2">XLSX</a>
+                <a class="btn-export" id="expTxt2">TXT</a>
+            </div>
+            <div class="width-control width-control-panel">
+                <label for="widthSlider">Lesebreite</label>
+                <input type="range" id="widthSlider" min="720" max="1800" step="80" oninput="setWidth(this.value)">
+                <span id="widthLabel"></span>
+            </div>
+        </div>
+    </section>
+
+    <section class="session-layout">
+        <aside class="session-sidebar">
+            <div class="session-panel">
+                <div class="session-panel-head">
+                    <div>
+                        <div class="session-panel-kicker">Timeline</div>
+                        <h2>Struktur</h2>
+                    </div>
+                </div>
+                <div class="message-stats" id="messageStats"></div>
+                <div class="related-thread-sessions" id="relatedThreadSessions"></div>
+            </div>
+        </aside>
+
+        <div class="session-main">
+            <div class="conversation-frame">
+                <div class="conversation-head">
+                    <div>
+                        <div class="session-panel-kicker">Conversation</div>
+                        <h2>Verlauf</h2>
+                    </div>
+                    <div class="conversation-head-note">Nachrichten, Tool-Aufrufe und Ergebnisse in chronologischer Reihenfolge.</div>
+                </div>
+                <div class="conversation" id="conversation">
+                    <div class="loading"><div class="spinner"></div>Lade Konversation...</div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<div class="review-modal" id="reviewModal" onclick="if(event.target===this)closeReviewModal()">
+    <div class="review-modal-panel">
+        <div class="review-modal-head">
+            <div>
+                <div class="session-panel-kicker">Bewertung</div>
+                <h2>Session Review</h2>
+                <p>Aktuellen Status setzen und mehrere Notizen im Verlauf pflegen.</p>
+            </div>
+            <button class="review-close" type="button" onclick="closeReviewModal()">×</button>
+        </div>
+
+        <div class="review-thread-wrap">
+            <div class="review-section-label">Thread / Thema</div>
+            <div class="review-thread-controls">
+                <select class="review-thread-select" id="reviewThreadSelect"></select>
+                <input class="review-thread-input" id="reviewThreadTitle" placeholder="Neuen Thread anlegen, z. B. Hetzner Sync Fix">
+            </div>
+        </div>
+
+        <div class="review-status-block">
+            <div class="review-section-label">Ergebnis</div>
+            <div class="outcome-bar" id="outcomeBar">
+                <button class="outcome-btn" data-outcome="ok" onclick="setOutcome('ok')">OK</button>
+                <button class="outcome-btn" data-outcome="needs_fix" onclick="setOutcome('needs_fix')">Needs Fix</button>
+                <button class="outcome-btn" data-outcome="reverted" onclick="setOutcome('reverted')">Reverted</button>
+                <button class="outcome-btn" data-outcome="partial" onclick="setOutcome('partial')">Partial</button>
+            </div>
+            <div class="review-actions-row">
+                <span class="outcome-saved" id="outcomeSaved">Gespeichert</span>
+                <button class="btn-export" type="button" onclick="saveOutcomeOnly()">Status speichern</button>
+            </div>
+        </div>
+
+        <div class="review-note-wrap">
+            <div class="review-section-label">Neue Notiz</div>
+            <textarea class="review-note-input" id="outcomeNote" placeholder="Was war gut, problematisch oder noch offen?"></textarea>
+            <div class="review-actions-row review-actions-row-right">
+                <button class="btn-export" type="button" onclick="addReviewNote()">Notiz speichern</button>
+            </div>
+        </div>
+
+        <div class="review-history-wrap">
+            <div class="review-section-label">Verlauf</div>
+            <div class="review-history" id="reviewHistory"></div>
         </div>
     </div>
+</div>
 
-    <div class="export-bar">
-        <span style="color:#888;font-size:13px;line-height:30px">Export:</span>
-        <a class="btn-export" id="expJson2">JSON</a>
-        <a class="btn-export" id="expMd2">Markdown</a>
-        <a class="btn-export" id="expHtml2">HTML</a>
-        <a class="btn-export" id="expXlsx2">XLSX</a>
-        <a class="btn-export" id="expTxt2">TXT</a>
-        <div class="width-control">
-            <label>Breite:</label>
-            <input type="range" id="widthSlider" min="600" max="2400" step="100" oninput="setWidth(this.value)">
-            <span id="widthLabel"></span>
+<div class="snapshot-modal" id="snapshotModal" onclick="if(event.target===this)closeSnapshotModal()">
+    <div class="snapshot-modal-panel">
+        <div class="snapshot-modal-head">
+            <div>
+                <div class="session-panel-kicker">Snapshot</div>
+                <h2>Übersicht</h2>
+                <p>Metadaten und technische Eckpunkte der aktuellen Session.</p>
+            </div>
+            <button class="review-close" type="button" onclick="closeSnapshotModal()">×</button>
         </div>
+        <div class="meta-grid" id="metaBarModal"></div>
     </div>
+</div>
 
-    <div class="conversation" id="conversation">
-        <div class="loading"><div class="spinner"></div>Lade Konversation...</div>
-    </div>
 {% endblock %}
 
+{% block global_lightbox %}{% endblock %}
+
 {% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/marked/lib/marked.umd.js"></script>
 <script>const SESSION_UUID = "{{ session_uuid }}";</script>
 <script src="/static/js/session-detail.js"></script>
 {% endblock %}

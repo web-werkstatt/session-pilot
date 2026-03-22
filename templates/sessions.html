@@ -10,7 +10,7 @@
 {% endblock %}
 
 {% block head_extra %}
-<link rel="stylesheet" href="/static/css/sessions.css">
+<link rel="stylesheet" href="/static/css/sessions2.css?v={{ cache_bust }}">
 {% endblock %}
 
 {% block content %}
@@ -48,7 +48,6 @@
         <select id="filterProject" onchange="resetAndLoad()">
             <option value="">Alle Projekte</option>
         </select>
-        <input type="text" id="filterSearch" placeholder="Suche..." oninput="debounceSearch()" style="width:180px">
         <input type="date" id="filterDateFrom" onchange="resetAndLoad()" title="Von">
         <input type="date" id="filterDateTo" onchange="resetAndLoad()" title="Bis">
         <div class="filter-pills">
@@ -95,5 +94,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="/static/js/sessions.js"></script>
+<script src="/static/js/sessions2.js?v={{ cache_bust }}"></script>
 {% endblock %}

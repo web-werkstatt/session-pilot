@@ -2,7 +2,7 @@
 Flask-Routes fuer Claude Code Sessions
 """
 from flask import Blueprint, render_template, jsonify, request, Response
-from services.db_service import execute
+from services.db_service import execute, ensure_session_review_schema
 from services.session_import import sync_all
 from services.session_export import (
     export_json, export_markdown, export_html, export_xlsx, export_txt,
@@ -10,6 +10,84 @@ from services.session_export import (
 )
 
 sessions_bp = Blueprint("sessions", __name__)
+
+
+def _serialize_review(row):
+    data = dict(row)
+    data["created_at"] = data["created_at"].isoformat() if data.get("created_at") else None
+    return data
+
+
+def _get_session_row(uuid):
+    return execute("SELECT * FROM sessions WHERE session_uuid = %s", (uuid,), fetchone=True)
+
+
+def _get_or_create_review_thread(session_row, thread_id=None, thread_title=None):
+    if thread_id:
+        thread = execute("SELECT * FROM review_threads WHERE id = %s", (thread_id,), fetchone=True)
+        if not thread:
+            raise ValueError("Review-Thread nicht gefunden")
+        return thread
+
+    title = (thread_title or "").strip()
+    if not title:
+        return None
+
+    existing = execute(
+        "SELECT * FROM review_threads WHERE project_name IS NOT DISTINCT FROM %s AND LOWER(title) = LOWER(%s) ORDER BY updated_at DESC LIMIT 1",
+        (session_row.get("project_name"), title), fetchone=True
+    )
+    if existing:
+        return existing
+
+    execute(
+        "INSERT INTO review_threads (project_name, title) VALUES (%s, %s)",
+        (session_row.get("project_name"), title)
+    )
+    return execute(
+        "SELECT * FROM review_threads WHERE project_name IS NOT DISTINCT FROM %s AND LOWER(title) = LOWER(%s) ORDER BY id DESC LIMIT 1",
+        (session_row.get("project_name"), title), fetchone=True
+    )
+
+
+def _touch_review_thread(thread_id):
+    if not thread_id:
+        return
+    execute("UPDATE review_threads SET updated_at = NOW() WHERE id = %s", (thread_id,))
+
+
+def _load_project_review_threads(project_name):
+    return execute("""
+        SELECT t.id, t.title, t.status, t.project_name, t.created_at, t.updated_at,
+               COUNT(DISTINCT sr.session_id) AS session_count,
+               COUNT(sr.id) AS note_count,
+               MAX(sr.created_at) AS last_activity
+        FROM review_threads t
+        LEFT JOIN session_reviews sr ON sr.thread_id = t.id
+        WHERE t.project_name IS NOT DISTINCT FROM %s
+        GROUP BY t.id
+        ORDER BY COALESCE(MAX(sr.created_at), t.updated_at) DESC, t.id DESC
+    """, (project_name,), fetch=True)
+
+
+def _load_thread_sessions(thread_ids, current_session_id=None):
+    if not thread_ids:
+        return []
+    return execute("""
+        SELECT DISTINCT ON (t.id, s.id)
+               t.id AS thread_id,
+               t.title AS thread_title,
+               s.session_uuid,
+               s.project_name,
+               s.started_at,
+               s.duration_ms,
+               s.outcome
+        FROM review_threads t
+        JOIN session_reviews sr ON sr.thread_id = t.id
+        JOIN sessions s ON s.id = sr.session_id
+        WHERE t.id = ANY(%s) AND (%s IS NULL OR s.id <> %s)
+        ORDER BY t.id, s.id, sr.created_at DESC
+    """, (thread_ids, current_session_id, current_session_id), fetch=True)
 
 
 @sessions_bp.route("/sessions")
@@ -168,9 +246,8 @@ def api_session_detail(uuid):
 
 
 def _api_session_detail_inner(uuid):
-    session = execute(
-        "SELECT * FROM sessions WHERE session_uuid = %s", (uuid,), fetchone=True
-    )
+    ensure_session_review_schema()
+    session = _get_session_row(uuid)
     if not session:
         return jsonify({"error": "Session nicht gefunden"}), 404
 
@@ -178,6 +255,18 @@ def _api_session_detail_inner(uuid):
         "SELECT * FROM messages WHERE session_id = %s ORDER BY timestamp ASC",
         (session["id"],), fetch=True
     )
+
+    reviews = execute("""
+        SELECT sr.id, sr.thread_id, rt.title AS thread_title, sr.outcome_snapshot, sr.note, sr.author, sr.created_at
+        FROM session_reviews sr
+        LEFT JOIN review_threads rt ON rt.id = sr.thread_id
+        WHERE sr.session_id = %s
+        ORDER BY sr.created_at DESC
+    """, (session["id"],), fetch=True)
+
+    project_threads = _load_project_review_threads(session.get("project_name")) or []
+    thread_ids = [row["thread_id"] for row in (reviews or []) if row.get("thread_id")]
+    related_sessions = _load_thread_sessions(thread_ids, session["id"]) if thread_ids else []
 
     s = dict(session)
     s["started_at"] = s["started_at"].isoformat() if s.get("started_at") else None
@@ -192,7 +281,31 @@ def _api_session_detail_inner(uuid):
         md["timestamp"] = md["timestamp"].isoformat() if md.get("timestamp") else None
         msgs.append(md)
 
-    return jsonify({"session": s, "messages": msgs})
+    review_rows = [_serialize_review(review) for review in (reviews or [])]
+
+    threads = []
+    for thread in (project_threads or []):
+        row = dict(thread)
+        row["created_at"] = row["created_at"].isoformat() if row.get("created_at") else None
+        row["updated_at"] = row["updated_at"].isoformat() if row.get("updated_at") else None
+        row["last_activity"] = row["last_activity"].isoformat() if row.get("last_activity") else None
+        threads.append(row)
+
+    related = []
+    for rel in (related_sessions or []):
+        row = dict(rel)
+        row["started_at"] = row["started_at"].isoformat() if row.get("started_at") else None
+        row["duration_formatted"] = format_duration(row.get("duration_ms"))
+        related.append(row)
+
+    return jsonify({
+        "session": s,
+        "messages": msgs,
+        "reviews": review_rows,
+        "threads": threads,
+        "related_sessions": related,
+    })
+
 
 
 @sessions_bp.route("/api/sessions/<uuid>/export")
@@ -226,8 +339,9 @@ def api_session_export(uuid):
 
 @sessions_bp.route("/api/sessions/<uuid>/outcome", methods=["POST"])
 def api_session_outcome(uuid):
-    """Session-Outcome bewerten"""
+    """Session-Outcome aktualisieren"""
     try:
+        ensure_session_review_schema()
         data = request.get_json()
         if not data:
             return jsonify({"error": "JSON Body erforderlich"}), 400
@@ -237,14 +351,118 @@ def api_session_outcome(uuid):
         if outcome not in allowed:
             return jsonify({"error": f"Ungueltiger Outcome: {outcome}"}), 400
 
+        note = (data.get("note") or "").strip()
+        session = _get_session_row(uuid)
+        if not session:
+            return jsonify({"error": "Session nicht gefunden"}), 404
+
+        thread = _get_or_create_review_thread(session, data.get("thread_id"), data.get("thread_title"))
         execute("""
             UPDATE sessions SET outcome = %s, outcome_note = %s, outcome_at = NOW()
             WHERE session_uuid = %s
-        """, (outcome, data.get("note", ""), uuid))
+        """, (outcome, note or None, uuid))
 
-        return jsonify({"success": True})
+        if note:
+            execute("""
+                INSERT INTO session_reviews (session_id, thread_id, outcome_snapshot, note, author)
+                VALUES (%s, %s, %s, %s, %s)
+            """, (session["id"], thread["id"] if thread else None, outcome, note, data.get("author") or "local"))
+            _touch_review_thread(thread["id"] if thread else None)
+
+        return jsonify({"success": True, "thread_id": thread["id"] if thread else None})
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+
+@sessions_bp.route("/api/sessions/<uuid>/reviews", methods=["POST"])
+def api_session_review_add(uuid):
+    """Review-Notiz zu einer Session hinzufuegen"""
+    try:
+        ensure_session_review_schema()
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "JSON Body erforderlich"}), 400
+
+        note = (data.get("note") or "").strip()
+        if not note:
+            return jsonify({"error": "Notiz erforderlich"}), 400
+
+        outcome = data.get("outcome")
+        allowed = {"ok", "needs_fix", "reverted", "partial", None}
+        if outcome not in allowed:
+            return jsonify({"error": f"Ungueltiger Outcome: {outcome}"}), 400
+
+        session = _get_session_row(uuid)
+        if not session:
+            return jsonify({"error": "Session nicht gefunden"}), 404
+
+        thread = _get_or_create_review_thread(session, data.get("thread_id"), data.get("thread_title"))
+
+        execute("""
+            INSERT INTO session_reviews (session_id, thread_id, outcome_snapshot, note, author)
+            VALUES (%s, %s, %s, %s, %s)
+        """, (session["id"], thread["id"] if thread else None, outcome, note, data.get("author") or "local"))
+        _touch_review_thread(thread["id"] if thread else None)
+
+        if outcome is not None:
+            execute("""
+                UPDATE sessions SET outcome = %s, outcome_note = %s, outcome_at = NOW()
+                WHERE session_uuid = %s
+            """, (outcome, note, uuid))
+
+        review = execute("""
+            SELECT sr.id, sr.thread_id, rt.title AS thread_title, sr.outcome_snapshot, sr.note, sr.author, sr.created_at
+            FROM session_reviews sr
+            LEFT JOIN review_threads rt ON rt.id = sr.thread_id
+            WHERE sr.session_id = %s
+            ORDER BY sr.created_at DESC
+            LIMIT 1
+        """, (session["id"],), fetchone=True)
+        return jsonify({"success": True, "review": _serialize_review(review), "thread_id": thread["id"] if thread else None})
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@sessions_bp.route("/api/review-threads", methods=["POST"])
+def api_review_thread_create():
+    """Projektbezogenen Review-Thread anlegen oder wiederverwenden"""
+    try:
+        ensure_session_review_schema()
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "JSON Body erforderlich"}), 400
+        title = (data.get("title") or "").strip()
+        if not title:
+            return jsonify({"error": "Titel erforderlich"}), 400
+
+        project_name = data.get("project_name")
+        existing = execute(
+            "SELECT * FROM review_threads WHERE project_name IS NOT DISTINCT FROM %s AND LOWER(title) = LOWER(%s) ORDER BY updated_at DESC LIMIT 1",
+            (project_name, title), fetchone=True
+        )
+        if existing:
+            row = dict(existing)
+            row["created_at"] = row["created_at"].isoformat() if row.get("created_at") else None
+            row["updated_at"] = row["updated_at"].isoformat() if row.get("updated_at") else None
+            return jsonify({"success": True, "thread": row})
+
+        execute("INSERT INTO review_threads (project_name, title) VALUES (%s, %s)", (project_name, title))
+        thread = execute(
+            "SELECT * FROM review_threads WHERE project_name IS NOT DISTINCT FROM %s AND LOWER(title) = LOWER(%s) ORDER BY id DESC LIMIT 1",
+            (project_name, title), fetchone=True
+        )
+        row = dict(thread)
+        row["created_at"] = row["created_at"].isoformat() if row.get("created_at") else None
+        row["updated_at"] = row["updated_at"].isoformat() if row.get("updated_at") else None
+        return jsonify({"success": True, "thread": row})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 
 
 @sessions_bp.route("/api/sessions/bulk-outcome", methods=["POST"])
@@ -270,6 +488,89 @@ def api_sessions_bulk_outcome():
         return jsonify({"success": True, "count": len(uuids)})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+@sessions_bp.route("/api/sessions/search")
+def api_sessions_search():
+    """Volltextsuche ueber Session-Message-Inhalte"""
+    try:
+        return _api_sessions_search_inner()
+    except Exception as e:
+        return jsonify({"error": f"Datenbankfehler: {e}", "results": [], "total": 0}), 500
+
+
+def _api_sessions_search_inner():
+    query = request.args.get("q", "").strip()
+    if not query or len(query) < 2:
+        return jsonify({"error": "Suchbegriff muss mindestens 2 Zeichen haben", "results": [], "total": 0}), 400
+
+    account = request.args.get("account")
+    project = request.args.get("project")
+    date_from = request.args.get("date_from")
+    date_to = request.args.get("date_to")
+    limit = min(int(request.args.get("limit", 30)), 100)
+    offset = int(request.args.get("offset", 0))
+
+    words = query.split()
+    conditions = []
+    params = []
+
+    # Alle Woerter muessen in derselben Message vorkommen, ODER
+    # bei einem einzelnen Wort: einfach ILIKE
+    for word in words:
+        conditions.append("m.content ILIKE %s")
+        params.append(f"%{word}%")
+
+    if account:
+        conditions.append("s.account = %s")
+        params.append(account)
+    if project:
+        conditions.append("s.project_name = %s")
+        params.append(project)
+    if date_from:
+        conditions.append("s.started_at >= %s")
+        params.append(date_from)
+    if date_to:
+        conditions.append("s.started_at < %s::date + 1")
+        params.append(date_to)
+
+    where = "WHERE " + " AND ".join(conditions)
+
+    # Anzahl betroffener Sessions
+    total = execute(f"""
+        SELECT COUNT(DISTINCT s.id) as cnt
+        FROM messages m JOIN sessions s ON m.session_id = s.id
+        {where}
+    """, params, fetchone=True)
+    total_count = total["cnt"] if total else 0
+
+    # Sessions mit Treffer-Snippets laden
+    results = execute(f"""
+        SELECT DISTINCT ON (s.id)
+            s.session_uuid, s.account, s.project_name, s.started_at,
+            s.duration_ms, s.model, s.git_branch, s.slug, s.outcome,
+            s.user_message_count, s.assistant_message_count,
+            s.total_input_tokens, s.total_output_tokens,
+            m.type as match_type,
+            SUBSTRING(m.content FROM GREATEST(1, POSITION(LOWER(%s) IN LOWER(m.content)) - 80) FOR 200) as snippet
+        FROM messages m JOIN sessions s ON m.session_id = s.id
+        {where}
+        ORDER BY s.id, m.timestamp ASC
+        LIMIT %s OFFSET %s
+    """, [words[0]] + params + [limit, offset], fetch=True)
+
+    result_list = []
+    for r in (results or []):
+        row = dict(r)
+        row["started_at"] = row["started_at"].isoformat() if row.get("started_at") else None
+        row["duration_formatted"] = format_duration(row.get("duration_ms"))
+        row["tokens_formatted"] = f"{format_tokens(row.get('total_input_tokens'))} / {format_tokens(row.get('total_output_tokens'))}"
+        result_list.append(row)
+
+    # Nach Datum sortieren (neueste zuerst)
+    result_list.sort(key=lambda x: x.get("started_at") or "", reverse=True)
+
+    return jsonify({"results": result_list, "total": total_count, "query": query, "limit": limit, "offset": offset})
 
 
 @sessions_bp.route("/api/sessions/sync", methods=["POST"])

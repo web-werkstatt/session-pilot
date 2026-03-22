@@ -13,6 +13,11 @@ if (localStorage.getItem('sidebar-collapsed') === 'true') {
 var lbImages = [];
 var lbIndex = 0;
 
+function getLightbox() {
+    return document.getElementById('lightbox');
+}
+
+
 function collectLightboxImages(clickedSrc) {
     var imgs = document.querySelectorAll('img:not(.lightbox img):not(.sidebar img):not([src*="favicon"])');
     lbImages = [];
@@ -40,17 +45,21 @@ function collectLightboxImages(clickedSrc) {
 }
 
 function openLightbox(src) {
+    var lightbox = getLightbox();
+    if (!lightbox) return;
     lbIndex = collectLightboxImages(src);
     showLightboxImage();
-    document.getElementById('lightbox').classList.add('show');
+    lightbox.classList.add('show');
 }
 
 function showLightboxImage() {
     if (lbImages.length === 0) return;
-    var item = lbImages[lbIndex];
-    document.getElementById('lightboxImg').src = item.src;
+    var lightboxImg = document.getElementById('lightboxImg');
     var info = document.getElementById('lbInfo');
     var counter = document.getElementById('lbCounter');
+    if (!lightboxImg || !info || !counter) return;
+    var item = lbImages[lbIndex];
+    lightboxImg.src = item.src;
     info.textContent = item.alt || '';
     if (lbImages.length > 1) {
         counter.textContent = (lbIndex + 1) + ' / ' + lbImages.length;
@@ -70,18 +79,23 @@ function lightboxNav(dir) {
 }
 
 function closeLightbox() {
-    document.getElementById('lightbox').classList.remove('show');
-    document.getElementById('lightboxImg').src = '';
+    var lightbox = getLightbox();
+    var lightboxImg = document.getElementById('lightboxImg');
+    if (!lightbox || !lightboxImg) return;
+    lightbox.classList.remove('show');
+    lightboxImg.src = '';
 }
 
 document.addEventListener('click', function(e) {
+    if (!getLightbox()) return;
     if (e.target.tagName === 'IMG' && !e.target.closest('.lightbox') && !e.target.closest('.sidebar')) {
         e.preventDefault(); e.stopPropagation(); openLightbox(e.target.src);
     }
 }, true);
 
 document.addEventListener('keydown', function(e) {
-    if (!document.getElementById('lightbox').classList.contains('show')) return;
+    var lightbox = getLightbox();
+    if (!lightbox || !lightbox.classList.contains('show')) return;
     if (e.key === 'ArrowLeft') { lightboxNav(-1); e.preventDefault(); }
     else if (e.key === 'ArrowRight') { lightboxNav(1); e.preventDefault(); }
 });
@@ -122,46 +136,68 @@ function handleCmdSearch() {
         return;
     }
 
-    document.getElementById('cmdTabs').style.display = 'flex';
-
-    if (cmdActiveTab === 'fulltext') {
-        clearTimeout(cmdSearchTimer);
-        cmdSearchTimer = setTimeout(function() { doFulltextSearch(q); }, 400);
-        return;
-    }
-
-    doProjectSearch(q);
+    clearTimeout(cmdSearchTimer);
+    cmdSearchTimer = setTimeout(function() { doProjectSearch(q); }, 400);
 }
 
 function doProjectSearch(q) {
-    fetch('/api/projects/search?q=' + encodeURIComponent(q) + '&limit=8')
-        .then(function(r) { return r.json(); })
-        .then(function(results) {
-            var html = '';
-            if (results.length > 0) {
-                html += '<div class="cmd-group"><div class="cmd-group-label">Projekte</div>';
-                results.forEach(function(p) {
-                    html += '<div class="cmd-item" onclick="location.href=\'/project/' + encodeURIComponent(p.name) + '\'">&#128193; ' + p.name + ' <span style="color:#666;font-size:11px;margin-left:8px">' + (p.description || '') + '</span></div>';
-                });
+    // Projekte + Seiten + Sessions parallel suchen
+    var projectsReq = fetch('/api/projects/search?q=' + encodeURIComponent(q) + '&limit=8').then(function(r) { return r.json(); });
+    var sessionsReq = q.length >= 2
+        ? fetch('/api/sessions/search?q=' + encodeURIComponent(q) + '&limit=10').then(function(r) { return r.json(); }).catch(function() { return {results:[]}; })
+        : Promise.resolve({results:[]});
+
+    Promise.all([projectsReq, sessionsReq]).then(function(res) {
+        var results = res[0];
+        var sessData = res[1];
+        var html = '';
+
+        if (results.length > 0) {
+            html += '<div class="cmd-group"><div class="cmd-group-label">Projekte</div>';
+            results.forEach(function(p) {
+                html += '<div class="cmd-item" onclick="location.href=\'/project/' + encodeURIComponent(p.name) + '\'">&#128193; ' + p.name + ' <span style="color:#666;font-size:11px;margin-left:8px">' + (p.description || '') + '</span></div>';
+            });
+            html += '</div>';
+        }
+
+        var statics = [
+            {label:'Dashboard', icon:'&#128202;', url:'/'},
+            {label:'Claude Sessions', icon:'&#129302;', url:'/sessions'},
+            {label:'Session-Analyse', icon:'&#128200;', url:'/sessions/analysis'},
+            {label:'Container', icon:'&#128051;', url:'/containers'},
+            {label:'Abh\u00e4ngigkeiten', icon:'&#128279;', url:'/dependencies'},
+            {label:'Vorlagen', icon:'&#128230;', url:'/vorlagen'},
+            {label:'News', icon:'&#128240;', url:'/news'},
+        ].filter(function(s) { return s.label.toLowerCase().includes(q); });
+        if (statics.length > 0) {
+            html += '<div class="cmd-group"><div class="cmd-group-label">Seiten</div>';
+            statics.forEach(function(s) { html += '<div class="cmd-item" onclick="location.href=\'' + s.url + '\'">' + s.icon + ' ' + s.label + '</div>'; });
+            html += '</div>';
+        }
+
+        if (sessData.results && sessData.results.length > 0) {
+            var re = new RegExp('(' + q.split(/\s+/).map(function(w) { return w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }).join('|') + ')', 'gi');
+            html += '<div class="cmd-group"><div class="cmd-group-label">Sessions (' + sessData.total + ' Treffer)</div>';
+            sessData.results.forEach(function(s) {
+                var date = s.started_at ? new Date(s.started_at).toLocaleDateString('de-DE', {day:'2-digit',month:'2-digit',year:'2-digit'}) : '';
+                var snippet = (s.snippet || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+                snippet = snippet.replace(re, '<mark style="background:rgba(79,195,247,0.3);color:#fff;padding:0 2px;border-radius:2px">$1</mark>');
+                html += '<div class="cmd-item" onclick="location.href=\'/sessions/' + s.session_uuid + '\'" style="flex-direction:column;align-items:flex-start;gap:4px">';
+                html += '<div style="display:flex;gap:8px;align-items:center;width:100%">';
+                html += '<span>&#129302;</span>';
+                html += '<span style="color:#4fc3f7;font-weight:500">' + (s.project_name || '-') + '</span>';
+                html += '<span style="color:#666;font-size:11px">' + date + '</span>';
+                html += '<span style="color:#555;font-size:11px">' + (s.duration_formatted || '') + '</span>';
                 html += '</div>';
-            }
-            var statics = [
-                {label:'Dashboard', icon:'&#128202;', url:'/'},
-                {label:'Claude Sessions', icon:'&#129302;', url:'/sessions'},
-                {label:'Session-Analyse', icon:'&#128200;', url:'/sessions/analysis'},
-                {label:'Container', icon:'&#128051;', url:'/containers'},
-                {label:'Abh\u00e4ngigkeiten', icon:'&#128279;', url:'/dependencies'},
-                {label:'Vorlagen', icon:'&#128230;', url:'/vorlagen'},
-                {label:'News', icon:'&#128240;', url:'/news'},
-            ].filter(function(s) { return s.label.toLowerCase().includes(q); });
-            if (statics.length > 0) {
-                html += '<div class="cmd-group"><div class="cmd-group-label">Seiten</div>';
-                statics.forEach(function(s) { html += '<div class="cmd-item" onclick="location.href=\'' + s.url + '\'">' + s.icon + ' ' + s.label + '</div>'; });
+                html += '<div style="font-size:11px;color:#888;font-family:monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;padding-left:28px">...' + snippet.substring(0, 200) + '...</div>';
                 html += '</div>';
-            }
-            if (!html) html = '<div style="padding:20px;text-align:center;color:#555">Keine Ergebnisse</div>';
-            document.getElementById('cmdResults').innerHTML = html;
-        });
+            });
+            html += '</div>';
+        }
+
+        if (!html) html = '<div style="padding:20px;text-align:center;color:#555">Keine Ergebnisse</div>';
+        document.getElementById('cmdResults').innerHTML = html;
+    });
 }
 
 function doFulltextSearch(q) {
@@ -223,7 +259,8 @@ document.addEventListener('keydown', function(e) {
         document.getElementById('cmdOverlay').classList.contains('show') ? closeCommandPalette() : openCommandPalette();
     }
     if (e.key === 'Escape') {
-        if (document.getElementById('lightbox').classList.contains('show')) { closeLightbox(); e.stopPropagation(); }
+        var lightbox = getLightbox();
+        if (lightbox && lightbox.classList.contains('show')) { closeLightbox(); e.stopPropagation(); }
         else if (document.getElementById('cmdOverlay').classList.contains('show')) { closeCommandPalette(); e.stopPropagation(); }
     }
 }, true);
