@@ -1,18 +1,21 @@
 function setWidth(val) {
     const conv = document.getElementById('conversation');
-    if (val >= 1760) {
+    const label = document.getElementById('widthLabel');
+    const slider = document.getElementById('widthSlider');
+    if (!conv || !label || !slider) return;
+    if (val >= 2400) {
         conv.style.maxWidth = '100%';
-        document.getElementById('widthLabel').textContent = 'Voll';
+        label.textContent = 'Voll';
     } else {
         conv.style.maxWidth = val + 'px';
-        document.getElementById('widthLabel').textContent = val + 'px';
+        label.textContent = val + 'px';
     }
-    document.getElementById('widthSlider').value = val;
+    slider.value = val;
     localStorage.setItem('session-width', val);
 }
 
 (function initWidth() {
-    const saved = localStorage.getItem('session-width') || '1120';
+    const saved = localStorage.getItem('session-width') || '1000';
     setWidth(saved);
 })();
 
@@ -63,38 +66,23 @@ function renderMarkdown(text) {
     return html;
 }
 
-function summarizeValue(value) {
-    const text = typeof value === 'string' ? value : JSON.stringify(value || {});
-    return text.replace(/\s+/g, ' ').trim().substring(0, 90) || 'Keine Details';
-}
-
-function renderToolCard(kind, title, meta, content, openByDefault) {
-    const kindClass = kind === 'result' ? 'tool-card tool-card-result' : 'tool-card';
-    const icon = kind === 'result' ? '↳' : '⌘';
-    const openAttr = openByDefault ? ' open' : '';
-    return `<details class="${kindClass}"${openAttr}><summary><span class="tool-card-title"><span class="tool-card-icon">${icon}</span><span class="tool-card-label"><span class="tool-card-name">${escapeHtml(title)}</span><span class="tool-card-meta">${escapeHtml(meta)}</span></span></span><span class="tool-card-arrow">▾</span></summary><div class="tool-content"><pre>${escapeHtml(content)}</pre></div></details>`;
-}
-
 function renderToolUse(contentJson) {
     if (!contentJson) return '';
     let blocks;
-    try {
-        blocks = typeof contentJson === 'string' ? JSON.parse(contentJson) : contentJson;
-    } catch {
-        return '';
-    }
+    try { blocks = typeof contentJson === 'string' ? JSON.parse(contentJson) : contentJson; } catch { return ''; }
     if (!Array.isArray(blocks)) return '';
 
     let html = '';
     for (const block of blocks) {
         if (block.type === 'tool_use') {
             const name = block.name || 'Tool';
-            const input = block.input || {};
-            html += renderToolCard('use', name, summarizeValue(input), JSON.stringify(input, null, 2), false);
+            const inputStr = JSON.stringify(block.input || {}, null, 2);
+            const summary = Object.values(block.input || {}).join(' ').substring(0, 80);
+            html += `<details><summary>Tool ${escapeHtml(name)}: ${escapeHtml(summary)}...</summary><div class="tool-content">${escapeHtml(inputStr)}</div></details>`;
         } else if (block.type === 'tool_result') {
             const content = typeof block.content === 'string' ? block.content : JSON.stringify(block.content || '', null, 2);
-            const prefix = block.is_error ? 'Fehler' : 'Ergebnis';
-            html += renderToolCard('result', prefix, summarizeValue(content), content, !!block.is_error);
+            const preview = String(content).substring(0, 60);
+            html += `<details><summary>Ergebnis: ${escapeHtml(preview)}...</summary><div class="tool-content">${escapeHtml(content)}</div></details>`;
         }
     }
     return html;
@@ -111,8 +99,7 @@ function getLinkedThreadIds() {
 function getSelectedThreadId() {
     const select = document.getElementById('reviewThreadSelect');
     if (!select) return null;
-    const value = select.value;
-    return value ? Number(value) : null;
+    return select.value ? Number(select.value) : null;
 }
 
 function getSelectedThreadTitle() {
@@ -120,70 +107,28 @@ function getSelectedThreadTitle() {
     return input ? input.value.trim() : '';
 }
 
-function setSessionHeader(session, messages) {
-    const title = session.project_name || 'Unbenannte Session';
-    const subtitle = `${formatDateTime(session.started_at)} · ${session.duration_formatted || '-'} · ${formatModel(session.model)} · ${session.account || '-'}`;
-    document.getElementById('sessionTitle').textContent = title;
-    document.getElementById('sessionSubtitle').textContent = subtitle;
-
-    const linkedThreadCount = getLinkedThreadIds().length;
-    const stats = [
-        {label: 'Nachrichten', value: String(messages.length), sub: `${session.user_message_count || 0} User · ${session.assistant_message_count || 0} Assistant`},
-        {label: 'Token Output', value: formatTokens(session.total_output_tokens), sub: `Input ${formatTokens(session.total_input_tokens)}`},
-        {label: 'Threads', value: linkedThreadCount ? String(linkedThreadCount) : '0', sub: linkedThreadCount ? 'Mit anderen Sessions verknüpft' : 'Noch keine Verknüpfung'},
-        {label: 'Outcome', value: formatOutcomeLabel(session.outcome), sub: session.outcome_note || 'Noch keine Review-Notiz'}
-    ];
-    document.getElementById('heroStats').innerHTML = stats.map(stat =>
-        `<div class="hero-stat"><div class="hero-stat-label">${stat.label}</div><div class="hero-stat-value">${escapeHtml(stat.value)}</div><div class="hero-stat-sub">${escapeHtml(stat.sub)}</div></div>`
-    ).join('');
-}
-
 function renderMeta(session) {
-    const metaItems = [
+    const primaryItems = [
+        ['Session', session.project_name || '-'],
+    ];
+    const statItems = [
         ['Account', session.account],
-        ['Start', formatDateTime(session.started_at)],
-        ['Ende', formatDateTime(session.ended_at)],
+        ['Datum', formatDateTime(session.started_at)],
         ['Dauer', session.duration_formatted],
         ['Model', formatModel(session.model)],
-        ['Input', formatTokens(session.total_input_tokens)],
-        ['Output', formatTokens(session.total_output_tokens)],
         ['Branch', session.git_branch || '-'],
         ['Version', session.claude_version || '-'],
-        ['Slug', session.slug || '-']
+        ['Nachrichten', `${session.user_message_count || 0} / ${session.assistant_message_count || 0}`],
+        ['Input', formatTokens(session.total_input_tokens)],
+        ['Output', formatTokens(session.total_output_tokens)],
     ];
-    const html = metaItems.map(([label, value]) =>
-        `<div class="meta-item"><span class="meta-label">${label}</span><span class="meta-value">${escapeHtml(value || '-')}</span></div>`
+    const renderItems = items => items.map(([l, v]) =>
+        `<div class="meta-item"><span class="meta-label">${escapeHtml(l)}</span><span class="meta-value">${escapeHtml(v || '-')}</span></div>`
     ).join('');
-    const modalTarget = document.getElementById('metaBarModal');
-    if (modalTarget) modalTarget.innerHTML = html;
-}
-
-function renderMessageStats(messages) {
-    const counts = {user: 0, assistant: 0, system: 0, tool: 0};
-    messages.forEach(msg => {
-        if (msg.type === 'user') counts.user += 1;
-        else if (msg.type === 'assistant') counts.assistant += 1;
-        else if (msg.type === 'system') counts.system += 1;
-        if (msg.content_json) {
-            try {
-                const blocks = typeof msg.content_json === 'string' ? JSON.parse(msg.content_json) : msg.content_json;
-                if (Array.isArray(blocks)) {
-                    counts.tool += blocks.filter(block => block.type === 'tool_use' || block.type === 'tool_result').length;
-                }
-            } catch {}
-        }
-    });
-
-    const items = [
-        ['user', 'User Turns', counts.user],
-        ['assistant', 'Assistant Turns', counts.assistant],
-        ['system', 'System Events', counts.system],
-        ['tool', 'Tool Blocks', counts.tool]
-    ];
-
-    document.getElementById('messageStats').innerHTML = items.map(([kind, label, value]) =>
-        `<div class="message-stat message-stat-${kind}"><span class="message-stat-dot"></span><span class="message-stat-label">${label}</span><span class="message-stat-value">${value}</span></div>`
-    ).join('');
+    document.getElementById('metaBar').innerHTML = `
+        <div class="meta-group">${renderItems(primaryItems)}</div>
+        <div class="meta-group meta-group-stats">${renderItems(statItems)}</div>
+    `;
 }
 
 function renderReviewSummary(session, reviews) {
@@ -191,12 +136,14 @@ function renderReviewSummary(session, reviews) {
     const summary = [
         ['Status', formatOutcomeLabel(session.outcome)],
         ['Notizen', String(reviews.length)],
-        ['Letzter Eintrag', latest ? formatDateTime(latest.created_at) : 'Noch keiner'],
-        ['Zuletzt', latest ? latest.note : (session.outcome_note || 'Noch keine Review-Notiz')]
+        ['Zuletzt', latest ? formatDateTime(latest.created_at) : 'Noch keiner'],
+        ['Hinweis', latest ? latest.note : (session.outcome_note || 'Noch keine Bewertungs-Notiz')]
     ];
-    document.getElementById('reviewSummary').innerHTML = summary.map(([label, value], index) => {
+    const el = document.getElementById('reviewSummary');
+    if (!el) return;
+    el.innerHTML = summary.map(([label, value], index) => {
         const extraClass = index === 3 ? ' review-summary-item-wide' : '';
-        return `<div class="review-summary-item${extraClass}"><span class="review-summary-label">${label}</span><span class="review-summary-value">${escapeHtml(value)}</span></div>`;
+        return `<div class="review-summary-item${extraClass}"><span class="review-summary-label">${escapeHtml(label)}</span><span class="review-summary-value">${escapeHtml(value)}</span></div>`;
     }).join('');
 }
 
@@ -218,7 +165,7 @@ function renderRelatedThreadSessions() {
     const el = document.getElementById('relatedThreadSessions');
     if (!el) return;
     if (!relatedThreadSessions.length) {
-        el.innerHTML = '<div class="review-empty">Keine weiteren Sessions aus den verknüpften Threads.</div>';
+        el.innerHTML = '';
         return;
     }
     const items = relatedThreadSessions.slice(0, 8);
@@ -231,7 +178,7 @@ function renderReviewHistory(reviews) {
     const el = document.getElementById('reviewHistory');
     if (!el) return;
     if (!reviews || !reviews.length) {
-        el.innerHTML = '<div class="review-empty">Noch keine Review-Notizen vorhanden.</div>';
+        el.innerHTML = '<div class="review-empty">Noch keine Bewertungs-Notizen vorhanden.</div>';
         return;
     }
     el.innerHTML = reviews.map(review => {
@@ -252,15 +199,172 @@ function populateThreadSelect(preferredId) {
     select.innerHTML = options.join('');
 }
 
-function refreshReviewUI() {
-    if (!sessionData) return;
+function stripLineNumbers(text) {
+    return String(text || '').replace(/^[ \t]*\d+[→\t]/gm, '');
+}
+
+function copyToClipboard(btn, text) {
+    navigator.clipboard.writeText(text).then(() => {
+        btn.textContent = 'Kopiert!';
+        btn.classList.add('copied');
+        setTimeout(() => { btn.textContent = 'Kopieren'; btn.classList.remove('copied'); }, 1500);
+    });
+}
+
+function copyMsg(btn, idx) {
+    const msg = window._messages[idx];
+    copyToClipboard(btn, stripLineNumbers(msg.content || ''));
+}
+
+function copyCode(btn) {
+    const pre = btn.parentElement.querySelector('code');
+    copyToClipboard(btn, stripLineNumbers(pre.textContent));
+}
+
+function highlightOutcome(outcome) {
+    currentOutcome = outcome;
+    document.querySelectorAll('.outcome-btn').forEach(b => {
+        b.className = 'outcome-btn';
+        if (b.dataset.outcome === outcome) b.classList.add('active-' + outcome);
+    });
+}
+
+function showSaved() {
+    const el = document.getElementById('outcomeSaved');
+    if (!el) return;
+    el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), 2000);
+}
+
+function openBewertungModal(prefillText) {
+    const modal = document.getElementById('reviewModal');
+    if (!modal) return;
+    if (typeof prefillText === 'string' && prefillText.trim()) {
+        reviewPrefill = prefillText.trim();
+    }
+    const noteEl = document.getElementById('reviewModalNote');
+    if (noteEl && reviewPrefill) {
+        noteEl.value = reviewPrefill;
+        reviewPrefill = '';
+    }
+    populateThreadSelect(getLinkedThreadIds()[0]);
+    modal.classList.add('show');
+}
+
+function closeBewertungModal() {
+    const modal = document.getElementById('reviewModal');
+    if (!modal) return;
+    modal.classList.remove('show');
+}
+
+async function ensureThreadSelection() {
+    const threadId = getSelectedThreadId();
+    const threadTitle = getSelectedThreadTitle();
+    if (threadTitle) return {thread_id: null, thread_title: threadTitle};
+    return {thread_id: threadId, thread_title: ''};
+}
+
+async function setOutcome(outcome) {
+    const note = document.getElementById('outcomeNote') ? document.getElementById('outcomeNote').value.trim() : '';
+    try {
+        const threadPayload = await ensureThreadSelection();
+        const r = await fetch(`/api/sessions/${SESSION_UUID}/outcome`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({outcome, note, ...threadPayload})
+        });
+        if (r.ok) {
+            highlightOutcome(outcome);
+            if (sessionData) {
+                sessionData.outcome = outcome;
+                sessionData.outcome_note = note || sessionData.outcome_note;
+            }
+            showSaved();
+            await reloadReviewData();
+        }
+    } catch (e) { console.error(e); }
+}
+
+async function saveOutcomeNote() {
+    if (!currentOutcome) return;
+    await setOutcome(currentOutcome);
+}
+
+async function saveOutcomeOnly() {
+    if (!currentOutcome) return;
+    await setOutcome(currentOutcome);
+}
+
+async function addReviewNote() {
+    const noteEl = document.getElementById('reviewModalNote');
+    if (!noteEl) return;
+    const note = noteEl.value.trim();
+    if (!note) return;
+    try {
+        const threadPayload = await ensureThreadSelection();
+        const r = await fetch(`/api/sessions/${SESSION_UUID}/reviews`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({note, outcome: currentOutcome, ...threadPayload})
+        });
+        if (!r.ok) return;
+        noteEl.value = '';
+        document.getElementById('outcomeNote').value = note;
+        showSaved();
+        await reloadReviewData();
+    } catch (e) {
+        console.error(e);
+    }
+}
+
+async function reloadReviewData() {
+    const r = await fetch(`/api/sessions/${SESSION_UUID}`);
+    if (!r.ok) return;
+    const d = await r.json();
+    sessionData = d.session;
+    sessionReviews = d.reviews || [];
+    projectThreads = d.threads || [];
+    relatedThreadSessions = d.related_sessions || [];
+    if (sessionData.outcome) highlightOutcome(sessionData.outcome);
+    if (document.getElementById('outcomeNote')) document.getElementById('outcomeNote').value = sessionData.outcome_note || '';
+    renderMeta(sessionData);
     renderReviewSummary(sessionData, sessionReviews);
     renderLinkedThreads();
     renderRelatedThreadSessions();
     renderReviewHistory(sessionReviews);
-    setSessionHeader(sessionData, window._messages || []);
-    if (sessionData.outcome) highlightOutcome(sessionData.outcome);
-    populateThreadSelect(getSelectedThreadId());
+    populateThreadSelect(getLinkedThreadIds()[0]);
+}
+
+function renderMessages(messages) {
+    const conv = document.getElementById('conversation');
+    if (!messages || !messages.length) { conv.innerHTML = '<div class="loading">Keine Nachrichten</div>'; return; }
+
+    let html = '';
+    messages.forEach((msg, index) => {
+        if (msg.type === 'system') {
+            html += `<div class="msg-system">${escapeHtml(msg.content || '')}</div>`;
+            return;
+        }
+
+        const cls = msg.type === 'user' ? 'msg-user' : 'msg-assistant';
+        const role = msg.type === 'user' ? 'User' : 'Assistant';
+
+        let contentHtml = '';
+        if (msg.content) contentHtml += `<div class="msg-content">${renderMarkdown(msg.content)}</div>`;
+        if (msg.content_json) contentHtml += renderToolUse(msg.content_json);
+
+        html += `<div class="msg ${cls}"><div class="msg-role"><span>${role}</span><span class="msg-actions"><button class="btn-copy" onclick="copyMsg(this, ${index})">Kopieren</button><button class="btn-copy" onclick="openReviewFromMessage(${index})">Bewertung</button></span></div>${contentHtml}</div>`;
+    });
+    conv.innerHTML = html;
+    window._messages = messages;
+}
+
+function openReviewFromMessage(idx) {
+    const msg = (window._messages || [])[idx];
+    if (!msg) return;
+    const snippet = stripLineNumbers((msg.content || '').trim()).replace(/\s+/g, ' ').substring(0, 280);
+    const role = msg.type === 'user' ? 'User' : 'Assistant';
+    openBewertungModal(`[${role}-Block]\n${snippet}${snippet.length >= 280 ? '…' : ''}`);
 }
 
 async function loadSession() {
@@ -277,198 +381,28 @@ async function loadSession() {
         relatedThreadSessions = d.related_sessions || [];
 
         document.title = `${sessionData.project_name || 'Session'} - Dashboard`;
-        setSessionHeader(sessionData, d.messages || []);
         renderMeta(sessionData);
-        renderMessageStats(d.messages || []);
         renderReviewSummary(sessionData, sessionReviews);
         renderLinkedThreads();
         renderRelatedThreadSessions();
         renderReviewHistory(sessionReviews);
         populateThreadSelect(getLinkedThreadIds()[0]);
 
-        ['Json', 'Md', 'Html', 'Xlsx', 'Txt'].forEach(fmt => {
-            document.getElementById('exp' + fmt).href = `/api/sessions/${SESSION_UUID}/export?format=${fmt.toLowerCase()}`;
-            document.getElementById('exp' + fmt + '2').href = `/api/sessions/${SESSION_UUID}/export?format=${fmt.toLowerCase()}`;
+        ['Json','Md','Html','Xlsx','Txt'].forEach(fmt => {
+            const top = document.getElementById('exp' + fmt);
+            const bottom = document.getElementById('exp' + fmt + '2');
+            if (top) top.href = `/api/sessions/${SESSION_UUID}/export?format=${fmt.toLowerCase()}`;
+            if (bottom) bottom.href = `/api/sessions/${SESSION_UUID}/export?format=${fmt.toLowerCase()}`;
         });
 
-        currentOutcome = sessionData.outcome || null;
-        if (currentOutcome) highlightOutcome(currentOutcome);
+        if (sessionData.outcome) highlightOutcome(sessionData.outcome);
+        if (sessionData.outcome_note && document.getElementById('outcomeNote')) document.getElementById('outcomeNote').value = sessionData.outcome_note;
+
         renderMessages(d.messages || []);
-    } catch (e) {
+    } catch(e) {
         console.error(e);
         document.getElementById('conversation').innerHTML = '<div class="loading">Fehler beim Laden</div>';
     }
-}
-
-function renderMessages(messages) {
-    const conv = document.getElementById('conversation');
-    if (!messages || !messages.length) {
-        conv.innerHTML = '<div class="loading">Keine Nachrichten</div>';
-        return;
-    }
-
-    let html = '';
-    messages.forEach((msg, index) => {
-        if (msg.type === 'system') {
-            html += `<div class="msg-system">${escapeHtml(msg.content || '')}</div>`;
-            return;
-        }
-
-        const cls = msg.type === 'user' ? 'msg-user' : 'msg-assistant';
-        const role = msg.type === 'user' ? 'User' : 'Assistant';
-        let contentHtml = '';
-
-        if (msg.content) {
-            contentHtml += `<div class="msg-content">${renderMarkdown(msg.content)}</div>`;
-        }
-        if (msg.content_json) {
-            contentHtml += renderToolUse(msg.content_json);
-        }
-
-        html += `<article class="msg ${cls}"><div class="msg-role"><span>${role}</span><div class="msg-actions"><button class="btn-copy" onclick="openReviewFromMessage(${index})">Review</button><button class="btn-copy" onclick="copyMsg(this, ${index})">Kopieren</button></div></div>${contentHtml}</article>`;
-    });
-
-    conv.innerHTML = html;
-    window._messages = messages;
-}
-
-function stripLineNumbers(text) {
-    return text.replace(/^[ \t]*\d+[→\t]/gm, '');
-}
-
-function copyToClipboard(btn, text) {
-    navigator.clipboard.writeText(text).then(() => {
-        btn.textContent = 'Kopiert!';
-        btn.classList.add('copied');
-        setTimeout(() => {
-            btn.textContent = 'Kopieren';
-            btn.classList.remove('copied');
-        }, 1500);
-    });
-}
-
-function copyMsg(btn, idx) {
-    const msg = window._messages[idx];
-    copyToClipboard(btn, stripLineNumbers(msg.content || ''));
-}
-
-function copyCode(btn) {
-    const pre = btn.parentElement.querySelector('code');
-    copyToClipboard(btn, stripLineNumbers(pre.textContent));
-}
-
-function highlightOutcome(outcome) {
-    currentOutcome = outcome;
-    document.querySelectorAll('.outcome-btn').forEach(button => {
-        button.className = 'outcome-btn';
-        if (button.dataset.outcome === outcome) button.classList.add('active-' + outcome);
-    });
-}
-
-function openReviewModal(prefillText) {
-    const modal = document.getElementById('reviewModal');
-    if (!modal) return;
-    modal.classList.add('show');
-    if (typeof prefillText === 'string') reviewPrefill = prefillText;
-    if (reviewPrefill) {
-        document.getElementById('outcomeNote').value = reviewPrefill;
-        reviewPrefill = '';
-    }
-}
-
-function closeReviewModal() {
-    const modal = document.getElementById('reviewModal');
-    if (!modal) return;
-    modal.classList.remove('show');
-}
-
-function openSnapshotModal() {
-    const modal = document.getElementById('snapshotModal');
-    if (!modal) return;
-    modal.classList.add('show');
-}
-
-function closeSnapshotModal() {
-    const modal = document.getElementById('snapshotModal');
-    if (!modal) return;
-    modal.classList.remove('show');
-}
-
-function openReviewFromMessage(idx) {
-    const msg = (window._messages || [])[idx];
-    if (!msg) return;
-    const snippet = stripLineNumbers((msg.content || '').trim()).replace(/\s+/g, ' ').substring(0, 280);
-    const role = msg.type === 'user' ? 'User' : 'Assistant';
-    openReviewModal(`[${role}-Block]\n${snippet}${snippet.length >= 280 ? '…' : ''}`);
-}
-
-async function ensureThreadSelection() {
-    const threadId = getSelectedThreadId();
-    const threadTitle = getSelectedThreadTitle();
-    if (threadTitle) return {thread_id: null, thread_title: threadTitle};
-    if (threadId) return {thread_id: threadId, thread_title: ''};
-    return {thread_id: null, thread_title: ''};
-}
-
-async function saveOutcomeOnly() {
-    try {
-        const threadPayload = await ensureThreadSelection();
-        const r = await fetch(`/api/sessions/${SESSION_UUID}/outcome`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({outcome: currentOutcome, note: '', author: 'local', ...threadPayload})
-        });
-        const data = await r.json();
-        if (!r.ok || !data.success) throw new Error(data.error || 'Status konnte nicht gespeichert werden');
-        if (sessionData) sessionData.outcome = currentOutcome;
-        await reloadReviewData();
-        showSaved();
-    } catch (e) {
-        console.error(e);
-    }
-}
-
-async function addReviewNote() {
-    const input = document.getElementById('outcomeNote');
-    const note = (input.value || '').trim();
-    if (!note) return;
-    try {
-        const threadPayload = await ensureThreadSelection();
-        const r = await fetch(`/api/sessions/${SESSION_UUID}/reviews`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({outcome: currentOutcome, note, author: 'local', ...threadPayload})
-        });
-        const data = await r.json();
-        if (!r.ok || !data.success) throw new Error(data.error || 'Notiz konnte nicht gespeichert werden');
-        input.value = '';
-        document.getElementById('reviewThreadTitle').value = '';
-        if (sessionData) {
-            sessionData.outcome = currentOutcome;
-            sessionData.outcome_note = note;
-        }
-        await reloadReviewData();
-        showSaved();
-    } catch (e) {
-        console.error(e);
-    }
-}
-
-async function reloadReviewData() {
-    const r = await fetch(`/api/sessions/${SESSION_UUID}`);
-    const data = await r.json();
-    sessionData = data.session;
-    sessionReviews = data.reviews || [];
-    projectThreads = data.threads || [];
-    relatedThreadSessions = data.related_sessions || [];
-    refreshReviewUI();
-}
-
-function showSaved() {
-    const el = document.getElementById('outcomeSaved');
-    if (!el) return;
-    el.classList.add('show');
-    setTimeout(() => el.classList.remove('show'), 1800);
 }
 
 loadSession();

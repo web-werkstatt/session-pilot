@@ -74,3 +74,28 @@
 - Container-Compose-Aktionen (ganzen Stack starten/stoppen)
 - Tailwind CDN durch lokalen Build ersetzen (Production)
 - 2026-03-22: Review-Modal auf zentriertes Dialog-Layout umgestellt; keine rechtsbündige Slide-over-Darstellung mehr, Snapshot bleibt separates Modal.
+- 2026-03-22: Tagesdokumentation unter `docs/changes-2026-03-22.md` angelegt; `next-session-sync`-Skill erweitert, damit optionale datierte Change-Logs unter `docs/` gepflegt werden koennen.
+- 2026-03-22: Timeline-/Struktur-Panel aus der Session-Detail-Sidebar entfernt; Statistik und verknuepfte Sessions jetzt als `Struktur`-Modal, Conversation laeuft vollbreit.
+- 2026-03-22: Statistik aus eigenem Struktur-Modal entfernt und als Dropdown/Popover direkt in die Hero-Stats integriert; Export-Panel auf Snapshot/Export fokussiert.
+- 2026-03-22: `session-detail.js` in `session_detail.html` ebenfalls mit Cache-Busting versehen; Reload-Probleme lagen vermutlich am Browser-Cache alter JS-Dateien.
+- 2026-03-22: Tuerkiser Header-Akzent nach Nutzerfeedback in subtiler Form zurueckgebracht; keine dominante Hero-Flaeche, nur leichter Rand/Glow.
+- 2026-03-22: Lesebreite repariert; Slider setzt nun die Breite auf dem gesamten `conversationFrame` statt nur auf `#conversation`.
+- 2026-03-22: Session-Detail GUI-Cleanup; obere Review-/Export-Karten durch kompakte Toolbar ersetzt, doppelte Exporte entfernt, Verlauf wieder klarer Hauptinhalt.
+- 2026-03-22: finaler harter Session-Detail Cleanup; nur noch eine Export-Stelle, Toolbar konsolidiert, Conversation-Header entschlackt, kollidierende Responsive-Reste entfernt.
+- 2026-03-22: Session-Detail auf Snapshot-Backup `session-detail-20260322-193911` zurueckgesetzt; spaetere UI-Experimente verworfen.
+- 2026-03-22: Nach Backup-Restore die neueren Review-/Thread-Funktionen wieder in das alte Session-Detail-Layout eingebaut; Design alt, Funktionalitaet neu.
+- 2026-03-22: Doppelte Export-Buttons im Session-Detail-Header entfernt; nur noch `Zur Liste` oben, Export verbleibt im Seiteninhalt.
+- 2026-03-22: `Zur Liste` nicht mehr im Header, sondern wieder in der Export-Leiste des Session-Details positioniert.
+- Session-Detail: sichtbare Review-Beschriftungen auf Bewertung umgestellt; Modal, leere Zustände und Nachrichtenaktion entsprechend vereinheitlicht.
+- Session-Detail: Bewertungs-Zusammenfassung entfernt; Statistik-/Übersichtsanteile sollen auf eine eigene Seite ausgelagert werden.
+- Session-Detail: Inline-Notizfeld aus der Bewertungsleiste entfernt; Notizen werden nur noch im Bewertungs-Modal erfasst.
+- Session-Detail: sichtbaren Session-Namen in der Meta-Leiste wieder ergänzt.
+- Session-Detail: Account, Datum und Dauer in der Meta-Leiste ebenfalls in die rechte Gruppe verschoben.
+- Session-Detail: Meta-Leiste von Flex auf zweispaltiges Grid umgestellt, damit die rechte Statistikgruppe auf Desktop stabil rechts bleibt.
+- Session-Detail: Model, Branch und Version in der Meta-Leiste ebenfalls in die rechte Gruppe verschoben; links bleibt nur der Session-Name.
+- DB-Backup erstellt: `backups/db/project_dashboard-2026-03-22-214758.dump` (PostgreSQL 16 pg_dump via lokales Docker-Image).
+- Import-Fix: Claude- und Multi-Import aktualisieren bei `session_uuid`-Konflikt jetzt alle Session-Metadaten statt nur `jsonl_size`/`jsonl_mtime`.
+- Session `954c743b-c988-40b7-8a0c-5729bb453ad0` aus JSONL neu in die DB gezogen; Tokens jetzt `697` Input und `49825` Output.
+- Session-Detail: Bewertung in die Export-Leiste vor die Export-Buttons gezogen; Export-Gruppe mittig ausgerichtet.
+- Session-Detail: redundanten Text `Bewertung:` vor dem Bewertungs-Button entfernt.
+- Session-Detail: Buttontext `Zur Liste` auf `Session Liste` geändert.

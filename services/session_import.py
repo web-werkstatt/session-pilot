@@ -229,7 +229,27 @@ def import_session(filepath, account_name, project_hash):
                 jsonl_path, jsonl_size, jsonl_mtime)
             VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
             ON CONFLICT (session_uuid) DO UPDATE SET
-                jsonl_size=EXCLUDED.jsonl_size, jsonl_mtime=EXCLUDED.jsonl_mtime, updated_at=NOW()
+                account=EXCLUDED.account,
+                project_hash=EXCLUDED.project_hash,
+                project_name=EXCLUDED.project_name,
+                cwd=EXCLUDED.cwd,
+                git_branch=EXCLUDED.git_branch,
+                model=EXCLUDED.model,
+                claude_version=EXCLUDED.claude_version,
+                slug=EXCLUDED.slug,
+                started_at=EXCLUDED.started_at,
+                ended_at=EXCLUDED.ended_at,
+                duration_ms=EXCLUDED.duration_ms,
+                user_message_count=EXCLUDED.user_message_count,
+                assistant_message_count=EXCLUDED.assistant_message_count,
+                total_input_tokens=EXCLUDED.total_input_tokens,
+                total_output_tokens=EXCLUDED.total_output_tokens,
+                cache_read_tokens=EXCLUDED.cache_read_tokens,
+                cache_creation_tokens=EXCLUDED.cache_creation_tokens,
+                jsonl_path=EXCLUDED.jsonl_path,
+                jsonl_size=EXCLUDED.jsonl_size,
+                jsonl_mtime=EXCLUDED.jsonl_mtime,
+                updated_at=NOW()
             RETURNING id
         """, (meta["session_uuid"], account_name, project_hash, project_name,
               meta["cwd"], meta["git_branch"], meta["model"], meta["claude_version"],
