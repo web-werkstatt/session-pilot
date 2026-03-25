@@ -436,6 +436,3 @@ async function loadSession() {
 }
 
 loadSession();
-
-// Lucide Icons erneut initialisieren (Timing-Fix fuer Session-Detail-Seite)
-requestAnimationFrame(() => { if (typeof lucide !== 'undefined') lucide.createIcons(); });

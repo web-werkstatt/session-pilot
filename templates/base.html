@@ -156,14 +156,10 @@
         </div>
     </div>
 
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="/static/js/lucide.min.js"></script>
     <script src="/static/js/base.js"></script>
     <script src="/static/js/notifications.js"></script>
-    <script>
-    function initLucide() { if (typeof lucide !== 'undefined') lucide.createIcons(); }
-    if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', initLucide); } else { initLucide(); }
-    window.addEventListener('load', initLucide);
-    </script>
+    <script>if (typeof lucide !== 'undefined') lucide.createIcons();</script>
     {% block scripts %}{% endblock %}
 </body>
 </html>
