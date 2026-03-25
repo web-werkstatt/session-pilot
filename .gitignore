@@ -52,7 +52,7 @@ next-session-archiv.md
 upload/
 
 # Claude settings
-.claude/settings.local.json
+.claude/
 .claude/backups/
 
 # Backups
@@ -65,3 +65,6 @@ docs/screenshots/lazy-*
 docs/screenshots/galerie-*
 docs/screenshots/lightbox-*
 docs/screenshots/project-detail-*
+
+# Internal planning
+sprints/
