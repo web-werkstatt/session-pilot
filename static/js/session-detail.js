@@ -386,6 +386,8 @@ function renderMessages(messages) {
     conv.innerHTML = html;
     window._messages = messages;
     buildToc(messages);
+    // Lucide Icons nach grossem DOM-Rendering wiederherstellen
+    requestAnimationFrame(() => { if (typeof lucide !== 'undefined') lucide.createIcons(); });
 }
 
 

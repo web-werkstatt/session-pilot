@@ -79,8 +79,9 @@
 {% block global_lightbox %}{% endblock %}
 
 {% block scripts %}
-<script src="https://cdn.jsdelivr.net/npm/marked/lib/marked.umd.js"></script>
+<script src="/static/js/marked.min.js"></script>
 <script>const SESSION_UUID = "{{ session_uuid }}";</script>
 <script src="/static/js/session-toc.js?v={{ cache_bust }}"></script>
 <script src="/static/js/session-detail.js?v={{ cache_bust }}"></script>
+<script>if (typeof lucide !== 'undefined') lucide.createIcons();</script>
 {% endblock %}
