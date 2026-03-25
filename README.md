@@ -84,7 +84,20 @@ But it doesn't stop there — it also monitors your Docker containers, scans you
 
 ## Screenshots
 
-> Coming soon — or run it yourself and see!
+**Project Dashboard** — All projects at a glance with priority, progress, milestones, and Git status.
+![Dashboard](docs/screenshots/01-dashboard.png)
+
+**Session List** — Browse all Claude Code sessions with filters, accounts, models, and outcome badges.
+![Sessions](docs/screenshots/02-sessions.png)
+
+**Cost Analysis** — Track spending by model, project, and time period. Weekday heatmap and tool usage ranking.
+![Analysis](docs/screenshots/03-analysis.png)
+
+**Session Detail** — Full conversation with Markdown rendering, timestamps, tool results, and Table of Contents.
+![Session Detail](docs/screenshots/04-session-detail.png)
+
+**Container Dashboard** — Live Docker container status with health checks and quick actions.
+![Containers](docs/screenshots/05-containers.png)
 
 ## Quick Start
 
