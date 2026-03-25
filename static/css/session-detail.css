@@ -372,6 +372,20 @@ details .tool-content {
     width: fit-content;
 }
 
+/* --- Review Modal Overrides --- */
+.review-modal-panel { padding: 24px 28px; border: 1px solid var(--border-hover); }
+.review-modal-head { margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--border-subtle); }
+.review-modal-head h2 { font-size: 18px; }
+.review-status-row { gap: 8px; margin-top: 16px; padding: 14px 0; border-top: 1px solid var(--border-subtle); border-bottom: 1px solid var(--border-subtle); }
+.outcome-btn { font-size: 12px; padding: 7px 18px; font-weight: 500; }
+.review-modal-note { min-height: 80px; font-size: var(--text-md); border-radius: 6px; }
+.review-modal-note:focus { border-color: var(--accent); outline: none; }
+.review-modal-actions { margin-top: 10px; justify-content: flex-end; }
+.review-history { border-top: 1px solid var(--border-subtle); padding-top: 16px; }
+.review-entry { border: 1px solid var(--border-subtle); transition: border-color var(--transition-base); }
+.review-entry:hover { border-color: var(--border-hover); }
+.review-entry-note { font-size: var(--text-md); }
+
 /* --- Responsive --- */
 @media (max-width: 1024px) {
     .session-toc { display: none; }

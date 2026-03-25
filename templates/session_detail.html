@@ -50,15 +50,10 @@
     <div class="review-modal-panel">
         <div class="review-modal-head">
             <div>
-                <div class="meta-label">Bewertung</div>
-                <h2>Bewertungs-Notizen</h2>
-                <p>Status pflegen, Notizen speichern und Threads über Sessions hinweg verknüpfen.</p>
+                <h2>Session bewerten</h2>
+                <p>Status setzen, Notizen erfassen und mit Threads verknüpfen.</p>
             </div>
             <button class="review-close" type="button" onclick="closeBewertungModal()">×</button>
-        </div>
-        <div class="review-thread-row">
-            <select id="reviewThreadSelect" class="review-thread-select"></select>
-            <input id="reviewThreadTitle" class="review-thread-input" placeholder="Neuen Thread anlegen">
         </div>
         <div class="review-status-row" id="reviewStatusRow">
             <button class="outcome-btn" data-outcome="ok" onclick="setOutcome('ok')">OK</button>
@@ -67,8 +62,12 @@
             <button class="outcome-btn" data-outcome="partial" onclick="setOutcome('partial')">Partial</button>
             <button class="btn-export" type="button" onclick="saveOutcomeOnly()">Status speichern</button>
         </div>
-        <textarea id="reviewModalNote" class="review-modal-note" placeholder="Neue Bewertungs-Notiz"></textarea>
+        <textarea id="reviewModalNote" class="review-modal-note" placeholder="Notiz schreiben..."></textarea>
         <div class="review-modal-actions">
+            <div class="review-thread-row">
+                <select id="reviewThreadSelect" class="review-thread-select"></select>
+                <input id="reviewThreadTitle" class="review-thread-input" placeholder="Neuer Thread...">
+            </div>
             <button class="btn-export" type="button" onclick="addReviewNote()">Notiz speichern</button>
         </div>
         <div class="review-history" id="reviewHistory"></div>
