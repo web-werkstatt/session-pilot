@@ -40,6 +40,20 @@ dashboard-full.png
 favorites.json
 notifications.json
 .notification_state.json
+groups.json
+ideas.json
+relations.json
+
+# Session notes (personal)
+next-session.md
+next-session-archiv.md
+
+# Upload folder
+upload/
 
 # Claude settings
 .claude/settings.local.json
+.claude/backups/
+
+# Backups
+backups/
