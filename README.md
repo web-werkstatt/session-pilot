@@ -1,8 +1,10 @@
 <p align="center">
-  <img src="static/favicon.svg" width="80" alt="SessionPilot">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/logo-dark.png">
+    <source media="(prefers-color-scheme: light)" srcset="docs/logo-light.png">
+    <img src="docs/logo-light.png" alt="SessionPilot" width="420">
+  </picture>
 </p>
-
-<h1 align="center">SessionPilot</h1>
 
 <p align="center">
   <strong>Your AI coding sessions deserve a cockpit.</strong><br>
