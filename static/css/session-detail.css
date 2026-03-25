@@ -146,10 +146,11 @@
 
 /* --- Message Content --- */
 .msg-content {
-    white-space: pre-wrap;
+    white-space: normal;
     word-wrap: break-word;
     font-size: var(--text-md);
     color: var(--text-secondary);
+    line-height: 1.7;
 }
 .msg-content p { margin: 6px 0; }
 .msg-content pre {
