@@ -146,12 +146,13 @@
 
 /* --- Message Content --- */
 .msg-content {
-    white-space: normal;
     word-wrap: break-word;
     font-size: var(--text-md);
     color: var(--text-secondary);
     line-height: 1.7;
 }
+.msg-assistant .msg-content { white-space: normal; }
+.msg-user .msg-content { white-space: pre-wrap; font-family: var(--font-mono); font-size: var(--text-base); }
 .msg-content p { margin: 6px 0; }
 .msg-content pre {
     background: var(--bg-base);
