@@ -68,3 +68,7 @@ docs/screenshots/project-detail-*
 
 # Internal planning
 sprints/
+
+# Local sync scripts
+sync_sessions.py
+systemd/
