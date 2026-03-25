@@ -1,12 +1,21 @@
 <p align="center">
-  <img src="static/favicon.svg" width="80" alt="Project Dashboard">
+  <img src="static/favicon.svg" width="80" alt="SessionPilot">
 </p>
 
-<h1 align="center">Project Dashboard</h1>
+<h1 align="center">SessionPilot</h1>
 
 <p align="center">
-  <strong>The ultimate self-hosted dashboard for developers using Claude Code.</strong><br>
-  Monitor AI sessions in real-time, track costs, manage projects, and keep your infrastructure in check — all in one place.
+  <strong>Your AI coding sessions deserve a cockpit.</strong><br>
+  <em>Deine AI-Coding-Sessions verdienen ein Cockpit.</em>
+</p>
+
+<p align="center">
+  Self-hosted dashboard to monitor, analyze, and review Claude Code sessions in real-time.<br>
+  Track costs, manage projects, and keep your dev infrastructure in check — all in one place.
+</p>
+
+<p align="center">
+  <a href="https://session-pilot.com">session-pilot.com</a> (coming soon)
 </p>
 
 <p align="center">
@@ -20,9 +29,9 @@
 
 ---
 
-## Why Project Dashboard?
+## Why SessionPilot?
 
-If you use **Claude Code** daily across multiple projects, you know the pain: sessions scattered across accounts, no cost visibility, no way to review what happened yesterday. Project Dashboard solves this by importing your Claude Code JSONL session files into a searchable, browsable, and analyzable web interface.
+If you use **Claude Code** daily across multiple projects, you know the pain: sessions scattered across accounts, no cost visibility, no way to review what happened yesterday. SessionPilot solves this by importing your Claude Code JSONL session files into a searchable, browsable, and analyzable web interface.
 
 But it doesn't stop there — it also monitors your Docker containers, scans your project directories, integrates with Gitea, and gives you a unified command center for your entire dev environment.
 
@@ -82,8 +91,8 @@ But it doesn't stop there — it also monitors your Docker containers, scans you
 ### Option A: Docker (recommended)
 
 ```bash
-git clone https://github.com/web-werkstatt/project-dashboard.git
-cd project-dashboard
+git clone https://github.com/web-werkstatt/session-pilot.git
+cd session-pilot
 cp .env.example .env
 # Edit .env (set your project path, DB credentials, optional Gitea token)
 docker compose up -d
@@ -94,16 +103,16 @@ Open http://localhost:5055
 ### Option B: Bare Metal (Linux)
 
 ```bash
-git clone https://github.com/web-werkstatt/project-dashboard.git
-cd project-dashboard
+git clone https://github.com/web-werkstatt/session-pilot.git
+cd session-pilot
 ./setup.sh
 ```
 
 ### Option C: Manual
 
 ```bash
-git clone https://github.com/web-werkstatt/project-dashboard.git
-cd project-dashboard
+git clone https://github.com/web-werkstatt/session-pilot.git
+cd session-pilot
 pip3 install -r requirements.txt
 cp .env.example .env
 # Edit .env
@@ -220,9 +229,9 @@ MIT
 
 ## Deutsch
 
-### Warum Project Dashboard?
+### Warum SessionPilot?
 
-Wenn Du **Claude Code** taeglich mit mehreren Projekten nutzt, kennst Du das Problem: Sessions ueber verschiedene Accounts verstreut, keine Kostenuebersicht, kein Weg um nachzuvollziehen was gestern passiert ist. Project Dashboard loest das, indem es deine Claude Code JSONL-Session-Dateien in eine durchsuchbare, browsbare und analysierbare Weboberflaeche importiert.
+Wenn Du **Claude Code** taeglich mit mehreren Projekten nutzt, kennst Du das Problem: Sessions ueber verschiedene Accounts verstreut, keine Kostenuebersicht, kein Weg um nachzuvollziehen was gestern passiert ist. SessionPilot loest das, indem es deine Claude Code JSONL-Session-Dateien in eine durchsuchbare, browsbare und analysierbare Weboberflaeche importiert.
 
 Aber das ist nicht alles — es ueberwacht auch Docker-Container, scannt Projektverzeichnisse, integriert sich mit Gitea und gibt dir ein einheitliches Kontrollzentrum fuer deine gesamte Entwicklungsumgebung.
 
@@ -261,8 +270,8 @@ Aber das ist nicht alles — es ueberwacht auch Docker-Container, scannt Projekt
 ### Schnellstart
 
 ```bash
-git clone https://github.com/web-werkstatt/project-dashboard.git
-cd project-dashboard
+git clone https://github.com/web-werkstatt/session-pilot.git
+cd session-pilot
 cp .env.example .env
 # .env anpassen (Projektpfad, DB-Zugangsdaten, optional Gitea-Token)
 docker compose up -d
