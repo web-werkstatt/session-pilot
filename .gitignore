@@ -72,3 +72,4 @@ sprints/
 # Local sync scripts
 sync_sessions.py
 systemd/
+project.json
