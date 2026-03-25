@@ -215,9 +215,26 @@ project_dashboard/
 └── requirements.txt          # Flask, psycopg2, markdown, openpyxl
 ```
 
+## Roadmap
+
+SessionPilot is actively developed. Here's what's coming next:
+
+| Priority | Feature | Description |
+|---|---|---|
+| **Next** | **Error Class Tagging** | Categorize *why* sessions need fixes — hallucination, wrong context, missing domain knowledge, edge case, infra problem. Turn reviews into learning curves. |
+| **Next** | **Git Diff per Session** | Show which files Claude Code actually changed. Diff view per session — what was generated vs. what survived review. Hard proof of real rework ratio. |
+| **Planned** | **CLAUDE.md Effectiveness Tracking** | Version-track prompt files per project. Compare metrics (tokens/session, rework rate) before/after CLAUDE.md updates. |
+| **Planned** | **Session Comparison** | Side-by-side comparison of two sessions — same task, different model (Opus vs. Sonnet), different prompt strategy. What worked better? |
+| **Planned** | **LLM Model Benchmarking** | "Opus vs. Sonnet: rework rate over time" across all projects. Unique research-grade insights. |
+| **Planned** | **Prompt Library** | Extract and rate reusable initial prompts per task type. Build a personal prompt playbook from real session data. |
+| **Future** | **Multi-LLM Support** | Extend beyond Claude Code — Codex CLI, Gemini CLI, aider, and other AI coding tools. |
+| **Future** | **Team Mode** | Shared dashboard for small teams with role-based views. |
+
+Have an idea? [Open an issue](https://github.com/web-werkstatt/session-pilot/issues) or contribute directly.
+
 ## Contributing
 
-Contributions welcome! This project is actively developed and used daily.
+Contributions welcome! This project is actively developed and used daily as the author's primary development tool.
 
 ## License
 
