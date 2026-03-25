@@ -377,7 +377,10 @@ function renderMessages(messages) {
         const role = msg.type === 'user' ? 'User' : 'Assistant';
 
         let contentHtml = '';
-        if (msg.content) contentHtml += `<div class="msg-content">${renderMarkdown(msg.content)}</div>`;
+        if (msg.content) {
+            const rendered = msg.type === 'assistant' ? renderMarkdown(msg.content) : escapeHtml(msg.content);
+            contentHtml += `<div class="msg-content">${rendered}</div>`;
+        }
         if (msg.content_json) contentHtml += renderToolUse(msg.content_json);
 
         html += `<div class="msg ${cls}" id="msg-${msgIndex}" data-msg-index="${msgIndex}"><div class="msg-role"><span>${role}</span><span class="msg-actions"><button class="btn-copy" onclick="copyMsg(this, ${index})">Kopieren</button><button class="btn-copy" onclick="openReviewFromMessage(${index})">Bewertung</button></span></div>${contentHtml}</div>`;
