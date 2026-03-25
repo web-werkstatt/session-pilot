@@ -57,3 +57,11 @@ upload/
 
 # Backups
 backups/
+
+# Old dev docs
+docs/changes-*.md
+docs/screenshots/doc-*
+docs/screenshots/lazy-*
+docs/screenshots/galerie-*
+docs/screenshots/lightbox-*
+docs/screenshots/project-detail-*
