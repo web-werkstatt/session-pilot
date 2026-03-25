@@ -90,6 +90,9 @@
     background: var(--bg-surface);
     border-left: 3px solid #66bb6a;
 }
+.msg-tool-result { background: var(--bg-elevated); border-left: 3px solid var(--border-muted); }
+.msg-tool-result .msg-role { color: var(--text-faint); }
+.msg-tool-result .msg-content { font-family: var(--font-mono); font-size: var(--text-base); white-space: pre-wrap; color: var(--text-muted); }
 .msg-system {
     text-align: center;
     color: var(--text-ghost);
@@ -165,10 +168,7 @@
     margin: 8px 0;
     font-size: var(--text-base);
 }
-.msg-content th, .msg-content td {
-    border: 1px solid var(--border-muted);
-    padding: 6px 10px;
-}
+.msg-content th, .msg-content td { border: 1px solid var(--border-muted); padding: 6px 10px; }
 .msg-content th { background: var(--bg-elevated); color: var(--text-heading); }
 
 /* --- Tool Use Details --- */

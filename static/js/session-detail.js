@@ -373,8 +373,9 @@ function renderMessages(messages) {
             return;
         }
 
-        const cls = msg.type === 'user' ? 'msg-user' : 'msg-assistant';
-        const role = msg.type === 'user' ? 'User' : 'Assistant';
+        const isToolResult = msg.type === 'user' && msg.content_json;
+        const cls = isToolResult ? 'msg-tool-result' : msg.type === 'user' ? 'msg-user' : 'msg-assistant';
+        const role = isToolResult ? 'Tool Result' : msg.type === 'user' ? 'User' : 'Assistant';
 
         let contentHtml = '';
         if (msg.content) {
