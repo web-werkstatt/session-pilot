@@ -218,11 +218,23 @@ function stripLineNumbers(text) {
 }
 
 function copyToClipboard(btn, text) {
-    navigator.clipboard.writeText(text).then(() => {
+    function onSuccess() {
         btn.textContent = 'Kopiert!';
         btn.classList.add('copied');
         setTimeout(() => { btn.textContent = 'Kopieren'; btn.classList.remove('copied'); }, 1500);
-    });
+    }
+    if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(onSuccess);
+    } else {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.cssText = 'position:fixed;left:-9999px;top:-9999px';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        onSuccess();
+    }
 }
 
 function copyMsg(btn, idx) {
