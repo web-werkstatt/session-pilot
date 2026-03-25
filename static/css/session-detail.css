@@ -115,7 +115,7 @@
 .msg-user .msg-role { color: var(--accent-light); }
 .msg-assistant .msg-role { color: #66bb6a; }
 .msg-actions { display: flex; gap: 4px; }
-.msg-time { font-weight: 400; color: var(--text-ghost); font-size: 10px; margin-left: 8px; letter-spacing: 0; text-transform: none; font-family: var(--font-mono); }
+.msg-time { font-weight: 400; color: var(--text-muted); font-size: 11px; margin-left: 8px; letter-spacing: 0; text-transform: none; font-family: var(--font-mono); }
 
 /* --- Message Content --- */
 .msg-content {
