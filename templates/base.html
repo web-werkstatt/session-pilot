@@ -159,7 +159,11 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="/static/js/base.js"></script>
     <script src="/static/js/notifications.js"></script>
-    <script>document.addEventListener('DOMContentLoaded', () => { if (typeof lucide !== 'undefined') lucide.createIcons(); });</script>
+    <script>
+    function initLucide() { if (typeof lucide !== 'undefined') lucide.createIcons(); }
+    if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', initLucide); } else { initLucide(); }
+    window.addEventListener('load', initLucide);
+    </script>
     {% block scripts %}{% endblock %}
 </body>
 </html>

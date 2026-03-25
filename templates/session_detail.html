@@ -6,6 +6,7 @@
 
 {% block head_extra %}
 <link rel="stylesheet" href="/static/css/sessions2.css?v={{ cache_bust }}">
+<link rel="stylesheet" href="/static/css/session-detail.css?v={{ cache_bust }}">
 {% endblock %}
 
 {% block topbar_actions %}{% endblock %}
@@ -16,13 +17,14 @@
     <div class="export-bar" id="outcomeBar">
         <div class="export-left">
             <a class="btn-export" href="/sessions">Session Liste</a>
+            <div class="export-sep"></div>
             <button class="btn-export" type="button" onclick="openBewertungModal()">Bewertung</button>
             <span class="outcome-saved" id="outcomeSaved">Gespeichert</span>
         </div>
         <div class="export-center">
-            <span class="export-label">Export:</span>
+            <span class="export-label">Export</span>
             <a class="btn-export" id="expJson2">JSON</a>
-            <a class="btn-export" id="expMd2">Markdown</a>
+            <a class="btn-export" id="expMd2">MD</a>
             <a class="btn-export" id="expHtml2">HTML</a>
             <a class="btn-export" id="expXlsx2">XLSX</a>
             <a class="btn-export" id="expTxt2">TXT</a>
@@ -34,8 +36,14 @@
         </div>
     </div>
 
-    <div class="conversation" id="conversation">
-        <div class="loading"><div class="spinner"></div>Lade Konversation...</div>
+    <div class="session-layout">
+        <div class="conversation" id="conversation">
+            <div class="loading"><div class="spinner"></div>Lade Konversation...</div>
+        </div>
+        <aside class="session-toc" id="sessionToc">
+            <div class="toc-header">Inhaltsverzeichnis</div>
+            <nav class="toc-nav" id="tocNav"></nav>
+        </aside>
     </div>
 
 <div class="review-modal" id="reviewModal" onclick="if(event.target===this)closeBewertungModal()">
@@ -74,5 +82,6 @@
 {% block scripts %}
 <script src="https://cdn.jsdelivr.net/npm/marked/lib/marked.umd.js"></script>
 <script>const SESSION_UUID = "{{ session_uuid }}";</script>
+<script src="/static/js/session-toc.js?v={{ cache_bust }}"></script>
 <script src="/static/js/session-detail.js?v={{ cache_bust }}"></script>
 {% endblock %}

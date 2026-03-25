@@ -5,7 +5,8 @@
 
 {% block head_extra %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<link rel="stylesheet" href="/static/css/sessions.css">
+<link rel="stylesheet" href="/static/css/sessions2.css">
+<link rel="stylesheet" href="/static/css/session-analysis.css">
 {% endblock %}
 
 {% block content %}
@@ -96,118 +97,136 @@
     function render(data) {
         document.getElementById('analysisLoading').style.display = 'none';
         document.getElementById('analysisGrid').style.display = '';
-        // Kosten
-        document.getElementById('totalCost').textContent = '$' + data.cost.total_usd.toFixed(2);
-        document.getElementById('tokenSummary').textContent =
-            formatTokens(data.cost.total_input_tokens) + ' Input / ' +
-            formatTokens(data.cost.total_output_tokens) + ' Output Tokens';
 
-        // Modelle
-        const modelHtml = data.cost.by_model.map(m => `
-            <div class="model-row">
-                <div>
-                    <div class="model-name">${m.model.replace('claude-', '')}</div>
-                    <div class="model-tokens">${m.sessions} Sessions / ${formatTokens(m.input_tokens + m.output_tokens)} Tokens</div>
+        // Kosten-Card mit Mini-KPIs
+        const totalSessions = data.cost.by_model.reduce((s, m) => s + m.sessions, 0);
+        document.getElementById('totalCost').textContent = '$' + data.cost.total_usd.toFixed(2);
+        document.getElementById('tokenSummary').innerHTML = `
+            <div class="cost-meta-row">
+                <div class="cost-meta-item">
+                    <span class="cost-meta-value">${formatTokens(data.cost.total_input_tokens)}</span>
+                    <span class="cost-meta-label">Input Tokens</span>
+                </div>
+                <div class="cost-meta-item">
+                    <span class="cost-meta-value">${formatTokens(data.cost.total_output_tokens)}</span>
+                    <span class="cost-meta-label">Output Tokens</span>
+                </div>
+                <div class="cost-meta-item">
+                    <span class="cost-meta-value">${totalSessions}</span>
+                    <span class="cost-meta-label">Sessions</span>
+                </div>
+            </div>`;
+
+        // Modelle mit Badges + Hintergrundbalken
+        const maxModelCost = Math.max(...data.cost.by_model.map(m => m.cost_usd), 1);
+        const modelHtml = data.cost.by_model.map(m => {
+            const pct = (m.cost_usd / maxModelCost * 100).toFixed(0);
+            const name = m.model.replace('claude-', '');
+            const tier = name.includes('opus') ? 'opus' : name.includes('haiku') ? 'haiku'
+                : name.includes('sonnet') ? 'sonnet' : 'other';
+            return `<div class="model-row" style="--model-pct:${pct}%">
+                <div class="model-bar-bg"></div>
+                <div class="model-info">
+                    <span class="model-badge model-${tier}">${name || 'unbekannt'}</span>
+                    <span class="model-tokens">${formatTokens(m.input_tokens)} in / ${formatTokens(m.output_tokens)} out &middot; ${m.sessions} Sessions</span>
                 </div>
                 <div class="model-cost">$${m.cost_usd.toFixed(2)}</div>
-            </div>
-        `).join('');
-        document.getElementById('modelList').innerHTML = modelHtml || '<div style="color:#555">Keine Daten</div>';
+            </div>`;
+        }).join('');
+        document.getElementById('modelList').innerHTML = modelHtml || '<div class="cost-sub">Keine Daten</div>';
 
-        // Wochentage
-        const wdHtml = data.weekdays.map(d => `
-            <div class="weekday-item">
+        // Wochentage mit Heatmap-Effekt
+        const maxWdSessions = Math.max(...data.weekdays.map(d => d.sessions), 1);
+        const wdHtml = data.weekdays.map(d => {
+            const intensity = d.sessions / maxWdSessions;
+            const isMax = d.sessions === maxWdSessions && d.sessions > 0;
+            const bgAlpha = (intensity * 0.12).toFixed(3);
+            return `<div class="weekday-item ${isMax ? 'weekday-peak' : ''}" style="background:rgba(79,195,247,${bgAlpha})">
                 <div class="weekday-label">${d.day}</div>
                 <div class="weekday-value">${d.sessions}</div>
+                <div class="weekday-micro-bar"><div class="weekday-micro-fill" style="height:${(intensity * 100).toFixed(0)}%"></div></div>
                 <div class="weekday-dur">${formatDuration(d.duration_ms)}</div>
-            </div>
-        `).join('');
-        document.getElementById('weekdayGrid').innerHTML = wdHtml || '<div style="color:#555">-</div>';
+            </div>`;
+        }).join('');
+        document.getElementById('weekdayGrid').innerHTML = wdHtml || '<div class="cost-sub">-</div>';
 
-        // Tools
+        // Tools mit Rang, formatierten Counts, dickeren Balken
         const maxToolCount = data.tools.length > 0 ? data.tools[0].count : 1;
-        const toolHtml = data.tools.slice(0, 12).map(t => `
-            <div class="tool-row">
+        const fmtCount = c => c >= 1e6 ? (c/1e6).toFixed(1)+'M' : c >= 1e3 ? (c/1e3).toFixed(1)+'K' : c;
+        const toolHtml = data.tools.slice(0, 12).map((t, i) => {
+            const pct = (t.count / maxToolCount * 100).toFixed(0);
+            const isTop = i < 3;
+            return `<div class="tool-row ${isTop ? 'tool-top' : ''}">
+                <span class="tool-rank">${i + 1}</span>
                 <span class="tool-name">${t.name}</span>
-                <span class="tool-count">${t.count}</span>
+                <span class="tool-count">${fmtCount(t.count)}</span>
             </div>
-            <div class="tool-bar"><div class="tool-bar-fill" style="width:${(t.count / maxToolCount * 100).toFixed(0)}%"></div></div>
-        `).join('');
-        document.getElementById('toolList').innerHTML = toolHtml || '<div style="color:#555">Keine Tool-Daten</div>';
+            <div class="tool-bar"><div class="tool-bar-fill ${isTop ? 'tool-bar-accent' : ''}" style="width:${pct}%"></div></div>`;
+        }).join('');
+        document.getElementById('toolList').innerHTML = toolHtml || '<div class="cost-sub">Keine Tool-Daten</div>';
 
-        // Projekte
-        const projHtml = data.cost.by_project.map(p => `
-            <div class="project-row">
+        // Projekte mit Hintergrundbalken + Kosten-Differenzierung
+        const maxProjCost = data.cost.by_project.length > 0 ? data.cost.by_project[0].cost_usd : 1;
+        const projHtml = data.cost.by_project.map(p => {
+            const pct = (p.cost_usd / maxProjCost * 100).toFixed(0);
+            const tier = p.cost_usd >= 100 ? 'high' : p.cost_usd >= 10 ? 'mid' : 'low';
+            return `<div class="project-row" style="--proj-pct:${pct}%">
+                <div class="project-bar-bg"></div>
                 <span class="project-name" onclick="location.href='/project/${encodeURIComponent(p.project)}'">${p.project}</span>
-                <span style="color:#666;font-size:11px">${p.sessions} Sessions / ${formatDuration(p.duration_ms)}</span>
-                <span class="project-cost">$${p.cost_usd.toFixed(2)}</span>
-            </div>
-        `).join('');
-        document.getElementById('projectList').innerHTML = projHtml || '<div style="color:#555">Keine Daten</div>';
+                <span class="project-meta">
+                    <span class="badge badge-neutral">${p.sessions} Sess.</span>
+                    <span class="badge badge-neutral">${formatDuration(p.duration_ms)}</span>
+                </span>
+                <span class="project-cost project-cost-${tier}">$${p.cost_usd.toFixed(2)}</span>
+            </div>`;
+        }).join('');
+        document.getElementById('projectList').innerHTML = projHtml || '<div class="cost-sub">Keine Daten</div>';
 
-        // Activity Chart
         renderActivityChart(data.activity);
         renderHourlyChart(data.hourly);
     }
 
+    const cs = getComputedStyle(document.documentElement);
+    const accentColor = cs.getPropertyValue('--accent-light').trim() || '#4fc3f7';
+    const gridColor = cs.getPropertyValue('--bg-hover').trim() || '#222';
+    const tickColor = cs.getPropertyValue('--text-ghost').trim() || '#555';
+    const chartOpts = {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+            x: { ticks: { color: tickColor, maxTicksLimit: 15, font: { size: 10 } }, grid: { display: false } },
+            y: { ticks: { color: tickColor, font: { size: 10 } }, grid: { color: gridColor }, beginAtZero: true }
+        }
+    };
+
     function renderActivityChart(activity) {
         const ctx = document.getElementById('activityChart').getContext('2d');
         if (activityChart) activityChart.destroy();
-
         activityChart = new Chart(ctx, {
             type: 'bar',
             data: {
                 labels: activity.map(a => a.date.slice(5)),
-                datasets: [{
-                    label: 'Sessions',
-                    data: activity.map(a => a.sessions),
-                    backgroundColor: '#4fc3f740',
-                    borderColor: '#4fc3f7',
-                    borderWidth: 1,
-                    borderRadius: 3,
-                }]
+                datasets: [{ label: 'Sessions', data: activity.map(a => a.sessions),
+                    backgroundColor: accentColor + '40', borderColor: accentColor, borderWidth: 1, borderRadius: 3 }]
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: {
-                    x: { ticks: { color: '#555', maxTicksLimit: 15, font: { size: 10 } }, grid: { display: false } },
-                    y: { ticks: { color: '#555', font: { size: 10 } }, grid: { color: '#222' }, beginAtZero: true }
-                }
-            }
+            options: { ...chartOpts, scales: { ...chartOpts.scales, x: { ...chartOpts.scales.x, ticks: { ...chartOpts.scales.x.ticks, maxTicksLimit: 15 } } } }
         });
     }
 
     function renderHourlyChart(hourly) {
         const ctx = document.getElementById('hourlyChart').getContext('2d');
         if (hourlyChart) hourlyChart.destroy();
-
         const labels = Array.from({length: 24}, (_, i) => i + ':00');
         const values = labels.map((_, i) => hourly[i] ? hourly[i].sessions : 0);
-
         hourlyChart = new Chart(ctx, {
             type: 'bar',
             data: {
                 labels,
-                datasets: [{
-                    label: 'Sessions',
-                    data: values,
-                    backgroundColor: values.map(v => v > 0 ? '#4fc3f760' : '#222'),
-                    borderColor: values.map(v => v > 0 ? '#4fc3f7' : '#333'),
-                    borderWidth: 1,
-                    borderRadius: 2,
-                }]
+                datasets: [{ label: 'Sessions', data: values,
+                    backgroundColor: values.map(v => v > 0 ? accentColor + '60' : gridColor),
+                    borderColor: values.map(v => v > 0 ? accentColor : '#333'), borderWidth: 1, borderRadius: 2 }]
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: {
-                    x: { ticks: { color: '#555', maxTicksLimit: 12, font: { size: 10 } }, grid: { display: false } },
-                    y: { ticks: { color: '#555', font: { size: 10 } }, grid: { color: '#222' }, beginAtZero: true }
-                }
-            }
+            options: { ...chartOpts, scales: { ...chartOpts.scales, x: { ...chartOpts.scales.x, ticks: { ...chartOpts.scales.x.ticks, maxTicksLimit: 12 } } } }
         });
     }
 

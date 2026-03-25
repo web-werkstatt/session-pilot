@@ -143,14 +143,16 @@ def session_analysis():
     for p in top_projects:
         p["cost_usd"] = round(p["cost_usd"], 2)
 
-    # Haeufigste Tools (aus messages.content_json)
+    # Haeufigste Tools (aus content_json JSONB-Array der assistant-Messages)
     tool_stats = execute("""
-        SELECT content_json->>'tool_name' as tool_name, COUNT(*) as cnt
+        SELECT elem->>'name' as tool_name, COUNT(*) as cnt
         FROM messages m
-        JOIN sessions s ON m.session_id = s.id
-        WHERE m.type = 'tool_use'
+        JOIN sessions s ON m.session_id = s.id,
+        jsonb_array_elements(m.content_json) as elem
+        WHERE m.type = 'assistant'
           AND s.started_at >= NOW() - INTERVAL '%s days'
-          AND content_json->>'tool_name' IS NOT NULL
+          AND elem->>'type' = 'tool_use'
+          AND elem->>'name' IS NOT NULL
         GROUP BY tool_name
         ORDER BY cnt DESC
         LIMIT 20

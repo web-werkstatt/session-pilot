@@ -59,8 +59,8 @@ function formatOutcomeLabel(outcome) {
 function renderMarkdown(text) {
     if (!text) return '';
     if (typeof marked === 'undefined') return '<pre>' + escapeHtml(text) + '</pre>';
-    let html = marked.parse(escapeHtml(text), {breaks: true, gfm: true});
-    html = html.replace(/<pre><code([\s\S]*?)>([\s\S]*?)<\/code><\/pre>/g, (m, attrs, code) => {
+    let html = marked.parse(text, {breaks: true, gfm: true});
+    html = html.replace(/<pre><code([\s\S]*?)>([\s\S]*?)<\/code><\/pre>/g, (_, attrs, code) => {
         return `<div class="pre-wrap"><button class="btn-copy-code" onclick="copyCode(this)">Kopieren</button><pre><code${attrs}>${code}</code></pre></div>`;
     });
     return html;
@@ -76,13 +76,20 @@ function renderToolUse(contentJson) {
     for (const block of blocks) {
         if (block.type === 'tool_use') {
             const name = block.name || 'Tool';
-            const inputStr = JSON.stringify(block.input || {}, null, 2);
-            const summary = Object.values(block.input || {}).join(' ').substring(0, 80);
-            html += `<details><summary>Tool ${escapeHtml(name)}: ${escapeHtml(summary)}...</summary><div class="tool-content">${escapeHtml(inputStr)}</div></details>`;
+            const input = block.input || {};
+            const inputStr = JSON.stringify(input, null, 2);
+            let summary = '';
+            if (input.command) summary = input.command.substring(0, 90);
+            else if (input.file_path) summary = input.file_path;
+            else if (input.pattern) summary = input.pattern;
+            else if (input.query) summary = input.query.substring(0, 80);
+            else if (input.url) summary = input.url;
+            else summary = Object.values(input).join(' ').substring(0, 80);
+            html += `<details><summary><strong>${escapeHtml(name)}</strong>&ensp;${escapeHtml(summary)}</summary><div class="tool-content">${escapeHtml(inputStr)}</div></details>`;
         } else if (block.type === 'tool_result') {
             const content = typeof block.content === 'string' ? block.content : JSON.stringify(block.content || '', null, 2);
-            const preview = String(content).substring(0, 60);
-            html += `<details><summary>Ergebnis: ${escapeHtml(preview)}...</summary><div class="tool-content">${escapeHtml(content)}</div></details>`;
+            const preview = String(content).substring(0, 80);
+            html += `<details><summary>Ergebnis&ensp;${escapeHtml(preview)}${content.length > 80 ? '...' : ''}</summary><div class="tool-content">${escapeHtml(content)}</div></details>`;
         }
     }
     return html;
@@ -108,26 +115,33 @@ function getSelectedThreadTitle() {
 }
 
 function renderMeta(session) {
-    const primaryItems = [
-        ['Session', session.project_name || '-'],
-    ];
-    const statItems = [
-        ['Account', session.account],
+    const outcomeCls = session.outcome ? ` outcome-${session.outcome}` : '';
+    const outcomeLabel = session.outcome ? formatOutcomeLabel(session.outcome) : '';
+    const badges = [
+        `<span class="meta-badge meta-badge-account">${escapeHtml(session.account || '-')}</span>`,
+        `<span class="meta-badge meta-badge-model">${escapeHtml(formatModel(session.model))}</span>`,
+        session.git_branch ? `<span class="meta-badge meta-badge-branch">${escapeHtml(session.git_branch)}</span>` : '',
+        outcomeLabel ? `<span class="meta-badge meta-badge-outcome${outcomeCls}">${escapeHtml(outcomeLabel)}</span>` : '',
+    ].filter(Boolean).join('');
+
+    const stats = [
         ['Datum', formatDateTime(session.started_at)],
-        ['Dauer', session.duration_formatted],
-        ['Model', formatModel(session.model)],
-        ['Branch', session.git_branch || '-'],
+        ['Dauer', session.duration_formatted || '-'],
         ['Version', session.claude_version || '-'],
         ['Nachrichten', `${session.user_message_count || 0} / ${session.assistant_message_count || 0}`],
         ['Input', formatTokens(session.total_input_tokens)],
         ['Output', formatTokens(session.total_output_tokens)],
     ];
-    const renderItems = items => items.map(([l, v]) =>
-        `<div class="meta-item"><span class="meta-label">${escapeHtml(l)}</span><span class="meta-value">${escapeHtml(v || '-')}</span></div>`
+    const statsHtml = stats.map(([l, v]) =>
+        `<div class="meta-stat"><span class="meta-stat-label">${escapeHtml(l)}</span><span class="meta-stat-value${l === 'Input' || l === 'Output' ? ' accent' : ''}">${escapeHtml(v)}</span></div>`
     ).join('');
+
     document.getElementById('metaBar').innerHTML = `
-        <div class="meta-group">${renderItems(primaryItems)}</div>
-        <div class="meta-group meta-group-stats">${renderItems(statItems)}</div>
+        <div class="meta-header">
+            <span class="meta-project-name">${escapeHtml(session.project_name || 'Session')}</span>
+            <div class="meta-badges">${badges}</div>
+        </div>
+        <div class="meta-stats">${statsHtml}</div>
     `;
 }
 
@@ -340,6 +354,7 @@ function renderMessages(messages) {
     if (!messages || !messages.length) { conv.innerHTML = '<div class="loading">Keine Nachrichten</div>'; return; }
 
     let html = '';
+    let msgIndex = 0;
     messages.forEach((msg, index) => {
         if (msg.type === 'system') {
             html += `<div class="msg-system">${escapeHtml(msg.content || '')}</div>`;
@@ -353,11 +368,14 @@ function renderMessages(messages) {
         if (msg.content) contentHtml += `<div class="msg-content">${renderMarkdown(msg.content)}</div>`;
         if (msg.content_json) contentHtml += renderToolUse(msg.content_json);
 
-        html += `<div class="msg ${cls}"><div class="msg-role"><span>${role}</span><span class="msg-actions"><button class="btn-copy" onclick="copyMsg(this, ${index})">Kopieren</button><button class="btn-copy" onclick="openReviewFromMessage(${index})">Bewertung</button></span></div>${contentHtml}</div>`;
+        html += `<div class="msg ${cls}" id="msg-${msgIndex}" data-msg-index="${msgIndex}"><div class="msg-role"><span>${role}</span><span class="msg-actions"><button class="btn-copy" onclick="copyMsg(this, ${index})">Kopieren</button><button class="btn-copy" onclick="openReviewFromMessage(${index})">Bewertung</button></span></div>${contentHtml}</div>`;
+        msgIndex++;
     });
     conv.innerHTML = html;
     window._messages = messages;
+    buildToc(messages);
 }
+
 
 function openReviewFromMessage(idx) {
     const msg = (window._messages || [])[idx];
@@ -406,3 +424,6 @@ async function loadSession() {
 }
 
 loadSession();
+
+// Lucide Icons erneut initialisieren (Timing-Fix fuer Session-Detail-Seite)
+requestAnimationFrame(() => { if (typeof lucide !== 'undefined') lucide.createIcons(); });
