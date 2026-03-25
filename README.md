@@ -1,55 +1,276 @@
-# Projekt-Dashboard
+<p align="center">
+  <img src="static/favicon.svg" width="80" alt="Project Dashboard">
+</p>
 
-Web-Dashboard zur Verwaltung und Übersicht aller Projekte, Docker-Container und Claude Code Sessions.
+<h1 align="center">Project Dashboard</h1>
+
+<p align="center">
+  <strong>The ultimate self-hosted dashboard for developers using Claude Code.</strong><br>
+  Monitor AI sessions in real-time, track costs, manage projects, and keep your infrastructure in check — all in one place.
+</p>
+
+<p align="center">
+  <a href="#features">Features</a> •
+  <a href="#screenshots">Screenshots</a> •
+  <a href="#quick-start">Quick Start</a> •
+  <a href="#configuration">Configuration</a> •
+  <a href="#api">API</a> •
+  <a href="#deutsch">Deutsch</a>
+</p>
+
+---
+
+## Why Project Dashboard?
+
+If you use **Claude Code** daily across multiple projects, you know the pain: sessions scattered across accounts, no cost visibility, no way to review what happened yesterday. Project Dashboard solves this by importing your Claude Code JSONL session files into a searchable, browsable, and analyzable web interface.
+
+But it doesn't stop there — it also monitors your Docker containers, scans your project directories, integrates with Gitea, and gives you a unified command center for your entire dev environment.
 
 ## Features
 
-- **Projekt-Übersicht**: Automatische Erkennung aller Projekte mit Typ, Tech-Stack, Git-Status
-- **Container-Status**: Docker-Container mit Health-Check
-- **Gitea-Integration**: Sync-Status mit Remote-Repository
-- **Claude Sessions**: Import, Anzeige und Export von Claude Code Sessions (PostgreSQL)
-- **Projekt-Management**: Priorität, Deadline, Fortschritt, Meilensteine
-- **Dokumenten-System**: Lazy-Loading Browser, Viewer, Editor, Export
-- **Gruppierung**: Benutzerdefinierte Gruppen (Privat, Geschäftlich, Kunde etc.)
-- **Ideen/Notizen**: Kategorisierte Ideen mit Projekt-Zuordnung
-- **Beziehungen**: Projekt-Abhängigkeiten visualisieren
-- **News**: Automatische Aktivitäts-Übersicht aller Projekte
-- **Backup**: Tägliches + wöchentliches automatisches Backup
+### Claude Code Session Management
+- **Live Session Viewer** — Browse sessions with full Markdown rendering, syntax-highlighted code blocks, and timestamps per message
+- **Smart Message Types** — Distinguishes between User input, Assistant responses, and Tool Results (Bash, Grep, Read, etc.)
+- **Table of Contents** — Right sidebar with navigable TOC, numbered user questions as "chapters", scroll tracking
+- **Multi-Account Support** — Monitor multiple Claude Code accounts simultaneously
+- **Session Reviews** — Rate sessions (OK / Needs Fix / Reverted / Partial), add notes, link review threads across sessions
+- **Export** — JSON, Markdown, HTML, XLSX, TXT
 
-## Schnellstart
+### Cost Analysis & Analytics
+- **Cost Dashboard** — Estimated API costs by model (Opus, Sonnet, Haiku), project, and time period
+- **Token Tracking** — Input/output tokens per session, model, and project
+- **Activity Charts** — Daily activity, hourly distribution, weekday heatmap
+- **Tool Usage Ranking** — Most-used tools with visual bars and gradient highlights
+- **Project Cost Ranking** — Top projects by cost with color-coded tiers
+- **AI Timesheets** — Automatic time tracking based on session data
 
-### Option A: Docker (empfohlen)
+### Project Management
+- **Auto-Discovery** — Scans your project directory and detects project types (monorepo, fork, tool, library, etc.)
+- **Project Detail** — README rendering, dependencies, Git status, Docker containers per project
+- **Sub-Project Detection** — Monorepo support for `apps/`, `packages/`, `services/` directories
+- **Project Scaffolding** — Create new projects from templates
+- **Relations & Groups** — Manage project dependencies, custom groups, favorites
+- **Ideas & Notes** — Capture project-related ideas with categories
+
+### DevOps & Infrastructure
+- **Docker Container Dashboard** — Live status with health checks, ports, uptime
+- **Dependency Tracker** — Dependencies across all projects (npm, pip, composer, etc.)
+- **Gitea Integration** — Repository info, branches, commits via Gitea API
+- **Notifications** — Background thread checks every 60s for container issues, sync status, new projects
+
+### Search & Navigation
+- **Full-Text Search** — Ripgrep-powered search across all projects with type filters
+- **Command Palette** — Ctrl+K quick search across projects, sessions, and documents
+- **Document Browser** — Browse, view, edit, and upload files
+
+### Technical
+- Flask with modular Blueprint architecture (19 route modules, 18 services)
+- PostgreSQL for session data with connection pooling
+- JSON file cache with TTL for fast project scans
+- Dark theme with design token system
+- Responsive layout with collapsible sidebar
+- No build step — runs directly, no compilation needed
+- Docker & systemd deployment options
+- ~8,000 lines of Python
+
+## Screenshots
+
+> Coming soon — or run it yourself and see!
+
+## Quick Start
+
+### Option A: Docker (recommended)
 
 ```bash
-git clone https://git.webideas24.com/webideas24/project_dashboard.git
-cd project_dashboard
+git clone https://github.com/web-werkstatt/project-dashboard.git
+cd project-dashboard
 cp .env.example .env
-# .env anpassen (Gitea-Token, Projekt-Pfad)
+# Edit .env (set your project path, DB credentials, optional Gitea token)
 docker compose up -d
 ```
 
-Dashboard öffnen: http://localhost:5055
+Open http://localhost:5055
 
-### Option B: Bare-Metal (Linux)
+### Option B: Bare Metal (Linux)
 
 ```bash
-git clone https://git.webideas24.com/webideas24/project_dashboard.git
-cd project_dashboard
+git clone https://github.com/web-werkstatt/project-dashboard.git
+cd project-dashboard
 ./setup.sh
 ```
 
-### Option C: Manuell
+### Option C: Manual
 
 ```bash
-git clone https://git.webideas24.com/webideas24/project_dashboard.git
-cd project_dashboard
+git clone https://github.com/web-werkstatt/project-dashboard.git
+cd project-dashboard
 pip3 install -r requirements.txt
 cp .env.example .env
-# .env anpassen
+# Edit .env
 python3 app.py
 ```
 
-## Konfiguration
+## Configuration
+
+All settings via environment variables (`.env` file):
+
+| Variable | Description | Default |
+|---|---|---|
+| `DASHBOARD_PROJECTS_DIR` | Path to your projects | `/mnt/projects` |
+| `DASHBOARD_PORT` | Web server port | `5055` |
+| `GITEA_URL` | Gitea server URL | — |
+| `GITEA_TOKEN` | Gitea API token | — |
+| `GITEA_USER` | Gitea username | — |
+| `DB_HOST` | PostgreSQL host | `localhost` |
+| `DB_PORT` | PostgreSQL port | `5432` |
+| `DB_NAME` | Database name | `project_dashboard` |
+| `DB_USER` | DB user | `autodns` |
+| `DB_PASSWORD` | DB password | — |
+
+## Prerequisites
+
+| Component | Required | Used for |
+|---|---|---|
+| Python 3.9+ | Yes | Application |
+| PostgreSQL 14+ | Optional | Claude Code sessions |
+| Docker | Optional | Container status monitoring |
+| Git | Optional | Git status, commits |
+| Gitea | Optional | Remote sync status |
+| ripgrep (rg) | Optional | Full-text search |
+
+Without PostgreSQL, everything works except the Sessions feature.
+
+## API
+
+| Endpoint | Method | Description |
+|---|---|---|
+| `/api/data` | GET | All project data + stats |
+| `/api/containers` | GET | Docker container list |
+| `/api/sessions` | GET | Claude Code sessions |
+| `/api/sessions/sync` | POST | Import/sync sessions |
+| `/api/sessions/analysis` | GET | Cost & usage analytics |
+| `/api/sessions/<uuid>` | GET | Session detail with messages |
+| `/api/sessions/<uuid>/export` | GET | Export (json/md/html/xlsx/txt) |
+| `/api/sessions/<uuid>/outcome` | POST | Set session review status |
+| `/api/sessions/<uuid>/reviews` | POST | Add review note |
+| `/api/timesheets` | GET | AI timesheet data |
+| `/api/info?name=X` | GET | Comprehensive project info |
+| `/api/project/<name>` | GET | Load project.json |
+| `/api/project/save` | POST | Save project.json |
+| `/api/search` | GET | Full-text search |
+| `/api/groups` | GET/POST | Manage groups |
+| `/api/relations` | GET/POST | Manage relations |
+| `/api/ideas` | GET/POST | Manage ideas |
+| `/api/notifications` | GET | Notification list |
+
+## Backup
+
+Automatic backup via cron:
+
+```bash
+# Daily backup (01:00, 7-day rotation)
+scripts/backup.sh daily
+
+# Weekly backup (Sunday 02:00, 4-week rotation)
+scripts/backup.sh weekly
+```
+
+## Project Structure
+
+```
+project_dashboard/
+├── app.py                    # Flask entry point
+├── config.py                 # Configuration via env vars
+├── routes/                   # 19 Blueprint modules
+│   ├── session_routes.py     # Session CRUD, detail, export
+│   ├── session_analysis_routes.py  # Cost & analytics API
+│   ├── data_routes.py        # Main data aggregation
+│   ├── project_routes.py     # Project info, save, assets
+│   ├── document_routes.py    # Document browser & editor
+│   ├── search_routes.py      # Full-text search via ripgrep
+│   ├── timesheet_routes.py   # AI timesheets
+│   └── ...                   # Groups, ideas, news, etc.
+├── services/                 # 18 service classes
+│   ├── session_import.py     # JSONL parser for Claude sessions
+│   ├── session_export.py     # Multi-format export
+│   ├── project_scanner.py    # Auto-discovery & caching
+│   ├── project_detector.py   # Type detection (monorepo, fork, etc.)
+│   ├── docker_service.py     # Docker container status
+│   ├── gitea_service.py      # Gitea API integration
+│   └── ...                   # Git, cache, notifications, etc.
+├── templates/                # Jinja2 templates
+├── static/                   # CSS (design tokens), JS, assets
+├── scripts/backup.sh         # Automated backup
+├── docker-compose.yml        # Docker deployment
+├── setup.sh                  # Bare-metal installer
+└── requirements.txt          # Flask, psycopg2, markdown, openpyxl
+```
+
+## Contributing
+
+Contributions welcome! This project is actively developed and used daily.
+
+## License
+
+MIT
+
+---
+
+<a name="deutsch"></a>
+
+## Deutsch
+
+### Warum Project Dashboard?
+
+Wenn Du **Claude Code** taeglich mit mehreren Projekten nutzt, kennst Du das Problem: Sessions ueber verschiedene Accounts verstreut, keine Kostenuebersicht, kein Weg um nachzuvollziehen was gestern passiert ist. Project Dashboard loest das, indem es deine Claude Code JSONL-Session-Dateien in eine durchsuchbare, browsbare und analysierbare Weboberflaeche importiert.
+
+Aber das ist nicht alles — es ueberwacht auch Docker-Container, scannt Projektverzeichnisse, integriert sich mit Gitea und gibt dir ein einheitliches Kontrollzentrum fuer deine gesamte Entwicklungsumgebung.
+
+### Features
+
+**Claude Code Session-Verwaltung**
+- Live Session Viewer mit Markdown-Rendering, Syntax-Highlighting und Zeitstempel pro Nachricht
+- Intelligente Message-Typen: User-Eingaben, Assistant-Antworten und Tool-Results (Bash, Grep, Read etc.)
+- Inhaltsverzeichnis-Sidebar mit Scroll-Tracking und nummerierten User-Fragen
+- Multi-Account-Support fuer mehrere Claude Code Accounts
+- Session-Bewertungen mit Status, Notizen und uebergreifenden Review-Threads
+- Export als JSON, Markdown, HTML, XLSX, TXT
+
+**Kosten-Analyse & Statistiken**
+- Geschaetzte API-Kosten nach Modell, Projekt und Zeitraum
+- Token-Tracking (Input/Output) pro Session und Projekt
+- Aktivitaets-Charts, Stunden-Verteilung, Wochentag-Heatmap
+- Tool-Nutzungs-Ranking und Projekt-Kostenranking
+- AI Timesheets mit automatischer Zeiterfassung
+
+**Projekt-Verwaltung**
+- Auto-Discovery: Erkennt Projekttyp, Tech-Stack, Sub-Projekte
+- Projekt-Details mit README, Dependencies, Git-Status, Container
+- Scaffolding, Gruppen, Favoriten, Beziehungen, Ideen/Notizen
+
+**DevOps & Infrastruktur**
+- Docker Container Dashboard mit Health-Checks
+- Dependency-Tracker ueber alle Projekte
+- Gitea-Integration und Echtzeit-Benachrichtigungen
+
+**Suche & Navigation**
+- Volltextsuche via ripgrep ueber alle Projekte
+- Ctrl+K Command Palette
+- Dokumenten-Browser mit Editor
+
+### Schnellstart
+
+```bash
+git clone https://github.com/web-werkstatt/project-dashboard.git
+cd project-dashboard
+cp .env.example .env
+# .env anpassen (Projektpfad, DB-Zugangsdaten, optional Gitea-Token)
+docker compose up -d
+```
+
+Dashboard oeffnen: http://localhost:5055
+
+### Konfiguration
 
 Alle Einstellungen via Umgebungsvariablen (`.env`-Datei):
 
@@ -57,130 +278,21 @@ Alle Einstellungen via Umgebungsvariablen (`.env`-Datei):
 |---|---|---|
 | `DASHBOARD_PROJECTS_DIR` | Pfad zu deinen Projekten | `/mnt/projects` |
 | `DASHBOARD_PORT` | Web-Server Port | `5055` |
-| `GITEA_URL` | Gitea Server URL | `https://git.webideas24.com` |
-| `GITEA_TOKEN` | Gitea API-Token | (leer) |
-| `GITEA_USER` | Gitea Benutzername | `webideas24` |
+| `GITEA_URL` | Gitea Server URL | — |
+| `GITEA_TOKEN` | Gitea API-Token | — |
 | `DB_HOST` | PostgreSQL Host | `localhost` |
-| `DB_PORT` | PostgreSQL Port | `5432` |
 | `DB_NAME` | Datenbankname | `project_dashboard` |
 | `DB_USER` | DB-Benutzer | `autodns` |
-| `DB_PASSWORD` | DB-Passwort | (leer) |
+| `DB_PASSWORD` | DB-Passwort | — |
 
-## Projektstruktur
+### Voraussetzungen
 
-```
-project_dashboard/
-├── app.py                          # Flask-Einstiegspunkt (schlank)
-├── config.py                       # Konfiguration via Umgebungsvariablen
-├── routes/
-│   ├── project_routes.py           # Projekt-Info, Data, Save, Export, Assets
-│   ├── relation_routes.py          # Abhängigkeiten
-│   ├── group_routes.py             # Gruppen-Verwaltung
-│   ├── idea_routes.py              # Ideen/Notizen
-│   ├── news_routes.py              # News + Vorlagen
-│   ├── session_routes.py           # Claude Sessions
-│   └── document_routes.py          # Dokumenten-Browser
-├── services/
-│   ├── project_scanner.py          # Projekt-Erkennung + Analyse
-│   ├── gitea_service.py            # Gitea API (urllib)
-│   ├── git_service.py              # Lokale Git-Infos
-│   ├── docker_service.py           # Docker Container-Status
-│   ├── cache_service.py            # JSON-Cache
-│   ├── db_service.py               # PostgreSQL Connection-Pool
-│   ├── session_import.py           # JSONL-Parser für Claude Sessions
-│   ├── session_export.py           # Export: JSON, MD, HTML, XLSX, TXT
-│   └── path_resolver.py            # Zentralisierte Pfad-Auflösung
-├── templates/                      # Jinja2-Templates
-├── static/                         # CSS, JS, Favicon
-├── scripts/
-│   └── backup.sh                   # Automatisches Backup-Skript
-├── Dockerfile                      # Container-Image
-├── docker-compose.yml              # Docker Compose mit PostgreSQL
-├── setup.sh                        # Bare-Metal Installationsskript
-├── requirements.txt                # Python-Abhängigkeiten
-├── .env.example                    # Konfigurations-Vorlage
-├── groups.json                     # Benutzerdefinierte Gruppen
-├── relations.json                  # Projekt-Beziehungen
-└── ideas.json                      # Ideen/Notizen
-```
-
-## Voraussetzungen
-
-| Komponente | Erforderlich | Wofür |
+| Komponente | Erforderlich | Wofuer |
 |---|---|---|
 | Python 3.9+ | Ja | Anwendung |
-| PostgreSQL 14+ | Optional | Claude Sessions (Import/Export) |
-| Docker | Optional | Container-Status-Anzeige |
-| Git | Optional | Git-Status, Commits |
-| Gitea | Optional | Remote-Sync-Status |
+| PostgreSQL 14+ | Optional | Claude Sessions |
+| Docker | Optional | Container-Status |
+| Git | Optional | Git-Status |
+| ripgrep (rg) | Optional | Volltextsuche |
 
-Ohne PostgreSQL funktioniert alles außer dem Sessions-Feature.
-Ohne Docker wird die Container-Seite leer angezeigt.
-
-## Projekt-Metadaten
-
-Jedes Projekt kann eine `project.json` im Projektordner haben:
-
-```json
-{
-  "name": "Projektname",
-  "description": "Kurze Beschreibung",
-  "group": "private",
-  "priority": "high",
-  "deadline": "2026-01-31",
-  "progress": 75,
-  "milestones": [
-    {"name": "MVP", "done": true},
-    {"name": "Testing", "done": false}
-  ]
-}
-```
-
-Metadaten können direkt im Dashboard bearbeitet werden.
-
-## API-Endpunkte
-
-| Endpunkt | Methode | Beschreibung |
-|---|---|---|
-| `/api/data` | GET | Alle Projektdaten + Stats |
-| `/api/containers` | GET | Docker Container-Liste |
-| `/api/info?name=X` | GET | Umfassende Projekt-Info |
-| `/api/project/<name>` | GET | project.json laden |
-| `/api/project/save` | POST | project.json speichern |
-| `/api/project/<name>/documents` | GET | Dokumenten-Browser |
-| `/api/project/<name>/readme` | GET/PUT | README lesen/schreiben |
-| `/api/project/<name>/export` | GET | Export (json/md/html) |
-| `/api/groups` | GET/POST | Gruppen verwalten |
-| `/api/relations` | GET/POST | Beziehungen verwalten |
-| `/api/ideas` | GET/POST | Ideen verwalten |
-| `/api/sessions` | GET | Claude Sessions |
-| `/api/sessions/sync` | POST | Sessions importieren |
-| `/api/news` | GET | Aktivitäts-News |
-
-## Backup
-
-Automatisches Backup via Cronjob:
-
-```bash
-# Tägliches Backup (01:00 Uhr, 7 Tage Rotation)
-scripts/backup.sh daily
-
-# Wöchentliches Backup (Sonntag 02:00, 4 Wochen Rotation)
-scripts/backup.sh weekly
-```
-
-Gesichert werden: JSON-Datenspeicher, alle project.json, Claude Sessions/Memory.
-
-## Entwicklung
-
-```bash
-# Manuell starten
-python3 app.py
-
-# systemd-Service
-sudo systemctl restart project-dashboard
-sudo systemctl status project-dashboard
-
-# Logs
-tail -f dashboard.log
-```
+Ohne PostgreSQL funktioniert alles ausser dem Sessions-Feature.
