@@ -383,7 +383,8 @@ function renderMessages(messages) {
         }
         if (msg.content_json) contentHtml += renderToolUse(msg.content_json);
 
-        html += `<div class="msg ${cls}" id="msg-${msgIndex}" data-msg-index="${msgIndex}"><div class="msg-role"><span>${role}</span><span class="msg-actions"><button class="btn-copy" onclick="copyMsg(this, ${index})">Kopieren</button><button class="btn-copy" onclick="openReviewFromMessage(${index})">Bewertung</button></span></div>${contentHtml}</div>`;
+        const time = msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit', second:'2-digit'}) : '';
+        html += `<div class="msg ${cls}" id="msg-${msgIndex}" data-msg-index="${msgIndex}"><div class="msg-role"><span>${role}${time ? `<span class="msg-time">${time}</span>` : ''}</span><span class="msg-actions"><button class="btn-copy" onclick="copyMsg(this, ${index})">Kopieren</button><button class="btn-copy" onclick="openReviewFromMessage(${index})">Bewertung</button></span></div>${contentHtml}</div>`;
         msgIndex++;
     });
     conv.innerHTML = html;
