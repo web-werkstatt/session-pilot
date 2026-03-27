@@ -9,6 +9,10 @@ from flask import Blueprint, jsonify, request
 
 from services.path_resolver import resolve_project_path
 from services import get_docker_containers
+from services.metadata_extractor import (
+    extract_version, detect_license, get_repo_size,
+    count_lines_of_code, parse_changelog,
+)
 
 project_info_bp = Blueprint('project_info', __name__)
 
@@ -31,15 +35,28 @@ def get_info():
 
     sections = []
 
-    # 1. project.json Metadaten
+    # 1. project.json Metadaten + on-demand Berechnung
     pj = _load_project_json(project_path)
+
+    if not pj.get("version"):
+        pj["version"] = extract_version(project_path)
+    if not pj.get("license"):
+        pj["license"] = detect_license(project_path)
+    if not pj.get("repo_size"):
+        pj["repo_size"] = get_repo_size(project_path)
+    if not pj.get("loc_stats"):
+        pj["loc_stats"] = count_lines_of_code(project_path)
+    if not pj.get("changelog_latest"):
+        pj["changelog_latest"] = parse_changelog(project_path)
 
     if pj.get("description"):
         sections.append(f"<h3>Beschreibung</h3><p>{_escape(pj['description'])}</p>")
 
     _add_metadata_section(sections, pj, project_path)
+    _add_loc_section(sections, pj)
     _add_tech_stack_section(sections, project_path)
     _add_git_section(sections, project_path)
+    _add_changelog_section(sections, pj)
     _add_readme_section(sections, project_path)
     _add_screenshots_section(sections, name, project_path)
     _add_milestones_section(sections, pj)
@@ -75,6 +92,12 @@ def _add_metadata_section(sections, pj, project_path):
         meta.append(("Deadline", _escape(pj["deadline"])))
     if pj.get("progress") is not None:
         meta.append(("Fortschritt", f"{_escape(pj['progress'])}%"))
+    if pj.get("version"):
+        meta.append(("Version", f"<code style='color:#4fc3f7'>{_escape(pj['version'])}</code>"))
+    if pj.get("license"):
+        meta.append(("Lizenz", _escape(pj["license"])))
+    if pj.get("repo_size"):
+        meta.append(("Groesse", _escape(pj["repo_size"])))
     meta.append(("Pfad", _escape(project_path)))
 
     if meta:
@@ -83,6 +106,55 @@ def _add_metadata_section(sections, pj, project_path):
             for k, v in meta
         )
         sections.append(f"<h3>Details</h3><table style='font-size:13px'>{rows}</table>")
+
+
+def _add_loc_section(sections, pj):
+    loc = pj.get("loc_stats")
+    if not loc or not loc.get("total"):
+        return
+    total = loc["total"]
+    total_display = f"{total:,}".replace(",", ".")
+    lang_colors = {
+        'Python': '#3572A5', 'JavaScript': '#f1e05a', 'TypeScript': '#3178c6',
+        'React JSX': '#61dafb', 'React TSX': '#3178c6', 'Vue': '#41b883',
+        'HTML': '#e34c26', 'CSS': '#563d7c', 'SCSS': '#c6538c',
+        'PHP': '#4F5D95', 'Go': '#00ADD8', 'Rust': '#dea584',
+        'Java': '#b07219', 'Shell': '#89e051', 'SQL': '#e38c00',
+    }
+    bars_html = ""
+    for lang, count in loc.items():
+        if lang == 'total':
+            continue
+        pct = round(count / total * 100, 1)
+        color = lang_colors.get(lang, '#888')
+        count_display = f"{count:,}".replace(",", ".")
+        bars_html += (
+            f"<div style='display:flex;align-items:center;gap:8px;padding:2px 0;font-size:12px'>"
+            f"<span style='width:90px;color:#ccc'>{_escape(lang)}</span>"
+            f"<div style='flex:1;background:#1a1a2e;border-radius:3px;height:14px;overflow:hidden'>"
+            f"<div style='width:{pct}%;background:{color};height:100%;border-radius:3px;min-width:2px'></div></div>"
+            f"<span style='width:60px;text-align:right;color:#888'>{count_display}</span>"
+            f"<span style='width:40px;text-align:right;color:#666'>{pct}%</span></div>"
+        )
+    sections.append(
+        f"<h3>Code-Statistiken <span style='font-weight:normal;color:#888;font-size:12px'>"
+        f"({total_display} Zeilen)</span></h3>{bars_html}"
+    )
+
+
+def _add_changelog_section(sections, pj):
+    cl = pj.get("changelog_latest")
+    if not cl:
+        return
+    version = _escape(cl.get("version", ""))
+    date = _escape(cl.get("date", ""))
+    summary = _escape(cl.get("summary", ""))
+    date_html = f" <span style='color:#666'>({date})</span>" if date else ""
+    sections.append(
+        f"<h3>Changelog</h3><div style='font-size:13px'>"
+        f"<strong>v{version}</strong>{date_html}<br>"
+        f"<span style='color:#aaa'>{summary}</span></div>"
+    )
 
 
 def _add_tech_stack_section(sections, project_path):

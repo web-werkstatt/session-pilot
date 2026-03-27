@@ -18,6 +18,7 @@ from services.project_detector import (
 from services.description_extractor import (
     extract_description, detect_topic, extract_dependencies,
 )
+from services.metadata_extractor import extract_version, detect_license
 
 
 def load_project_json(project_path):
@@ -285,6 +286,10 @@ def scan_projects(auto_generate=True):
                 if ports and not project["port"]:
                     project["port"] = ports[0]
                 break
+
+        # Neue Metadaten: Version, Lizenz (schnell, Datei-basiert)
+        project["version"] = extract_version(item_path)
+        project["license"] = detect_license(item_path)
 
         # Git-Infos
         git_info = get_local_git_info(item_path)

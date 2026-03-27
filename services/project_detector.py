@@ -8,7 +8,7 @@ from datetime import datetime
 from services.description_extractor import extract_description, detect_topic
 
 # Schema-Version für project.json
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
 
 # Aktuelle Pflichtfelder für project.json
 SCHEMA_FIELDS = {
@@ -21,6 +21,8 @@ SCHEMA_FIELDS = {
     "priority": None,
     "status": "active",
     "project_type": "project",
+    "version": None,
+    "license": None,
     "schema_version": SCHEMA_VERSION
 }
 

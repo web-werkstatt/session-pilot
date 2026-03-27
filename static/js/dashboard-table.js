@@ -129,6 +129,25 @@ function renderProject(proj, isNew) {
         typeBadge = `<span class="badge" style="background:#555;font-size:9px;margin-left:5px">${typeLabel}</span>`;
     }
 
+    // Version-Badge
+    let versionBadge = '';
+    if (proj.version) {
+        versionBadge = `<span class="badge" style="background:#1a3a2a;color:#4caf50;font-size:9px;margin-left:5px">v${proj.version}</span>`;
+    }
+
+    // LOC + Lizenz + Size als Tooltip-Info in Beschreibung
+    let metaInfo = '';
+    const metaParts = [];
+    if (proj.loc_stats && proj.loc_stats.total) {
+        const loc = proj.loc_stats.total;
+        metaParts.push(loc >= 1000 ? (loc/1000).toFixed(1) + 'k LOC' : loc + ' LOC');
+    }
+    if (proj.license) metaParts.push(proj.license);
+    if (proj.repo_size) metaParts.push(proj.repo_size);
+    if (metaParts.length > 0) {
+        metaInfo = `<span style="color:#555;font-size:10px;margin-left:6px">${metaParts.join(' · ')}</span>`;
+    }
+
     const isFav = favorites.includes(proj.name);
     const favBtn = `<button class="fav-btn ${isFav ? 'active' : ''}" onclick="event.stopPropagation();toggleFavorite('${proj.name}',this)" title="Favorit">${isFav ? '★' : '☆'}</button>`;
     const projInfoIcon = `<span class="info-icon" onclick="event.stopPropagation();location.href='/project/${encodeURIComponent(proj.name)}'" title="Details">ℹ️</span>`;
@@ -149,8 +168,8 @@ function renderProject(proj, isNew) {
     </div>`;
 
     tr.innerHTML = `
-        <td class="project-name"><span class="pn-icons">${favBtn}</span><span class="pn-text">${namePrefix}${isNew ? '<span class="badge badge-new">NEU</span> ' : ''}${displayName}${typeBadge}${relationBadges}</span></td>
-        <td class="project-function">${proj.function || '-'}</td>
+        <td class="project-name"><span class="pn-icons">${favBtn}</span><span class="pn-text">${namePrefix}${isNew ? '<span class="badge badge-new">NEU</span> ' : ''}${displayName}${typeBadge}${versionBadge}${relationBadges}</span></td>
+        <td class="project-function">${proj.function || '-'}${metaInfo}</td>
         <td>${getGroupBadge(proj.group)}</td>
         <td>${getPriorityBadge(proj.priority)}</td>
         <td>${getDeadlineBadge(proj.deadline)}</td>
