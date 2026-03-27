@@ -51,34 +51,35 @@ function renderIdeasList() {
     }
 
     container.innerHTML = filtered.map(idea => {
-        const cat = ideasData.categories.find(c => c.id === idea.category) || {icon: '📝', color: '#666'};
-        const priorityIcon = idea.priority === 'high' ? '🔴' : idea.priority === 'low' ? '🟢' : '';
+        const cat = ideasData.categories.find(c => c.id === idea.category) || {icon: '<i data-lucide="file-text" class="icon"></i>', color: '#666'};
+        const priorityIcon = idea.priority === 'high' ? '<i data-lucide="circle" class="icon-priority-high"></i>' : idea.priority === 'low' ? '<i data-lucide="circle" class="icon-priority-low"></i>' : '';
         const statusClass = idea.status === 'done' ? 'idea-done' : idea.status === 'archived' ? 'idea-archived' : '';
         const date = new Date(idea.created).toLocaleDateString('de-DE');
         return `
             <div class="idea-card ${statusClass}" onclick="editIdea('${idea.id}')">
                 <div class="idea-header">
-                    <span class="idea-cat" style="background:${cat.color}30;color:${cat.color}">${cat.icon}</span>
+                    <span class="idea-cat" style="background:${cat.color}30;color:${cat.color}">${renderIcon(cat.icon)}</span>
                     <span class="idea-title">${priorityIcon} ${idea.title}</span>
                     <span class="idea-date">${date}</span>
                 </div>
                 ${idea.content ? `<div class="idea-content">${idea.content.substring(0, 150)}${idea.content.length > 150 ? '...' : ''}</div>` : ''}
-                ${idea.project ? `<div class="idea-project">📁 ${idea.project}</div>` : ''}
+                ${idea.project ? `<div class="idea-project"><i data-lucide="folder" class="icon"></i> ${idea.project}</div>` : ''}
                 <div class="idea-actions">
-                    <button class="idea-status-btn" onclick="event.stopPropagation();toggleIdeaStatus('${idea.id}','${idea.status}')">${idea.status === 'done' ? '↩️ Öffnen' : '✅ Erledigt'}</button>
-                    <button class="idea-delete-btn" onclick="event.stopPropagation();deleteIdea('${idea.id}')">🗑️</button>
+                    <button class="idea-status-btn" onclick="event.stopPropagation();toggleIdeaStatus('${idea.id}','${idea.status}')">${idea.status === 'done' ? '<i data-lucide="rotate-ccw" class="icon"></i> Öffnen' : '<i data-lucide="check" class="icon"></i> Erledigt'}</button>
+                    <button class="idea-delete-btn" onclick="event.stopPropagation();deleteIdea('${idea.id}')"><i data-lucide="trash-2" class="icon"></i></button>
                 </div>
             </div>
         `;
     }).join('');
+    if (typeof lucide !== 'undefined') lucide.createIcons();
 
     // Kategorien für Filter
     document.getElementById('ideasFilterCategory').innerHTML = '<option value="">Alle Kategorien</option>' +
-        ideasData.categories.map(c => `<option value="${c.id}">${c.icon} ${c.name}</option>`).join('');
+        ideasData.categories.map(c => `<option value="${c.id}">${renderIcon(c.icon)} ${c.name}</option>`).join('');
 
     // Kategorien für Form
     document.getElementById('ideaCategory').innerHTML = ideasData.categories.map(c =>
-        `<option value="${c.id}">${c.icon} ${c.name}</option>`
+        `<option value="${c.id}">${renderIcon(c.icon)} ${c.name}</option>`
     ).join('');
 
     // Projekte für Form (aus allProjectsData)

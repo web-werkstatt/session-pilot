@@ -25,7 +25,7 @@ function renderGroupFilterButtons() {
     html += '<option value="none">Ungrouped</option>';
 
     groupsData.groups.forEach(group => {
-        html += `<option value="${group.id}">${group.icon} ${group.name}</option>`;
+        html += `<option value="${group.id}">${renderIcon(group.icon)} ${group.name}</option>`;
     });
 
     select.innerHTML = html;
@@ -38,7 +38,7 @@ function updateGroupDropdown(selectNewGroupId = null) {
     let html = '<option value="">-- Keine --</option>';
 
     groupsData.groups.forEach(group => {
-        html += `<option value="${group.id}">${group.icon} ${group.name}</option>`;
+        html += `<option value="${group.id}">${renderIcon(group.icon)} ${group.name}</option>`;
     });
 
     select.innerHTML = html;
@@ -62,7 +62,7 @@ function toggleInlineGroupForm() {
         // Felder zurücksetzen
         document.getElementById('inlineGroupId').value = '';
         document.getElementById('inlineGroupName').value = '';
-        document.getElementById('inlineGroupIcon').value = '📁';
+        document.getElementById('inlineGroupIcon').value = '';
         document.getElementById('inlineGroupColor').value = '#666666';
     }
 }
@@ -105,7 +105,7 @@ function getGroupBadge(groupId) {
     if (!groupId) return '-';
     const group = groupsData.groups.find(g => g.id === groupId);
     if (group) {
-        return `<span title="${group.name}" style="font-size:16px">${group.icon}</span>`;
+        return `<span title="${group.name}" style="font-size:16px">${renderIcon(group.icon)}</span>`;
     }
     return '-';
 }
@@ -134,7 +134,7 @@ function renderGroupsList() {
         html += `
             <div class="group-item" data-group-id="${group.id}">
                 <div class="group-color-bar" style="background:${group.color}"></div>
-                <div class="group-icon-preview">${group.icon}</div>
+                <div class="group-icon-preview">${renderIcon(group.icon)}</div>
                 <div class="group-info">
                     <div class="group-name">${group.name}</div>
                     <div class="group-id">${group.id}</div>
@@ -149,6 +149,7 @@ function renderGroupsList() {
     });
 
     container.innerHTML = html;
+    if (typeof lucide !== 'undefined') lucide.createIcons();
 }
 
 // Neue Gruppe erstellen
@@ -157,7 +158,7 @@ function createGroup() {
     let id = document.getElementById('newGroupId').value.trim().toLowerCase();
     id = id.replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
     const name = document.getElementById('newGroupName').value.trim();
-    const icon = document.getElementById('newGroupIcon').value.trim() || '📁';
+    const icon = document.getElementById('newGroupIcon').value.trim() || '';
     const color = document.getElementById('newGroupColor').value;
     const desc = document.getElementById('newGroupDesc').value.trim();
 
@@ -200,7 +201,7 @@ function editGroup(groupId) {
     const newName = prompt('Name:', group.name);
     if (newName === null) return;
 
-    const newIcon = prompt('Icon (Emoji):', group.icon);
+    const newIcon = prompt('Icon (Lucide-Name oder Emoji):', group.icon);
     if (newIcon === null) return;
 
     const newColor = prompt('Farbe (Hex):', group.color);

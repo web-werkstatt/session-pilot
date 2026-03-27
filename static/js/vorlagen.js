@@ -23,9 +23,9 @@
         const grid = document.getElementById('vorlagenGrid');
 
         const icons = {
-            'news-ticker': '📰',
-            'dark-theme_special': '🎨',
-            'default': '📦'
+            'news-ticker': '<i data-lucide="newspaper" class="icon"></i>',
+            'dark-theme_special': '<i data-lucide="palette" class="icon"></i>',
+            'default': '<i data-lucide="package" class="icon"></i>'
         };
 
         let html = '';
@@ -55,20 +55,21 @@
                         </div>
 
                         <div class="vorlage-actions">
-                            ${v.preview ? `<button class="action-btn primary" onclick="openPreview('${v.name}', '${v.preview}')">👁 Vorschau</button>` : ''}
-                            <button class="action-btn secondary" onclick="showCode('${v.name}')">📄 Code anzeigen</button>
-                            <button class="action-btn copy" onclick="copyPath('${v.path}')">📋 Pfad kopieren</button>
+                            ${v.preview ? `<button class="action-btn primary" onclick="openPreview('${v.name}', '${v.preview}')"><i data-lucide="eye" class="icon"></i> Vorschau</button>` : ''}
+                            <button class="action-btn secondary" onclick="showCode('${v.name}')"><i data-lucide="file" class="icon"></i> Code anzeigen</button>
+                            <button class="action-btn copy" onclick="copyPath('${v.path}')"><i data-lucide="clipboard" class="icon"></i> Pfad kopieren</button>
                         </div>
 
                         <div class="path-display">
                             <span>${v.path}</span>
-                            <span class="copy-icon" onclick="copyPath('${v.path}')">📋</span>
+                            <span class="copy-icon" onclick="copyPath('${v.path}')"><i data-lucide="clipboard" class="icon"></i></span>
                         </div>
                     </div>
                 </div>
             `;
         });
         grid.innerHTML = html;
+        if (typeof lucide !== 'undefined') lucide.createIcons();
     }
 
     function openPreview(name, file) {
@@ -89,7 +90,7 @@
                     <div class="code-header">
                         <span>${file}</span>
                         <button class="action-btn copy" onclick="copyFile('${vorlage.path}/${file}')" style="padding:5px 10px;font-size:11px;">
-                            📋 Kopieren
+                            <i data-lucide="clipboard" class="icon"></i> Kopieren
                         </button>
                     </div>
                     <div class="code-content" id="code-${file.replace('.', '-')}">
@@ -101,6 +102,7 @@
 
         document.getElementById('modalBody').innerHTML = html;
         document.getElementById('codeModal').classList.add('show');
+        if (typeof lucide !== 'undefined') lucide.createIcons();
 
         // Dateien laden (simuliert - in echt brauchst du eine API)
         if (vorlage.readme) {

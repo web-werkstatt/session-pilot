@@ -40,7 +40,7 @@
 .graph-svg line:hover { stroke-width: 4; }
 .graph-svg text {
     font-size: 10px;
-    fill: #aaa;
+    fill: var(--text-muted);
     pointer-events: none;
 }
 .graph-svg .arrow-head {
@@ -78,7 +78,7 @@
     outline-offset: 2px;
 }
 .graph-node.connect-source {
-    outline: 2px solid #2ecc71;
+    outline: 2px solid var(--status-success-bright);
     outline-offset: 2px;
 }
 .graph-node.connect-target {
@@ -91,7 +91,7 @@
     right: -8px;
     width: 18px;
     height: 18px;
-    background: #e74c3c;
+    background: var(--status-error-alt);
     border: none;
     border-radius: 50%;
     color: var(--text-heading);
@@ -160,11 +160,11 @@
     overflow: hidden;
     text-overflow: ellipsis;
 }
-.project-item:hover { background: #454545; }
+.project-item:hover { background: var(--border-hover); }
 .project-item.in-graph { opacity: 0.5; cursor: default; }
 
 .connect-mode-info {
-    background: #2d5a2d;
+    background: var(--bg-success-dark);
     padding: 12px;
     border-radius: var(--radius-md);
     font-size: 12px;

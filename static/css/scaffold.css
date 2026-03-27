@@ -27,7 +27,7 @@
     transition: all var(--transition-base);
 }
 .wizard-step.active { background: var(--accent); color: var(--text-heading); }
-.wizard-step.done { color: #66bb6a; }
+.wizard-step.done { color: var(--status-valid); }
 .step-num {
     width: 24px;
     height: 24px;
@@ -37,7 +37,7 @@
     justify-content: center;
     font-size: 12px;
     font-weight: 700;
-    background: #333;
+    background: var(--border-muted);
 }
 .wizard-step.active .step-num { background: rgba(255,255,255,0.2); }
 .wizard-step.done .step-num { background: var(--status-success-border); color: var(--text-heading); }
@@ -86,10 +86,10 @@
     border-color: var(--accent);
     outline: none;
 }
-.sc-field input.invalid { border-color: #ef5350; }
-.sc-field input.valid { border-color: #66bb6a; }
+.sc-field input.invalid { border-color: var(--status-error-bright); }
+.sc-field input.valid { border-color: var(--status-valid); }
 .sc-hint { color: var(--text-faint); font-size: 11px; margin-top: 4px; }
-.sc-hint.error { color: #ef5350; }
+.sc-hint.error { color: var(--status-error-bright); }
 .sc-row { display: flex; gap: 16px; }
 .sc-row .sc-field { flex: 1; }
 
@@ -176,15 +176,15 @@
 .sc-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 .sc-btn-primary { background: var(--accent); border-color: var(--accent); color: var(--text-heading); }
 .sc-btn-primary:hover { background: var(--accent-hover); }
-.sc-btn-primary:disabled { background: #333; border-color: #333; }
+.sc-btn-primary:disabled { background: var(--border-muted); border-color: var(--border-muted); }
 .sc-btn-create { background: var(--status-success-border); border-color: var(--status-success-border); color: var(--text-heading); font-size: 15px; padding: 12px 32px; }
 .sc-btn-create:hover { background: var(--success-bg); }
-.sc-btn-create:disabled { background: #333; border-color: #333; }
+.sc-btn-create:disabled { background: var(--border-muted); border-color: var(--border-muted); }
 
 /* Result */
 .sc-result { text-align: center; padding: 40px 20px; }
 .sc-result-icon { font-size: 48px; margin-bottom: 16px; }
-.sc-result h2 { color: #66bb6a; margin-bottom: 12px; }
+.sc-result h2 { color: var(--status-valid); margin-bottom: 12px; }
 .sc-result-log {
     text-align: left;
     background: var(--bg-surface);

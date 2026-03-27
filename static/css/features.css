@@ -64,7 +64,7 @@
 
 /* ===== NEWS TICKER ===== */
 .news-ticker-bar {
-    background: linear-gradient(90deg, #1a1a2e, #16213e);
+    background: linear-gradient(90deg, var(--bg-card), var(--bg-blue-elevated));
     padding: 6px 24px;
     display: flex;
     align-items: center;
@@ -75,7 +75,7 @@
     z-index: 41;
 }
 .news-label {
-    background: #e94560;
+    background: var(--color-feature);
     color: var(--text-heading);
     padding: 4px 12px;
     border-radius: var(--radius-sm);
@@ -100,7 +100,7 @@
     align-items: center;
     gap: 8px;
     white-space: nowrap;
-    color: #a8dadc;
+    color: var(--text-secondary);
     font-size: var(--text-base);
     cursor: pointer;
     transition: color var(--transition-base);
@@ -120,7 +120,7 @@
     flex-shrink: 0;
     transition: background var(--transition-base);
 }
-.news-link:hover { background: #1a4a7a; }
+.news-link:hover { background: var(--bg-blue-elevated); }
 
 /* ===== NEW PROJECTS BAR ===== */
 .new-projects-bar {
@@ -200,7 +200,7 @@
     white-space: nowrap;
 }
 .filter-btn:hover { background: var(--bg-hover); border-color: var(--border-hover); color: var(--text-secondary); }
-.filter-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+.filter-btn.active { background: var(--accent); border-color: var(--accent); color: var(--text-heading); }
 .filter-btn:focus-visible { outline: var(--ring-width) solid var(--ring-color); outline-offset: var(--ring-offset); }
 .filter-label { color: var(--text-ghost); font-size: 11px; margin-right: 2px; }
 .filter-group { display: flex; gap: 6px; }
@@ -268,7 +268,7 @@
     padding: 4px 10px; border: none; border-radius: var(--radius-sm);
     font-size: 11px; cursor: pointer; transition: background var(--transition-base);
 }
-.idea-status-btn { background: var(--success-bg); color: #fff; }
+.idea-status-btn { background: var(--success-bg); color: var(--text-heading); }
 .idea-status-btn:hover { background: var(--success-bg-hover); }
 .idea-delete-btn { background: var(--error-bg); color: var(--status-error-text); }
 .idea-delete-btn:hover { background: var(--error-bg-hover); }

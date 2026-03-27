@@ -37,10 +37,10 @@
 .act-btn.start:hover { background: var(--status-success-border); color: var(--text-heading); }
 .act-btn.stop { border-color: var(--status-error-border); color: var(--status-error); }
 .act-btn.stop:hover { background: var(--status-error-border); color: var(--text-heading); }
-.act-btn.restart { border-color: #e65100; color: var(--status-warning); }
-.act-btn.restart:hover { background: #e65100; color: var(--text-heading); }
-.act-btn.logs { border-color: #1565c0; color: var(--accent-link); }
-.act-btn.logs:hover { background: #1565c0; color: var(--text-heading); }
+.act-btn.restart { border-color: var(--action-orange); color: var(--status-warning); }
+.act-btn.restart:hover { background: var(--action-orange); color: var(--text-heading); }
+.act-btn.logs { border-color: var(--action-blue); color: var(--accent-link); }
+.act-btn.logs:hover { background: var(--action-blue); color: var(--text-heading); }
 .act-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 .act-btn:focus-visible { outline: var(--ring-width) solid var(--ring-color); outline-offset: var(--ring-offset); }
 .actions-cell { display: flex; gap: 4px; align-items: center; flex-wrap: wrap; }

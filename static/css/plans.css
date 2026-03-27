@@ -38,18 +38,18 @@
     border-left: 3px solid var(--accent);
 }
 .plan-card.status-active .plan-card-title {
-    color: #6bb8ff;
+    color: var(--action-blue-light);
 }
 .plan-card.status-completed {
     background: rgba(46,204,113,0.10);
     border-left: 3px solid var(--success);
 }
 .plan-card.status-completed .plan-card-title {
-    color: #5ee0a0;
+    color: var(--status-valid);
 }
 .plan-card.status-archived {
     background: rgba(80,80,80,0.15);
-    border-left: 3px solid #555;
+    border-left: 3px solid var(--text-ghost);
     opacity: 0.55;
 }
 
@@ -133,7 +133,7 @@
 .badge-draft { background: rgba(150,150,150,0.15); color: var(--text-secondary); }
 .badge-active { background: rgba(0,120,212,0.15); color: var(--accent); }
 .badge-completed { background: rgba(46,204,113,0.15); color: var(--success); }
-.badge-archived { background: rgba(100,100,100,0.15); color: #888; }
+.badge-archived { background: rgba(100,100,100,0.15); color: var(--text-muted); }
 
 /* Filter Extras */
 .filter-divider {

@@ -9,7 +9,7 @@
     gap: 0;
     padding: 0 24px;
     border-bottom: 1px solid var(--border);
-    background: var(--surface, #161616);
+    background: var(--surface, var(--bg-surface));
     position: sticky;
     top: 52px;
     z-index: 10;
@@ -43,7 +43,7 @@
 
 .tab-count {
     font-size: 11px;
-    background: var(--elevated, #1e1e1e);
+    background: var(--elevated, var(--bg-elevated));
     padding: 1px 6px;
     border-radius: 8px;
     color: var(--text-secondary);
@@ -77,7 +77,7 @@
 .project-body table { margin-bottom: 12px; }
 .project-body table td { padding: 5px 14px 5px 0; font-size: 13px; border: none; }
 .project-body code {
-    background: #1a3a5c; color: var(--accent-light); padding: 2px 8px;
+    background: var(--bg-blue-elevated); color: var(--accent-light); padding: 2px 8px;
     border-radius: var(--radius-sm); font-size: 12px; display: inline-block; margin: 2px;
 }
 .project-body img {
@@ -108,21 +108,21 @@
 .readme-rendered table { border-collapse: collapse; width: 100%; margin: 12px 0; }
 .readme-rendered table th, .readme-rendered table td { border: 1px solid var(--border-subtle); padding: 8px 12px; font-size: 13px; text-align: left; }
 .readme-rendered table th { background: var(--bg-card); color: var(--text-muted); }
-.readme-rendered blockquote { border-left: 3px solid #4fc3f7; padding: 8px 16px; margin: 12px 0; color: var(--text-muted); background: var(--bg-card); border-radius: 0 6px 6px 0; }
+.readme-rendered blockquote { border-left: 3px solid var(--accent-light); padding: 8px 16px; margin: 12px 0; color: var(--text-muted); background: var(--bg-card); border-radius: 0 6px 6px 0; }
 .readme-rendered ul, .readme-rendered ol { padding-left: 24px; margin: 8px 0; }
 .readme-rendered a { color: var(--accent-light); }
 .readme-actions { display: flex; gap: 10px; margin-bottom: 12px; align-items: center; }
 .readme-actions .btn-edit { background: var(--bg-card); border: 1px solid var(--border-muted); color: var(--text-secondary); padding: 6px 14px; border-radius: var(--radius-md); cursor: pointer; font-size: 12px; }
 .readme-actions .btn-edit:hover { background: var(--bg-hover); border-color: var(--border-hover); }
-.readme-actions .btn-save { background: #1b4332; border: none; color: var(--text-heading); padding: 6px 14px; border-radius: var(--radius-md); cursor: pointer; font-size: 12px; }
-.readme-actions .btn-cancel { background: #333; border: none; color: var(--text-secondary); padding: 6px 14px; border-radius: var(--radius-md); cursor: pointer; font-size: 12px; }
+.readme-actions .btn-save { background: var(--success-bg); border: none; color: var(--text-heading); padding: 6px 14px; border-radius: var(--radius-md); cursor: pointer; font-size: 12px; }
+.readme-actions .btn-cancel { background: var(--border-muted); border: none; color: var(--text-secondary); padding: 6px 14px; border-radius: var(--radius-md); cursor: pointer; font-size: 12px; }
 .readme-actions .status { color: var(--text-faint); font-size: 12px; margin-left: auto; }
 #readmeEditor { display: none; }
 
 /* Git Panel */
 .git-panel { background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); padding: 14px 18px; margin-bottom: 20px; }
 .git-header { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; font-size: 13px; }
-.git-branch { background: #1a3a5c; color: var(--accent-light); padding: 2px 10px; border-radius: var(--radius-sm); font-family: var(--font-mono); font-size: 12px; }
+.git-branch { background: var(--bg-blue-elevated); color: var(--accent-light); padding: 2px 10px; border-radius: var(--radius-sm); font-family: var(--font-mono); font-size: 12px; }
 .git-sync { font-size: 11px; margin-left: auto; }
 .git-changes { max-height: 200px; overflow-y: auto; margin: 8px 0; }
 .git-change { display: flex; gap: 8px; padding: 3px 0; font-size: 12px; font-family: var(--font-mono); }
@@ -136,10 +136,10 @@
 .git-btn:hover { border-color: var(--text-muted); color: var(--text-heading); }
 .git-btn.commit { border-color: var(--status-success-border); color: var(--status-success); }
 .git-btn.commit:hover { background: var(--status-success-border); color: var(--text-heading); }
-.git-btn.push { border-color: #1565c0; color: #42a5f5; }
-.git-btn.push:hover { background: #1565c0; color: var(--text-heading); }
-.git-btn.pull { border-color: #e65100; color: var(--status-warning); }
-.git-btn.pull:hover { background: #e65100; color: var(--text-heading); }
+.git-btn.push { border-color: var(--action-blue); color: var(--action-blue-light); }
+.git-btn.push:hover { background: var(--action-blue); color: var(--text-heading); }
+.git-btn.pull { border-color: var(--action-orange); color: var(--status-warning); }
+.git-btn.pull:hover { background: var(--action-orange); color: var(--text-heading); }
 .git-btn.refresh { border: none; font-size: 16px; padding: 2px 6px; }
 
 /* EasyMDE Dark Theme */
@@ -150,12 +150,12 @@
 .EasyMDEContainer .editor-toolbar button { color: var(--text-muted) !important; }
 .EasyMDEContainer .editor-toolbar button:hover { background: var(--bg-hover) !important; color: var(--text-heading) !important; }
 .EasyMDEContainer .editor-toolbar button.active { background: var(--accent) !important; color: var(--text-heading) !important; }
-.EasyMDEContainer .editor-toolbar i.separator { border-left-color: #333 !important; }
+.EasyMDEContainer .editor-toolbar i.separator { border-left-color: var(--border-muted) !important; }
 .EasyMDEContainer .editor-statusbar { color: var(--text-faint) !important; background: var(--bg-card) !important; border-top: 1px solid var(--border-muted) !important; }
-.EasyMDEContainer .CodeMirror .CodeMirror-selected { background: #1a3a5c !important; }
+.EasyMDEContainer .CodeMirror .CodeMirror-selected { background: var(--bg-blue-elevated) !important; }
 .EasyMDEContainer .CodeMirror .cm-header { color: var(--accent-light) !important; }
 .EasyMDEContainer .CodeMirror .cm-link { color: var(--accent-light) !important; }
-.EasyMDEContainer .CodeMirror .cm-string { color: #66bb6a !important; }
+.EasyMDEContainer .CodeMirror .cm-string { color: var(--status-valid) !important; }
 .EasyMDEContainer .CodeMirror .cm-comment { color: var(--text-faint) !important; }
 .EasyMDEContainer .editor-preview { background: var(--bg-input) !important; color: var(--text-secondary) !important; }
 .EasyMDEContainer .editor-preview pre { background: var(--bg-sidebar) !important; }
@@ -179,7 +179,7 @@
 .plans-view-all {
     margin-left: auto;
     font-size: 12px;
-    color: var(--accent-light, #4fc3f7);
+    color: var(--accent-light);
     text-decoration: none;
     text-transform: none;
     letter-spacing: 0;
@@ -195,8 +195,8 @@
 .plan-mini-card {
     display: block;
     padding: 10px 12px;
-    background: var(--card, #1a1a1a);
-    border: 1px solid var(--border, #333);
+    background: var(--card, var(--bg-card));
+    border: 1px solid var(--border, var(--border-muted));
     border-radius: 6px;
     text-decoration: none;
     color: inherit;
@@ -217,13 +217,13 @@
 .plan-mini-title {
     font-size: 13px;
     font-weight: 600;
-    color: var(--text-primary, #eee);
+    color: var(--text-primary);
     line-height: 1.3;
     margin-bottom: 6px;
 }
 .plan-mini-context {
     font-size: 12px;
-    color: var(--text-secondary, #888);
+    color: var(--text-secondary);
     line-height: 1.3;
     margin-bottom: 6px;
     opacity: 0.8;

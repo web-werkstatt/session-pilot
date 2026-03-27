@@ -11,12 +11,12 @@ relation_bp = Blueprint('relations', __name__)
 RELATIONS_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'relations.json')
 
 DEFAULT_RELATION_TYPES = [
-    {"id": "depends_on", "name": "hängt ab von", "icon": "🔗", "color": "#3498db"},
-    {"id": "replaces", "name": "ersetzt", "icon": "🔄", "color": "#e74c3c"},
-    {"id": "extends", "name": "erweitert", "icon": "➕", "color": "#2ecc71"},
-    {"id": "uses", "name": "nutzt", "icon": "⚙️", "color": "#9b59b6"},
-    {"id": "related", "name": "verwandt mit", "icon": "🔀", "color": "#f39c12"},
-    {"id": "fork_of", "name": "Fork von", "icon": "🍴", "color": "#1abc9c"},
+    {"id": "depends_on", "name": "hängt ab von", "icon": "link", "color": "#3498db"},
+    {"id": "replaces", "name": "ersetzt", "icon": "refresh-cw", "color": "#e74c3c"},
+    {"id": "extends", "name": "erweitert", "icon": "plus", "color": "#2ecc71"},
+    {"id": "uses", "name": "nutzt", "icon": "settings", "color": "#9b59b6"},
+    {"id": "related", "name": "verwandt mit", "icon": "git-merge", "color": "#f39c12"},
+    {"id": "fork_of", "name": "Fork von", "icon": "git-fork", "color": "#1abc9c"},
 ]
 
 
@@ -106,7 +106,7 @@ def add_relation_type():
 
     type_id = req.get("id", "").lower().replace(" ", "_")
     name = req.get("name")
-    icon = req.get("icon", "🔗")
+    icon = req.get("icon", "link")
     color = req.get("color", "#666666")
 
     if not type_id or not name:

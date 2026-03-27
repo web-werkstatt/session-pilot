@@ -127,7 +127,7 @@
     border: none;
     padding: 8px 15px;
     border-radius: var(--radius-md);
-    color: #fff;
+    color: var(--text-heading);
     cursor: pointer;
     font-size: var(--text-sm);
     transition: background var(--transition-base);
@@ -149,7 +149,7 @@
     border: none;
     padding: 10px 24px;
     border-radius: var(--radius-md);
-    color: #fff;
+    color: var(--text-heading);
     cursor: pointer;
     font-size: var(--text-base);
     transition: background var(--transition-base);

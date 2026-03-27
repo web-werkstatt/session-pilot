@@ -65,7 +65,7 @@ body {
     font-size: var(--text-xs);
     font-weight: 500;
 }
-.badge-new { background: var(--success-bg); color: #6ff7b0; }
+.badge-new { background: var(--success-bg); color: var(--brand-minimax); }
 .relation-badges { margin-left: 6px; display: inline-flex; gap: 2px; vertical-align: middle; }
 .relation-badge {
     display: inline-block; padding: 1px 4px; border-radius: var(--radius-sm);

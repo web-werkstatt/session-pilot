@@ -37,8 +37,9 @@ function sortBy(col) {
 
 function updateSortIcons() {
     document.querySelectorAll('.sort-icon').forEach(el => {
-        el.textContent = el.dataset.col === currentSort ? (currentOrder === 'desc' ? '▼' : '▲') : '';
+        el.innerHTML = el.dataset.col === currentSort ? (currentOrder === 'desc' ? '<i data-lucide="chevron-down" class="icon"></i>' : '<i data-lucide="chevron-up" class="icon"></i>') : '';
     });
+    if (typeof lucide !== 'undefined') lucide.createIcons();
 }
 
 function debounceSearch() {
@@ -242,7 +243,7 @@ async function syncSessions() {
         } else { btn.textContent = 'Fehler'; }
     } catch(e) { btn.textContent = 'Fehler'; }
     btn.classList.remove('syncing');
-    setTimeout(() => { btn.textContent = '🔄 Sync'; }, 3000);
+    setTimeout(() => { btn.innerHTML = '<i data-lucide="refresh-cw" style="width:14px;height:14px;display:inline-block;vertical-align:middle"></i> Sync'; if (typeof lucide !== 'undefined') lucide.createIcons(); }, 3000);
 }
 
 async function loadSessionsWithFulltext(query) {
@@ -368,4 +369,5 @@ function hideFulltextResults() {
 
 loadStats();
 updateSortIcons();
+if (typeof lucide !== 'undefined') lucide.createIcons();
 loadSessions();

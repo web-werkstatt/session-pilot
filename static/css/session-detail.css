@@ -37,12 +37,12 @@
     letter-spacing: 0.3px;
 }
 .meta-badge-account { background: rgba(79, 195, 247, 0.12); color: var(--accent-light); }
-.meta-badge-model { background: rgba(198, 40, 40, 0.15); color: #ef5350; }
-.meta-badge-branch { background: rgba(46, 125, 50, 0.15); color: #66bb6a; }
+.meta-badge-model { background: rgba(198, 40, 40, 0.15); color: var(--status-error-bright); }
+.meta-badge-branch { background: rgba(46, 125, 50, 0.15); color: var(--status-valid); }
 .meta-badge-outcome { padding: 3px 10px; }
-.meta-badge-outcome.outcome-ok { background: rgba(46,125,50,0.2); color: #66bb6a; }
-.meta-badge-outcome.outcome-needs_fix { background: rgba(230,81,0,0.2); color: #ffa726; }
-.meta-badge-outcome.outcome-reverted { background: rgba(198,40,40,0.2); color: #ef5350; }
+.meta-badge-outcome.outcome-ok { background: rgba(46,125,50,0.2); color: var(--status-valid); }
+.meta-badge-outcome.outcome-needs_fix { background: rgba(230,81,0,0.2); color: var(--status-warning-bright); }
+.meta-badge-outcome.outcome-reverted { background: rgba(198,40,40,0.2); color: var(--status-error-bright); }
 .meta-badge-outcome.outcome-partial { background: rgba(79,195,247,0.15); color: var(--accent-light); }
 
 .meta-stats { display: flex; gap: 24px; flex-wrap: wrap; }
@@ -88,7 +88,7 @@
 }
 .msg-assistant {
     background: var(--bg-surface);
-    border-left: 3px solid #66bb6a;
+    border-left: 3px solid var(--status-valid);
 }
 .msg-tool-result { background: var(--bg-elevated); border-left: 3px solid var(--border-muted); }
 .msg-tool-result .msg-role { color: var(--text-faint); }
@@ -116,7 +116,7 @@
     border-bottom: 1px solid rgba(255,255,255,0.04);
 }
 .msg-user .msg-role { color: var(--accent-light); }
-.msg-assistant .msg-role { color: #66bb6a; }
+.msg-assistant .msg-role { color: var(--status-valid); }
 .msg-actions { display: flex; gap: 4px; }
 .msg-time { font-weight: 400; color: var(--text-muted); font-size: 11px; margin-left: 8px; letter-spacing: 0; text-transform: none; font-family: var(--font-mono); }
 
@@ -231,7 +231,7 @@ details .tool-content {
 }
 .btn-copy.copied {
     background: rgba(46, 125, 50, 0.2);
-    color: #66bb6a;
+    color: var(--status-valid);
     border-color: rgba(46, 125, 50, 0.3);
 }
 .pre-wrap { position: relative; }
@@ -252,7 +252,7 @@ details .tool-content {
 }
 .pre-wrap:hover .btn-copy-code { opacity: 1; }
 .btn-copy-code:hover { background: var(--bg-hover); color: var(--text-heading); border-color: var(--accent); }
-.btn-copy-code.copied { background: rgba(46, 125, 50, 0.2); color: #66bb6a; border-color: rgba(46, 125, 50, 0.3); opacity: 1; }
+.btn-copy-code.copied { background: rgba(46, 125, 50, 0.2); color: var(--status-valid); border-color: rgba(46, 125, 50, 0.3); opacity: 1; }
 
 /* --- Session Layout with ToC --- */
 .session-layout {

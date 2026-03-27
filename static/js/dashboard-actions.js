@@ -20,7 +20,8 @@ function toggleFavorite(name, btn) {
         if (data.success) {
             favorites = data.favorites;
             btn.classList.toggle('active', favorites.includes(name));
-            btn.textContent = favorites.includes(name) ? '★' : '☆';
+            btn.innerHTML = '<i data-lucide="star" class="icon"></i>';
+            if (typeof lucide !== 'undefined') lucide.createIcons();
             // Tabelle neu rendern für Sortierung
             if (allProjectsData.projects) renderProjectsTable(allProjectsData);
         }
@@ -48,7 +49,8 @@ function toggleShowArchived() {
     const btn = document.getElementById('archiveToggle');
     if (btn) {
         btn.classList.toggle('active', showArchived);
-        btn.textContent = showArchived ? '📦 Archiv ausblenden' : '📦 Archiv anzeigen';
+        btn.innerHTML = showArchived ? '<i data-lucide="package" style="width:14px;height:14px;display:inline-block;vertical-align:middle"></i> Archiv ausblenden' : '<i data-lucide="package" style="width:14px;height:14px;display:inline-block;vertical-align:middle"></i> Archiv anzeigen';
+        if (typeof lucide !== 'undefined') lucide.createIcons();
     }
     applyFiltersAndSort();
 }
@@ -101,7 +103,7 @@ function openTerminal(projectName) {
 }
 
 function refreshDescriptions() {
-    document.getElementById('modalTitle').textContent = '📝 Beschreibungen aktualisieren';
+    document.getElementById('modalTitle').textContent = 'Beschreibungen aktualisieren';
     document.getElementById('modalBody').innerHTML = `
         <p>Wähle aus, wie die Projektbeschreibungen aktualisiert werden sollen:</p>
         <div style="margin:20px 0;display:flex;flex-direction:column;gap:10px">
@@ -126,7 +128,7 @@ function executeRefresh(forceAll) {
     fetch(url, { method: 'POST' })
         .then(r => r.json())
         .then(data => {
-            let html = `<h3>✅ ${data.updated} Projekte aktualisiert</h3>`;
+            let html = `<h3>${data.updated} Projekte aktualisiert</h3>`;
             if (data.force_descriptions) {
                 html += '<p style="color:#ffaa00">Alle Beschreibungen wurden neu erkannt.</p>';
             }
@@ -153,7 +155,7 @@ function executeRefresh(forceAll) {
 }
 
 function cleanupDocker() {
-    document.getElementById('modalTitle').textContent = '🧹 Docker Aufräumen';
+    document.getElementById('modalTitle').textContent = 'Docker Aufräumen';
     document.getElementById('modalBody').innerHTML = '<div class="spinner"></div> Analysiere...';
     document.getElementById('infoModal').classList.add('show');
 
@@ -161,12 +163,13 @@ function cleanupDocker() {
     fetch('/api/cleanup?mode=analyze')
         .then(r => r.json())
         .then(data => {
-            let html = '<h3>📊 Analyse vor Reinigung:</h3><pre>' + data.result + '</pre>';
-            html += '<p><a href="/api/cleanup/report?type=pre" target="_blank" class="action-link">📥 Analyse als .md exportieren</a></p>';
+            let html = '<h3>Analyse vor Reinigung:</h3><pre>' + data.result + '</pre>';
+            html += '<p><a href="/api/cleanup/report?type=pre" target="_blank" class="action-link"><i data-lucide="download" style="width:14px;height:14px;display:inline-block;vertical-align:middle"></i> Analyse als .md exportieren</a></p>';
             html += '<hr style="border-color:#444;margin:20px 0">';
             html += '<p>Möchtest du die Reinigung durchführen?</p>';
-            html += '<button class="btn" onclick="executeCleanup()" style="margin-right:10px">✅ Ja, aufräumen</button>';
-            html += '<button class="btn" onclick="closeModal()" style="background:#666">❌ Abbrechen</button>';
+            html += '<button class="btn" onclick="executeCleanup()" style="margin-right:10px"><i data-lucide="check" style="width:14px;height:14px;display:inline-block;vertical-align:middle"></i> Ja, aufräumen</button>';
+            html += '<button class="btn" onclick="closeModal()" style="background:#666"><i data-lucide="x" style="width:14px;height:14px;display:inline-block;vertical-align:middle"></i> Abbrechen</button>';
+            if (typeof lucide !== 'undefined') lucide.createIcons();
             document.getElementById('modalBody').innerHTML = html;
         })
         .catch(err => {
@@ -180,11 +183,12 @@ function executeCleanup() {
     fetch('/api/cleanup?mode=execute')
         .then(r => r.json())
         .then(data => {
-            let html = '<h3>✅ Reinigung abgeschlossen:</h3><pre>' + data.result + '</pre>';
+            let html = '<h3>Reinigung abgeschlossen:</h3><pre>' + data.result + '</pre>';
             if (data.space_freed) {
                 html += '<p><strong>Freigegebener Speicher:</strong> ' + data.space_freed + '</p>';
             }
-            html += '<p><a href="/api/cleanup/report?type=post" target="_blank" class="action-link">📥 Bericht als .md exportieren</a></p>';
+            html += '<p><a href="/api/cleanup/report?type=post" target="_blank" class="action-link"><i data-lucide="download" style="width:14px;height:14px;display:inline-block;vertical-align:middle"></i> Bericht als .md exportieren</a></p>';
+            if (typeof lucide !== 'undefined') lucide.createIcons();
             document.getElementById('modalBody').innerHTML = html;
             loadData();
         })

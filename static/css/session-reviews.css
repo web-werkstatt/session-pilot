@@ -208,10 +208,10 @@
     white-space: pre-wrap;
 }
 .review-badge { display: inline-flex; align-items: center; padding: 3px 8px; border-radius: var(--radius-full); font-size: 11px; border: 1px solid var(--border-muted); }
-.review-badge-ok { background: rgba(46,125,50,0.2); color: #66bb6a; }
+.review-badge-ok { background: rgba(46,125,50,0.2); color: var(--status-valid); }
 .review-badge-needs_fix { background: rgba(230,81,0,0.2); color: var(--status-warning); }
-.review-badge-reverted { background: rgba(198,40,40,0.2); color: #ef5350; }
-.review-badge-partial { background: rgba(249,168,37,0.2); color: #f9a825; }
+.review-badge-reverted { background: rgba(198,40,40,0.2); color: var(--status-error-bright); }
+.review-badge-partial { background: rgba(249,168,37,0.2); color: var(--status-partial); }
 .review-thread-link { color: var(--accent-light); }
 
 /* Responsive */

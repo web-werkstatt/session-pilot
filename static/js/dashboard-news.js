@@ -27,17 +27,18 @@ function renderNewsTicker(headlines) {
 
     // Icons für verschiedene News-Typen
     const icons = {
-        'commit': '📝',
-        'file_change': '📄',
-        'new_project': '🆕',
-        'sync_warning': '⚠️'
+        'commit': 'file-text',
+        'file_change': 'file',
+        'new_project': 'plus-circle',
+        'sync_warning': 'alert-triangle'
     };
 
     // Erstelle News-Items (doppelt für endlose Animation)
     let html = '';
     const items = [...headlines, ...headlines]; // Verdoppeln für nahtlose Animation
     items.forEach(news => {
-        const icon = icons[news.type] || '📌';
+        const iconName = icons[news.type] || 'pin';
+        const icon = `<i data-lucide="${iconName}" style="width:14px;height:14px;display:inline-block;vertical-align:middle"></i>`;
         html += `
             <span class="news-item" onclick="window.location='/news'">
                 <span class="news-icon">${icon}</span>
@@ -50,6 +51,7 @@ function renderNewsTicker(headlines) {
     // Sanftes Update: Animation kurz pausieren
     container.style.animationPlayState = 'paused';
     container.innerHTML = html;
+    if (typeof lucide !== 'undefined') lucide.createIcons();
     // Animation nach kleinem Delay fortsetzen
     requestAnimationFrame(() => {
         container.style.animationPlayState = 'running';

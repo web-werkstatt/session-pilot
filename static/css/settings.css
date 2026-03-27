@@ -132,10 +132,10 @@
     font-size: 11px;
     font-weight: 600;
 }
-.s-provider-anthropic { background: rgba(211,153,132,0.15); color: #d39984; }
-.s-provider-openai { background: rgba(16,163,127,0.15); color: #10a37f; }
-.s-provider-google { background: rgba(66,133,244,0.15); color: #4285f4; }
-.s-provider-amazon { background: rgba(255,153,0,0.15); color: #ff9900; }
+.s-provider-anthropic { background: rgba(211,153,132,0.15); color: var(--brand-anthropic); }
+.s-provider-openai { background: rgba(16,163,127,0.15); color: var(--brand-openai); }
+.s-provider-google { background: rgba(66,133,244,0.15); color: var(--brand-google); }
+.s-provider-amazon { background: rgba(255,153,0,0.15); color: var(--brand-amazon); }
 
 /* Buttons */
 .s-btn {
@@ -187,11 +187,11 @@
     border-radius: var(--radius-xl);
     font-weight: 600;
 }
-.s-tool-claude { background: rgba(211,153,132,0.15); color: #d39984; }
-.s-tool-codex { background: rgba(16,163,127,0.15); color: #10a37f; }
-.s-tool-gemini { background: rgba(66,133,244,0.15); color: #4285f4; }
+.s-tool-claude { background: rgba(211,153,132,0.15); color: var(--brand-anthropic); }
+.s-tool-codex { background: rgba(16,163,127,0.15); color: var(--brand-openai); }
+.s-tool-gemini { background: rgba(66,133,244,0.15); color: var(--brand-google); }
 .s-tool-copilot { background: rgba(255,255,255,0.1); color: var(--text-secondary); }
-.s-tool-amazonq { background: rgba(255,153,0,0.15); color: #ff9900; }
+.s-tool-amazonq { background: rgba(255,153,0,0.15); color: var(--brand-amazon); }
 .s-card-detail {
     font-size: 12px;
     color: var(--text-muted);

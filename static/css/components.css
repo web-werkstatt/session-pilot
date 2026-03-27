@@ -38,7 +38,7 @@
 /* Primary */
 .btn-primary {
     background: var(--accent);
-    color: #fff;
+    color: var(--text-heading);
     border-color: var(--accent);
 }
 .btn-primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
@@ -170,7 +170,7 @@
 .filter-pill.active {
     background: var(--accent);
     border-color: var(--accent);
-    color: #fff;
+    color: var(--text-heading);
 }
 .filter-pill:focus-visible {
     outline: var(--ring-width) solid var(--ring-color);
@@ -238,7 +238,7 @@
     border: 1px solid var(--status-success-border);
 }
 .toast-error, .toast.error {
-    background: #b71c1c;
+    background: var(--color-destructive);
     color: var(--status-error-text);
     border: 1px solid var(--status-error-border);
 }

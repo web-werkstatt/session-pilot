@@ -43,8 +43,8 @@ async function loadProjectInfo() {
         html += `
         <h3>README</h3>
         <div class="readme-actions">
-            <button class="btn-edit" onclick="toggleReadmeEdit()" id="readmeEditBtn">✏️ Bearbeiten</button>
-            <button class="btn-save" onclick="saveReadme()" id="readmeSaveBtn" style="display:none">💾 Speichern</button>
+            <button class="btn-edit" onclick="toggleReadmeEdit()" id="readmeEditBtn"><i data-lucide="edit" class="icon"></i> Bearbeiten</button>
+            <button class="btn-save" onclick="saveReadme()" id="readmeSaveBtn" style="display:none"><i data-lucide="save" class="icon"></i> Speichern</button>
             <button class="btn-cancel" onclick="cancelReadmeEdit()" id="readmeCancelBtn" style="display:none">Abbrechen</button>
             <span class="status" id="readmeStatus"></span>
         </div>
@@ -52,6 +52,7 @@ async function loadProjectInfo() {
         <div id="readmeEditor"><textarea id="readmeTextarea"></textarea></div>`;
 
         document.getElementById('projectBody').innerHTML = html;
+        if (typeof lucide !== 'undefined') lucide.createIcons();
         loadReadme();
     } catch(e) {
         document.getElementById('projectBody').innerHTML = '<div class="loading" style="color:#ff6666">Fehler: ' + e + '</div>';

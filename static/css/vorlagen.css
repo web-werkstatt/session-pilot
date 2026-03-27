@@ -43,10 +43,10 @@
     font-family: var(--font-mono);
     color: var(--accent-link);
 }
-.file-tag.html { color: #e34c26; }
-.file-tag.css { color: #264de4; }
-.file-tag.js { color: #f7df1e; }
-.file-tag.py { color: #3776ab; }
+.file-tag.html { color: var(--syntax-html); }
+.file-tag.css { color: var(--syntax-css); }
+.file-tag.js { color: var(--syntax-js); }
+.file-tag.py { color: var(--syntax-python); }
 .file-tag.md { color: var(--text-muted); }
 .vorlage-actions { display: flex; gap: 10px; flex-wrap: wrap; }
 .action-btn {
@@ -65,8 +65,8 @@
 .action-btn.primary:hover { background: var(--accent-hover); }
 .action-btn.secondary { background: var(--border-hover); color: var(--text-heading); }
 .action-btn.secondary:hover { background: var(--text-ghost); }
-.action-btn.copy { background: #2d5a2d; color: var(--text-heading); }
-.action-btn.copy:hover { background: #3d6a3d; }
+.action-btn.copy { background: var(--bg-success-dark); color: var(--text-heading); }
+.action-btn.copy:hover { background: var(--bg-success-dark-hover); }
 .path-display {
     background: var(--bg-elevated);
     padding: 10px 15px;
@@ -103,5 +103,5 @@
     line-height: 1.6;
     overflow-x: auto;
     white-space: pre;
-    color: #d4d4d4;
+    color: var(--text-secondary);
 }

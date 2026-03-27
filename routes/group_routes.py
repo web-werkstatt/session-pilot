@@ -11,9 +11,9 @@ group_bp = Blueprint('groups', __name__)
 GROUPS_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'groups.json')
 
 DEFAULT_GROUPS = [
-    {"id": "private", "name": "Privat", "icon": "🏠", "color": "#6b5b95", "description": "Private Projekte"},
-    {"id": "business", "name": "Geschäftlich", "icon": "🏢", "color": "#0077b6", "description": "Geschäftliche Projekte"},
-    {"id": "customer", "name": "Kunde", "icon": "👤", "color": "#2d6a4f", "description": "Kundenprojekte"},
+    {"id": "private", "name": "Privat", "icon": "home", "color": "#6b5b95", "description": "Private Projekte"},
+    {"id": "business", "name": "Geschäftlich", "icon": "building-2", "color": "#0077b6", "description": "Geschäftliche Projekte"},
+    {"id": "customer", "name": "Kunde", "icon": "user", "color": "#2d6a4f", "description": "Kundenprojekte"},
 ]
 
 
@@ -53,7 +53,7 @@ def api_create_group():
 
     group_id = data.get('id', '').strip().lower()
     group_name = data.get('name', '').strip()
-    group_icon = data.get('icon', '📁')
+    group_icon = data.get('icon', 'folder')
     group_color = data.get('color', '#666666')
     group_desc = data.get('description', '')
 

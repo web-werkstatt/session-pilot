@@ -32,8 +32,8 @@ td {
 tbody tr { transition: background var(--transition-fast); }
 tbody tr:nth-child(even):not(.section-header) { background: var(--bg-surface); }
 tbody tr:not(.section-header):hover { background: var(--accent-bg); }
-tr.new-project { background: #132b13; }
-tr.new-project:hover { background: #1a3d1a; }
+tr.new-project { background: var(--success-bg); }
+tr.new-project:hover { background: var(--success-bg-hover); }
 
 /* Section Headers */
 tr.section-header { background: transparent !important; }
@@ -47,7 +47,7 @@ tr.section-header td {
 }
 tr.section-header:first-child td { padding-top: 10px; }
 .top5-header {
-    background: linear-gradient(135deg, #ff6b35, #f7931e) !important;
+    background: linear-gradient(135deg, var(--action-orange), var(--status-warning)) !important;
     color: var(--text-heading) !important;
 }
 .top5-header td {
@@ -127,7 +127,7 @@ td img:hover, .project-function img:hover { opacity: 0.8; }
     transform: translateY(-50%);
     background: rgba(255,255,255,0.08);
     border: 1px solid rgba(255,255,255,0.12);
-    color: #fff;
+    color: var(--text-heading);
     font-size: 36px;
     width: 50px;
     height: 70px;
@@ -149,7 +149,7 @@ td img:hover, .project-function img:hover { opacity: 0.8; }
     right: 16px;
     background: rgba(255,255,255,0.08);
     border: 1px solid rgba(255,255,255,0.12);
-    color: #fff;
+    color: var(--text-heading);
     font-size: 18px;
     width: 40px;
     height: 40px;
@@ -215,7 +215,7 @@ tr:hover .row-ctx-btn { opacity: 0.7; }
     padding: 0 2px; opacity: 0.3; transition: opacity var(--transition-fast);
 }
 .fav-btn:hover, .fav-btn.active { opacity: 1; }
-.fav-btn.active { color: #ffd700; }
+.fav-btn.active { color: var(--color-favorite); }
 .action-link {
     color: var(--accent-light);
     text-decoration: none;
@@ -230,7 +230,7 @@ tr:hover .row-ctx-btn { opacity: 0.7; }
 .action-link:hover { background: var(--accent-light); color: var(--bg-base); }
 
 /* ===== SUB-PROJECTS ===== */
-.subproject-row { background: #181818 !important; }
+.subproject-row { background: var(--bg-card) !important; }
 .subproject-row:hover { background: var(--accent-bg) !important; }
 .subproject-row td:first-child { padding-left: 30px; }
 .subproject-indicator { color: var(--text-ghost); margin-right: 6px; font-size: var(--text-base); }

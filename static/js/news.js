@@ -57,10 +57,10 @@ function renderNews(news) {
     const tbody = document.getElementById('newsTableBody');
 
     const icons = {
-        'commit': '📝',
-        'file_change': '📄',
-        'new_project': '🆕',
-        'sync_warning': '⚠️'
+        'commit': '<i data-lucide="file-text" class="icon"></i>',
+        'file_change': '<i data-lucide="file" class="icon"></i>',
+        'new_project': '<i data-lucide="plus-circle" class="icon"></i>',
+        'sync_warning': '<i data-lucide="alert-triangle" class="icon"></i>'
     };
 
     const typeLabels = {
@@ -72,13 +72,13 @@ function renderNews(news) {
 
     let html = '';
     news.forEach(item => {
-        const icon = icons[item.type] || '📌';
+        const icon = icons[item.type] || '<i data-lucide="pin" class="icon"></i>';
         const typeLabel = typeLabels[item.type] || item.type;
         const daysAgoText = item.days_ago === 0 ? 'Heute' :
             item.days_ago === 1 ? 'Gestern' : `Vor ${item.days_ago} Tagen`;
 
         html += `
-            <tr class="type-${item.type} clickable" onclick="showDetail('${item.project}', '${item.type}', '${icon}')">
+            <tr class="type-${item.type} clickable" onclick="showDetail('${item.project}', '${item.type}')">
                 <td class="news-icon">${icon}</td>
                 <td class="project-name">${item.project}</td>
                 <td class="news-message">${item.message || item.title}</td>
@@ -91,11 +91,18 @@ function renderNews(news) {
         `;
     });
     tbody.innerHTML = html;
+    if (typeof lucide !== 'undefined') lucide.createIcons();
 }
 
 // === MODAL FUNKTIONEN ===
-function showDetail(project, type, icon) {
-    document.getElementById('modalIcon').textContent = icon;
+function showDetail(project, type) {
+    const detailIcons = {
+        'commit': '<i data-lucide="file-text" class="icon"></i>',
+        'file_change': '<i data-lucide="file" class="icon"></i>',
+        'new_project': '<i data-lucide="plus-circle" class="icon"></i>',
+        'sync_warning': '<i data-lucide="alert-triangle" class="icon"></i>'
+    };
+    document.getElementById('modalIcon').innerHTML = detailIcons[type] || '<i data-lucide="pin" class="icon"></i>';
     document.getElementById('modalProject').textContent = project;
     document.getElementById('modalBody').innerHTML = `
         <div class="loading">
@@ -104,6 +111,7 @@ function showDetail(project, type, icon) {
         </div>
     `;
     document.getElementById('detailModal').classList.add('show');
+    if (typeof lucide !== 'undefined') lucide.createIcons();
 
     fetch(`/api/news/detail/${encodeURIComponent(project)}`)
         .then(r => r.json())
@@ -127,7 +135,7 @@ function renderDetail(data, newsType) {
     const info = data.project_info || {};
     html += `
         <div class="detail-section">
-            <h3>📋 Projekt-Info</h3>
+            <h3><i data-lucide="clipboard-list" class="icon"></i> Projekt-Info</h3>
             <div class="detail-card">
                 <div class="detail-row">
                     <span class="detail-label">Name</span>
@@ -161,11 +169,11 @@ function renderDetail(data, newsType) {
         const gs = data.git_status;
         html += `
             <div class="detail-section">
-                <h3>🔀 Git Status</h3>
+                <h3><i data-lucide="git-branch" class="icon"></i> Git Status</h3>
                 <div class="git-status-grid">
                     <div class="git-stat">
                         <div class="git-stat-value ${gs.clean ? 'git-clean' : 'git-dirty'}">
-                            ${gs.clean ? '✓' : gs.changes}
+                            ${gs.clean ? '<i data-lucide="check" class="icon"></i>' : gs.changes}
                         </div>
                         <div class="git-stat-label">${gs.clean ? 'Sauber' : 'Änderungen'}</div>
                     </div>
@@ -190,7 +198,7 @@ function renderDetail(data, newsType) {
     if (data.commits && data.commits.length > 0) {
         html += `
             <div class="detail-section">
-                <h3>📝 Letzte Commits</h3>
+                <h3><i data-lucide="file-text" class="icon"></i> Letzte Commits</h3>
                 ${data.commits.map(c => `
                     <div class="commit-item">
                         <span class="commit-sha">${c.sha}</span>
@@ -206,7 +214,7 @@ function renderDetail(data, newsType) {
     if (data.recent_files && data.recent_files.length > 0) {
         html += `
             <div class="detail-section">
-                <h3>📄 Kürzlich geänderte Dateien</h3>
+                <h3><i data-lucide="file" class="icon"></i> Kürzlich geänderte Dateien</h3>
                 ${data.recent_files.map(f => `
                     <div class="file-item">
                         <span class="file-name">${escapeHtml(f.name)}</span>
@@ -220,7 +228,7 @@ function renderDetail(data, newsType) {
     // Pfad
     html += `
         <div class="detail-section" style="margin-bottom:0">
-            <h3>📂 Pfad</h3>
+            <h3><i data-lucide="folder-open" class="icon"></i> Pfad</h3>
             <div class="detail-card" style="font-family:monospace;font-size:13px;color:#888;">
                 ${data.path}
             </div>
@@ -228,6 +236,7 @@ function renderDetail(data, newsType) {
     `;
 
     body.innerHTML = html;
+    if (typeof lucide !== 'undefined') lucide.createIcons();
 }
 
 function escapeHtml(text) {

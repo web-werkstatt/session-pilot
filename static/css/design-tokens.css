@@ -59,10 +59,50 @@
     --status-stopped: #f44336;
     --status-unhealthy: #ff9800;
 
+    /* Extended Status */
+    --status-valid: #66bb6a;
+    --status-error-bright: #ef5350;
+    --status-partial: #f9a825;
+    --status-success-bright: #2ecc71;
+    --status-error-alt: #e74c3c;
+    --status-warning-bright: #ffa726;
+
     /* Priority */
     --priority-high: #ff4444;
     --priority-medium: #ffaa00;
     --priority-low: #44ff44;
+
+    /* Action Colors */
+    --action-orange: #e65100;
+    --action-blue: #1565c0;
+    --action-blue-light: #42a5f5;
+
+    /* Extended Backgrounds */
+    --bg-blue-elevated: #1a3a5c;
+    --bg-success-dark: #2d5a2d;
+    --bg-success-dark-hover: #3d6a3d;
+    --bg-darkest: #111111;
+    --bg-interactive: #252525;
+    --bg-accent-dark: #0d1f2d;
+
+    /* Brand / Provider Colors */
+    --brand-anthropic: #d39984;
+    --brand-openai: #10a37f;
+    --brand-google: #4285f4;
+    --brand-amazon: #ff9900;
+    --brand-claude-alt: #cf6ff7;
+    --brand-minimax: #6ff7b0;
+
+    /* Syntax Highlighting */
+    --syntax-html: #e34c26;
+    --syntax-css: #264de4;
+    --syntax-js: #f7df1e;
+    --syntax-python: #3776ab;
+
+    /* Special Purpose */
+    --color-favorite: #ffd700;
+    --color-destructive: #b71c1c;
+    --color-feature: #e94560;
 
     /* Spacing */
     --space-1: 4px;

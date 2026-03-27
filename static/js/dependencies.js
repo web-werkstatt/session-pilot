@@ -68,7 +68,7 @@ function populateSelects() {
     const connectModalType = document.getElementById('connectModalType');
 
     const typeOptions = relationTypes.map(t =>
-        `<option value="${t.id}">${t.icon} ${t.name}</option>`
+        `<option value="${t.id}">${renderIcon(t.icon)} ${t.name}</option>`
     ).join('');
     typeSelect.innerHTML = typeOptions;
     graphTypeSelect.innerHTML = typeOptions;
@@ -77,8 +77,9 @@ function populateSelects() {
     typeFilter.innerHTML = '<option value="">Alle Typen</option>' + typeOptions;
 
     document.getElementById('typeList').innerHTML = relationTypes.map(t =>
-        `<span class="type-badge" style="background: ${t.color}20; border: 1px solid ${t.color};">${t.icon} ${t.name}</span>`
+        `<span class="type-badge" style="background: ${t.color}20; border: 1px solid ${t.color};">${renderIcon(t.icon)} ${t.name}</span>`
     ).join('');
+    if (typeof lucide !== 'undefined') lucide.createIcons();
 }
 
 // AJAX AUTOCOMPLETE
@@ -223,7 +224,7 @@ function renderRelations() {
             <div class="relation-card">
                 <div class="relation-source" title="${rel.source}">${rel.source}</div>
                 <span class="relation-arrow">&rarr;</span>
-                <span class="relation-type" style="background: ${type.color}30; color: ${type.color};">${type.icon} ${type.name}</span>
+                <span class="relation-type" style="background: ${type.color}30; color: ${type.color};">${renderIcon(type.icon)} ${type.name}</span>
                 <span class="relation-arrow">&rarr;</span>
                 <div class="relation-target" title="${rel.target}">${rel.target}</div>
                 ${rel.note ? `<span class="relation-note" title="${rel.note}">${rel.note}</span>` : ''}

@@ -49,7 +49,7 @@
     transition: all var(--transition-base);
 }
 .pill:hover { border-color: var(--border-hover); color: var(--text-secondary); }
-.pill.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+.pill.active { background: var(--accent); border-color: var(--accent); color: var(--text-heading); }
 .pill:focus-visible { outline: var(--ring-width) solid var(--ring-color); outline-offset: var(--ring-offset); }
 
 /* Row hover actions */
@@ -71,8 +71,8 @@ tr.row:hover .row-actions { opacity: 1; }
 .sessions-table .project-name:hover { text-decoration: underline; }
 .account-badge { display: inline-block; padding: 2px 10px; border-radius: var(--radius-full); font-size: 11px; font-weight: 600; }
 .account-claude { background: rgba(79,195,247,0.12); color: var(--accent-light); }
-.account-claude1 { background: rgba(207,111,247,0.12); color: #cf6ff7; }
-.account-minimax { background: rgba(111,247,176,0.12); color: #6ff7b0; }
+.account-claude1 { background: rgba(207,111,247,0.12); color: var(--brand-claude-alt); }
+.account-minimax { background: rgba(111,247,176,0.12); color: var(--brand-minimax); }
 
 /* Duration bar */
 .dur-wrap { display: flex; align-items: center; gap: 8px; }
@@ -100,10 +100,10 @@ tr.row:hover .row-actions { opacity: 1; }
 
 /* Outcome badges */
 .outcome-badge { display: inline-block; padding: 2px 10px; border-radius: var(--radius-full); font-size: 11px; font-weight: 600; }
-.outcome-ok { background: rgba(46,125,50,0.2); color: #66bb6a; }
+.outcome-ok { background: rgba(46,125,50,0.2); color: var(--status-valid); }
 .outcome-needs_fix { background: rgba(230,81,0,0.2); color: var(--status-warning); }
-.outcome-reverted { background: rgba(198,40,40,0.2); color: #ef5350; }
-.outcome-partial { background: rgba(249,168,37,0.2); color: #f9a825; }
+.outcome-reverted { background: rgba(198,40,40,0.2); color: var(--status-error-bright); }
+.outcome-partial { background: rgba(249,168,37,0.2); color: var(--status-partial); }
 .outcome-unrated { color: var(--text-disabled); font-size: 11px; }
 
 /* Pagination */

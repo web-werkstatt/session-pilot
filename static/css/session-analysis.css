@@ -97,9 +97,9 @@
     border-radius: var(--radius-full);
     width: fit-content;
 }
-.model-opus { background: rgba(198, 40, 40, 0.2); color: #ef5350; }
+.model-opus { background: rgba(198, 40, 40, 0.2); color: var(--status-error-bright); }
 .model-sonnet { background: rgba(0, 120, 212, 0.2); color: var(--accent-light); }
-.model-haiku { background: rgba(46, 125, 50, 0.2); color: #66bb6a; }
+.model-haiku { background: rgba(46, 125, 50, 0.2); color: var(--status-valid); }
 .model-other { background: var(--bg-hover); color: var(--text-muted); }
 .model-tokens { color: var(--text-faint); font-size: 11px; }
 
@@ -228,7 +228,7 @@
     font-family: var(--font-mono);
     white-space: nowrap;
 }
-.project-cost-high { color: #ef5350; }
+.project-cost-high { color: var(--status-error-bright); }
 .project-cost-mid { color: var(--accent-light); }
 .project-cost-low { color: var(--text-muted); }
 

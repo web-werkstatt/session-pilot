@@ -48,7 +48,7 @@ function closeEditModal() {
         inlineForm.style.display = 'none';
         document.getElementById('inlineGroupId').value = '';
         document.getElementById('inlineGroupName').value = '';
-        document.getElementById('inlineGroupIcon').value = '📁';
+        document.getElementById('inlineGroupIcon').value = '';
         document.getElementById('inlineGroupColor').value = '#666666';
     }
     // Relations-Tab zurücksetzen
@@ -80,7 +80,7 @@ async function loadRelationTypes() {
     relationTypes = await resp.json();
     const select = document.getElementById('editRelationType');
     select.innerHTML = relationTypes.map(t =>
-        `<option value="${t.id}">${t.icon} ${t.name}</option>`
+        `<option value="${t.id}">${renderIcon(t.icon)} ${t.name}</option>`
     ).join('');
 }
 
@@ -97,33 +97,38 @@ async function loadProjectRelations() {
         outgoingDiv.innerHTML = '<div style="color:#666;font-style:italic">Keine ausgehenden Beziehungen</div>';
     } else {
         outgoingDiv.innerHTML = data.outgoing.map(rel => {
-            const typeInfo = relationTypes.find(t => t.id === rel.type) || {icon: '🔗', name: rel.type, color: '#888'};
+            const typeInfo = relationTypes.find(t => t.id === rel.type) || {icon: 'link', name: rel.type, color: '#888'};
             return `
                 <div class="relation-item" style="border-left:3px solid ${typeInfo.color}">
-                    <span class="relation-type">${typeInfo.icon} ${typeInfo.name}</span>
+                    <span class="relation-type">${renderIcon(typeInfo.icon)} ${typeInfo.name}</span>
                     <span class="relation-target">→ ${rel.target}</span>
                     ${rel.note ? `<span class="relation-note">(${rel.note})</span>` : ''}
                     <button class="btn-remove" onclick="deleteProjectRelation('${rel.id}')" title="Löschen">×</button>
                 </div>
             `;
         }).join('');
+        if (typeof lucide !== 'undefined') lucide.createIcons();
     }
 
     if (data.incoming.length === 0) {
         incomingDiv.innerHTML = '<div style="color:#666;font-style:italic">Keine eingehenden Beziehungen</div>';
     } else {
         incomingDiv.innerHTML = data.incoming.map(rel => {
-            const typeInfo = relationTypes.find(t => t.id === rel.type) || {icon: '🔗', name: rel.type, color: '#888'};
+            const typeInfo = relationTypes.find(t => t.id === rel.type) || {icon: 'link', name: rel.type, color: '#888'};
             return `
                 <div class="relation-item" style="border-left:3px solid ${typeInfo.color}">
-                    <span class="relation-type">${typeInfo.icon} ${typeInfo.name}</span>
+                    <span class="relation-type">${renderIcon(typeInfo.icon)} ${typeInfo.name}</span>
                     <span class="relation-target">← ${rel.source}</span>
                     ${rel.note ? `<span class="relation-note">(${rel.note})</span>` : ''}
                     <button class="btn-remove" onclick="deleteProjectRelation('${rel.id}')" title="Löschen">×</button>
                 </div>
             `;
         }).join('');
+        if (typeof lucide !== 'undefined') lucide.createIcons();
     }
+
+    // Lucide Icons rendern nach DOM-Update
+    if (typeof lucide !== 'undefined') lucide.createIcons();
 }
 
 function updateRelationForm() {

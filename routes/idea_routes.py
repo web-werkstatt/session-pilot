@@ -11,12 +11,12 @@ idea_bp = Blueprint('ideas', __name__)
 IDEAS_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'ideas.json')
 
 DEFAULT_CATEGORIES = [
-    {"id": "feature", "name": "Feature-Idee", "icon": "💡", "color": "#f1c40f"},
-    {"id": "improvement", "name": "Verbesserung", "icon": "🔧", "color": "#3498db"},
-    {"id": "bug", "name": "Bug/Problem", "icon": "🐛", "color": "#e74c3c"},
-    {"id": "note", "name": "Notiz", "icon": "📝", "color": "#9b59b6"},
-    {"id": "research", "name": "Recherche", "icon": "🔍", "color": "#1abc9c"},
-    {"id": "question", "name": "Frage", "icon": "❓", "color": "#e67e22"},
+    {"id": "feature", "name": "Feature-Idee", "icon": "lightbulb", "color": "#f1c40f"},
+    {"id": "improvement", "name": "Verbesserung", "icon": "wrench", "color": "#3498db"},
+    {"id": "bug", "name": "Bug/Problem", "icon": "bug", "color": "#e74c3c"},
+    {"id": "note", "name": "Notiz", "icon": "file-text", "color": "#9b59b6"},
+    {"id": "research", "name": "Recherche", "icon": "search", "color": "#1abc9c"},
+    {"id": "question", "name": "Frage", "icon": "help-circle", "color": "#e67e22"},
 ]
 
 

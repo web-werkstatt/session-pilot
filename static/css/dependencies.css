@@ -19,7 +19,7 @@
     transition: all var(--transition-base);
 }
 .tab-btn:hover { color: var(--text-heading); background: var(--bg-hover); }
-.tab-btn.active { color: var(--accent-link); background: var(--bg-hover); border-bottom: 2px solid #4dabf7; }
+.tab-btn.active { color: var(--accent-link); background: var(--bg-hover); border-bottom: 2px solid var(--accent-link); }
 .tab-content { display: none; }
 .tab-content.active { display: block; }
 
@@ -103,7 +103,7 @@
     padding: 5px;
     transition: color var(--transition-base);
 }
-.relation-delete:hover { color: #e74c3c; }
+.relation-delete:hover { color: var(--status-error-alt); }
 
 /* Add Panel */
 .add-panel {
@@ -174,7 +174,7 @@
     border-color: var(--accent);
 }
 .autocomplete-input.has-value {
-    border-color: #2ecc71;
+    border-color: var(--status-success-bright);
     background: #1e2e1e;
 }
 .autocomplete-dropdown {

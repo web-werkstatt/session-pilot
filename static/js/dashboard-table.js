@@ -4,9 +4,9 @@
 // === GLOBALE HELPER-FUNKTIONEN FÜR TABELLEN-RENDERING ===
 
 function getPriorityBadge(priority) {
-    if (priority === 'high') return '<span class="priority-high">🔴</span>';
-    if (priority === 'medium') return '<span class="priority-medium">🟡</span>';
-    if (priority === 'low') return '<span class="priority-low">🟢</span>';
+    if (priority === 'high') return '<span class="priority-high"><i data-lucide="circle" class="icon-priority icon-priority-high"></i></span>';
+    if (priority === 'medium') return '<span class="priority-medium"><i data-lucide="circle" class="icon-priority icon-priority-medium"></i></span>';
+    if (priority === 'low') return '<span class="priority-low"><i data-lucide="circle" class="icon-priority icon-priority-low"></i></span>';
     return '-';
 }
 
@@ -17,7 +17,7 @@ function getDeadlineBadge(deadline) {
     const days = Math.ceil((dl - today) / (1000 * 60 * 60 * 24));
     const parts = deadline.split('-');
     const formatted = parts[2] + '.' + parts[1] + '.' + parts[0].substring(2);
-    if (days < 0) return `<span class="deadline-urgent" style="white-space:nowrap">⚠️ ${formatted}</span>`;
+    if (days < 0) return `<span class="deadline-urgent" style="white-space:nowrap"><i data-lucide="alert-triangle" class="icon" style="width:14px;height:14px;display:inline-block;vertical-align:middle"></i> ${formatted}</span>`;
     if (days <= 7) return `<span class="deadline-urgent" style="white-space:nowrap">${formatted}</span>`;
     if (days <= 30) return `<span class="deadline-soon" style="white-space:nowrap">${formatted}</span>`;
     return `<span class="deadline-ok" style="white-space:nowrap">${formatted}</span>`;
@@ -46,13 +46,13 @@ function getRelationBadges(projectName) {
     let badges = '';
 
     outgoing.forEach(rel => {
-        const typeInfo = relationTypes.find(t => t.id === rel.type) || {icon: '🔗', color: '#888'};
-        badges += `<span class="relation-badge" style="background:${typeInfo.color}" title="${typeInfo.icon} → ${rel.target}${rel.note ? ': ' + rel.note : ''}">${typeInfo.icon}</span>`;
+        const typeInfo = relationTypes.find(t => t.id === rel.type) || {icon: 'link', color: '#888'};
+        badges += `<span class="relation-badge" style="background:${typeInfo.color}" title="${typeInfo.name || rel.type} → ${rel.target}${rel.note ? ': ' + rel.note : ''}">${renderIcon(typeInfo.icon)}</span>`;
     });
 
     incoming.forEach(rel => {
-        const typeInfo = relationTypes.find(t => t.id === rel.type) || {icon: '🔗', color: '#888'};
-        badges += `<span class="relation-badge incoming" style="background:${typeInfo.color}" title="${typeInfo.icon} ← ${rel.source}${rel.note ? ': ' + rel.note : ''}">${typeInfo.icon}</span>`;
+        const typeInfo = relationTypes.find(t => t.id === rel.type) || {icon: 'link', color: '#888'};
+        badges += `<span class="relation-badge incoming" style="background:${typeInfo.color}" title="${typeInfo.name || rel.type} ← ${rel.source}${rel.note ? ': ' + rel.note : ''}">${renderIcon(typeInfo.icon)}</span>`;
     });
 
     return `<span class="relation-badges">${badges}</span>`;
@@ -207,8 +207,8 @@ function renderProject(proj, isNew) {
     }
 
     const isFav = favorites.includes(proj.name);
-    const favBtn = `<button class="fav-btn ${isFav ? 'active' : ''}" onclick="event.stopPropagation();toggleFavorite('${proj.name}',this)" title="Favorit">${isFav ? '★' : '☆'}</button>`;
-    const projInfoIcon = `<span class="info-icon" onclick="event.stopPropagation();location.href='/project/${encodeURIComponent(proj.name)}'" title="Details">ℹ️</span>`;
+    const favBtn = `<button class="fav-btn ${isFav ? 'active' : ''}" onclick="event.stopPropagation();toggleFavorite('${proj.name}',this)" title="Favorit"><i data-lucide="star" class="icon"></i></button>`;
+    const projInfoIcon = `<span class="info-icon" onclick="event.stopPropagation();location.href='/project/${encodeURIComponent(proj.name)}'" title="Details"><i data-lucide="info" class="icon" style="width:14px;height:14px;display:inline-block;vertical-align:middle"></i></span>`;
 
     const relationBadges = getRelationBadges(proj.name);
 
@@ -216,12 +216,12 @@ function renderProject(proj, isNew) {
     const eName = proj.name.replace(/'/g, "\\'");
 
     const ctxMenu = `<div class="row-ctx">
-        <button class="row-ctx-btn" onclick="openRowCtx(event,'${eName}')" title="Aktionen">⋯</button>
+        <button class="row-ctx-btn" onclick="openRowCtx(event,'${eName}')" title="Aktionen"><i data-lucide="more-horizontal" class="icon"></i></button>
         <div class="row-ctx-menu">
-            <div class="row-ctx-item" onclick="event.stopPropagation();location.href='/project/${encodeURIComponent(eName)}'">ℹ️ Details</div>
-            <div class="row-ctx-item" onclick="event.stopPropagation();openEditModal('${eName}')">✏️ Bearbeiten</div>
-            <div class="row-ctx-item" onclick="event.stopPropagation();toggleFavorite('${eName}',null)">⭐ Favorit</div>
-            <div class="row-ctx-item" onclick="event.stopPropagation();toggleArchive('${eName}', ${!proj.archived})">${proj.archived ? '📂 Wiederherstellen' : '📦 Archivieren'}</div>
+            <div class="row-ctx-item" onclick="event.stopPropagation();location.href='/project/${encodeURIComponent(eName)}'"><i data-lucide="info" class="icon" style="width:14px;height:14px;display:inline-block;vertical-align:middle"></i> Details</div>
+            <div class="row-ctx-item" onclick="event.stopPropagation();openEditModal('${eName}')"><i data-lucide="edit" class="icon" style="width:14px;height:14px;display:inline-block;vertical-align:middle"></i> Bearbeiten</div>
+            <div class="row-ctx-item" onclick="event.stopPropagation();toggleFavorite('${eName}',null)"><i data-lucide="star" class="icon" style="width:14px;height:14px;display:inline-block;vertical-align:middle"></i> Favorit</div>
+            <div class="row-ctx-item" onclick="event.stopPropagation();toggleArchive('${eName}', ${!proj.archived})">${proj.archived ? '<i data-lucide="folder-open" class="icon" style="width:14px;height:14px;display:inline-block;vertical-align:middle"></i> Wiederherstellen' : '<i data-lucide="package" class="icon" style="width:14px;height:14px;display:inline-block;vertical-align:middle"></i> Archivieren'}</div>
         </div>
     </div>`;
 
@@ -252,7 +252,7 @@ function renderProjectsTable(data) {
         if (favProjects.length > 0) {
             const favHeader = document.createElement('tr');
             favHeader.classList.add('section-header');
-            favHeader.innerHTML = '<td colspan="10" style="color:#ffd700">⭐ FAVORITEN</td>';
+            favHeader.innerHTML = '<td colspan="10" style="color:#ffd700"><i data-lucide="star" class="icon" style="width:16px;height:16px;display:inline-block;vertical-align:middle"></i> FAVORITEN</td>';
             tbody.appendChild(favHeader);
             favProjects.forEach(proj => {
                 tbody.appendChild(renderProject(proj, data.new_projects.includes(proj.name)));
@@ -265,7 +265,7 @@ function renderProjectsTable(data) {
         // === ANSICHT: NACH GRUPPEN ===
         renderByGroups(data, tbody);
     } else {
-        // === ANSICHT: NACH PRIORITÄT (Standard) ===
+        // === ANSICHT: NACH PRIORITAET (Standard) ===
         const projectsWithPriority = data.projects.filter(p => p.priority && p.project_type !== 'subproject');
         const projectsWithoutPriority = data.projects.filter(p => !p.priority && p.project_type !== 'subproject');
 
@@ -281,7 +281,7 @@ function renderProjectsTable(data) {
         if (projectsWithPriority.length > 0) {
             const top5Header = document.createElement('tr');
             top5Header.classList.add('section-header', 'top5-header');
-            top5Header.innerHTML = '<td colspan="10">🔥 TOP PROJEKTE (mit Priorität)</td>';
+            top5Header.innerHTML = '<td colspan="10"><i data-lucide="flame" class="icon" style="width:16px;height:16px;display:inline-block;vertical-align:middle"></i> TOP PROJEKTE (mit Priorität)</td>';
             tbody.appendChild(top5Header);
 
             projectsWithPriority.forEach(proj => {
@@ -295,7 +295,7 @@ function renderProjectsTable(data) {
         if (projectsWithoutPriority.length > 0) {
             const otherHeader = document.createElement('tr');
             otherHeader.classList.add('section-header');
-            otherHeader.innerHTML = '<td colspan="10">📁 WEITERE PROJEKTE</td>';
+            otherHeader.innerHTML = '<td colspan="10"><i data-lucide="folder" class="icon" style="width:16px;height:16px;display:inline-block;vertical-align:middle"></i> WEITERE PROJEKTE</td>';
             tbody.appendChild(otherHeader);
 
             projectsWithoutPriority.forEach(proj => {
@@ -305,6 +305,9 @@ function renderProjectsTable(data) {
             });
         }
     }
+
+    // Lucide Icons rendern nach DOM-Update
+    if (typeof lucide !== 'undefined') lucide.createIcons();
 }
 
 function renderByGroups(data, tbody) {
@@ -365,7 +368,7 @@ function renderByGroups(data, tbody) {
 
         const header = document.createElement('tr');
         header.classList.add('section-header');
-        header.innerHTML = `<td colspan="10">📁 Ohne Gruppe <span style="opacity:0.7;font-weight:normal">(${noGroupProjects.length})</span></td>`;
+        header.innerHTML = `<td colspan="10"><i data-lucide="folder" class="icon" style="width:16px;height:16px;display:inline-block;vertical-align:middle"></i> Ohne Gruppe <span style="opacity:0.7;font-weight:normal">(${noGroupProjects.length})</span></td>`;
         tbody.appendChild(header);
 
         noGroupProjects.forEach(proj => {

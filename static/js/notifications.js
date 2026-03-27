@@ -55,17 +55,17 @@ function renderNotifications(notifications) {
     }
 
     var icons = {
-        container_down: '&#9940;',
-        container_unhealthy: '&#9888;',
-        new_commit: '&#128229;',
-        sync_conflict: '&#128260;',
-        new_project: '&#128193;',
+        container_down: '<i data-lucide="circle-x" class="icon"></i>',
+        container_unhealthy: '<i data-lucide="alert-triangle" class="icon"></i>',
+        new_commit: '<i data-lucide="git-commit" class="icon"></i>',
+        sync_conflict: '<i data-lucide="git-pull-request" class="icon"></i>',
+        new_project: '<i data-lucide="folder-plus" class="icon"></i>',
     };
 
     var html = '';
     notifications.forEach(function(n) {
         var unread = n.read ? '' : ' unread';
-        var icon = icons[n.type] || '&#128276;';
+        var icon = icons[n.type] || '<i data-lucide="bell" class="icon"></i>';
         var time = formatTimeAgo(n.created_at);
 
         html += '<div class="notification-item severity-' + n.severity + unread + '" data-id="' + n.id + '" onclick="onNotificationClick(\'' + n.id + '\', \'' + (n.project || '') + '\')">';
@@ -81,6 +81,7 @@ function renderNotifications(notifications) {
         html += '</div>';
     });
     list.innerHTML = html;
+    if (typeof lucide !== 'undefined') lucide.createIcons();
 }
 
 function onNotificationClick(id, project) {

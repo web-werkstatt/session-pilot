@@ -67,7 +67,7 @@
     font-size: 12px;
     margin-top: 4px;
 }
-.ts-kpi-trend.up { color: #f44; }
+.ts-kpi-trend.up { color: var(--priority-high); }
 .ts-kpi-trend.down { color: var(--status-success); }
 .ts-kpi-trend.neutral { color: var(--text-faint); }
 .ts-kpi-sub { color: var(--text-faint); font-size: 11px; margin-top: 4px; }
@@ -175,7 +175,7 @@
     max-width: 120px;
 }
 .ts-token-in { background: var(--accent); }
-.ts-token-out { background: #4fc3f7; }
+.ts-token-out { background: var(--accent-light); }
 
 .ts-account-tag {
     display: inline-block;
@@ -229,8 +229,8 @@
     font-weight: 700;
     margin-top: 4px;
 }
-.ts-ctx-better { color: #66bb6a; }
-.ts-ctx-worse { color: #ef5350; }
+.ts-ctx-better { color: var(--status-valid); }
+.ts-ctx-worse { color: var(--status-error-bright); }
 .ts-ctx-neutral { color: var(--text-muted); }
 .ts-ctx-empty { color: var(--text-ghost); font-size: 13px; padding: 20px; text-align: center; }
 .ts-ctx-msg { color: var(--text-faint); font-size: 11px; font-style: italic; margin-top: 2px; }
@@ -239,8 +239,8 @@
 .ts-rework-kpis { display: flex; align-items: center; gap: 6px; }
 .ts-rework-kpi { font-weight: 700; color: var(--text-heading); font-size: 14px; }
 .ts-rework-label { color: var(--text-muted); font-size: 11px; }
-.ts-rework-sep { color: #333; }
-.ts-cost-wasted { color: #ef5350; }
+.ts-rework-sep { color: var(--border-muted); }
+.ts-cost-wasted { color: var(--status-error-bright); }
 
 /* Responsive */
 @media (max-width: 1200px) {
@@ -328,5 +328,5 @@
 .ts-btn-save { background: var(--status-success-border); }
 .ts-btn-save:hover { background: var(--success-bg); }
 .ts-btn-del { background: var(--status-error-border); }
-.ts-btn-del:hover { background: #b71c1c; }
+.ts-btn-del:hover { background: var(--color-destructive); }
 .ts-btn-group { display: flex; gap: 4px; }
