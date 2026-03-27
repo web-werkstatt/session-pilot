@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+
+{% block title %}Scheduled Tasks - Dashboard{% endblock %}
+
+{% block breadcrumb %}Scheduled Tasks{% endblock %}
+
+{% block topbar_actions %}
+<button class="btn btn-primary btn-sm" onclick="showCreateModal()"><i data-lucide="plus" class="icon icon-sm"></i> Neuer Task</button>
+<button class="btn btn-secondary btn-sm" onclick="loadTasks()"><i data-lucide="refresh-cw" class="icon icon-sm"></i> Aktualisieren</button>
+{% endblock %}
+
+{% block head_extra %}
+<link rel="stylesheet" href="/static/css/scheduled_tasks.css">
+{% endblock %}
+
+{% block content %}
+    <div class="stats-bar">
+        <div class="stat">
+            <span class="stat-value" id="totalTasks">-</span>
+            <span class="stat-label">Gesamt</span>
+        </div>
+        <div class="stat">
+            <span class="stat-value" style="color:var(--success)" id="activeTasks">-</span>
+            <span class="stat-label">Aktiv</span>
+        </div>
+        <div class="stat">
+            <span class="stat-value" style="color:var(--warning)" id="pausedTasks">-</span>
+            <span class="stat-label">Pausiert</span>
+        </div>
+        <div class="stat">
+            <span class="stat-value" style="color:var(--accent)" id="typeCount">-</span>
+            <span class="stat-label">Typen</span>
+        </div>
+    </div>
+
+    <div class="filter-bar">
+        <span class="filter-label">Filter:</span>
+        <button class="filter-btn active" onclick="filterTasks('all')">Alle</button>
+        <button class="filter-btn" onclick="filterTasks('health-check')">Health Check</button>
+        <button class="filter-btn" onclick="filterTasks('backup')">Backup</button>
+        <button class="filter-btn" onclick="filterTasks('issue-tracker')">Issue Tracker</button>
+        <button class="filter-btn" onclick="filterTasks('custom')">Custom</button>
+    </div>
+
+    <div class="tasks-container">
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <div>Lade Tasks...</div>
+        </div>
+
+        <table id="tasksTable" style="display:none;">
+            <thead>
+                <tr>
+                    <th style="width:40px;">Status</th>
+                    <th>Name</th>
+                    <th>Zeitplan</th>
+                    <th>Typ</th>
+                    <th>Letzter Lauf</th>
+                    <th style="width:120px;">Aktionen</th>
+                </tr>
+            </thead>
+            <tbody id="tasksBody"></tbody>
+        </table>
+
+        <div id="emptyState" class="empty-state" style="display:none;">
+            <div class="empty-icon"><i data-lucide="timer" style="width:48px;height:48px;opacity:0.3"></i></div>
+            <h3>Keine Scheduled Tasks</h3>
+            <p>Erstelle geplante Aufgaben um automatische Checks einzurichten.</p>
+            <div class="template-cards">
+                <div class="template-card" onclick="createFromTemplate('health-check')">
+                    <i data-lucide="heart-pulse" class="icon"></i>
+                    <strong>Health Check</strong>
+                    <span>Dashboard-Status pruefen</span>
+                </div>
+                <div class="template-card" onclick="createFromTemplate('backup')">
+                    <i data-lucide="shield-check" class="icon"></i>
+                    <strong>Backup Check</strong>
+                    <span>Backup-Integritaet pruefen</span>
+                </div>
+                <div class="template-card" onclick="createFromTemplate('issue-tracker')">
+                    <i data-lucide="git-pull-request" class="icon"></i>
+                    <strong>Issue Tracker</strong>
+                    <span>GitHub/Gitea-Issue ueberwachen</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create/Edit Modal -->
+    <div class="modal-overlay" id="taskModal" onclick="if(event.target===this)closeModal()">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Neuer Task</h2>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="taskName">Name</label>
+                    <input type="text" id="taskName" placeholder="z.B. Dashboard Health Check" class="form-input">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="taskCron">Cron-Ausdruck</label>
+                        <input type="text" id="taskCron" placeholder="23 8 * * *" class="form-input" oninput="updateCronPreview()">
+                        <small class="cron-preview" id="cronPreview"></small>
+                    </div>
+                    <div class="form-group">
+                        <label for="taskType">Typ</label>
+                        <select id="taskType" class="form-input">
+                            <option value="custom">Custom</option>
+                            <option value="health-check">Health Check</option>
+                            <option value="backup">Backup</option>
+                            <option value="issue-tracker">Issue Tracker</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Schnellauswahl Zeitplan</label>
+                    <div class="cron-presets">
+                        <button type="button" class="btn btn-ghost btn-sm" onclick="setCron('*/15 * * * *')">15 Min</button>
+                        <button type="button" class="btn btn-ghost btn-sm" onclick="setCron('0 * * * *')">Stuendlich</button>
+                        <button type="button" class="btn btn-ghost btn-sm" onclick="setCron('23 8 * * *')">Taeglich 8:23</button>
+                        <button type="button" class="btn btn-ghost btn-sm" onclick="setCron('0 9 * * 1-5')">Werktags 9:00</button>
+                        <button type="button" class="btn btn-ghost btn-sm" onclick="setCron('17 2 * * *')">Nachts 2:17</button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="taskPrompt">Prompt / Beschreibung</label>
+                    <textarea id="taskPrompt" rows="6" placeholder="Was soll geprueft werden?" class="form-input"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="taskTriggerId">Remote Trigger ID (optional)</label>
+                    <input type="text" id="taskTriggerId" placeholder="trig_..." class="form-input">
+                    <small>Falls bereits als RemoteTrigger in Claude Code angelegt</small>
+                </div>
+                <div class="modal-actions">
+                    <button class="btn btn-secondary" onclick="closeModal()">Abbrechen</button>
+                    <button class="btn btn-primary" id="saveBtn" onclick="saveTask()">Erstellen</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detail Modal -->
+    <div class="modal-overlay" id="detailModal" onclick="if(event.target===this)closeDetailModal()">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="detailTitle">Task Details</h2>
+                <button class="modal-close" onclick="closeDetailModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="detailBody"></div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/scheduled_tasks.js"></script>
+{% endblock %}

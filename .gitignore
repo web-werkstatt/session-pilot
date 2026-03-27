@@ -35,6 +35,12 @@ Thumbs.db
 # Playwright screenshots
 .playwright-mcp/
 dashboard-full.png
+plans-*.png
+scheduled-tasks-*.png
+project-detail-*.png
+project-tabs-*.png
+project-wordpress-*.png
+projekte-menu-*.png
 
 # User data
 favorites.json
@@ -43,6 +49,7 @@ notifications.json
 groups.json
 ideas.json
 relations.json
+scheduled_tasks.json
 
 # Session notes (personal)
 next-session.md
