@@ -22,7 +22,7 @@ def _escape(text):
 @project_bp.route('/project/<path:name>')
 def project_detail(name):
     from flask import render_template
-    return render_template('project_detail.html', project_name=name, active_page='dashboard')
+    return render_template('project_detail.html', project_name=name, active_page='projects')
 
 
 @project_bp.route('/api/project/<path:name>')

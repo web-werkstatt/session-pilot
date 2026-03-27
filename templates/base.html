@@ -46,6 +46,9 @@
                 <a href="/" class="nav-item {% if active_page == 'dashboard' %}active{% endif %}">
                     <span class="nav-icon"><i data-lucide="bar-chart-3" class="icon"></i></span><span class="nav-text">Dashboard</span>
                 </a>
+                <a href="/" class="nav-item {% if active_page == 'projects' %}active{% endif %}" onclick="if(window.location.pathname==='/'){event.preventDefault();if(typeof showTab==='function')showTab('projects');}">
+                    <span class="nav-icon"><i data-lucide="folder-open" class="icon"></i></span><span class="nav-text">Projekte</span>
+                </a>
                 <a href="/sessions" class="nav-item {% if active_page == 'sessions' %}active{% endif %}">
                     <span class="nav-icon"><i data-lucide="bot" class="icon"></i></span><span class="nav-text">Claude Sessions</span>
                 </a>
@@ -66,6 +69,12 @@
                 </a>
                 <a href="/dependencies" class="nav-item {% if active_page == 'dependencies' %}active{% endif %}">
                     <span class="nav-icon"><i data-lucide="git-branch" class="icon"></i></span><span class="nav-text">Abhängigkeiten</span>
+                </a>
+                <a href="/scheduled-tasks" class="nav-item {% if active_page == 'scheduled_tasks' %}active{% endif %}">
+                    <span class="nav-icon"><i data-lucide="timer" class="icon"></i></span><span class="nav-text">Scheduled Tasks</span>
+                </a>
+                <a href="/plans" class="nav-item {% if active_page == 'plans' %}active{% endif %}">
+                    <span class="nav-icon"><i data-lucide="clipboard-list" class="icon"></i></span><span class="nav-text">Plans</span>
                 </a>
             </div>
             <div class="nav-section">

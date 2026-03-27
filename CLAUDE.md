@@ -41,6 +41,8 @@ Kein Build-Schritt, keine Tests, kein Linting konfiguriert. Abhaengigkeiten in `
 - `group_routes.py` - Gruppen-Verwaltung
 - `idea_routes.py` - Ideen/Notizen
 - `news_routes.py` - News + Vorlagen
+- `scheduled_tasks_routes.py` - Scheduled Tasks Verwaltung (CRUD, JSON-Store)
+- `plans_routes.py` - Plans Import, Uebersicht, Detail, Status-Verwaltung (PostgreSQL)
 
 **Service-Schicht (`services/`):**
 - `project_scanner.py` - Scannt Projekte, verwaltet project.json, Cache-Logik
@@ -56,9 +58,11 @@ Kein Build-Schritt, keine Tests, kein Linting konfiguriert. Abhaengigkeiten in `
 - `db_service.py` - PostgreSQL Connection-Pool (psycopg2)
 - `session_import.py` - JSONL-Parser fuer Claude Sessions
 - `session_export.py` - Export: JSON, MD, HTML, XLSX, TXT
+- `plans_import.py` - Scannt ~/.claude/plans/, erkennt Projekte aus Inhalt, importiert in DB
 
 **Datenspeicher (JSON-Dateien, in .gitignore):**
-- `groups.json`, `relations.json`, `ideas.json` - Benutzerdaten
+- `groups.json`, `relations.json`, `ideas.json`, `scheduled_tasks.json` - Benutzerdaten (JSON)
+- `project_plans` - DB-Tabelle fuer Plans (importiert aus ~/.claude/plans/)
 - `notifications.json`, `.notification_state.json` - Benachrichtigungen
 - `favorites.json` - Projekt-Favoriten
 - `.env` - Secrets (Gitea-Token, DB-Passwort)
@@ -75,6 +79,37 @@ Kein Build-Schritt, keine Tests, kein Linting konfiguriert. Abhaengigkeiten in `
 - **Notification-System:** Background-Thread prueft alle 60s auf Aenderungen, JSON-Store ist thread-safe via Lock.
 - **Volltextsuche:** Nutzt ripgrep (rg) mit Typ-Filtern, Fallback auf grep.
 - **Dashboard-Widgets:** Chart.js via CDN, Lazy-Loading beim Tab-Wechsel.
+- **Plans-Import:** Scannt `~/.claude/plans/*.md`, erkennt Projekt aus `/mnt/projects/XXX`-Pfaden im Inhalt, verknuepft mit Sessions via Zeitstempel-Korrelation.
+
+## Scheduled Tasks (Claude Code)
+
+Dashboard-Seite unter `/scheduled-tasks` zur Verwaltung geplanter Aufgaben. Tasks werden in `scheduled_tasks.json` gespeichert und koennen optional als Claude Code RemoteTrigger angelegt werden.
+
+### Aktive RemoteTrigger
+
+| Name | ID | Cron | Zweck |
+|---|---|---|---|
+| TUI Bug Check #39294 | trig_01AppVBkp2M9xSd3EySnkpfJ | 0 9 * * * | GitHub-Issue Monitoring |
+| Dashboard Health Check | trig_01EyXhKZkHTYQLkMcj3k9Zju | 23 8 * * * | Service + DB + Disk |
+| Backup Verification | trig_01NQ7gimC19cSqAvawor3rs6 | 17 2 * * * | Backup-Integritaet |
+
+### CLI-Verwaltung
+
+```bash
+# Alle Trigger auflisten
+RemoteTrigger list
+
+# Trigger manuell ausfuehren
+RemoteTrigger run --trigger_id trig_...
+
+# Trigger deaktivieren
+RemoteTrigger update --trigger_id trig_... --body '{"enabled": false}'
+```
+
+### Zwei Mechanismen
+
+- **RemoteTrigger**: Persistent, ueberlebt Sessions, laeuft auf claude.ai-Infrastruktur
+- **CronCreate**: Session-lokal, max 7 Tage, gut fuer temporaere Checks
 
 ## Backup
 
