@@ -1,5 +1,6 @@
 """Blueprint-Registrierung"""
 from routes.session_routes import sessions_bp
+from routes.session_review_routes import session_review_bp
 from routes.document_routes import documents_bp
 from routes.project_routes import project_bp
 from routes.project_info_routes import project_info_bp
@@ -23,6 +24,7 @@ from routes.plans_routes import plans_bp
 
 def register_blueprints(app):
     app.register_blueprint(sessions_bp)
+    app.register_blueprint(session_review_bp)
     app.register_blueprint(documents_bp)
     app.register_blueprint(data_bp)
     app.register_blueprint(project_bp)

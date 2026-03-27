@@ -1,8 +1,8 @@
 # Projekt-Dashboard - Naechste Session
 
 > **Letzte Aktualisierung:** 2026-03-27
-> **Status:** Sprint 1+2 abgeschlossen, Sprint 3 offen
-> **Naechste Aufgabe:** Sprint 3 - GitHub-Integration & Security
+> **Status:** Sprint 1+2+3 abgeschlossen
+> **Naechste Aufgabe:** Tech-Debt Cleanup + UI-Verbesserungen
 
 ---
 
@@ -18,28 +18,13 @@ Version, Lizenz, LOC, Repo-Size, Changelog Erkennung
 - **Env-Infos** - `description_extractor.py:parse_env_example()`, Code-Badges in Detail
 - **Port-Konflikte** - in `project_scanner.py:scan_projects()`, Warn-Badge in Tabelle
 
----
-
-## Naechste Session - Sprint 3: GitHub-Integration & Security
-
-### Tasks Sprint 3
-
-1. **GitHub-Integration** - Stars, Issues, PRs von GitHub-Repos anzeigen
-   - Neuer Service: `services/github_service.py`
-   - API-Anbindung via Token oder public
-   - Badges in Tabelle + Detail-Ansicht
-
-2. **CI/CD-Status** - GitHub Actions Status anzeigen
-   - Letzter Workflow-Run: success/failure/pending
-   - Badge in Tabelle
-
-3. **Deployment-Status** - Health-Check fuer laufende Services
-   - HTTP-Check auf konfigurierte URLs
-   - Status-Badge in Tabelle
-
-4. **Security/Vulnerabilities** - npm audit / pip-audit Ergebnisse
-   - `services/security_scanner.py`
-   - Warn-Badge bei bekannten Schwachstellen
+### Sprint 3 - GitHub-Integration & Security (Commit 7568784)
+- **GitHub-Integration** - `services/github_service.py`, Stars/Forks/Issues/PRs, Token aus Remote-URL
+- **CI/CD-Status** - GitHub Actions letzter Workflow-Run, Badge in Tabelle + Detail
+- **Health-Checks** - `services/health_check_service.py`, HTTP-Check auf Ports/URLs, Badge in Tabelle + Detail
+- **Security-Scanner** - `services/security_scanner.py`, npm audit / pip-audit, On-Demand API `/api/security/<project>`
+- **Detail-Sections** - GitHub, Health-Check, Security in `routes/project_info_sections_s3.py`
+- 5 GitHub-Repos erkannt (serena 22k★, open-lovable 24k★, Archon 13k★), 27 Health-Checks aktiv
 
 ---
 
@@ -50,7 +35,7 @@ Version, Lizenz, LOC, Repo-Size, Changelog Erkennung
 - [ ] `sessions2.css` (823/400 Zeilen) → aufteilen
 
 ### UI-Verbesserungen
-- [ ] Verbleibende hardcoded Hex-Farben in CSS
+- [ ] Verbleibende hardcoded Hex-Farben in CSS durch CSS-Variablen ersetzen
 - [ ] Emoji-Icons in JS-generierten Inhalten durch Lucide ersetzen
 - [ ] Plans: 3 nicht-zugeordnete Plans manuell zuordnen
 
