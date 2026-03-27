@@ -1,57 +1,49 @@
 # Projekt-Dashboard - Naechste Session
 
 > **Letzte Aktualisierung:** 2026-03-27
-> **Status:** Sprint 1 (Metadaten) abgeschlossen, Sprint 2+3 offen
-> **Naechste Aufgabe:** Sprint 2 - Git-erweiterte Features implementieren
+> **Status:** Sprint 1+2 abgeschlossen, Sprint 3 offen
+> **Naechste Aufgabe:** Sprint 3 - GitHub-Integration & Security
 
 ---
 
-## Naechste Session - Sprint 2: Git-erweiterte Features
+## Abgeschlossen
 
-### Sprint-Plan
-Datei: `~/.claude/plans/jazzy-booping-pascal.md`
+### Sprint 1 - Metadaten (Commit ea34b6f)
+Version, Lizenz, LOC, Repo-Size, Changelog Erkennung
 
-### Tasks Sprint 2 (in dieser Reihenfolge)
+### Sprint 2 - Git-erweiterte Features (Commit 69d552e)
+- **Aktivitaets-Score** - `git_service.py:get_activity_score()`, farbiger Dot in Tabelle
+- **Branches** - `git_service.py:get_branches()`, Count-Badge in Tabelle, Liste in Detail
+- **Contributors** - `git_service.py:get_contributors()`, Top 3 in Detail-Ansicht
+- **Env-Infos** - `description_extractor.py:parse_env_example()`, Code-Badges in Detail
+- **Port-Konflikte** - in `project_scanner.py:scan_projects()`, Warn-Badge in Tabelle
 
-1. **Aktivitaets-Score** - Commits 7d/30d zaehlen, gewichteter Score, Level (hot/active/moderate/low/inactive), farbiger Dot in Tabelle
-   - `services/git_service.py`: `get_activity_score()`
-   - `services/project_scanner.py`: in scan_projects()
-   - `static/js/dashboard-table.js`: Dot in Aktivitaets-Spalte
+---
 
-2. **Branches-Uebersicht** - Alle Branches mit letzter Aktivitaet, Branch-Count Badge
-   - `services/git_service.py`: `get_branches()`
-   - Detail-Ansicht: Branch-Liste
+## Naechste Session - Sprint 3: GitHub-Integration & Security
 
-3. **Contributors** - Top 3 Contributor mit Commit-Anzahl
-   - `services/git_service.py`: `get_contributors()`
-   - Nur in Detail-Ansicht
+### Tasks Sprint 3
 
-4. **Environment-Infos** - .env.example Keys auslesen
-   - `services/description_extractor.py`: `parse_env_example()`
-   - Nur in Detail-Ansicht als Code-Badges
+1. **GitHub-Integration** - Stars, Issues, PRs von GitHub-Repos anzeigen
+   - Neuer Service: `services/github_service.py`
+   - API-Anbindung via Token oder public
+   - Badges in Tabelle + Detail-Ansicht
 
-5. **Port-Konflikt-Check** - Projekte mit gleichem Port warnen
-   - `services/project_scanner.py`: `detect_port_conflicts()`
-   - Warn-Badge in Tabelle
+2. **CI/CD-Status** - GitHub Actions Status anzeigen
+   - Letzter Workflow-Run: success/failure/pending
+   - Badge in Tabelle
 
-### Betroffene Dateien
-| Datei | Aenderung |
-|-------|-----------|
-| `services/git_service.py` | 3 neue Funktionen (Score, Branches, Contributors) |
-| `services/project_scanner.py` | Neue Felder + Port-Konflikt-Check |
-| `services/description_extractor.py` | parse_env_example() |
-| `routes/project_info_routes.py` | Neue Sections (Branches, Contributors, Env) |
-| `static/js/dashboard-table.js` | Activity-Dot, Branch-Count Badge, Port-Warn |
+3. **Deployment-Status** - Health-Check fuer laufende Services
+   - HTTP-Check auf konfigurierte URLs
+   - Status-Badge in Tabelle
+
+4. **Security/Vulnerabilities** - npm audit / pip-audit Ergebnisse
+   - `services/security_scanner.py`
+   - Warn-Badge bei bekannten Schwachstellen
 
 ---
 
 ## Offene Punkte
-
-### Sprint 3 (danach)
-- [ ] GitHub-Integration (Stars, Issues, PRs)
-- [ ] CI/CD-Status (GitHub Actions)
-- [ ] Deployment-Status (Health-Check)
-- [ ] Security/Vulnerabilities (npm audit / pip-audit)
 
 ### Dateigroessen-Limits (Pre-Commit)
 - [ ] `session_routes.py` (583/500 Zeilen) → aufteilen
