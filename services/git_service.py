@@ -130,3 +130,113 @@ def git_pull(project_path):
                        capture_output=True, text=True, timeout=30)
     output = r.stdout.strip() + "\n" + r.stderr.strip()
     return r.returncode == 0, output.strip()
+
+
+def get_activity_score(project_path):
+    """Berechnet Aktivitaets-Score basierend auf Commits der letzten 7/30 Tage.
+    Returns: {"commits_7d": int, "commits_30d": int, "score": int, "level": str}
+    """
+    result = {"commits_7d": 0, "commits_30d": 0, "score": 0, "level": "inactive"}
+    try:
+        for period, key in [("7 days", "commits_7d"), ("30 days", "commits_30d")]:
+            r = subprocess.run(
+                ["git", "-C", project_path, "rev-list", "--count",
+                 f"--since={period} ago", "HEAD"],
+                capture_output=True, text=True, timeout=5
+            )
+            if r.returncode == 0:
+                result[key] = int(r.stdout.strip())
+    except (OSError, subprocess.TimeoutExpired, ValueError):
+        pass
+
+    # Gewichteter Score: 7d-Commits zaehlen 3x, 30d-Commits 1x
+    score = result["commits_7d"] * 3 + result["commits_30d"]
+    result["score"] = score
+
+    if score >= 20:
+        result["level"] = "hot"
+    elif score >= 10:
+        result["level"] = "active"
+    elif score >= 3:
+        result["level"] = "moderate"
+    elif score >= 1:
+        result["level"] = "low"
+    else:
+        result["level"] = "inactive"
+
+    return result
+
+
+def get_branches(project_path):
+    """Listet alle Branches mit letzter Aktivitaet.
+    Returns: {"count": int, "branches": [{"name": str, "last_commit": str, "is_current": bool}]}
+    """
+    result = {"count": 0, "branches": []}
+    try:
+        r = subprocess.run(
+            ["git", "-C", project_path, "branch", "-a",
+             "--format=%(refname:short)|%(committerdate:short)|%(HEAD)"],
+            capture_output=True, text=True, timeout=5
+        )
+        if r.returncode != 0:
+            return result
+
+        seen = set()
+        for line in r.stdout.strip().split('\n'):
+            if not line.strip():
+                continue
+            parts = line.split('|')
+            if len(parts) < 3:
+                continue
+            name = parts[0].strip()
+            # Remote-Branches: origin/xxx -> nur wenn kein lokaler existiert
+            if name.startswith("origin/"):
+                local_name = name[7:]
+                if local_name == "HEAD":
+                    continue
+                if local_name in seen:
+                    continue
+                name = local_name
+            if name in seen:
+                continue
+            seen.add(name)
+            result["branches"].append({
+                "name": name,
+                "last_commit": parts[1].strip(),
+                "is_current": parts[2].strip() == "*"
+            })
+        result["count"] = len(result["branches"])
+        # Sortieren: aktueller Branch zuerst, dann nach Datum absteigend
+        result["branches"].sort(key=lambda b: (not b["is_current"], b.get("last_commit", "")), reverse=False)
+        result["branches"].sort(key=lambda b: b["is_current"], reverse=True)
+    except (OSError, subprocess.TimeoutExpired):
+        pass
+    return result
+
+
+def get_contributors(project_path, limit=3):
+    """Top Contributors mit Commit-Anzahl.
+    Returns: [{"name": str, "email": str, "commits": int}]
+    """
+    result = []
+    try:
+        r = subprocess.run(
+            ["git", "-C", project_path, "shortlog", "-sne", "HEAD"],
+            capture_output=True, text=True, timeout=10
+        )
+        if r.returncode == 0:
+            import re
+            for line in r.stdout.strip().split('\n')[:limit]:
+                line = line.strip()
+                if not line:
+                    continue
+                match = re.match(r'(\d+)\s+(.+?)\s+<(.+?)>', line)
+                if match:
+                    result.append({
+                        "name": match.group(2).strip(),
+                        "email": match.group(3).strip(),
+                        "commits": int(match.group(1))
+                    })
+    except (OSError, subprocess.TimeoutExpired):
+        pass
+    return result

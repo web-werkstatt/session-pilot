@@ -13,6 +13,8 @@ from services.metadata_extractor import (
     extract_version, detect_license, get_repo_size,
     count_lines_of_code, parse_changelog,
 )
+from services.git_service import get_branches, get_contributors
+from services.description_extractor import parse_env_example
 
 project_info_bp = Blueprint('project_info', __name__)
 
@@ -56,6 +58,9 @@ def get_info():
     _add_loc_section(sections, pj)
     _add_tech_stack_section(sections, project_path)
     _add_git_section(sections, project_path)
+    _add_branches_section(sections, project_path)
+    _add_contributors_section(sections, project_path)
+    _add_env_section(sections, project_path)
     _add_changelog_section(sections, pj)
     _add_readme_section(sections, project_path)
     _add_screenshots_section(sections, name, project_path)
@@ -349,5 +354,67 @@ def _add_containers_section(sections, name):
                     f"<span style='color:#666'>{_escape(port)}</span></div>"
                 )
             sections.append(f"<h3>Container</h3>{cont_html}")
+    except Exception:
+        pass
+
+
+def _add_branches_section(sections, project_path):
+    """Branch-Uebersicht (Sprint 2)"""
+    try:
+        branch_data = get_branches(project_path)
+        if branch_data["count"] <= 1:
+            return
+        rows = ""
+        for b in branch_data["branches"]:
+            current = " <strong>(aktuell)</strong>" if b["is_current"] else ""
+            rows += (
+                f"<div style='display:flex;gap:10px;padding:4px 0;font-size:13px'>"
+                f"<code style='color:#64b5f6'>{_escape(b['name'])}</code>{current}"
+                f"<span style='color:#666;margin-left:auto'>{_escape(b.get('last_commit', ''))}</span></div>"
+            )
+        sections.append(
+            f"<h3>Branches <span style='font-weight:normal;color:#888;font-size:12px'>"
+            f"({branch_data['count']})</span></h3>{rows}"
+        )
+    except Exception:
+        pass
+
+
+def _add_contributors_section(sections, project_path):
+    """Top Contributors (Sprint 2)"""
+    try:
+        contributors = get_contributors(project_path)
+        if not contributors:
+            return
+        rows = ""
+        for c in contributors:
+            rows += (
+                f"<div style='display:flex;gap:10px;padding:4px 0;font-size:13px'>"
+                f"<strong>{_escape(c['name'])}</strong>"
+                f"<span style='color:#888'>{_escape(c['email'])}</span>"
+                f"<span style='color:#4caf50;margin-left:auto'>{c['commits']} Commits</span></div>"
+            )
+        sections.append(f"<h3>Contributors</h3>{rows}")
+    except Exception:
+        pass
+
+
+def _add_env_section(sections, project_path):
+    """Environment-Variablen aus .env.example (Sprint 2)"""
+    try:
+        env_vars = parse_env_example(project_path)
+        if not env_vars:
+            return
+        badges = ""
+        for v in env_vars:
+            color = "#1a3a2a" if v["has_default"] else "#3a1a1a"
+            text_color = "#4caf50" if v["has_default"] else "#ff8a80"
+            title = _escape(v["comment"]) if v["comment"] else ("Hat Default" if v["has_default"] else "Muss gesetzt werden")
+            badges += (
+                f"<code style='background:{color};color:{text_color};padding:2px 8px;"
+                f"border-radius:4px;font-size:11px;margin:2px' title='{title}'>"
+                f"{_escape(v['key'])}</code> "
+            )
+        sections.append(f"<h3>Environment-Variablen</h3><p>{badges}</p>")
     except Exception:
         pass

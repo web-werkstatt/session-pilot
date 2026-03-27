@@ -393,3 +393,39 @@ def extract_dependencies(project_path, all_project_names=None):
     dependencies["frameworks"] = sorted(set(dependencies["frameworks"]))
 
     return dependencies
+
+
+def parse_env_example(project_path):
+    """Liest .env.example und gibt die definierten Keys zurueck.
+    Returns: [{"key": str, "comment": str, "has_default": bool}]
+    """
+    result = []
+    for env_file in [".env.example", ".env.sample", ".env.template", "env.example"]:
+        env_path = os.path.join(project_path, env_file)
+        if os.path.exists(env_path):
+            try:
+                last_comment = ""
+                with open(env_path, 'r', encoding='utf-8', errors='ignore') as f:
+                    for line in f:
+                        line = line.strip()
+                        if not line:
+                            last_comment = ""
+                            continue
+                        if line.startswith('#'):
+                            last_comment = line.lstrip('#').strip()
+                            continue
+                        if '=' in line:
+                            key, _, value = line.partition('=')
+                            key = key.strip()
+                            value = value.strip()
+                            if key and re.match(r'^[A-Z_][A-Z0-9_]*$', key):
+                                result.append({
+                                    "key": key,
+                                    "comment": last_comment,
+                                    "has_default": bool(value and value not in ('""', "''", "your_value_here", "xxx", ""))
+                                })
+                            last_comment = ""
+            except OSError:
+                pass
+            break
+    return result

@@ -135,6 +135,29 @@ function renderProject(proj, isNew) {
         versionBadge = `<span class="badge" style="background:#1a3a2a;color:#4caf50;font-size:9px;margin-left:5px">v${proj.version}</span>`;
     }
 
+    // Activity-Dot (Sprint 2)
+    let activityDot = '';
+    if (proj.activity_score) {
+        const levelColors = {hot:'#ff4444', active:'#4caf50', moderate:'#ff9800', low:'#666', inactive:'#333'};
+        const levelTitles = {hot:'Sehr aktiv', active:'Aktiv', moderate:'Moderat', low:'Wenig aktiv', inactive:'Inaktiv'};
+        const lvl = proj.activity_score.level || 'inactive';
+        const c7 = proj.activity_score.commits_7d || 0;
+        const c30 = proj.activity_score.commits_30d || 0;
+        activityDot = `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${levelColors[lvl]};margin-right:4px;vertical-align:middle" title="${levelTitles[lvl]} (${c7} commits/7d, ${c30}/30d)"></span>`;
+    }
+
+    // Branch-Count Badge (Sprint 2)
+    let branchBadge = '';
+    if (proj.branch_count && proj.branch_count > 1) {
+        branchBadge = `<span class="badge" style="background:#1a2a4a;color:#64b5f6;font-size:9px;margin-left:5px" title="${proj.branch_count} Branches">${proj.branch_count}B</span>`;
+    }
+
+    // Port-Konflikt Warnung (Sprint 2)
+    let portWarnBadge = '';
+    if (proj.port_conflict && proj.port_conflict.length > 0) {
+        portWarnBadge = `<span class="badge" style="background:#4a1a1a;color:#ff5252;font-size:9px;margin-left:5px" title="Port-Konflikt mit: ${proj.port_conflict.join(', ')}">PORT!</span>`;
+    }
+
     // LOC + Lizenz + Size als Tooltip-Info in Beschreibung
     let metaInfo = '';
     const metaParts = [];
@@ -168,7 +191,7 @@ function renderProject(proj, isNew) {
     </div>`;
 
     tr.innerHTML = `
-        <td class="project-name"><span class="pn-icons">${favBtn}</span><span class="pn-text">${namePrefix}${isNew ? '<span class="badge badge-new">NEU</span> ' : ''}${displayName}${typeBadge}${versionBadge}${relationBadges}</span></td>
+        <td class="project-name"><span class="pn-icons">${favBtn}</span><span class="pn-text">${activityDot}${namePrefix}${isNew ? '<span class="badge badge-new">NEU</span> ' : ''}${displayName}${typeBadge}${versionBadge}${branchBadge}${portWarnBadge}${relationBadges}</span></td>
         <td class="project-function">${proj.function || '-'}${metaInfo}</td>
         <td>${getGroupBadge(proj.group)}</td>
         <td>${getPriorityBadge(proj.priority)}</td>

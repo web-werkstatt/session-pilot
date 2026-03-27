@@ -7,7 +7,7 @@ import subprocess
 from datetime import datetime
 
 from config import PROJECTS_DIR
-from services.git_service import get_local_git_info
+from services.git_service import get_local_git_info, get_activity_score
 from services.docker_service import load_yaml_simple
 from services.cache_service import load_cache, save_cache, is_cache_valid, get_cached_activity, set_cached_activity
 from services.project_detector import (
@@ -297,6 +297,27 @@ def scan_projects(auto_generate=True):
         project["has_gitea"] = git_info["has_remote"]
         project["gitea_repo"] = git_info["remote_name"]
 
+        # Aktivitaets-Score (Sprint 2)
+        if git_info["local_sha"]:
+            activity_score = get_activity_score(item_path)
+            project["activity_score"] = activity_score
+        else:
+            project["activity_score"] = {"commits_7d": 0, "commits_30d": 0, "score": 0, "level": "inactive"}
+
+        # Branch-Count (schnell, ohne Details)
+        try:
+            r = subprocess.run(
+                ["git", "-C", item_path, "branch", "--list"],
+                capture_output=True, text=True, timeout=3
+            )
+            if r.returncode == 0:
+                branches = [l.strip() for l in r.stdout.strip().split('\n') if l.strip()]
+                project["branch_count"] = len(branches)
+            else:
+                project["branch_count"] = 0
+        except (OSError, subprocess.TimeoutExpired):
+            project["branch_count"] = 0
+
         # Letzte Aktivität (mit Cache)
         if is_cache_valid(cache, item):
             cached_activity = get_cached_activity(cache, item)
@@ -358,6 +379,20 @@ def scan_projects(auto_generate=True):
             proj_path = os.path.join(PROJECTS_DIR, proj_name)
         if os.path.isdir(proj_path):
             proj_data["dependencies"] = extract_dependencies(proj_path, all_project_names)
+
+    # Port-Konflikt-Check (Sprint 2)
+    port_map = {}
+    for proj_name, proj_data in projects.items():
+        port = proj_data.get("port")
+        if port:
+            port_str = str(port)
+            if port_str not in port_map:
+                port_map[port_str] = []
+            port_map[port_str].append(proj_name)
+    for port_str, proj_names in port_map.items():
+        if len(proj_names) > 1:
+            for pn in proj_names:
+                projects[pn]["port_conflict"] = [p for p in proj_names if p != pn]
 
     return dict(sorted(
         projects.items(),
