@@ -4,6 +4,51 @@
 
 ---
 
+## Session 2026-03-27 (Abend) - Sprint 2+3 + Tech-Debt Cleanup
+
+### Was wurde erledigt
+
+**Sprint 2 - Git-erweiterte Features:**
+- Aktivitaets-Score (Commits 7d/30d, gewichteter Score, farbiger Dot)
+- Branch-Zaehler + Branch-Liste in Detail
+- Top 3 Contributors in Detail
+- Env-Variablen aus .env.example als Badges
+- Port-Konflikt-Erkennung mit Warn-Badge
+
+**Sprint 3 - GitHub-Integration & Security:**
+- GitHub-Service (Stars, Forks, Issues, PRs, Sprache via API, 5min Cache)
+- CI/CD-Status (GitHub Actions letzter Workflow-Run)
+- Health-Check-Service (HTTP-Checks auf Ports/URLs, 2min Cache)
+- Security-Scanner (npm audit / pip-audit, On-Demand API)
+- 5 GitHub-Repos erkannt (serena 22k, open-lovable 24k, Archon 13k)
+- 27 Health-Checks aktiv
+- Badges in Dashboard-Tabelle: GH, CI, Health
+- Detail-Sections: GitHub, Health-Check, Security
+
+**Tech-Debt Cleanup:**
+- session_routes.py aufgeteilt (583→350 Zeilen, Reviews nach session_review_routes.py)
+- sessions2.css aufgeteilt (823→7 Zeilen Import-Hub, 3 thematische Dateien)
+
+### Git Commits
+```
+9f6e14e refactor: session_routes.py und sessions2.css aufgeteilt (Dateigroessen-Limits)
+7568784 feat: Sprint 3 - GitHub-Integration, CI/CD-Status, Health-Checks, Security-Scanner
+4156492 docs: next-session.md fuer Sprint 3 aktualisiert
+69d552e feat: Sprint 2 - Activity-Score, Branches, Contributors, Env-Infos, Port-Konflikte
+e308a5a docs: Session 2026-03-27 dokumentiert
+```
+
+### Neue Dateien
+- `services/github_service.py` - GitHub API Service
+- `services/health_check_service.py` - Health-Check Service
+- `services/security_scanner.py` - Security Scanner
+- `routes/session_review_routes.py` - Review-Routes (extrahiert)
+- `routes/project_info_sections_s3.py` - Sprint 3 Detail-Sections
+- `static/css/sessions-list.css` - Sessions-Liste CSS
+- `static/css/session-reviews.css` - Reviews CSS
+
+---
+
 ## Session 2026-03-27 (Nachmittag) - README Update + Sprint 1 Metadaten
 
 ### Was wurde erledigt
