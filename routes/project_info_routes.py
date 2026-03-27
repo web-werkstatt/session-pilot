@@ -15,6 +15,7 @@ from services.metadata_extractor import (
 )
 from services.git_service import get_branches, get_contributors
 from services.description_extractor import parse_env_example
+from routes.project_info_sections_s3 import add_github_section, add_health_section, add_security_section
 
 project_info_bp = Blueprint('project_info', __name__)
 
@@ -61,6 +62,9 @@ def get_info():
     _add_branches_section(sections, project_path)
     _add_contributors_section(sections, project_path)
     _add_env_section(sections, project_path)
+    add_github_section(sections, project_path)
+    add_health_section(sections, name, pj, project_path)
+    add_security_section(sections, name, project_path)
     _add_changelog_section(sections, pj)
     _add_readme_section(sections, project_path)
     _add_screenshots_section(sections, name, project_path)
@@ -418,3 +422,5 @@ def _add_env_section(sections, project_path):
         sections.append(f"<h3>Environment-Variablen</h3><p>{badges}</p>")
     except Exception:
         pass
+
+

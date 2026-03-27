@@ -112,6 +112,21 @@ def api_container_action(name, action):
     return jsonify(result), status_code
 
 
+@data_bp.route('/api/security/<path:project_name>')
+def api_security_scan(project_name):
+    """On-Demand Security-Scan fuer ein Projekt"""
+    import os
+    from config import PROJECTS_DIR
+    from services.security_scanner import get_security_for_project
+    project_path = os.path.join(PROJECTS_DIR, project_name)
+    if not os.path.isdir(project_path):
+        return jsonify({"error": "Projekt nicht gefunden"}), 404
+    result = get_security_for_project(project_name, project_path)
+    if not result:
+        return jsonify({"error": "Kein npm/pip Projekt"}), 404
+    return jsonify(result)
+
+
 @data_bp.route('/api/container/<name>/logs')
 def api_container_logs(name):
     """Container-Logs abrufen"""

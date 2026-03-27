@@ -9,6 +9,8 @@ from datetime import datetime
 from config import PROJECTS_DIR
 from services.git_service import get_local_git_info, get_activity_score
 from services.docker_service import load_yaml_simple
+from services.github_service import get_github_info_for_project
+from services.health_check_service import get_health_for_project
 from services.cache_service import load_cache, save_cache, is_cache_valid, get_cached_activity, set_cached_activity
 from services.project_detector import (
     SCHEMA_VERSION, SCHEMA_FIELDS,
@@ -317,6 +319,23 @@ def scan_projects(auto_generate=True):
                 project["branch_count"] = 0
         except (OSError, subprocess.TimeoutExpired):
             project["branch_count"] = 0
+
+        # GitHub-Infos (Sprint 3) - nur fuer GitHub-Repos
+        github_info = get_github_info_for_project(item_path)
+        if github_info:
+            project["github"] = github_info
+        else:
+            project["github"] = None
+
+        # Health-Check (Sprint 3) - nur fuer Projekte mit Port
+        health_url = None
+        if project_meta:
+            health_url = project_meta.get("health_url")
+        health = get_health_for_project(item, port=project.get("port"), health_url=health_url)
+        if health:
+            project["health"] = health
+        else:
+            project["health"] = None
 
         # Letzte Aktivität (mit Cache)
         if is_cache_valid(cache, item):

@@ -158,6 +158,41 @@ function renderProject(proj, isNew) {
         portWarnBadge = `<span class="badge" style="background:#4a1a1a;color:#ff5252;font-size:9px;margin-left:5px" title="Port-Konflikt mit: ${proj.port_conflict.join(', ')}">PORT!</span>`;
     }
 
+    // GitHub-Badge (Sprint 3)
+    let githubBadge = '';
+    if (proj.github) {
+        const gh = proj.github;
+        const parts = [];
+        if (gh.stars > 0) parts.push(`★${gh.stars}`);
+        if (gh.open_issues > 0) parts.push(`I:${gh.open_issues}`);
+        if (gh.open_prs > 0) parts.push(`PR:${gh.open_prs}`);
+        if (parts.length > 0) {
+            githubBadge = `<span class="badge" style="background:#1a1a2e;color:#e0e0e0;font-size:9px;margin-left:5px" title="GitHub: ${gh.full_name}">${parts.join(' ')}</span>`;
+        } else {
+            githubBadge = `<span class="badge" style="background:#1a1a2e;color:#888;font-size:9px;margin-left:5px" title="GitHub: ${gh.full_name}">GH</span>`;
+        }
+    }
+
+    // CI/CD-Badge (Sprint 3)
+    let ciBadge = '';
+    if (proj.github && proj.github.ci_status) {
+        const ciColors = {success:'#1b5e20', failure:'#b71c1c', cancelled:'#4a4a00', in_progress:'#0d47a1'};
+        const ciIcons = {success:'✓', failure:'✗', cancelled:'—', in_progress:'⟳'};
+        const conclusion = proj.github.ci_conclusion || proj.github.ci_status;
+        const color = ciColors[conclusion] || '#333';
+        const icon = ciIcons[conclusion] || '?';
+        ciBadge = `<span class="badge" style="background:${color};font-size:9px;margin-left:3px" title="CI: ${proj.github.ci_workflow || 'Actions'} — ${conclusion}">${icon}CI</span>`;
+    }
+
+    // Health-Badge (Sprint 3)
+    let healthBadge = '';
+    if (proj.health) {
+        const hColors = {up:'#1b5e20', down:'#b71c1c', error:'#e65100'};
+        const hIcons = {up:'▲', down:'▼', error:'!'};
+        const s = proj.health.status;
+        healthBadge = `<span class="badge" style="background:${hColors[s] || '#333'};font-size:9px;margin-left:3px" title="Health: ${proj.health.url} (${proj.health.ms}ms)">${hIcons[s] || '?'}${proj.health.code || ''}</span>`;
+    }
+
     // LOC + Lizenz + Size als Tooltip-Info in Beschreibung
     let metaInfo = '';
     const metaParts = [];
@@ -191,7 +226,7 @@ function renderProject(proj, isNew) {
     </div>`;
 
     tr.innerHTML = `
-        <td class="project-name"><span class="pn-icons">${favBtn}</span><span class="pn-text">${activityDot}${namePrefix}${isNew ? '<span class="badge badge-new">NEU</span> ' : ''}${displayName}${typeBadge}${versionBadge}${branchBadge}${portWarnBadge}${relationBadges}</span></td>
+        <td class="project-name"><span class="pn-icons">${favBtn}</span><span class="pn-text">${activityDot}${namePrefix}${isNew ? '<span class="badge badge-new">NEU</span> ' : ''}${displayName}${typeBadge}${versionBadge}${branchBadge}${portWarnBadge}${githubBadge}${ciBadge}${healthBadge}${relationBadges}</span></td>
         <td class="project-function">${proj.function || '-'}${metaInfo}</td>
         <td>${getGroupBadge(proj.group)}</td>
         <td>${getPriorityBadge(proj.priority)}</td>
