@@ -1,0 +1,158 @@
+/* KPI Cards - Wiederverwendbare Statistik-Karten */
+
+.kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.kpi-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+}
+
+.kpi-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 8px;
+    color: var(--text-secondary);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.kpi-header .icon {
+    width: 14px;
+    height: 14px;
+}
+
+.kpi-main {
+    display: flex;
+    align-items: baseline;
+    gap: 2px;
+}
+
+.kpi-value {
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--text-primary);
+}
+
+.kpi-unit {
+    font-size: 16px;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.kpi-detail {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-top: 6px;
+}
+
+.kpi-sub {
+    display: block;
+    margin-top: 2px;
+    opacity: 0.7;
+}
+
+/* Progress Bar */
+.kpi-bar {
+    height: 4px;
+    background: var(--surface);
+    border-radius: 2px;
+    margin-top: 10px;
+    overflow: hidden;
+}
+
+.kpi-bar-fill {
+    height: 100%;
+    background: var(--success);
+    border-radius: 2px;
+    transition: width 0.6s ease;
+}
+
+/* Pipeline Stages */
+.kpi-stages {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 4px;
+}
+
+.kpi-stage {
+    text-align: center;
+    flex: 1;
+}
+
+.kpi-stage-value {
+    display: block;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    line-height: 1.2;
+}
+
+.kpi-stage-label {
+    font-size: 11px;
+    color: var(--text-secondary);
+    opacity: 0.7;
+}
+
+.kpi-arrow {
+    color: var(--text-secondary);
+    opacity: 0.3;
+    flex-shrink: 0;
+}
+
+/* Split Value */
+.kpi-split {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-top: 4px;
+}
+
+.kpi-split > div:not(.kpi-divider) {
+    flex: 1;
+    text-align: center;
+}
+
+.kpi-divider {
+    width: 1px;
+    height: 32px;
+    background: var(--border);
+    flex-shrink: 0;
+}
+
+.kpi-top-project {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--border);
+}
+
+.kpi-top-project strong {
+    color: var(--text-primary);
+}
+
+/* Color helpers */
+.kpi-accent { color: var(--accent) !important; }
+.kpi-success { color: var(--success) !important; }
+.kpi-warn { color: var(--warning) !important; }
+
+@media (max-width: 1100px) {
+    .kpi-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 600px) {
+    .kpi-grid {
+        grid-template-columns: 1fr;
+    }
+}

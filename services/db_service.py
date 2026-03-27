@@ -146,6 +146,8 @@ def ensure_database():
 
 _schema_ready = False
 _schema_lock = threading.Lock()
+_plans_schema_ready = False
+_plans_schema_lock = threading.Lock()
 
 
 def ensure_session_review_schema():
@@ -185,3 +187,35 @@ def ensure_session_review_schema():
         execute("CREATE INDEX IF NOT EXISTS idx_session_reviews_thread_id ON session_reviews(thread_id, created_at DESC)")
         execute("CREATE INDEX IF NOT EXISTS idx_review_threads_project_name ON review_threads(project_name, updated_at DESC)")
         _schema_ready = True
+
+
+def ensure_plans_schema():
+    """Erstellt die project_plans Tabelle falls noetig"""
+    global _plans_schema_ready
+    if _plans_schema_ready:
+        return
+    with _plans_schema_lock:
+        if _plans_schema_ready:
+            return
+        execute("""
+            CREATE TABLE IF NOT EXISTS project_plans (
+                id SERIAL PRIMARY KEY,
+                filename VARCHAR(255) UNIQUE NOT NULL,
+                title VARCHAR(500),
+                project_name VARCHAR(255),
+                content TEXT,
+                context_summary TEXT,
+                category VARCHAR(50) DEFAULT 'plan',
+                status VARCHAR(20) DEFAULT 'draft',
+                session_uuid VARCHAR(64),
+                file_hash VARCHAR(64),
+                file_mtime DOUBLE PRECISION,
+                created_at TIMESTAMPTZ,
+                updated_at TIMESTAMPTZ,
+                imported_at TIMESTAMPTZ DEFAULT NOW()
+            )
+        """)
+        execute("CREATE INDEX IF NOT EXISTS idx_plans_project ON project_plans(project_name)")
+        execute("CREATE INDEX IF NOT EXISTS idx_plans_status ON project_plans(status)")
+        execute("CREATE INDEX IF NOT EXISTS idx_plans_created ON project_plans(created_at DESC)")
+        _plans_schema_ready = True

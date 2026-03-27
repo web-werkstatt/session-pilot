@@ -1,6 +1,7 @@
 """
 Background-Checker: Erkennt Zustandsaenderungen und erzeugt Notifications
 Laeuft als daemon-Thread alle 60 Sekunden.
+Plans-Sync laeuft alle 10 Minuten.
 """
 import threading
 from services.notification_service import add_notification, load_state, save_state
@@ -8,7 +9,9 @@ from services.docker_service import get_docker_containers
 from services.cache_service import load_cache
 
 CHECK_INTERVAL = 60  # Sekunden
+PLANS_SYNC_EVERY = 10  # Alle X Check-Zyklen (= alle 10 Minuten)
 _checker_timer = None
+_check_count = 0
 
 
 def start_checker():
@@ -21,11 +24,14 @@ def start_checker():
 
 def _run_check():
     """Fuehrt alle Checks durch und plant den naechsten"""
-    global _checker_timer
+    global _checker_timer, _check_count
+    _check_count += 1
     try:
         _check_containers()
         _check_sync_conflicts()
         _check_new_projects()
+        if _check_count % PLANS_SYNC_EVERY == 0:
+            _sync_plans()
     except Exception:
         pass  # Checker darf niemals den Server crashen
 
@@ -131,3 +137,18 @@ def _check_new_projects():
 
     state['known_projects'] = list(current_projects)
     save_state(state)
+
+
+def _sync_plans():
+    """Synchronisiert Claude Code Plans aus ~/.claude/plans/ in die DB"""
+    try:
+        from services.plans_import import sync_plans
+        stats = sync_plans()
+        if stats['imported'] > 0:
+            add_notification(
+                'new_project', 'info',
+                f'{stats["imported"]} neue Plans importiert',
+                f'Plans-Sync: {stats["imported"]} neu, {stats["updated"]} aktualisiert',
+            )
+    except Exception:
+        pass  # Plans-Sync darf niemals den Server crashen

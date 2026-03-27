@@ -1,0 +1,239 @@
+"""
+Plans Routes - Uebersicht und Verwaltung von Claude Code Plans
+"""
+import markdown
+from flask import Blueprint, jsonify, request, render_template
+from services.db_service import execute, ensure_plans_schema
+from services.plans_import import sync_plans
+
+plans_bp = Blueprint('plans', __name__)
+
+
+@plans_bp.route('/plans')
+def plans_page():
+    return render_template('plans.html', active_page='plans')
+
+
+@plans_bp.route('/api/plans')
+def get_plans():
+    """Alle Plans aus der DB laden."""
+    ensure_plans_schema()
+    project = request.args.get('project')
+    status = request.args.get('status')
+    category = request.args.get('category')
+
+    query = """
+        SELECT p.id, p.filename, p.title, p.project_name, p.context_summary,
+               p.category, p.status, p.session_uuid, p.created_at, p.updated_at,
+               s.slug as session_slug
+        FROM project_plans p
+        LEFT JOIN sessions s ON s.session_uuid = p.session_uuid
+    """
+    conditions = []
+    params = []
+
+    if project:
+        conditions.append("p.project_name = %s")
+        params.append(project)
+    if status:
+        conditions.append("p.status = %s")
+        params.append(status)
+    if category:
+        conditions.append("p.category = %s")
+        params.append(category)
+
+    if conditions:
+        query += " WHERE " + " AND ".join(conditions)
+    query += " ORDER BY p.created_at DESC"
+
+    rows = execute(query, params if params else None, fetch=True)
+    plans = []
+    for row in (rows or []):
+        plans.append({
+            'id': row['id'],
+            'filename': row['filename'],
+            'title': row['title'],
+            'project_name': row['project_name'],
+            'context_summary': row['context_summary'],
+            'category': row['category'],
+            'status': row['status'],
+            'session_uuid': row['session_uuid'],
+            'created_at': row['created_at'].isoformat() if row['created_at'] else None,
+            'updated_at': row['updated_at'].isoformat() if row['updated_at'] else None,
+            'session_slug': row['session_slug'],
+        })
+
+    return jsonify({'plans': plans})
+
+
+@plans_bp.route('/api/plans/<int:plan_id>')
+def get_plan_detail(plan_id):
+    """Einzelnen Plan mit vollstaendigem Inhalt laden."""
+    ensure_plans_schema()
+    rows = execute(
+        """SELECT p.id, p.filename, p.title, p.project_name, p.content,
+                  p.context_summary, p.category, p.status, p.session_uuid,
+                  p.created_at, p.updated_at,
+                  s.slug as session_slug, s.started_at as session_started
+           FROM project_plans p
+           LEFT JOIN sessions s ON s.session_uuid = p.session_uuid
+           WHERE p.id = %s""",
+        (plan_id,), fetch=True
+    )
+    if not rows:
+        return jsonify({'error': 'Plan nicht gefunden'}), 404
+
+    row = rows[0]
+    content_md = row['content'] or ''
+    content_html = markdown.markdown(
+        content_md,
+        extensions=['fenced_code', 'tables', 'nl2br']
+    )
+
+    return jsonify({
+        'id': row['id'],
+        'filename': row['filename'],
+        'title': row['title'],
+        'project_name': row['project_name'],
+        'content': content_md,
+        'content_html': content_html,
+        'context_summary': row['context_summary'],
+        'category': row['category'],
+        'status': row['status'],
+        'session_uuid': row['session_uuid'],
+        'created_at': row['created_at'].isoformat() if row['created_at'] else None,
+        'updated_at': row['updated_at'].isoformat() if row['updated_at'] else None,
+        'session_slug': row['session_slug'],
+        'session_started': row['session_started'].isoformat() if row['session_started'] else None,
+    })
+
+
+@plans_bp.route('/api/plans/<int:plan_id>', methods=['PUT'])
+def update_plan(plan_id):
+    """Plan-Metadaten aktualisieren (Status, Projekt, Kategorie)."""
+    ensure_plans_schema()
+    req = request.get_json()
+    if not req:
+        return jsonify({'error': 'Keine Daten'}), 400
+
+    allowed = ('status', 'project_name', 'category', 'title')
+    updates = []
+    params = []
+    for field in allowed:
+        if field in req:
+            updates.append(f"{field} = %s")
+            params.append(req[field])
+
+    if not updates:
+        return jsonify({'error': 'Keine aenderbaren Felder'}), 400
+
+    updates.append("updated_at = NOW()")
+    params.append(plan_id)
+
+    execute(
+        f"UPDATE project_plans SET {', '.join(updates)} WHERE id = %s",
+        params
+    )
+    return jsonify({'success': True})
+
+
+@plans_bp.route('/api/plans/sync', methods=['POST'])
+def trigger_sync():
+    """Plans aus Dateisystem synchronisieren."""
+    stats = sync_plans()
+    return jsonify({'success': True, 'stats': stats})
+
+
+@plans_bp.route('/api/plans/stats')
+def get_plan_stats():
+    """Erweiterte Statistiken mit handlungsrelevanten KPIs."""
+    ensure_plans_schema()
+    row = execute("""
+        SELECT
+            COUNT(*) as total,
+            COUNT(*) FILTER (WHERE status = 'draft') as draft,
+            COUNT(*) FILTER (WHERE status = 'active') as active,
+            COUNT(*) FILTER (WHERE status = 'completed') as completed,
+            COUNT(*) FILTER (WHERE status = 'archived') as archived,
+            COUNT(DISTINCT project_name) FILTER (WHERE project_name IS NOT NULL) as projects,
+            COUNT(*) FILTER (WHERE project_name IS NULL) as unassigned,
+            COUNT(*) FILTER (WHERE session_uuid IS NOT NULL) as linked_sessions,
+            COUNT(*) FILTER (WHERE created_at >= NOW() - INTERVAL '30 days') as last_30d,
+            COUNT(*) FILTER (WHERE created_at >= NOW() - INTERVAL '7 days') as last_7d,
+            MIN(created_at) as oldest,
+            MAX(created_at) as newest
+        FROM project_plans
+    """, fetchone=True)
+
+    if not row:
+        return jsonify({
+            'total': 0, 'draft': 0, 'active': 0, 'completed': 0,
+            'archived': 0, 'projects': 0, 'unassigned': 0,
+            'linked_sessions': 0, 'last_30d': 0, 'last_7d': 0,
+            'completion_rate': 0, 'top_project': None,
+            'categories': {},
+        })
+
+    # Umsetzungsrate berechnen (completed / (completed + archived + active + draft))
+    actionable = row['completed'] + row['active'] + row['draft']
+    completion_rate = round(row['completed'] / actionable * 100) if actionable > 0 else 0
+
+    # Top-Projekt ermitteln
+    top = execute("""
+        SELECT project_name, COUNT(*) as cnt
+        FROM project_plans
+        WHERE project_name IS NOT NULL
+        GROUP BY project_name ORDER BY cnt DESC LIMIT 1
+    """, fetchone=True)
+
+    # Kategorie-Verteilung
+    cats = execute("""
+        SELECT category, COUNT(*) as cnt
+        FROM project_plans GROUP BY category ORDER BY cnt DESC
+    """, fetch=True)
+
+    return jsonify({
+        'total': row['total'],
+        'draft': row['draft'],
+        'active': row['active'],
+        'completed': row['completed'],
+        'archived': row['archived'],
+        'projects': row['projects'],
+        'unassigned': row['unassigned'],
+        'linked_sessions': row['linked_sessions'],
+        'last_30d': row['last_30d'],
+        'last_7d': row['last_7d'],
+        'oldest': row['oldest'].isoformat() if row['oldest'] else None,
+        'newest': row['newest'].isoformat() if row['newest'] else None,
+        'completion_rate': completion_rate,
+        'top_project': {'name': top['project_name'], 'count': top['cnt']} if top else None,
+        'categories': {r['category']: r['cnt'] for r in (cats or [])},
+    })
+
+
+@plans_bp.route('/api/plans/projects')
+def get_plan_projects():
+    """Alle Projekte mit Plan-Anzahl."""
+    ensure_plans_schema()
+    rows = execute("""
+        SELECT project_name, COUNT(*) as cnt, MAX(created_at) as latest
+        FROM project_plans
+        WHERE project_name IS NOT NULL
+        GROUP BY project_name
+        ORDER BY COUNT(*) DESC
+    """, fetch=True)
+
+    projects = [
+        {'name': r['project_name'], 'count': r['cnt'],
+         'latest': r['latest'].isoformat() if r['latest'] else None}
+        for r in (rows or [])
+    ]
+    # Nicht-zugeordnete zaehlen
+    unassigned = execute(
+        "SELECT COUNT(*) as cnt FROM project_plans WHERE project_name IS NULL",
+        fetchone=True
+    )
+    if unassigned and unassigned['cnt'] > 0:
+        projects.append({'name': None, 'count': unassigned['cnt'], 'latest': None})
+
+    return jsonify({'projects': projects})
