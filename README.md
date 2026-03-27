@@ -57,11 +57,26 @@ But it doesn't stop there — it also monitors your Docker containers, scans you
 
 ### Project Management
 - **Auto-Discovery** — Scans your project directory and detects project types (monorepo, fork, tool, library, etc.)
-- **Project Detail** — README rendering, dependencies, Git status, Docker containers per project
+- **Project Detail with Tabs** — Tabbed project view: Overview, Sessions, Plans, Documents, Relations — instead of a single long page
+- **Plans Integration** — See which Claude Code plans belong to each project, linked to sessions
 - **Sub-Project Detection** — Monorepo support for `apps/`, `packages/`, `services/` directories
 - **Project Scaffolding** — Create new projects from templates
 - **Relations & Groups** — Manage project dependencies, custom groups, favorites
 - **Ideas & Notes** — Capture project-related ideas with categories
+
+### Plans Management
+- **Plan Import** — Automatically imports Claude Code plans from `~/.claude/plans/` into PostgreSQL
+- **Project Matching** — Detects which project a plan belongs to by scanning for `/mnt/projects/` paths in plan content
+- **Session Linking** — Correlates plans with sessions via timestamp matching
+- **Auto-Status** — Determines plan status (completed, in-progress, stale) based on file age and session activity
+- **Category Detection** — Identifies plan categories: feature, bugfix, refactor, setup, etc.
+- **Filterable Overview** — Browse all plans with filters for project, status, and category
+
+### Scheduled Tasks
+- **Task Dashboard** — Manage scheduled tasks for Claude Code automation
+- **RemoteTrigger Integration** — Create and manage persistent Claude Code RemoteTriggers (cron-based)
+- **Task Templates** — Pre-built templates for health checks, backup verification, and monitoring
+- **Enable/Disable** — Toggle tasks on/off without deleting them
 
 ### DevOps & Infrastructure
 - **Docker Container Dashboard** — Live status with health checks, ports, uptime
@@ -82,7 +97,7 @@ But it doesn't stop there — it also monitors your Docker containers, scans you
 - Responsive layout with collapsible sidebar
 - No build step — runs directly, no compilation needed
 - Docker & systemd deployment options
-- ~8,000 lines of Python
+- ~8,800 lines of Python
 
 ## Screenshots
 
@@ -97,6 +112,15 @@ But it doesn't stop there — it also monitors your Docker containers, scans you
 
 **Session Detail** — Full conversation with Markdown rendering, timestamps, tool results, and Table of Contents.
 ![Session Detail](docs/screenshots/04-session-detail.png)
+
+**Project Detail (Tabs)** — Tabbed project view with overview, sessions, plans, documents, and relations.
+![Project Detail](docs/screenshots/06-project-detail.png)
+
+**Plans** — Browse and manage Claude Code plans, linked to projects and sessions, with auto-detected status.
+![Plans](docs/screenshots/07-plans.png)
+
+**Scheduled Tasks** — Manage scheduled automation tasks with RemoteTrigger integration.
+![Scheduled Tasks](docs/screenshots/08-scheduled-tasks.png)
 
 **Container Dashboard** — Live Docker container status with health checks and quick actions.
 ![Containers](docs/screenshots/05-containers.png)
@@ -186,6 +210,18 @@ Without PostgreSQL, everything works except the Sessions feature.
 | `/api/relations` | GET/POST | Manage relations |
 | `/api/ideas` | GET/POST | Manage ideas |
 | `/api/notifications` | GET | Notification list |
+| `/api/scheduled-tasks` | GET | List all scheduled tasks |
+| `/api/scheduled-tasks` | POST | Create a scheduled task |
+| `/api/scheduled-tasks/<id>` | PUT | Update a task |
+| `/api/scheduled-tasks/<id>` | DELETE | Delete a task |
+| `/api/scheduled-tasks/<id>/toggle` | POST | Enable/disable a task |
+| `/api/scheduled-tasks/templates` | GET | Available task templates |
+| `/api/plans` | GET | List all plans (filter by project/status/category) |
+| `/api/plans/<id>` | GET | Plan detail with Markdown content |
+| `/api/plans/<id>` | PUT | Update plan (status, project assignment) |
+| `/api/plans/sync` | POST | Import/sync plans from ~/.claude/plans/ |
+| `/api/plans/stats` | GET | Plan statistics (by status, category, project) |
+| `/api/plans/projects` | GET | Projects with plan counts |
 
 ## Backup
 
@@ -213,6 +249,8 @@ project_dashboard/
 │   ├── document_routes.py    # Document browser & editor
 │   ├── search_routes.py      # Full-text search via ripgrep
 │   ├── timesheet_routes.py   # AI timesheets
+│   ├── plans_routes.py       # Plans import, overview, detail
+│   ├── scheduled_tasks_routes.py  # Scheduled task management
 │   └── ...                   # Groups, ideas, news, etc.
 ├── services/                 # 18 service classes
 │   ├── session_import.py     # JSONL parser for Claude sessions
@@ -221,6 +259,7 @@ project_dashboard/
 │   ├── project_detector.py   # Type detection (monorepo, fork, etc.)
 │   ├── docker_service.py     # Docker container status
 │   ├── gitea_service.py      # Gitea API integration
+│   ├── plans_import.py       # Scans ~/.claude/plans/, imports to DB
 │   └── ...                   # Git, cache, notifications, etc.
 ├── templates/                # Jinja2 templates
 ├── static/                   # CSS (design tokens), JS, assets
@@ -286,8 +325,20 @@ Aber das ist nicht alles — es ueberwacht auch Docker-Container, scannt Projekt
 
 **Projekt-Verwaltung**
 - Auto-Discovery: Erkennt Projekttyp, Tech-Stack, Sub-Projekte
-- Projekt-Details mit README, Dependencies, Git-Status, Container
+- Projekt-Details mit Tabs: Uebersicht, Sessions, Plans, Dokumente, Beziehungen
 - Scaffolding, Gruppen, Favoriten, Beziehungen, Ideen/Notizen
+
+**Plans-Verwaltung**
+- Import von Claude Code Plans aus `~/.claude/plans/` in PostgreSQL
+- Automatische Projekt-Zuordnung anhand von Pfaden im Plan-Inhalt
+- Session-Verknuepfung via Zeitstempel-Korrelation
+- Auto-Status (fertig, in Arbeit, veraltet), Kategorie-Erkennung
+- Filterbare Uebersicht nach Projekt, Status und Kategorie
+
+**Scheduled Tasks**
+- Dashboard zur Verwaltung geplanter Automatisierungsaufgaben
+- RemoteTrigger-Integration fuer persistente Cron-basierte Tasks
+- Vorlagen fuer Health-Checks, Backup-Verifizierung und Monitoring
 
 **DevOps & Infrastruktur**
 - Docker Container Dashboard mit Health-Checks
