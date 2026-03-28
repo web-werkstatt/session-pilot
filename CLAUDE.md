@@ -111,6 +111,28 @@ RemoteTrigger update --trigger_id trig_... --body '{"enabled": false}'
 - **RemoteTrigger**: Persistent, ueberlebt Sessions, laeuft auf claude.ai-Infrastruktur
 - **CronCreate**: Session-lokal, max 7 Tage, gut fuer temporaere Checks
 
+## Workflow: Issues bei Aenderungen
+
+Bei **jeder Code-Aenderung** (neue Features, Bugfixes, Refactoring) wird ein Gitea-Issue erstellt:
+
+1. **Vor der Arbeit:** Issue auf Gitea anlegen mit Titel und kurzer Beschreibung
+   ```bash
+   # Issue erstellen (Gitea API)
+   curl -s -X POST "https://git.webideas24.com/api/v1/repos/webideas24/project_dashboard/issues" \
+     -H "Authorization: token $GITEA_TOKEN" \
+     -H "Content-Type: application/json" \
+     -d '{"title": "feat: Kurzbeschreibung", "body": "Details..."}'
+   ```
+2. **Im Commit:** Issue-Nummer referenzieren (`fixes #N` oder `refs #N`)
+3. **Nach Abschluss:** Issue schliessen (automatisch via `fixes #N` im Commit oder manuell)
+
+**Ausnahmen** (kein Issue noetig):
+- Reine Dokumentations-Updates (next-session.md, Archiv)
+- Typo-Fixes unter 5 Zeilen
+- Automatisch generierte Dateien (project.json, Cache)
+
+**GitHub-Mirror:** Wird via `git push github main` synchronisiert. Issues nur auf Gitea, nicht doppelt auf GitHub.
+
 ## Backup
 
 Automatisches Backup via Cronjob (`scripts/backup.sh`):
