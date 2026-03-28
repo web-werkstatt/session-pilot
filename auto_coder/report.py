@@ -6,6 +6,7 @@ from dataclasses import asdict, dataclass, field
 from typing import Optional
 
 from auto_coder.config import (
+    BASELINE_FILE,
     LEVELS,
     MAX_HISTORY_ENTRIES,
     QUALITY_DIR,
@@ -103,6 +104,64 @@ def load_report(project_path: str) -> Optional[QualityReport]:
         )
     except (json.JSONDecodeError, KeyError):
         return None
+
+
+def load_baseline(project_path: str) -> Optional[QualityReport]:
+    """Laedt .quality/baseline.json falls vorhanden."""
+    path = os.path.join(project_path, QUALITY_DIR, BASELINE_FILE)
+    if not os.path.exists(path):
+        return None
+    try:
+        with open(path) as f:
+            data = json.load(f)
+        issues = [Issue(**i) for i in data.get("issues", [])]
+        tests = TestResult(**data.get("tests", {}))
+        return QualityReport(
+            project=data["project"],
+            scanned_at=data.get("scanned_at", ""),
+            score=data.get("score", "F"),
+            score_numeric=data.get("score_numeric", 0),
+            summary=data.get("summary", {}),
+            tests=tests,
+            issues=issues,
+            history=data.get("history", []),
+        )
+    except (json.JSONDecodeError, KeyError):
+        return None
+
+
+def save_baseline(project_path: str, report: QualityReport) -> str:
+    """Speichert aktuellen Report als neue Baseline."""
+    quality_dir = os.path.join(project_path, QUALITY_DIR)
+    os.makedirs(quality_dir, exist_ok=True)
+    path = os.path.join(quality_dir, BASELINE_FILE)
+    with open(path, "w") as f:
+        json.dump(asdict(report), f, indent=2, ensure_ascii=False)
+    return path
+
+
+def diff_reports(baseline: QualityReport, current: QualityReport) -> dict:
+    """Vergleicht aktuellen Report mit Baseline, gibt Delta zurueck."""
+    baseline_ids = {i.id for i in baseline.issues if i.status != "ignored"}
+    current_ids = {i.id for i in current.issues if i.status != "ignored"}
+
+    new_issues = [i for i in current.issues if i.id not in baseline_ids and i.status != "ignored"]
+    fixed_issues = [i for i in baseline.issues if i.id not in current_ids and i.status != "ignored"]
+
+    score_delta = current.score_numeric - baseline.score_numeric
+    warning_delta = current.summary.get("warnings", 0) - baseline.summary.get("warnings", 0)
+    error_delta = current.summary.get("errors", 0) - baseline.summary.get("errors", 0)
+
+    return {
+        "score_delta": score_delta,
+        "warning_delta": warning_delta,
+        "error_delta": error_delta,
+        "new_issues": new_issues,
+        "fixed_issues": fixed_issues,
+        "baseline_score": baseline.score_numeric,
+        "current_score": current.score_numeric,
+        "improved": score_delta >= 0 and error_delta <= 0,
+    }
 
 
 def save_report(project_path: str, report: QualityReport) -> str:

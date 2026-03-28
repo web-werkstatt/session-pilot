@@ -87,6 +87,39 @@ for file in $STAGED_FILES; do
     esac
 done
 
+# === Architektur-Check (nur geaenderte Routes) ===
+for file in $STAGED_FILES; do
+    case "$file" in
+        routes/*.py)
+            # Kein subprocess in Routes
+            if git diff --cached -- "$file" | grep -P "^\+.*import subprocess|^\+.*subprocess\." | grep -qv "^+++"; then
+                echo -e "${YELLOW}WARNUNG:${NC} subprocess in $file - gehoert in services/"
+            fi
+            # Kein open() in Routes
+            if git diff --cached -- "$file" | grep -P "^\+.*\bopen\(" | grep -qv "^+++"; then
+                echo -e "${YELLOW}WARNUNG:${NC} Datei-I/O (open) in $file - gehoert in services/"
+            fi
+            ;;
+    esac
+done
+
+# === Duplikat-Check: Globale Utilities ===
+GLOBAL_UTILS="escapeHtml formatTimeAgo formatTokens formatDate formatDateTime"
+for file in $STAGED_FILES; do
+    case "$file" in
+        static/js/*.js)
+            [ "$(basename "$file")" = "base.js" ] && continue
+            [ "$(basename "$file")" = "api.js" ] && continue
+            for util in $GLOBAL_UTILS; do
+                if git diff --cached -- "$file" | grep -qP "^\+.*function\s+$util\b"; then
+                    echo -e "${YELLOW}WARNUNG:${NC} $util() in $file - bereits in base.js definiert"
+                    ERRORS=$((ERRORS + 1))
+                fi
+            done
+            ;;
+    esac
+done
+
 # === Ergebnis ===
 if [ $ERRORS -gt 0 ]; then
     echo ""

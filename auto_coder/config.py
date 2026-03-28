@@ -45,3 +45,4 @@ IGNORE_DIRS = {
 }
 
 MAX_HISTORY_ENTRIES = 90
+BASELINE_FILE = "baseline.json"

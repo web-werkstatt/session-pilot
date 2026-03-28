@@ -3,7 +3,7 @@
 import argparse
 import sys
 
-from auto_coder.report import load_report
+from auto_coder.report import diff_reports, load_baseline, load_report, save_baseline
 from auto_coder.scanner import ProjectQualityScanner
 
 
@@ -37,6 +37,60 @@ def cmd_report(args):
         print(f"Kein Report gefunden fuer {args.project}", file=sys.stderr)
         sys.exit(1)
     _print_report(report)
+
+
+def cmd_diff(args):
+    """Scannt und vergleicht mit Baseline."""
+    baseline = load_baseline(args.project)
+    if not baseline:
+        print(f"Keine Baseline gefunden fuer {args.project}", file=sys.stderr)
+        print("Erstelle eine mit: auto_coder baseline <projekt>")
+        sys.exit(1)
+
+    scanner = ProjectQualityScanner()
+    print(f"Scanne {args.project}...")
+    current = scanner.scan(args.project)
+    delta = diff_reports(baseline, current)
+
+    print(f"\n{'='*60}")
+    print(f"  {current.project} — Diff zur Baseline")
+    print(f"{'='*60}")
+    print(f"  Score:    {baseline.score} ({baseline.score_numeric}) -> {current.score} ({current.score_numeric})  [{'+' if delta['score_delta'] >= 0 else ''}{delta['score_delta']}]")
+    print(f"  Errors:   {'+' if delta['error_delta'] >= 0 else ''}{delta['error_delta']}")
+    print(f"  Warnings: {'+' if delta['warning_delta'] >= 0 else ''}{delta['warning_delta']}")
+    print()
+
+    if delta["new_issues"]:
+        print(f"  NEU ({len(delta['new_issues'])}):")
+        for issue in delta["new_issues"]:
+            icon = "X" if issue.level == "error" else "!" if issue.level == "warning" else "i"
+            print(f"    {icon} {issue.id}: {issue.title}")
+        print()
+
+    if delta["fixed_issues"]:
+        print(f"  BEHOBEN ({len(delta['fixed_issues'])}):")
+        for issue in delta["fixed_issues"]:
+            print(f"    + {issue.id}: {issue.title}")
+        print()
+
+    if delta["improved"]:
+        print("  Ergebnis: OK (keine Verschlechterung)")
+    else:
+        print("  Ergebnis: VERSCHLECHTERT")
+        sys.exit(1)
+
+
+def cmd_baseline(args):
+    """Speichert aktuellen Report als Baseline."""
+    report = load_report(args.project)
+    if not report:
+        print("Kein Report vorhanden. Fuehre zuerst einen Scan aus.", file=sys.stderr)
+        sys.exit(1)
+    path = save_baseline(args.project, report)
+    s = report.summary
+    print(f"Baseline gespeichert: {path}")
+    print(f"  Score: {report.score} ({report.score_numeric})")
+    print(f"  Issues: {s.get('errors', 0)} Errors, {s.get('warnings', 0)} Warnings")
 
 
 def _print_report(report):
@@ -86,12 +140,24 @@ def main():
     report_p = sub.add_parser("report", help="Report anzeigen")
     report_p.add_argument("project", help="Pfad zum Projekt")
 
+    # diff
+    diff_p = sub.add_parser("diff", help="Vergleich mit Baseline")
+    diff_p.add_argument("project", help="Pfad zum Projekt")
+
+    # baseline
+    base_p = sub.add_parser("baseline", help="Aktuelle Baseline setzen")
+    base_p.add_argument("project", help="Pfad zum Projekt")
+
     args = parser.parse_args()
 
     if args.command == "scan":
         cmd_scan(args)
     elif args.command == "report":
         cmd_report(args)
+    elif args.command == "diff":
+        cmd_diff(args)
+    elif args.command == "baseline":
+        cmd_baseline(args)
     else:
         parser.print_help()
         sys.exit(1)
