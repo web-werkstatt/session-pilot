@@ -268,6 +268,8 @@ def import_session(filepath, account_name, project_hash):
               meta["total_input_tokens"], meta["total_output_tokens"],
               meta.get("cache_read_tokens", 0), meta.get("cache_creation_tokens", 0),
               filepath, file_size, file_mtime), fetchone=True)
+        if not row:
+            return "skipped"
         session_id = row["id"]
 
     if messages:
