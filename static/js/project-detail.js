@@ -241,12 +241,52 @@ function setProjectBaseline() {
 }
 
 // === Sessions Tab ===
-function extractSessions() {
+async function extractSessions() {
     sessionsExtracted = true;
-    if (window._sessionsHtml) {
-        document.getElementById('sessionsBody').innerHTML = window._sessionsHtml;
-    } else {
-        document.getElementById('sessionsBody').innerHTML = '<p style="color:#888;padding:20px">Keine Claude Sessions fuer dieses Projekt</p>';
+    var body = document.getElementById('sessionsBody');
+    try {
+        var d = await api.get('/api/sessions?project=' + encodeURIComponent(PROJECT_NAME) + '&limit=100');
+        var sessions = d.sessions || [];
+        if (!sessions.length) {
+            body.innerHTML = '<p style="color:#888;padding:20px;text-align:center">Keine Claude Sessions fuer dieses Projekt</p>';
+            return;
+        }
+        var countEl = document.getElementById('sessionsCount');
+        if (countEl) countEl.textContent = sessions.length;
+
+        var html = '<table class="data-table sessions-table"><thead><tr>';
+        html += '<th>Datum</th><th>Dauer</th><th>Nachrichten</th><th>Modell</th><th>Tokens</th><th>Branch</th><th>Bewertung</th>';
+        html += '</tr></thead><tbody>';
+
+        sessions.forEach(function(s) {
+            var date = s.started_at ? new Date(s.started_at) : null;
+            var dateStr = date ? date.toLocaleDateString('de-DE', {day:'2-digit',month:'2-digit',year:'2-digit'}) : '-';
+            var timeStr = date ? date.toLocaleTimeString('de-DE', {hour:'2-digit',minute:'2-digit'}) : '';
+            var model = (s.model || '-').replace('claude-', '').replace('opus-4-6', 'Opus').replace('sonnet-4-6', 'Sonnet');
+            var msgs = (s.user_message_count || 0) + (s.assistant_message_count || 0);
+            var branch = s.git_branch || '';
+            var outcome = s.outcome || '';
+            var outcomeBadge = '';
+            if (outcome === 'ok') outcomeBadge = '<span class="badge" style="background:rgba(46,125,50,0.2);color:#43a047;font-size:10px">OK</span>';
+            else if (outcome === 'needs_fix') outcomeBadge = '<span class="badge" style="background:rgba(255,152,0,0.2);color:#ffa726;font-size:10px">Fix</span>';
+            else if (outcome === 'reverted') outcomeBadge = '<span class="badge" style="background:rgba(244,67,54,0.2);color:#f44336;font-size:10px">Rev</span>';
+            else if (outcome === 'partial') outcomeBadge = '<span class="badge" style="background:rgba(91,155,213,0.2);color:#5b9bd5;font-size:10px">Teil</span>';
+
+            html += '<tr style="cursor:pointer" onclick="location.href=\'/sessions/' + s.session_uuid + '\'">';
+            html += '<td><span style="color:#ccc">' + dateStr + '</span> <span style="color:#666;font-size:11px">' + timeStr + '</span></td>';
+            html += '<td>' + (s.duration_formatted || '-') + '</td>';
+            html += '<td>' + msgs + '</td>';
+            html += '<td style="color:#888;font-size:12px">' + model + '</td>';
+            html += '<td style="font-size:12px">' + (s.tokens_formatted || '-') + '</td>';
+            html += '<td>' + (branch ? '<span style="background:#222;padding:2px 6px;border-radius:3px;font-size:11px;font-family:monospace">' + escapeHtml(branch) + '</span>' : '') + '</td>';
+            html += '<td>' + outcomeBadge + '</td>';
+            html += '</tr>';
+        });
+
+        html += '</tbody></table>';
+        body.innerHTML = html;
+    } catch(e) {
+        body.innerHTML = '<p style="color:#f44336;padding:20px">Fehler: ' + e + '</p>';
     }
 }
 
