@@ -201,9 +201,16 @@ def import_session(filepath, account_name, project_hash):
 
     for m in messages:
         if m.get("content"):
-            m["content"] = m["content"].replace("\x00", "").replace("\\u0000", "")
+            m["content"] = m["content"].replace("\x00", "")
         if m.get("content_json"):
-            m["content_json"] = m["content_json"].replace("\x00", "").replace("\\u0000", "")
+            # PostgreSQL jsonb: echte Null-Bytes entfernen, dann
+            # als valides JSON neu serialisieren um Escape-Probleme zu vermeiden
+            s = m["content_json"].replace("\x00", "")
+            try:
+                parsed = json.loads(s)
+                m["content_json"] = json.dumps(parsed, ensure_ascii=False)
+            except (json.JSONDecodeError, ValueError):
+                m["content_json"] = None
 
     if session_id:
         execute("""
