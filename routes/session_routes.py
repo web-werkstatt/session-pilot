@@ -73,8 +73,8 @@ def _api_sessions_inner():
         conditions.append("account = %s")
         params.append(account)
     if project:
-        conditions.append("project_name = %s")
-        params.append(project)
+        conditions.append("(project_name = %s OR project_name = %s OR cwd LIKE %s)")
+        params.extend([project, project.replace('_', '-'), f"%/{project}"])
     if search:
         conditions.append("(project_name ILIKE %s OR slug ILIKE %s OR cwd ILIKE %s)")
         params.extend([f"%{search}%"] * 3)
