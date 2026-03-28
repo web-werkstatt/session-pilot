@@ -1,36 +1,68 @@
 # Projekt-Dashboard - Naechste Session
 
-> **Letzte Aktualisierung:** 2026-03-27
-> **Status:** Sprint 1+2+3 + UI-Verbesserungen abgeschlossen
-> **Naechste Aufgabe:** Infrastruktur (Docker vs. systemd, Tailwind lokal)
+> **Letzte Aktualisierung:** 2026-03-28
+> **Status:** Auto-Coder Quality Pipeline geplant (Sprint 5-8)
+> **Naechste Aufgabe:** Sprint 5 - Package + Scanner implementieren
 
 ---
 
-## Session 2026-03-27 (Nacht) - UI-Verbesserungen
+## Session 2026-03-28 - Codebasis-Analyse + Quality Pipeline Planung
 
 ### Was wurde erledigt
-- **CSS-Variablen:** ~30 neue Design-Tokens definiert (Brand, Syntax, Status, Actions) + ~129 hardcoded Hex-Farben in 22 CSS-Dateien durch var(--...) ersetzt
-- **Emoji → Lucide:** 12 JS-Dateien migriert (dashboard-table, -modals, -groups, -news, -actions, -ideas, documents, news, vorlagen, project-detail, sessions2, notifications). Python-Routen waren bereits umgestellt. `renderIcon()` Dual-Mode (Emoji+Lucide) vorhanden
-- **Plans zugeordnet:** 3 unassigned Plans (Sticky Save Footer, 2FA System, Admin UI Transparenz) → proj_irtours. 0 unassigned verbleibend
-- dashboard-misc.js Emojis bewusst beibehalten (dekorative Zitate)
+- **Codebasis-Analyse** mit Serena: Alle Module, Schichten, Duplikationen identifiziert
+  - Services: 25 Module, 5.086 Zeilen -- HTTP/Cache-Pattern 7x dupliziert
+  - Routes: 21 Blueprints, 4.628 Zeilen -- JSON-Persistierung 5x dupliziert
+  - Frontend: 29 CSS (5.247Z), 30+ JS (8.800Z) -- escapeHtml() 6x, .stat 7x dupliziert
+- **Auto-Coder Quality Pipeline** konzipiert:
+  - DeRep Middleware (Post-Processing fuer Claude-Output)
+  - Automatischer Scanner mit modularen Checks
+  - Claude Code Fix-Loop (headless Issues beheben)
+  - Dashboard-Integration (Score-Badge, Detail-Tab, Verlaufs-Chart)
+- **4 Sprint-Plaene erstellt:**
+  - `sprints/05-roadmap-quality-pipeline.md` (Roadmap + Architektur)
+  - `sprints/sprint-5-scanner.md` (Package + 7 Checks + CLI)
+  - `sprints/sprint-6-derep-fixer.md` (DeRep + Fix-Loop)
+  - `sprints/sprint-7-ui-integration.md` (API + UI)
+  - `sprints/sprint-8-automation.md` (Scheduler + Tuning)
+- **Serena** fuer project_dashboard aktiviert (.serena/ Config)
 
-### Betroffene Dateien
-| Bereich | Dateien |
-|---------|---------|
-| Design-Tokens | static/css/design-tokens.css |
-| CSS (22 Dateien) | base, components, containers, dependencies(-graph), documents(-extras), features, modals, news, notifications, plans, project-detail, scaffold, session-analysis, session-detail, session-reviews, sessions-list, settings, table, timesheets, vorlagen |
-| JS (12 Dateien) | dashboard-table/-modals/-groups/-news/-actions/-ideas/-state, documents, news, vorlagen, project-detail, sessions2, notifications |
-| DB | project_plans: 3 Plans auf proj_irtours zugeordnet |
+### Neue Dateien
+| Datei | Zweck |
+|-------|-------|
+| sprints/05-roadmap-quality-pipeline.md | Roadmap Quality Pipeline |
+| sprints/sprint-5-scanner.md | Sprint 5: Package + Scanner |
+| sprints/sprint-6-derep-fixer.md | Sprint 6: DeRep + Fixer |
+| sprints/sprint-7-ui-integration.md | Sprint 7: API + UI |
+| sprints/sprint-8-automation.md | Sprint 8: Automation |
+| docs/plan-auto-coder.md | Detailplan (Referenz) |
+| .serena/project.yml | Serena-Konfiguration |
 
 ---
 
-## Naechste Session
+## Naechste Session: Sprint 5 starten
 
-### Infrastruktur
-- [ ] Docker vs. systemd klaeren
-- [ ] Tailwind CDN durch lokalen Build ersetzen (Production)
+### Aufgaben
+- [ ] `auto_coder/__init__.py` + `__main__.py` + `config.py` erstellen
+- [ ] `auto_coder/report.py` -- Datenklassen (Issue, QualityReport)
+- [ ] `auto_coder/checks/__init__.py` -- BaseCheck Interface
+- [ ] `auto_coder/checks/file_sizes.py` -- Dateigroessen-Limits
+- [ ] `auto_coder/checks/duplication.py` -- DRYwall/jscpd
+- [ ] `auto_coder/checks/complexity.py` -- Radon (Python)
+- [ ] `auto_coder/checks/css_quality.py` -- CSS-Token-Pruefung
+- [ ] `auto_coder/checks/js_quality.py` -- JS-Funktionsduplikate
+- [ ] `auto_coder/checks/architecture.py` -- Schicht-Regeln
+- [ ] `auto_coder/checks/tests.py` -- Test-Erkennung
+- [ ] `auto_coder/scanner.py` -- Orchestrator
+- [ ] `auto_coder/cli.py` -- CLI (scan, report)
+- [ ] Erster Scan auf project_dashboard ausfuehren
+
+### Referenz
+- Sprint-Plan: `sprints/sprint-5-scanner.md`
+- Architektur: `sprints/05-roadmap-quality-pipeline.md`
 
 ### Hinweise
-- GitHub API: Private Repos brauchen gueltigen Token (einige PATs abgelaufen)
-- Health-Checks: Viele Projekte mit Port zeigen "down" weil Service nicht laeuft - ggf. nur fuer aktive Container pruefen
-- Security: pip-audit nicht installiert auf dem Server (`pip install pip-audit`)
+- radon bereits installiert: `/home/joshko/.local/bin/radon`
+- jscpd via npx verfuegbar (v4.0.8)
+- DRYwall Plugin aktiv in Claude Code settings
+- Serena MCP Server konfiguriert
+- Alle Module unter 500 Zeilen halten!

@@ -4,6 +4,16 @@
 
 ---
 
+## Session 2026-03-27 (Nacht) - UI-Verbesserungen
+
+### Was wurde erledigt
+- **CSS-Variablen:** ~30 neue Design-Tokens definiert (Brand, Syntax, Status, Actions) + ~129 hardcoded Hex-Farben in 22 CSS-Dateien durch var(--...) ersetzt
+- **Emoji → Lucide:** 12 JS-Dateien migriert (dashboard-table, -modals, -groups, -news, -actions, -ideas, documents, news, vorlagen, project-detail, sessions2, notifications). Python-Routen waren bereits umgestellt. `renderIcon()` Dual-Mode (Emoji+Lucide) vorhanden
+- **Plans zugeordnet:** 3 unassigned Plans → proj_irtours. 0 unassigned verbleibend
+- dashboard-misc.js Emojis bewusst beibehalten (dekorative Zitate)
+
+---
+
 ## Session 2026-03-27 (Abend) - Sprint 2+3 + Tech-Debt Cleanup
 
 ### Was wurde erledigt
