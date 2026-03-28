@@ -4,6 +4,30 @@
 
 ---
 
+## Session 2026-03-28 (Nacht) - Zentraler Fetch-Wrapper + CSS-Fix
+
+### Was wurde erledigt
+
+**Fetch-Wrapper `api.js`:**
+- Neues Modul `static/js/api.js` als zentrale HTTP-Schicht
+- ~85 rohe fetch()-Aufrufe in 24 JS-Dateien auf api.get/post/put/del umgestellt
+- Automatisches JSON-Parsing, Content-Type-Header, Status-Check
+- ApiError-Klasse mit status, body, message
+- Convenience-Methoden: get, post, put, patch, del, request (raw fuer Downloads)
+- Eingebunden in base.html vor base.js
+
+**CSS-Fix:**
+- `sessions-list.css` und `session-reviews.css` aus Git-History wiederhergestellt
+- Waren in b0a5cd7 faelschlicherweise als "verwaist" geloescht worden
+- Werden per @import in sessions2.css eingebunden
+
+### Git Commits
+```
+(dieser Commit)
+```
+
+---
+
 ## Session 2026-03-28 (Abend) - Modal-Refactoring + Performance
 
 ### Was wurde erledigt

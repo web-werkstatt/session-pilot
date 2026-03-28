@@ -18,9 +18,7 @@ function switchTab(tab, btn) {
 // === Pricing ===
 async function loadPricing() {
     try {
-        const r = await fetch('/api/settings/pricing');
-        if (!r.ok) return;
-        pricingData = await r.json();
+        pricingData = await api.get('/api/settings/pricing');
         renderPricing();
     } catch(e) { console.error(e); }
 }
@@ -94,23 +92,17 @@ async function savePricing(btn) {
     if (!data.model_pattern) return;
 
     try {
-        const r = await fetch('/api/settings/pricing', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(data)
-        });
-        if (r.ok) {
-            btn.textContent = '\u2713';
-            btn.style.background = '#4caf50';
-            setTimeout(() => { btn.style.background = ''; loadPricing(); }, 600);
-        }
+        await api.post('/api/settings/pricing', data);
+        btn.textContent = '\u2713';
+        btn.style.background = '#4caf50';
+        setTimeout(() => { btn.style.background = ''; loadPricing(); }, 600);
     } catch(e) { console.error(e); }
 }
 
 async function deletePricing(id) {
     if (!confirm('Modell-Preis loeschen?')) return;
     try {
-        await fetch('/api/settings/pricing/' + id, {method: 'DELETE'});
+        await api.del('/api/settings/pricing/' + id);
         loadPricing();
     } catch(e) { console.error(e); }
 }
@@ -118,9 +110,7 @@ async function deletePricing(id) {
 // === Accounts ===
 async function loadAccounts() {
     try {
-        const r = await fetch('/api/settings/accounts');
-        if (!r.ok) return;
-        const data = await r.json();
+        const data = await api.get('/api/settings/accounts');
 
         document.getElementById('accountCards').innerHTML = data.map(a => {
             const toolClass = 's-tool-' + a.tool;
@@ -155,9 +145,7 @@ async function loadAccounts() {
 // === System ===
 async function loadSystem() {
     try {
-        const r = await fetch('/api/settings/system');
-        if (!r.ok) return;
-        const d = await r.json();
+        const d = await api.get('/api/settings/system');
 
         document.getElementById('systemInfo').innerHTML = `
             <div class="s-info-group">

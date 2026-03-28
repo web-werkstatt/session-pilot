@@ -44,12 +44,10 @@ function saveColors() {
 
 // DATA LOADING
 async function loadData() {
-    const dataResp = await fetch('/api/data');
-    const data = await dataResp.json();
+    const data = await api.get('/api/data');
     allProjects = data.projects.map(p => p.name).sort();
 
-    const relResp = await fetch('/api/relations');
-    const relData = await relResp.json();
+    const relData = await api.get('/api/relations');
     allRelations = relData.relations || [];
     relationTypes = relData.relation_types || [];
 
@@ -113,10 +111,9 @@ async function fetchProjects(type, query) {
     currentSearchController = new AbortController();
 
     try {
-        const resp = await fetch(`/api/projects/search?q=${encodeURIComponent(query)}&limit=15`, {
+        const results = await api.request(`/api/projects/search?q=${encodeURIComponent(query)}&limit=15`, {
             signal: currentSearchController.signal
         });
-        const results = await resp.json();
 
         if (results.length === 0) {
             dropdown.innerHTML = '<div class="autocomplete-no-results">Keine Projekte gefunden</div>';

@@ -47,9 +47,7 @@ async function loadSummary() {
     if (getProject()) params.set('project', getProject());
 
     try {
-        const r = await fetch('/api/timesheets/summary?' + params);
-        if (!r.ok) return;
-        const d = await r.json();
+        const d = await api.get('/api/timesheets/summary?' + params);
 
         document.getElementById('kpiSessions').textContent = d.sessions.toLocaleString('de-DE');
         document.getElementById('kpiDuration').textContent = d.duration_formatted;
@@ -72,9 +70,7 @@ async function loadDaily() {
     if (getProject()) params.set('project', getProject());
 
     try {
-        const r = await fetch('/api/timesheets/daily?' + params);
-        if (!r.ok) return;
-        const data = await r.json();
+        const data = await api.get('/api/timesheets/daily?' + params);
 
         const labels = data.map(d => {
             const dt = new Date(d.date);
@@ -128,9 +124,7 @@ async function loadProjects() {
     if (getAccount()) params.set('account', getAccount());
 
     try {
-        const r = await fetch('/api/timesheets/projects?' + params);
-        if (!r.ok) return;
-        projectsData = await r.json();
+        projectsData = await api.get('/api/timesheets/projects?' + params);
 
         // Donut: Top 8 + Rest
         const top = projectsData.slice(0, 8);
@@ -246,9 +240,7 @@ function sortProjects(key) {
 // === Tool Chart ===
 async function loadTools() {
     try {
-        const r = await fetch('/api/timesheets/tools?days=' + getDays());
-        if (!r.ok) return;
-        const data = await r.json();
+        const data = await api.get('/api/timesheets/tools?days=' + getDays());
 
         // Populate account filter
         const sel = document.getElementById('filterAccount');
@@ -294,9 +286,7 @@ async function loadTools() {
 // === Model Chart ===
 async function loadModels() {
     try {
-        const r = await fetch('/api/timesheets/models?days=' + getDays());
-        if (!r.ok) return;
-        const data = await r.json();
+        const data = await api.get('/api/timesheets/models?days=' + getDays());
 
         const top = data.slice(0, 6);
 
@@ -343,9 +333,7 @@ async function loadRework() {
     if (getProject()) params.set('project', getProject());
 
     try {
-        const r = await fetch('/api/timesheets/rework?' + params);
-        if (!r.ok) return;
-        const d = await r.json();
+        const d = await api.get('/api/timesheets/rework?' + params);
 
         // KPIs
         document.getElementById('reworkRate').textContent = d.rework_rate + '%';
@@ -413,9 +401,7 @@ async function loadContext() {
     if (getProject()) params.set('project', getProject());
 
     try {
-        const r = await fetch('/api/timesheets/context-effectiveness?' + params);
-        if (!r.ok) return;
-        const d = await r.json();
+        const d = await api.get('/api/timesheets/context-effectiveness?' + params);
 
         const container = document.getElementById('contextCards');
         const changes = d.changes || [];

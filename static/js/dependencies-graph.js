@@ -160,13 +160,7 @@ async function confirmConnection() {
     const type = document.getElementById('connectModalType').value;
     const note = document.getElementById('connectModalNote').value;
 
-    const resp = await fetch('/api/relations', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({source, target, type, note})
-    });
-
-    const result = await resp.json();
+    const result = await api.post('/api/relations', {source, target, type, note});
     if (result.error) {
         alert(result.error);
         return;
@@ -356,13 +350,7 @@ async function addRelation() {
     if (!source || !target || !type) { alert('Bitte alle Pflichtfelder ausfuellen'); return; }
     if (source === target) { alert('Projekte muessen unterschiedlich sein'); return; }
 
-    const resp = await fetch('/api/relations', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({source, target, type, note})
-    });
-
-    const result = await resp.json();
+    const result = await api.post('/api/relations', {source, target, type, note});
     if (result.error) { alert(result.error); return; }
 
     document.getElementById('sourceProject').value = '';
@@ -376,7 +364,7 @@ async function addRelation() {
 }
 
 async function deleteRelation(id) {
-    await fetch(`/api/relations/${id}`, {method: 'DELETE'});
+    await api.del(`/api/relations/${id}`);
     loadData();
 }
 
@@ -391,13 +379,7 @@ async function addRelationType() {
     if (!name) { alert('Bitte Namen eingeben'); return; }
 
     const id = name.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
-    const resp = await fetch('/api/relations/types', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({id, name, icon, color})
-    });
-
-    const result = await resp.json();
+    const result = await api.post('/api/relations/types', {id, name, icon, color});
     if (result.error) { alert(result.error); return; }
 
     hideAddTypeModal();

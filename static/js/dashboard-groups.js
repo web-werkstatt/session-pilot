@@ -3,8 +3,7 @@
 
 // Gruppen laden
 function loadGroups() {
-    return fetch('/api/groups')
-        .then(r => r.json())
+    return api.get('/api/groups')
         .then(data => {
             groupsData = data;
             renderGroupFilterButtons();
@@ -80,12 +79,7 @@ function createInlineGroup() {
         return;
     }
 
-    fetch('/api/groups', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, name, icon, color, description: '' })
-    })
-    .then(r => r.json())
+    api.post('/api/groups', { id, name, icon, color, description: '' })
     .then(result => {
         if (result.success) {
             // Gruppen neu laden und neue Gruppe auswählen
@@ -167,12 +161,7 @@ function createGroup() {
         return;
     }
 
-    fetch('/api/groups', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, name, icon, color, description: desc })
-    })
-    .then(r => r.json())
+    api.post('/api/groups', { id, name, icon, color, description: desc })
     .then(result => {
         if (result.success) {
             // Felder leeren
@@ -210,17 +199,12 @@ function editGroup(groupId) {
     const newDesc = prompt('Beschreibung:', group.description || '');
     if (newDesc === null) return;
 
-    fetch(`/api/groups/${groupId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+    api.put(`/api/groups/${groupId}`, {
             name: newName,
             icon: newIcon,
             color: newColor,
             description: newDesc
-        })
     })
-    .then(r => r.json())
     .then(result => {
         if (result.success) {
             loadGroups().then(() => {
@@ -244,8 +228,7 @@ function deleteGroup(groupId) {
         return;
     }
 
-    fetch(`/api/groups/${groupId}`, { method: 'DELETE' })
-    .then(r => r.json())
+    api.del(`/api/groups/${groupId}`)
     .then(result => {
         if (result.success) {
             loadGroups().then(() => {

@@ -142,9 +142,9 @@ function handleCmdSearch() {
 
 function doProjectSearch(q) {
     // Projekte + Seiten + Sessions parallel suchen
-    var projectsReq = fetch('/api/projects/search?q=' + encodeURIComponent(q) + '&limit=8').then(function(r) { return r.json(); });
+    var projectsReq = api.get('/api/projects/search?q=' + encodeURIComponent(q) + '&limit=8');
     var sessionsReq = q.length >= 2
-        ? fetch('/api/sessions/search?q=' + encodeURIComponent(q) + '&limit=10').then(function(r) { return r.json(); }).catch(function() { return {results:[]}; })
+        ? api.get('/api/sessions/search?q=' + encodeURIComponent(q) + '&limit=10').catch(function() { return {results:[]}; })
         : Promise.resolve({results:[]});
 
     Promise.all([projectsReq, sessionsReq]).then(function(res) {
@@ -207,8 +207,7 @@ function doFulltextSearch(q) {
     }
     document.getElementById('cmdResults').innerHTML = '<div style="padding:20px;text-align:center;color:#555"><span class="doc-status-spinner" style="display:inline-block;width:16px;height:16px;border-width:2px;vertical-align:middle;margin-right:8px"></span>Suche in allen Projekten...</div>';
 
-    fetch('/api/search?q=' + encodeURIComponent(q) + '&limit=30')
-        .then(function(r) { return r.json(); })
+    api.get('/api/search?q=' + encodeURIComponent(q) + '&limit=30')
         .then(function(data) {
             if (data.error) {
                 document.getElementById('cmdResults').innerHTML = '<div style="padding:20px;text-align:center;color:#ff4444">' + data.error + '</div>';

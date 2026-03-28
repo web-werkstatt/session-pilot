@@ -25,8 +25,7 @@ function loadPlans() {
     if (filters.project) params.set('project', filters.project);
     if (filters.category) params.set('category', filters.category);
 
-    fetch('/api/plans?' + params.toString())
-        .then(r => r.json())
+    api.get('/api/plans?' + params.toString())
         .then(data => {
             allPlans = data.plans || [];
             renderPlans();
@@ -38,8 +37,7 @@ function loadPlans() {
 }
 
 function loadStats() {
-    fetch('/api/plans/stats')
-        .then(r => r.json())
+    api.get('/api/plans/stats')
         .then(s => {
             // Umsetzung
             document.getElementById('completionRate').textContent = s.completion_rate;
@@ -76,8 +74,7 @@ function loadStats() {
 }
 
 function loadProjects() {
-    fetch('/api/plans/projects')
-        .then(r => r.json())
+    api.get('/api/plans/projects')
         .then(data => {
             const sel = document.getElementById('projectFilter');
             (data.projects || []).forEach(p => {
@@ -176,8 +173,7 @@ function setFilter(key, value) {
 
 // === Detail ===
 function showPlan(id) {
-    fetch(`/api/plans/${id}`)
-        .then(r => r.json())
+    api.get(`/api/plans/${id}`)
         .then(plan => {
             document.getElementById('modalTitle').textContent = plan.title;
 
@@ -215,12 +211,7 @@ function closePlanModal() {
 }
 
 function setPlanStatus(id, status) {
-    fetch(`/api/plans/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status }),
-    })
-    .then(r => r.json())
+    api.put(`/api/plans/${id}`, { status })
     .then(result => {
         if (result.success) {
             showPlan(id);  // Modal aktualisieren
@@ -236,8 +227,7 @@ function syncPlans() {
     btn.disabled = true;
     btn.innerHTML = '<i data-lucide="loader" class="icon icon-sm spin"></i> Importiere...';
 
-    fetch('/api/plans/sync', { method: 'POST' })
-        .then(r => r.json())
+    api.post('/api/plans/sync')
         .then(result => {
             if (result.success) {
                 const s = result.stats;

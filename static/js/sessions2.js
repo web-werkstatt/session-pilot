@@ -75,9 +75,7 @@ function setQuickFilter(range, btn) {
 
 async function loadStats() {
     try {
-        const r = await fetch('/api/sessions/stats');
-        if (!r.ok) throw new Error('Stats failed');
-        const d = await r.json();
+        const d = await api.get('/api/sessions/stats');
         document.getElementById('statSessions').textContent = d.total_sessions || 0;
         document.getElementById('statProjects').textContent = d.projects || 0;
         document.getElementById('statDuration').textContent = d.total_duration_formatted || '0s';
@@ -119,13 +117,7 @@ async function loadSessions() {
     if (dateTo) params.set('date_to', dateTo);
 
     try {
-        const r = await fetch('/api/sessions?' + params);
-        if (!r.ok) {
-            console.error('Sessions laden fehlgeschlagen:', r.status);
-            document.getElementById('loading').innerHTML = '<p style="color:var(--danger)">Fehler beim Laden der Sessions (DB nicht erreichbar?)</p>';
-            return;
-        }
-        const d = await r.json();
+        const d = await api.get('/api/sessions?' + params);
         totalCount = d.total;
         sessionsData = d.sessions || [];
         maxDuration = Math.max(1, ...sessionsData.map(s => s.duration_ms || 0));
@@ -233,9 +225,7 @@ async function syncSessions() {
     btn.classList.add('syncing');
     btn.textContent = '⏳ Sync...';
     try {
-        const r = await fetch('/api/sessions/sync', {method: 'POST'});
-        if (!r.ok) throw new Error(`Sync failed: ${r.status}`);
-        const d = await r.json();
+        const d = await api.post('/api/sessions/sync');
         if (d.success) {
             btn.textContent = `+${d.stats.imported} neu`;
             loadStats();
@@ -272,8 +262,8 @@ async function loadSessionsWithFulltext(query) {
 
     try {
         const [metaRes, ftRes] = await Promise.all([
-            fetch('/api/sessions?' + metaParams, {signal}).then(r => r.json()),
-            fetch('/api/sessions/search?' + ftParams, {signal}).then(r => r.json()),
+            api.request('/api/sessions?' + metaParams, {signal}),
+            api.request('/api/sessions/search?' + ftParams, {signal}),
         ]);
 
         if (signal.aborted) return;

@@ -17,8 +17,7 @@ function openEditModal(projectName) {
     // Tab auf Allgemein setzen
     switchEditTab('general');
 
-    fetch(`/api/project/${encodeURIComponent(projectName)}`)
-        .then(r => r.json())
+    api.get(`/api/project/${encodeURIComponent(projectName)}`)
         .then(data => {
             document.getElementById('editDescription').value = data.description || '';
             document.getElementById('editGroup').value = data.group || '';
@@ -76,8 +75,7 @@ function switchEditTab(tab) {
 }
 
 async function loadRelationTypes() {
-    const resp = await fetch('/api/relations/types');
-    relationTypes = await resp.json();
+    relationTypes = await api.get('/api/relations/types');
     const select = document.getElementById('editRelationType');
     select.innerHTML = relationTypes.map(t =>
         `<option value="${t.id}">${renderIcon(t.icon)} ${t.name}</option>`
@@ -87,8 +85,7 @@ async function loadRelationTypes() {
 async function loadProjectRelations() {
     if (!currentEditProject) return;
 
-    const resp = await fetch(`/api/project/${encodeURIComponent(currentEditProject)}/relations`);
-    const data = await resp.json();
+    const data = await api.get(`/api/project/${encodeURIComponent(currentEditProject)}/relations`);
 
     const outgoingDiv = document.getElementById('outgoingRelations');
     const incomingDiv = document.getElementById('incomingRelations');
@@ -152,10 +149,9 @@ function onEditRelationSearch() {
     editRelationSearchTimeout = setTimeout(async () => {
         editRelationAbortController = new AbortController();
         try {
-            const resp = await fetch(`/api/projects/search?q=${encodeURIComponent(query)}&limit=10`, {
+            const results = await api.request(`/api/projects/search?q=${encodeURIComponent(query)}&limit=10`, {
                 signal: editRelationAbortController.signal
             });
-            const results = await resp.json();
 
             // Aktuelles Projekt aus der Liste entfernen
             const filtered = results.filter(p => p.name !== currentEditProject);
@@ -196,31 +192,23 @@ async function addProjectRelation() {
     const source = direction === 'outgoing' ? currentEditProject : targetProject;
     const target = direction === 'outgoing' ? targetProject : currentEditProject;
 
-    const resp = await fetch('/api/relations', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ source, target, type: relationType, note })
-    });
-
-    if (resp.ok) {
+    try {
+        await api.post('/api/relations', { source, target, type: relationType, note });
         document.getElementById('editRelationProject').value = '';
         document.getElementById('editRelationNote').value = '';
         loadProjectRelations();
-        loadData(); // Dashboard aktualisieren
-    } else {
-        const err = await resp.json();
-        alert('Fehler: ' + (err.error || 'Unbekannter Fehler'));
+        loadData();
+    } catch (err) {
+        alert('Fehler: ' + (err.message || 'Unbekannter Fehler'));
     }
 }
 
 async function deleteProjectRelation(id) {
     if (!confirm('Beziehung wirklich löschen?')) return;
 
-    const resp = await fetch(`/api/relations/${id}`, { method: 'DELETE' });
-    if (resp.ok) {
-        loadProjectRelations();
-        loadData(); // Dashboard aktualisieren
-    }
+    await api.del(`/api/relations/${id}`);
+    loadProjectRelations();
+    loadData();
 }
 
 // Dropdown schließen bei Klick außerhalb
@@ -280,12 +268,7 @@ document.getElementById('editForm').addEventListener('submit', function(e) {
         milestones: milestones
     };
 
-    fetch('/api/project/save', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-    })
-    .then(r => r.json())
+    api.post('/api/project/save', data)
     .then(result => {
         if (result.success) {
             closeEditModal();

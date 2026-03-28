@@ -14,8 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // === Data Loading ===
 function loadTasks() {
-    fetch('/api/scheduled-tasks')
-        .then(r => r.json())
+    api.get('/api/scheduled-tasks')
         .then(data => {
             allTasks = data.tasks || [];
             updateStats();
@@ -28,8 +27,7 @@ function loadTasks() {
 }
 
 function loadTemplates() {
-    fetch('/api/scheduled-tasks/templates')
-        .then(r => r.json())
+    api.get('/api/scheduled-tasks/templates')
         .then(data => { templates = data; })
         .catch(() => {});
 }
@@ -189,12 +187,10 @@ function saveTask() {
         : '/api/scheduled-tasks';
     const method = editingTaskId ? 'PUT' : 'POST';
 
-    fetch(url, {
+    api.request(url, {
         method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(taskData),
+        body: taskData,
     })
-    .then(r => r.json())
     .then(result => {
         if (result.success) {
             closeTaskModal();
@@ -211,8 +207,7 @@ function deleteTask(id) {
     if (!task) return;
     if (!confirm(`Task "${task.name}" wirklich loeschen?`)) return;
 
-    fetch(`/api/scheduled-tasks/${id}`, { method: 'DELETE' })
-        .then(r => r.json())
+    api.del(`/api/scheduled-tasks/${id}`)
         .then(result => {
             if (result.success) loadTasks();
             else alert(result.error || 'Fehler beim Loeschen');
@@ -221,8 +216,7 @@ function deleteTask(id) {
 }
 
 function toggleTask(id) {
-    fetch(`/api/scheduled-tasks/${id}/toggle`, { method: 'POST' })
-        .then(r => r.json())
+    api.post(`/api/scheduled-tasks/${id}/toggle`)
         .then(result => {
             if (result.success) loadTasks();
         })

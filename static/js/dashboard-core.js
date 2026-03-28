@@ -10,8 +10,8 @@ function loadData() {
 
     // Daten und Relations parallel laden
     Promise.all([
-        fetch('/api/data').then(r => r.json()),
-        fetch('/api/relations').then(r => r.json())
+        api.get('/api/data'),
+        api.get('/api/relations')
     ])
         .then(([data, relationsData]) => {
             allRelations = relationsData.relations || [];

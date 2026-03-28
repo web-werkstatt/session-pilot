@@ -13,8 +13,7 @@ function initGitPanel(projectName) {
 function loadGitStatus(doFetch) {
     var url = '/api/git/' + encodeURIComponent(gitProjectName) + '/status';
     if (doFetch) url += '?fetch=1';
-    fetch(url)
-        .then(r => r.json())
+    api.get(url)
         .then(renderGitPanel)
         .catch(() => {
             const el = document.getElementById('gitPanel');
@@ -104,12 +103,7 @@ function doGitCommit() {
     if (!msg) { input.focus(); return; }
 
     input.disabled = true;
-    fetch('/api/git/' + encodeURIComponent(gitProjectName) + '/commit', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({message: msg})
-    })
-    .then(r => r.json())
+    api.post('/api/git/' + encodeURIComponent(gitProjectName) + '/commit', {message: msg})
     .then(data => {
         input.disabled = false;
         if (data.success) {
@@ -125,8 +119,7 @@ function doGitCommit() {
 
 function doGitPush() {
     showGitToast('Push laeuft...', 'success');
-    fetch('/api/git/' + encodeURIComponent(gitProjectName) + '/push', {method: 'POST'})
-        .then(r => r.json())
+    api.post('/api/git/' + encodeURIComponent(gitProjectName) + '/push')
         .then(data => {
             showGitToast(data.success ? 'Push erfolgreich' : (data.error || data.output), data.success ? 'success' : 'error');
             if (data.success) loadGitStatus();
@@ -136,8 +129,7 @@ function doGitPush() {
 
 function doGitPull() {
     showGitToast('Pull laeuft...', 'success');
-    fetch('/api/git/' + encodeURIComponent(gitProjectName) + '/pull', {method: 'POST'})
-        .then(r => r.json())
+    api.post('/api/git/' + encodeURIComponent(gitProjectName) + '/pull')
         .then(data => {
             showGitToast(data.success ? 'Pull erfolgreich' : (data.error || data.output), data.success ? 'success' : 'error');
             if (data.success) loadGitStatus();

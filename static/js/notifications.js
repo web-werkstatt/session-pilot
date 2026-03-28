@@ -11,8 +11,7 @@ function startNotificationPolling() {
 }
 
 function pollNotificationCount() {
-    fetch('/api/notifications/count')
-        .then(function(r) { return r.json(); })
+    api.get('/api/notifications/count')
         .then(function(data) {
             var badge = document.getElementById('notificationBadge');
             if (!badge) return;
@@ -38,8 +37,7 @@ function toggleNotificationPanel() {
 }
 
 function loadNotifications() {
-    fetch('/api/notifications?limit=50')
-        .then(function(r) { return r.json(); })
+    api.get('/api/notifications?limit=50')
         .then(function(data) {
             renderNotifications(data.notifications || []);
         });
@@ -86,7 +84,7 @@ function renderNotifications(notifications) {
 
 function onNotificationClick(id, project) {
     // Als gelesen markieren
-    fetch('/api/notifications/' + id + '/read', {method: 'POST'});
+    api.post('/api/notifications/' + id + '/read');
 
     // Zum Projekt navigieren (falls vorhanden)
     if (project) {
@@ -100,7 +98,7 @@ function onNotificationClick(id, project) {
 }
 
 function dismissNotification(id) {
-    fetch('/api/notifications/' + id, {method: 'DELETE'})
+    api.del('/api/notifications/' + id)
         .then(function() {
             var item = document.querySelector('[data-id="' + id + '"]');
             if (item) item.remove();
@@ -109,7 +107,7 @@ function dismissNotification(id) {
 }
 
 function markAllNotificationsRead() {
-    fetch('/api/notifications/read-all', {method: 'POST'})
+    api.post('/api/notifications/read-all')
         .then(function() {
             document.querySelectorAll('.notification-item.unread').forEach(function(el) {
                 el.classList.remove('unread');

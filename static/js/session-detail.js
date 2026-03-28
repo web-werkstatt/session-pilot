@@ -283,12 +283,8 @@ async function setOutcome(outcome) {
     const note = document.getElementById('outcomeNote') ? document.getElementById('outcomeNote').value.trim() : '';
     try {
         const threadPayload = await ensureThreadSelection();
-        const r = await fetch(`/api/sessions/${SESSION_UUID}/outcome`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({outcome, note, ...threadPayload})
-        });
-        if (r.ok) {
+        await api.post(`/api/sessions/${SESSION_UUID}/outcome`, {outcome, note, ...threadPayload});
+        {
             highlightOutcome(outcome);
             if (sessionData) {
                 sessionData.outcome = outcome;
@@ -317,12 +313,7 @@ async function addReviewNote() {
     if (!note) return;
     try {
         const threadPayload = await ensureThreadSelection();
-        const r = await fetch(`/api/sessions/${SESSION_UUID}/reviews`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({note, outcome: currentOutcome, ...threadPayload})
-        });
-        if (!r.ok) return;
+        await api.post(`/api/sessions/${SESSION_UUID}/reviews`, {note, outcome: currentOutcome, ...threadPayload});
         noteEl.value = '';
         document.getElementById('outcomeNote').value = note;
         showSaved();
@@ -333,9 +324,7 @@ async function addReviewNote() {
 }
 
 async function reloadReviewData() {
-    const r = await fetch(`/api/sessions/${SESSION_UUID}`);
-    if (!r.ok) return;
-    const d = await r.json();
+    const d = await api.get(`/api/sessions/${SESSION_UUID}`);
     sessionData = d.session;
     sessionReviews = d.reviews || [];
     projectThreads = d.threads || [];
@@ -395,12 +384,7 @@ function openReviewFromMessage(idx) {
 
 async function loadSession() {
     try {
-        const r = await fetch(`/api/sessions/${SESSION_UUID}`);
-        if (!r.ok) {
-            document.getElementById('conversation').innerHTML = '<div class="loading">Session nicht gefunden</div>';
-            return;
-        }
-        const d = await r.json();
+        const d = await api.get(`/api/sessions/${SESSION_UUID}`);
         sessionData = d.session;
         sessionReviews = d.reviews || [];
         projectThreads = d.threads || [];

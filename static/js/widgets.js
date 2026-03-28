@@ -23,8 +23,8 @@ async function loadWidgets() {
 
     try {
         const [overview, activity] = await Promise.all([
-            fetch('/api/widgets/overview').then(r => r.json()),
-            fetch('/api/widgets/activity').then(r => r.json()),
+            api.get('/api/widgets/overview'),
+            api.get('/api/widgets/activity'),
         ]);
 
         renderNumberCards(overview);

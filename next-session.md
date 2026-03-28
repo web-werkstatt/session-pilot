@@ -1,41 +1,36 @@
 # Projekt-Dashboard - Naechste Session
 
 > **Letzte Aktualisierung:** 2026-03-28
-> **Status:** Sprint 6 System Cleanup abgeschlossen, Performance-Optimierung erledigt
+> **Status:** Fetch-Wrapper implementiert, alle JS-Dateien migriert
 > **Naechste Aufgabe:** Quality Pipeline starten (Sprint 5)
 
 ---
 
-## Session 2026-03-28 (Abend) - Modal-Refactoring + Performance
+## Session 2026-03-28 (Nacht) - Zentraler Fetch-Wrapper + CSS-Fix
 
 ### Was wurde erledigt
 
-**Modal-Handling vereinheitlicht:**
-- Generisches openModal(id)/closeModal(id) mit Modal-Stack in base.js
-- Globaler Escape-Handler, delegierter Overlay-Click
-- 5x gleichnamige closeModal() aufgeloest, 5 Escape-Handler entfernt
-- ideasModal von style.display auf classList/modal-overlay umgestellt
-- Duplizierte Lightbox aus index-ui.js entfernt
+**Fetch-Wrapper `api.js`:**
+- Neues Modul `static/js/api.js` als zentrale HTTP-Schicht
+- ~85 rohe fetch()-Aufrufe in 24 JS-Dateien auf api.get/post/put/del umgestellt
+- Automatisches JSON-Parsing, Content-Type-Header, Status-Check
+- ApiError-Klasse mit status, body, message
+- Convenience-Methoden: get, post, put, patch, del, request (raw fuer Downloads)
+- Eingebunden in base.html vor base.js
 
-**Performance Projekt-Detail (60s -> 20ms):**
-- /api/info aufgeteilt: Basis (4ms) sofort, teure Sections async via /api/info/slow
-- git fetch nur on-demand (Refresh-Button), nicht beim Seitenaufruf
-- count_lines_of_code: Weiche kleine/grosse Projekte (os.walk vs find+wc)
-- Security-Scan Timeouts von 30-60s auf 10s reduziert
+**CSS-Fix:**
+- `sessions-list.css` und `session-reviews.css` aus Git-History wiederhergestellt
+- Waren in b0a5cd7 faelschlicherweise als "verwaist" geloescht worden
+- Werden per @import in sessions2.css eingebunden
 
-**Performance Dashboard (8-11s -> 5ms):**
-- Background-Scan: Projekt-Scan laeuft async im Thread
-- /api/data liefert sofort cached Daten, Scan startet beim App-Start
-- scan_projects() parallelisiert via ThreadPoolExecutor (8 Workers)
-- GitHub-API/Health-Checks aus Dashboard-Scan entfernt (nur Projekt-Detail)
-- Flask threaded=True aktiviert
-
-### Git Commits
-```
-24d61b0 perf: Dashboard /api/data von 8-11s auf 5ms optimiert
-2271eb6 perf: Projekt-Detail von 60s auf 20ms optimiert
-09a5914 refactor: Generisches Modal-System in base.js, Duplikate bereinigt
-```
+### Betroffene Dateien
+| Datei | Aenderung |
+|-------|-----------|
+| `static/js/api.js` | NEU - Zentraler Fetch-Wrapper |
+| `templates/base.html` | api.js Script-Tag eingefuegt |
+| `static/js/*.js` (24 Dateien) | fetch() -> api.* migriert |
+| `static/css/sessions-list.css` | Wiederhergestellt aus Git |
+| `static/css/session-reviews.css` | Wiederhergestellt aus Git |
 
 ---
 
@@ -43,7 +38,7 @@
 
 ### Aufgaben
 - [ ] Quality Pipeline: Sprint 5 - Package + Scanner (auto_coder)
-- [ ] Fetch-Wrapper einfuehren (globale fetchJson() in base.js)
+- [ ] CLAUDE.md aktualisieren: api.js Pattern dokumentieren
 
 ### Offene Punkte
 - project_scanner.py vs project_detector.py: Tag-Erkennung teilweise dupliziert

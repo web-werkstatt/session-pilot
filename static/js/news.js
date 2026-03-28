@@ -2,8 +2,7 @@ let allNews = [];
 let currentFilter = 'all';
 
 function loadNews() {
-    fetch('/api/news')
-        .then(r => r.json())
+    api.get('/api/news')
         .then(data => {
             allNews = data.news;
             document.getElementById('timestamp').textContent = 'Stand: ' + data.timestamp;
@@ -113,8 +112,7 @@ function showDetail(project, type) {
     openModal('detailModal');
     if (typeof lucide !== 'undefined') lucide.createIcons();
 
-    fetch(`/api/news/detail/${encodeURIComponent(project)}`)
-        .then(r => r.json())
+    api.get(`/api/news/detail/${encodeURIComponent(project)}`)
         .then(data => {
             renderDetail(data, type);
         })

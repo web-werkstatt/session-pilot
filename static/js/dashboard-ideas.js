@@ -5,8 +5,7 @@ let ideasData = { ideas: [], categories: [] };
 let currentEditIdea = null;
 
 async function loadIdeas() {
-    const resp = await fetch('/api/ideas');
-    ideasData = await resp.json();
+    ideasData = await api.get('/api/ideas');
     renderIdeasList();
 }
 
@@ -121,19 +120,9 @@ async function saveIdea() {
     const data = { title, content, category, priority, project };
 
     if (currentEditIdea) {
-        // Update
-        await fetch(`/api/ideas/${currentEditIdea}`, {
-            method: 'PUT',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(data)
-        });
+        await api.put(`/api/ideas/${currentEditIdea}`, data);
     } else {
-        // Create
-        await fetch('/api/ideas', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(data)
-        });
+        await api.post('/api/ideas', data);
     }
 
     resetIdeaForm();
@@ -142,17 +131,13 @@ async function saveIdea() {
 
 async function deleteIdea(ideaId) {
     if (!confirm('Idee wirklich löschen?')) return;
-    await fetch(`/api/ideas/${ideaId}`, { method: 'DELETE' });
+    await api.del(`/api/ideas/${ideaId}`);
     loadIdeas();
 }
 
 async function toggleIdeaStatus(ideaId, currentStatus) {
     const newStatus = currentStatus === 'done' ? 'open' : 'done';
-    await fetch(`/api/ideas/${ideaId}`, {
-        method: 'PUT',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ status: newStatus })
-    });
+    await api.put(`/api/ideas/${ideaId}`, { status: newStatus });
     loadIdeas();
 }
 

@@ -3,19 +3,13 @@
 
 // Favoriten laden
 function loadFavorites() {
-    return fetch('/api/favorites')
-        .then(r => r.json())
+    return api.get('/api/favorites')
         .then(data => { favorites = data || []; })
         .catch(() => { favorites = []; });
 }
 
 function toggleFavorite(name, btn) {
-    fetch('/api/favorites', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({name: name})
-    })
-    .then(r => r.json())
+    api.post('/api/favorites', {name: name})
     .then(data => {
         if (data.success) {
             favorites = data.favorites;
@@ -30,12 +24,7 @@ function toggleFavorite(name, btn) {
 
 function toggleArchive(name, archived) {
     closeAllCtx();
-    fetch('/api/project/' + encodeURIComponent(name) + '/archive', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({archived: archived})
-    })
-    .then(r => r.json())
+    api.post('/api/project/' + encodeURIComponent(name) + '/archive', {archived: archived})
     .then(data => {
         if (data.success) {
             // Daten neu laden
@@ -72,8 +61,7 @@ function showInfo(type, name) {
     document.getElementById('modalBody').innerHTML = '<div class="spinner"></div> Lade Beschreibung...';
     openModal('infoModal');
 
-    fetch(`/api/info?type=${type}&name=${encodeURIComponent(name)}`)
-        .then(r => r.json())
+    api.get(`/api/info?type=${type}&name=${encodeURIComponent(name)}`)
         .then(data => {
             let html = '<div>' + data.description.replace(/\\n/g, '<br>') + '</div>';
             if (data.source) {
@@ -91,8 +79,7 @@ function closeInfoModal() {
 }
 
 function openTerminal(projectName) {
-    fetch(`/api/terminal?project=${encodeURIComponent(projectName)}`)
-        .then(r => r.json())
+    api.get(`/api/terminal?project=${encodeURIComponent(projectName)}`)
         .then(data => {
             if (data.success) {
                 alert('Terminal geöffnet für: ' + projectName);
@@ -125,8 +112,7 @@ function executeRefresh(forceAll) {
     document.getElementById('modalBody').innerHTML = '<div class="spinner"></div> Scanne Projekte...';
 
     const url = forceAll ? '/api/projects/refresh?force_descriptions=true' : '/api/projects/refresh';
-    fetch(url, { method: 'POST' })
-        .then(r => r.json())
+    api.post(url)
         .then(data => {
             let html = `<h3>${data.updated} Projekte aktualisiert</h3>`;
             if (data.force_descriptions) {
@@ -160,8 +146,7 @@ function cleanupDocker() {
     openModal('infoModal');
 
     // Erst Analyse anzeigen
-    fetch('/api/cleanup?mode=analyze')
-        .then(r => r.json())
+    api.get('/api/cleanup?mode=analyze')
         .then(data => {
             let html = '<h3>Analyse vor Reinigung:</h3><pre>' + data.result + '</pre>';
             html += '<p><a href="/api/cleanup/report?type=pre" target="_blank" class="action-link"><i data-lucide="download" style="width:14px;height:14px;display:inline-block;vertical-align:middle"></i> Analyse als .md exportieren</a></p>';
@@ -180,8 +165,7 @@ function cleanupDocker() {
 function executeCleanup() {
     document.getElementById('modalBody').innerHTML = '<div class="spinner"></div> Räume auf...';
 
-    fetch('/api/cleanup?mode=execute')
-        .then(r => r.json())
+    api.get('/api/cleanup?mode=execute')
         .then(data => {
             let html = '<h3>Reinigung abgeschlossen:</h3><pre>' + data.result + '</pre>';
             if (data.space_freed) {

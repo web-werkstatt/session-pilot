@@ -106,10 +106,10 @@ async function executeExport() {
     setDocStatus('Exportiere ' + selectedFiles.length + ' Dateien als ' + format.toUpperCase() + '...', 'loading');
 
     try {
-        var r = await fetch('/api/project/' + encodeURIComponent(PROJECT_NAME) + '/export-bundle', {
+        var r = await api.request('/api/project/' + encodeURIComponent(PROJECT_NAME) + '/export-bundle', {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({files: selectedFiles, format: format})
+            body: {files: selectedFiles, format: format},
+            raw: true
         });
 
         var blob = await r.blob();

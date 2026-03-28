@@ -1,8 +1,7 @@
     let vorlagenData = [];
 
     function loadVorlagen() {
-        fetch('/api/vorlagen')
-            .then(r => r.json())
+        api.get('/api/vorlagen')
             .then(data => {
                 vorlagenData = data.vorlagen;
                 document.getElementById('loading').style.display = 'none';

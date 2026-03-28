@@ -38,8 +38,7 @@ async function loadDocuments() {
 
 async function loadDirectory(dir) {
     try {
-        var r = await fetch('/api/project/' + encodeURIComponent(PROJECT_NAME) + '/documents?dir=' + encodeURIComponent(dir));
-        var d = await r.json();
+        var d = await api.get('/api/project/' + encodeURIComponent(PROJECT_NAME) + '/documents?dir=' + encodeURIComponent(dir));
         if (d.error) {
             setDocStatus('Fehler: ' + d.error, 'error');
             return;
@@ -160,8 +159,7 @@ async function expandSubdir(el, dirPath, indent) {
     setDocStatus('Lade ' + dirPath + ' ...', 'loading');
 
     try {
-        var r = await fetch('/api/project/' + encodeURIComponent(PROJECT_NAME) + '/documents?dir=' + encodeURIComponent(dirPath));
-        var d = await r.json();
+        var d = await api.get('/api/project/' + encodeURIComponent(PROJECT_NAME) + '/documents?dir=' + encodeURIComponent(dirPath));
         if (d.error) {
             countSpan.textContent = '!';
             setDocStatus('Fehler: ' + d.error, 'error');
@@ -276,8 +274,7 @@ async function openDocument(path) {
     }
 
     try {
-        var r = await fetch('/api/project/' + encodeURIComponent(PROJECT_NAME) + '/document/' + encodeURIComponent(path));
-        var d = await r.json();
+        var d = await api.get('/api/project/' + encodeURIComponent(PROJECT_NAME) + '/document/' + encodeURIComponent(path));
 
         if (d.type === 'document') {
             actionsEl.innerHTML =
@@ -345,12 +342,7 @@ async function saveDocContent() {
     status.style.color = '#888';
 
     try {
-        var r = await fetch('/api/project/' + encodeURIComponent(PROJECT_NAME) + '/document/' + encodeURIComponent(activeDocPath), {
-            method: 'PUT',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({content: docEditorMDE.value()})
-        });
-        var d = await r.json();
+        var d = await api.put('/api/project/' + encodeURIComponent(PROJECT_NAME) + '/document/' + encodeURIComponent(activeDocPath), {content: docEditorMDE.value()});
         if (d.success) {
             status.textContent = 'Gespeichert';
             status.style.color = '#4caf50';

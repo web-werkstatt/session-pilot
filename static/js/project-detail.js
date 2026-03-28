@@ -22,8 +22,7 @@ function switchProjectTab(tab) {
 // === Overview ===
 async function loadProjectInfo() {
     try {
-        const r = await fetch('/api/info?name=' + encodeURIComponent(PROJECT_NAME));
-        const d = await r.json();
+        const d = await api.get('/api/info?name=' + encodeURIComponent(PROJECT_NAME));
 
         const match = d.description.match(/<h3>Beschreibung<\/h3><p>(.*?)<\/p>/);
         document.getElementById('projectSubtitle').textContent = match ? match[1] : '';
@@ -58,8 +57,7 @@ async function loadProjectInfo() {
 
 async function loadSlowSections() {
     try {
-        const r = await fetch('/api/info/slow?name=' + encodeURIComponent(PROJECT_NAME));
-        const d = await r.json();
+        const d = await api.get('/api/info/slow?name=' + encodeURIComponent(PROJECT_NAME));
         const el = document.getElementById('slowSections');
         if (!el) return;
 
@@ -104,8 +102,7 @@ async function loadProjectPlans() {
         ];
         let allPlans = [];
         for (const v of variants) {
-            const r = await fetch('/api/plans?project=' + encodeURIComponent(v));
-            const d = await r.json();
+            const d = await api.get('/api/plans?project=' + encodeURIComponent(v));
             if (d.plans && d.plans.length > 0) allPlans = allPlans.concat(d.plans);
         }
         const seen = new Set();
@@ -164,8 +161,7 @@ async function loadProjectPlans() {
 // === README ===
 async function loadReadme() {
     try {
-        const r = await fetch('/api/project/' + encodeURIComponent(PROJECT_NAME) + '/readme');
-        const d = await r.json();
+        const d = await api.get('/api/project/' + encodeURIComponent(PROJECT_NAME) + '/readme');
         readmeFilename = d.filename || 'README.md';
         if (d.html) {
             document.getElementById('readmeRendered').innerHTML = d.html;
@@ -210,11 +206,7 @@ async function saveReadme() {
     const status = document.getElementById('readmeStatus');
     status.textContent = 'Speichern...'; status.style.color = '#888';
     try {
-        const r = await fetch('/api/project/' + encodeURIComponent(PROJECT_NAME) + '/readme', {
-            method: 'PUT', headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({content, filename: readmeFilename})
-        });
-        const d = await r.json();
+        const d = await api.put('/api/project/' + encodeURIComponent(PROJECT_NAME) + '/readme', {content, filename: readmeFilename});
         if (d.success) { status.textContent = 'Gespeichert'; status.style.color = '#4caf50'; await loadReadme(); cancelReadmeEdit(); }
         else { status.textContent = d.error; status.style.color = '#ff4444'; }
     } catch(e) { status.textContent = 'Fehler: ' + e; status.style.color = '#ff4444'; }

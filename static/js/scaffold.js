@@ -56,9 +56,7 @@ function validateName() {
 async function loadTemplates() {
     if (templates.length) { renderTemplates(); return; }
     try {
-        const r = await fetch('/api/scaffold/templates');
-        if (!r.ok) return;
-        templates = await r.json();
+        templates = await api.get('/api/scaffold/templates');
         renderTemplates();
     } catch(e) { console.error(e); }
 }
@@ -108,12 +106,7 @@ async function loadPreview() {
     document.getElementById('previewDesc').textContent = config.description || 'Keine Beschreibung';
 
     try {
-        const r = await fetch('/api/scaffold/preview', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(config)
-        });
-        const d = await r.json();
+        const d = await api.post('/api/scaffold/preview', config);
         if (d.error) {
             document.getElementById('previewFiles').innerHTML = `<span style="color:#ef5350">${d.error}</span>`;
             document.getElementById('btnCreate').disabled = true;
@@ -136,12 +129,7 @@ async function createProject() {
     btn.textContent = 'Erstelle...';
 
     try {
-        const r = await fetch('/api/scaffold/create', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(getConfig())
-        });
-        const d = await r.json();
+        const d = await api.post('/api/scaffold/create', getConfig());
 
         document.querySelectorAll('.wizard-panel').forEach(p => p.style.display = 'none');
         document.getElementById('stepResult').style.display = '';

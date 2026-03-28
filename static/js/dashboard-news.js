@@ -3,8 +3,7 @@
 
 // News Ticker laden - mit sanftem Update ohne Ruckeln
 function loadNews() {
-    fetch('/api/news')
-        .then(r => r.json())
+    api.get('/api/news')
         .then(data => {
             // Nur aktualisieren wenn sich etwas geändert hat
             const newHash = JSON.stringify(data.headlines.map(h => h.project + h.type));
