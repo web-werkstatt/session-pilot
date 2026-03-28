@@ -110,13 +110,13 @@ def get_plan_detail(plan_id):
 
 @plans_bp.route('/api/plans/<int:plan_id>', methods=['PUT'])
 def update_plan(plan_id):
-    """Plan-Metadaten aktualisieren (Status, Projekt, Kategorie)."""
+    """Plan-Metadaten aktualisieren (Projekt, Kategorie). Status wird automatisch erkannt."""
     ensure_plans_schema()
     req = request.get_json()
     if not req:
         return jsonify({'error': 'Keine Daten'}), 400
 
-    allowed = ('status', 'project_name', 'category', 'title')
+    allowed = ('project_name', 'category', 'title')
     updates = []
     params = []
     for field in allowed:

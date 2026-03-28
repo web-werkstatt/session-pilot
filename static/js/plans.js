@@ -188,18 +188,11 @@ function showPlan(id) {
             }
             document.getElementById('modalMeta').innerHTML = meta.join('');
 
-            // Toolbar mit Status-Buttons
+            // Toolbar: Status (auto-erkannt), Kategorie, Dateiname
             document.getElementById('modalToolbar').innerHTML = `
-                <div class="status-buttons">
-                    <button class="btn btn-sm ${plan.status === 'draft' ? 'btn-active' : 'btn-ghost'}" onclick="setPlanStatus(${id},'draft')">Entwurf</button>
-                    <button class="btn btn-sm ${plan.status === 'active' ? 'btn-active' : 'btn-ghost'}" onclick="setPlanStatus(${id},'active')">Aktiv</button>
-                    <button class="btn btn-sm ${plan.status === 'completed' ? 'btn-active' : 'btn-ghost'}" onclick="setPlanStatus(${id},'completed')">Erledigt</button>
-                    <button class="btn btn-sm ${plan.status === 'archived' ? 'btn-active' : 'btn-ghost'}" onclick="setPlanStatus(${id},'archived')">Archiv</button>
-                </div>
-                <div class="toolbar-right">
-                    <span class="badge badge-cat"><i data-lucide="${getCategoryIcon(plan.category)}" class="icon icon-xs"></i> ${plan.category}</span>
-                    <code class="filename">${escapeHtml(plan.filename)}</code>
-                </div>
+                <span class="badge badge-status badge-${plan.status}">${statusLabel(plan.status)}</span>
+                <span class="badge badge-cat"><i data-lucide="${getCategoryIcon(plan.category)}" class="icon icon-xs"></i> ${plan.category}</span>
+                <code class="filename">${escapeHtml(plan.filename)}</code>
             `;
 
             document.getElementById('modalContent').innerHTML = plan.content_html || '<em>Kein Inhalt</em>';
@@ -211,17 +204,6 @@ function showPlan(id) {
 
 function closePlanModal() {
     closeModal('planModal');
-}
-
-function setPlanStatus(id, status) {
-    api.put(`/api/plans/${id}`, { status })
-    .then(result => {
-        if (result.success) {
-            showPlan(id);  // Modal aktualisieren
-            loadPlans();
-            loadStats();
-        }
-    });
 }
 
 // === Sync ===
