@@ -1,5 +1,48 @@
 /* Project Detail Page Styles */
 
+/* Uebersicht: Content + TOC Sidebar */
+.overview-layout {
+    display: grid;
+    grid-template-columns: 1fr 200px;
+    gap: 24px;
+    align-items: start;
+}
+.overview-toc {
+    position: sticky;
+    top: 80px;
+    padding: 14px 0;
+}
+.overview-toc .toc-title {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 10px;
+    padding: 0 12px;
+}
+.overview-toc .toc-link {
+    display: block;
+    padding: 5px 12px;
+    font-size: 12px;
+    color: var(--text-muted);
+    text-decoration: none;
+    border-left: 2px solid transparent;
+    transition: all 0.15s;
+}
+.overview-toc .toc-link:hover {
+    color: var(--text-primary);
+    background: var(--bg-hover);
+}
+.overview-toc .toc-link.active {
+    color: var(--accent-light);
+    border-left-color: var(--accent-light);
+}
+@media (max-width: 900px) {
+    .overview-layout { grid-template-columns: 1fr; }
+    .overview-toc { display: none; }
+}
+
 /* Zweispaltiges Grid fuer Uebersicht-Sektionen */
 .info-grid {
     display: grid;
@@ -89,7 +132,7 @@
 }
 
 .project-body { padding: 24px; padding-bottom: 80px; }
-.project-body .project-info-section { max-width: 900px; }
+.project-body .project-info-section { flex: 1; min-width: 0; }
 .project-body h3 {
     color: var(--accent-light); font-size: 14px; margin: 28px 0 12px;
     border-bottom: 1px solid var(--border); padding-bottom: 6px;
