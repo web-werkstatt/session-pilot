@@ -78,6 +78,14 @@ But it doesn't stop there — it also monitors your Docker containers, scans you
 - **Task Templates** — Pre-built templates for health checks, backup verification, and monitoring
 - **Enable/Disable** — Toggle tasks on/off without deleting them
 
+### Code Quality
+- **Quality Dashboard** — Score overview (A–F) for all scanned projects, drill-down into issues by category
+- **7 Automated Checks** — File sizes, code duplication (jscpd), cyclomatic complexity (radon), CSS quality, JS duplicates, architecture rules, test detection
+- **Baseline & Diff** — Freeze current state, track only new/fixed issues — no noise from legacy code
+- **Scan & Baseline from GUI** — One-click scan and baseline per project, no CLI required
+- **AI Quality Templates** — Generate `AI_QUALITY.md` and `AI_TASKS.md` for AI-assisted refactoring
+- **Pre-commit Hook** — Guards against file size violations, secrets, architecture rule breaks, and utility duplication
+
 ### DevOps & Infrastructure
 - **Docker Container Dashboard** — Live status with health checks, ports, uptime
 - **Dependency Tracker** — Dependencies across all projects (npm, pip, composer, etc.)
@@ -90,14 +98,14 @@ But it doesn't stop there — it also monitors your Docker containers, scans you
 - **Document Browser** — Browse, view, edit, and upload files
 
 ### Technical
-- Flask with modular Blueprint architecture (19 route modules, 18 services)
+- Flask with modular Blueprint architecture (20 route modules, 19 services)
 - PostgreSQL for session data with connection pooling
 - JSON file cache with TTL for fast project scans
+- `auto_coder` quality scanner with baseline/diff workflow
 - Dark theme with design token system
 - Responsive layout with collapsible sidebar
 - No build step — runs directly, no compilation needed
 - Docker & systemd deployment options
-- ~8,800 lines of Python
 
 ## Screenshots
 
@@ -121,6 +129,9 @@ But it doesn't stop there — it also monitors your Docker containers, scans you
 
 **Scheduled Tasks** — Manage scheduled automation tasks with RemoteTrigger integration.
 ![Scheduled Tasks](docs/screenshots/08-scheduled-tasks.png)
+
+**Code Quality** — Score overview for all projects with drill-down into issues by category.
+![Quality](docs/screenshots/09-quality.png)
 
 **Container Dashboard** — Live Docker container status with health checks and quick actions.
 ![Containers](docs/screenshots/05-containers.png)
@@ -222,6 +233,10 @@ Without PostgreSQL, everything works except the Sessions feature.
 | `/api/plans/sync` | POST | Import/sync plans from ~/.claude/plans/ |
 | `/api/plans/stats` | GET | Plan statistics (by status, category, project) |
 | `/api/plans/projects` | GET | Projects with plan counts |
+| `/api/quality/projects` | GET | All projects with quality scores |
+| `/api/quality/report/<name>` | GET | Detailed quality report + baseline diff |
+| `/api/quality/scan/<name>` | POST | Trigger quality scan |
+| `/api/quality/baseline/<name>` | POST | Set current report as baseline |
 
 ## Backup
 
@@ -251,6 +266,7 @@ project_dashboard/
 │   ├── timesheet_routes.py   # AI timesheets
 │   ├── plans_routes.py       # Plans import, overview, detail
 │   ├── scheduled_tasks_routes.py  # Scheduled task management
+│   ├── quality_routes.py     # Code quality dashboard & API
 │   └── ...                   # Groups, ideas, news, etc.
 ├── services/                 # 18 service classes
 │   ├── session_import.py     # JSONL parser for Claude sessions
@@ -281,7 +297,8 @@ SessionPilot is actively developed. Here's what's coming next:
 | **Planned** | **Session Comparison** | Side-by-side comparison of two sessions — same task, different model (Opus vs. Sonnet), different prompt strategy. What worked better? |
 | **Planned** | **LLM Model Benchmarking** | "Opus vs. Sonnet: rework rate over time" across all projects. Unique research-grade insights. |
 | **Planned** | **Prompt Library** | Extract and rate reusable initial prompts per task type. Build a personal prompt playbook from real session data. |
-| **Future** | **Multi-LLM Support** | Extend beyond Claude Code — Codex CLI, Gemini CLI, aider, and other AI coding tools. |
+| **Done** | ~~**Multi-LLM Support**~~ | Codex CLI and Gemini CLI sessions are now supported alongside Claude Code. |
+| **Planned** | **Quality CI Integration** | Run `auto_coder diff` in CI pipelines, block PRs on regressions. |
 | **Future** | **Team Mode** | Shared dashboard for small teams with role-based views. |
 
 Have an idea? [Open an issue](https://github.com/web-werkstatt/session-pilot/issues) or contribute directly.
@@ -339,6 +356,12 @@ Aber das ist nicht alles — es ueberwacht auch Docker-Container, scannt Projekt
 - Dashboard zur Verwaltung geplanter Automatisierungsaufgaben
 - RemoteTrigger-Integration fuer persistente Cron-basierte Tasks
 - Vorlagen fuer Health-Checks, Backup-Verifizierung und Monitoring
+
+**Code Quality**
+- Quality-Dashboard mit Score-Uebersicht (A-F) fuer alle Projekte
+- 7 automatisierte Checks: Dateigroessen, Duplikate, Komplexitaet, CSS/JS, Architektur, Tests
+- Baseline-Vergleich: nur neue/behobene Issues anzeigen
+- AI Quality Templates fuer AI-gestuetztes Refactoring
 
 **DevOps & Infrastruktur**
 - Docker Container Dashboard mit Health-Checks
