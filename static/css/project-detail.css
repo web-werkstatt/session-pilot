@@ -183,7 +183,8 @@
 .readme-actions .status { color: var(--text-faint); font-size: 12px; margin-left: auto; }
 #readmeEditor { display: none; }
 
-/* Git Panel */
+/* Git Section + Panel */
+.git-section { border-top: 1px solid var(--border-subtle); margin-top: 24px; padding-top: 8px; }
 .git-panel { background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); padding: 14px 18px; margin-bottom: 20px; }
 .git-header { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; font-size: 13px; }
 .git-branch { background: var(--bg-blue-elevated); color: var(--accent-light); padding: 2px 10px; border-radius: var(--radius-sm); font-family: var(--font-mono); font-size: 12px; }
