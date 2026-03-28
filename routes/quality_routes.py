@@ -137,6 +137,20 @@ def quality_scan(project):
         return jsonify({"error": "Scan-Timeout (300s)"}), 500
 
 
+@quality_bp.route('/api/quality/progress/<path:project>')
+def quality_progress(project):
+    """Fortschritt eines laufenden Scans"""
+    project_path = os.path.join(PROJECTS_DIR, project)
+    path = os.path.join(project_path, QUALITY_DIR, "progress.json")
+    if not os.path.exists(path):
+        return jsonify({"step": 0, "total": 0, "check": "", "status": "idle"})
+    try:
+        with open(path) as f:
+            return jsonify(json.load(f))
+    except (json.JSONDecodeError, OSError):
+        return jsonify({"step": 0, "total": 0, "check": "", "status": "idle"})
+
+
 @quality_bp.route('/api/quality/baseline/<path:project>', methods=['POST'])
 def quality_set_baseline(project):
     """Setzt aktuelle Report als Baseline"""

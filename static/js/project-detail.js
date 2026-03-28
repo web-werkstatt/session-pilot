@@ -204,12 +204,34 @@ async function loadQualityTab() {
     }
 }
 
+var _scanPollTimer = null;
+var _checkNames = {
+    file_sizes: 'Dateigroessen', duplication: 'Duplikate (jscpd)',
+    complexity: 'Komplexitaet (radon)', css_quality: 'CSS-Qualitaet',
+    js_quality: 'JS-Duplikate', architecture: 'Architektur-Regeln',
+    tests: 'Tests', done: 'Fertig'
+};
+
 function runQualityScan() {
     var body = document.getElementById('qualityBody');
-    body.innerHTML = '<div class="loading"><div class="spinner"></div> Scanne...</div>';
+    body.innerHTML = '<div id="scanProgress" style="padding:30px;text-align:center"><div class="spinner" style="margin:0 auto 12px"></div><div id="scanStep" style="font-size:13px;color:#888">Starte Scan...</div><div id="scanBar" style="margin:16px auto;width:300px;height:6px;background:#222;border-radius:3px;overflow:hidden"><div id="scanFill" style="width:0%;height:100%;background:var(--accent);border-radius:3px;transition:width 0.3s"></div></div></div>';
+
+    _scanPollTimer = setInterval(function() {
+        api.get('/api/quality/progress/' + encodeURIComponent(PROJECT_NAME))
+            .then(function(p) {
+                if (!p || p.status === 'idle') return;
+                var pct = p.total > 0 ? Math.round(p.step / p.total * 100) : 0;
+                var el = document.getElementById('scanFill');
+                if (el) el.style.width = pct + '%';
+                var step = document.getElementById('scanStep');
+                if (step) step.textContent = 'Check ' + p.step + '/' + p.total + ': ' + (_checkNames[p.check] || p.check);
+                if (p.status === 'complete') clearInterval(_scanPollTimer);
+            }).catch(function() {});
+    }, 800);
+
     api.post('/api/quality/scan/' + encodeURIComponent(PROJECT_NAME))
-        .then(function() { qualityLoaded = false; loadQualityTab(); })
-        .catch(function(e) { body.innerHTML = '<div style="color:#f44336;padding:20px">Fehler: ' + e + '</div>'; });
+        .then(function() { clearInterval(_scanPollTimer); qualityLoaded = false; loadQualityTab(); })
+        .catch(function(e) { clearInterval(_scanPollTimer); body.innerHTML = '<div style="color:#f44336;padding:20px">Fehler: ' + e + '</div>'; });
 }
 
 function setProjectBaseline() {

@@ -1,5 +1,6 @@
 """Scanner-Orchestrator: Fuehrt alle Checks aus und erstellt Report."""
 
+import json
 import os
 from datetime import datetime, timezone
 
@@ -10,7 +11,7 @@ from auto_coder.checks.duplication import DuplicationCheck
 from auto_coder.checks.file_sizes import FileSizeCheck
 from auto_coder.checks.js_quality import JSQualityCheck
 from auto_coder.checks.tests import TestCheck
-from auto_coder.config import IGNORE_DIRS, PROJECTS_ROOT
+from auto_coder.config import IGNORE_DIRS, PROJECTS_ROOT, QUALITY_DIR
 from auto_coder.report import (
     QualityReport,
     TestResult,
@@ -33,19 +34,37 @@ class ProjectQualityScanner:
             TestCheck(),
         ]
 
+    def _write_progress(self, project_path, step, total, check_name, status):
+        """Schreibt Fortschritt in .quality/progress.json"""
+        progress_dir = os.path.join(project_path, QUALITY_DIR)
+        os.makedirs(progress_dir, exist_ok=True)
+        path = os.path.join(progress_dir, "progress.json")
+        try:
+            with open(path, "w") as f:
+                json.dump({
+                    "step": step, "total": total,
+                    "check": check_name, "status": status,
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                }, f)
+        except OSError:
+            pass
+
     def scan(self, project_path: str) -> QualityReport:
         """Scannt ein Projekt und erzeugt Quality Report."""
         project_path = os.path.abspath(project_path)
         project_name = os.path.basename(project_path)
+        total = len(self.checks)
 
         issues = []
         skipped = []
-        for check in self.checks:
+        for i, check in enumerate(self.checks):
+            self._write_progress(project_path, i + 1, total, check.name, "running")
             if check.is_applicable(project_path):
                 found = check.run(project_path)
                 issues.extend(found)
             else:
                 skipped.append(check.name)
+        self._write_progress(project_path, total, total, "done", "complete")
 
         score_letter, score_num = calculate_score(issues)
         now = datetime.now(timezone.utc).isoformat()
