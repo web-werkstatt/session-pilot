@@ -1,59 +1,67 @@
 # Projekt-Dashboard - Naechste Session
 
-> **Letzte Aktualisierung:** 2026-03-28
-> **Status:** auto_coder als eigenstaendiges Projekt extrahiert, Quality-Workflow komplett
-> **Naechste Aufgabe:** Scoring-Tuning oder Sprint 6 (DeRep + Fixer)
+> **Letzte Aktualisierung:** 2026-03-29
+> **Status:** Quality-Pipeline komplett, UI massiv verbessert
+> **Naechste Aufgabe:** Komplette Umstellung auf Englisch
 
 ---
 
-## Session 2026-03-28 (Abend) - Quality Pipeline + Duplikat-Sprint
+## Session 2026-03-28/29 (Abend/Nacht) - Quality + UI Sprint
 
 ### Was wurde erledigt
 
-**1. Tag-Erkennung konsolidiert (Issue #5):**
-- Zentrale `detect_tags()` in `project_detector.py`, 3 Duplikate entfernt
+**Quality Pipeline (Issues #5-#7):**
+- detect_tags() konsolidiert, Scanner-Rauschen -46%, Warnings 347->189
+- Baseline + Diff CLI, Pre-commit Hook, auto_coder als eigenstaendiges Projekt
+- AI Quality Templates (AI_QUALITY.md, AI_TASKS.md) mit Init-Script
 
-**2. Scanner-Rauschen + Code-Duplikate bereinigt (Issue #6):**
-- IGNORE_DIRS erweitert (.claude/, backups/, _archive/), Same-File -> info
-- `escapeHtml()` (5x) und `formatTimeAgo()` (2x) nach base.js konsolidiert
-- `create_session_meta()` und `update_time_range()` in session_import_utils.py
-- **Warnings 347 -> 189 (-46%)**
+**Quality Dashboard (Issue #8):**
+- /quality Seite mit Projekt-Tabelle, Score, Scan/Baseline Buttons
+- Quality-Tab in Projekt-Detail-Seite mit Issues nach Kategorie
+- Scan-Fortschrittsanzeige (progress.json Polling)
+- Timeout 120s->300s, jscpd 120s->60s
 
-**3. Quality Baseline + Diff-Workflow (Issue #7):**
-- CLI-Befehle: `auto_coder diff` (Delta zur Baseline), `auto_coder baseline`
-- Pre-commit Hook erweitert: Architektur-Guards, Utility-Duplikat-Guard
-- Baseline bei 189 Warnings eingefroren
+**Projekt-Detail Verbesserungen:**
+- Uebersicht zweispaltig (Grid) mit sticky TOC rechts
+- Sessions-Tab als richtige Tabelle (wie Sessions-Hauptseite)
+- Plans-Tab: verschachtelte Links behoben, 404 gefixt
+- Git-Panel unter Sessions-Tabelle mit Legende (M/A/D/?) auf Englisch
+- Session-Filter matcht jetzt auch Bindestrich/Unterstrich-Varianten
 
-**4. auto_coder als eigenstaendiges Projekt:**
-- Extrahiert nach `/mnt/projects/auto_coder/` mit eigener Package-Struktur
-- `quality-template/` Bundle: pre-commit, Makefile, CLAUDE-Vorlage
-- Validiert ueber 3 Projekte (A/93, F/33, F/0)
+**UI/Design:**
+- Akzentfarbe von Cyan #4fc3f7 auf Stahlblau #5b9bd5
+- Lila Card-Hintergrund #1e1e2e durch neutrales #222
+- Lila Code-Statistik-Balken #1a1a2e durch #222
+- Prio-Icons: Leerer Kreis -> Pfeile (arrow-up/minus/arrow-down)
+- Account-Badge Styling fuer account1 und codex
+- Zeilennummern in Code-Bloecken der Session-Ansicht
+- Plans: Manuelle Status-Buttons entfernt (Auto-Status reicht)
 
-### Commits
-| Commit | Beschreibung |
-|--------|-------------|
-| 59ee90a | refactor: detect_tags() konsolidiert (fixes #5) |
-| 16a729a | refactor: Scanner-Rauschen + Duplikate (fixes #6) |
-| b902488 | docs: CLAUDE.md House-Style-Regeln |
-| eedd1ed | feat: Baseline + Diff + Pre-commit (fixes #7) |
+**README + GitHub:**
+- Code Quality Feature dokumentiert mit Screenshot
+- API-Endpoints, Roadmap aktualisiert
 
 ---
 
 ## Naechste Session
 
-### Aufgaben
-- [ ] auto_coder README: Architektur-Skizze + Roadmap-Kapitel ergaenzen
+### Aufgaben (Prioritaet)
+- [ ] **Komplette Umstellung auf Englisch** - Templates, JS, Python-Routes
+  - Templates (15+): Tab-Labels, Buttons, Ueberschriften, Platzhalter
+  - JS-Dateien (10+): UI-Texte, Fehlermeldungen, Tooltips
+  - Python-Routes (5+): Server-generierte h3 (Beschreibung, Details, Letzte Commits etc.)
+  - Systematisch mit Agents parallelisieren
+
+### Weitere Aufgaben
 - [ ] Scoring-Tuning: Score-Cap pro Kategorie (aktuell F bei 189 Warnings)
-- [ ] Sprint 6: DeRep + Fixer (abhaengig von Sprint 5)
-- [ ] Langfristziel: Warnings < 100 (Scout Rule bei jeder Aenderung)
+- [ ] Sprint 6: DeRep + Fixer
+- [ ] auto_coder README: Architektur-Skizze + Roadmap
 
 ### Offene Punkte
 - CSS-Duplikate (12x): Warten auf Design-Refactor
-- Gleichnamige JS-Funktionen: Kein echtes DRY-Problem, seitenspezifische Logik
 - auto_coder: Weitere Checks (Security, Dependencies), HTML-Reports, CI-Integration
 
 ### Referenz
 - auto_coder Projekt: `/mnt/projects/auto_coder/`
 - Quality Roadmap: `sprints/05-roadmap-quality-pipeline.md`
 - Baseline: `.quality/baseline.json` (189 Warnings, 13 Errors)
-- Report: `.quality/report.json`
