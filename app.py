@@ -35,6 +35,10 @@ register_blueprints(app)
 from services.notification_checker import start_checker
 start_checker()
 
+# Projekt-Scan im Hintergrund starten (Daten sind bereit wenn User Dashboard oeffnet)
+from routes.data_routes import init_background_scan
+init_background_scan()
+
 # Favoriten
 FAVORITES_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'favorites.json')
 
@@ -88,4 +92,4 @@ def containers():
 
 if __name__ == '__main__':
     print(f"Projekt-Dashboard startet auf http://{HOST}:{PORT}")
-    app.run(host=HOST, port=PORT, debug=False)
+    app.run(host=HOST, port=PORT, debug=False, threaded=True)

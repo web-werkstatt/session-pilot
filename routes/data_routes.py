@@ -1,6 +1,8 @@
 """
 Daten-Aggregation Routes: /api/data, /api/containers, Container-Aktionen
+Background-Scan: Projekt-Scan laeuft async, /api/data liefert immer sofort cached Daten.
 """
+import threading
 from datetime import datetime
 from flask import Blueprint, jsonify, request
 
@@ -13,6 +15,10 @@ from services import (
 
 data_bp = Blueprint('data', __name__)
 
+# Background-Scan: Daten werden async aktualisiert
+_data_store = {"data": None, "timestamp": None, "scanning": False}
+_DATA_REFRESH_INTERVAL = 15  # Sekunden - passt zum Frontend Auto-Refresh
+
 
 def _container_stats(containers):
     """Berechnet Container-Statistiken"""
@@ -22,76 +28,117 @@ def _container_stats(containers):
     return {"total": len(containers), "running": running, "stopped": stopped, "unhealthy": unhealthy}
 
 
-@data_bp.route('/api/data')
-def get_data():
-    projects = scan_projects()
-    containers = get_docker_containers()
-    gitea_repos = get_gitea_repos()
-    gitea_commits = get_gitea_repo_commits()
+def _do_scan():
+    """Fuehrt den kompletten Scan im Hintergrund durch"""
+    try:
+        projects = scan_projects()
+        containers = get_docker_containers()
+        gitea_repos = get_gitea_repos()
+        gitea_commits = get_gitea_repo_commits()
 
-    for proj_name, proj_info in projects.items():
-        if proj_info.get("has_gitea") and proj_info.get("gitea_repo"):
-            repo_name = proj_info["gitea_repo"]
-            if repo_name in gitea_commits:
-                remote_sha = gitea_commits[repo_name]["sha"]
-                local_sha = proj_info.get("local_sha", "")
-                if local_sha and remote_sha:
-                    proj_info["sync_status"] = "synced" if local_sha == remote_sha else "differs"
-                    proj_info["remote_sha"] = remote_sha
+        # Sync-Status berechnen
+        for proj_name, proj_info in projects.items():
+            if proj_info.get("has_gitea") and proj_info.get("gitea_repo"):
+                repo_name = proj_info["gitea_repo"]
+                if repo_name in gitea_commits:
+                    remote_sha = gitea_commits[repo_name]["sha"]
+                    local_sha = proj_info.get("local_sha", "")
+                    if local_sha and remote_sha:
+                        proj_info["sync_status"] = "synced" if local_sha == remote_sha else "differs"
+                        proj_info["remote_sha"] = remote_sha
+                    else:
+                        proj_info["sync_status"] = "unknown"
                 else:
-                    proj_info["sync_status"] = "unknown"
+                    proj_info["sync_status"] = "not_on_gitea"
             else:
-                proj_info["sync_status"] = "not_on_gitea"
-        else:
-            proj_info["sync_status"] = "no_remote"
+                proj_info["sync_status"] = "no_remote"
 
-    cache = load_cache()
-    cached_projects = set(cache.get("projects", {}).keys())
-    current_projects = set(projects.keys())
-    new_projects = list(current_projects - cached_projects)
+        # Cache + Notifications
+        cache = load_cache()
+        cached_projects = set(cache.get("projects", {}).keys())
+        current_projects = set(projects.keys())
+        new_projects = list(current_projects - cached_projects)
 
-    for proj_name in new_projects:
-        if proj_name not in cache.get("projects", {}):
+        for proj_name in new_projects:
             if "projects" not in cache:
                 cache["projects"] = {}
             cache["projects"][proj_name] = {"name": proj_name}
-    cache["last_update"] = datetime.now().isoformat()
-    save_cache(cache)
+        cache["last_update"] = datetime.now().isoformat()
+        save_cache(cache)
 
-    # Commit-Detection fuer Notifications
-    try:
-        from services.notification_service import load_state, save_state, add_notification
-        state = load_state()
-        prev_commits = state.get("last_commits", {})
-        for proj_name, proj_info in projects.items():
-            sha = proj_info.get("local_sha", "")
-            if sha and prev_commits.get(proj_name) and prev_commits[proj_name] != sha:
-                add_notification(
-                    "new_commit", "info",
-                    f"Neuer Commit: {proj_name}",
-                    proj_info.get("last_commit_msg", "")[:80],
-                    project=proj_name
-                )
-            if sha:
-                prev_commits[proj_name] = sha
-        state["last_commits"] = prev_commits
-        save_state(state)
-    except Exception:
-        pass  # Notifications duerfen /api/data nicht blockieren
+        # Commit-Detection
+        try:
+            from services.notification_service import load_state, save_state, add_notification
+            state = load_state()
+            prev_commits = state.get("last_commits", {})
+            for proj_name, proj_info in projects.items():
+                sha = proj_info.get("local_sha", "")
+                if sha and prev_commits.get(proj_name) and prev_commits[proj_name] != sha:
+                    add_notification("new_commit", "info", f"Neuer Commit: {proj_name}",
+                                     proj_info.get("last_commit_msg", "")[:80], project=proj_name)
+                if sha:
+                    prev_commits[proj_name] = sha
+            state["last_commits"] = prev_commits
+            save_state(state)
+        except Exception:
+            pass
 
-    stats = _container_stats(containers)
-    stats["total_projects"] = len(projects)
-    stats["total_containers"] = stats.pop("total")
-    stats["gitea_repos"] = len(gitea_repos)
+        stats = _container_stats(containers)
+        stats["total_projects"] = len(projects)
+        stats["total_containers"] = stats.pop("total")
+        stats["gitea_repos"] = len(gitea_repos)
 
-    return jsonify({
-        "projects": list(projects.values()),
-        "containers": containers,
-        "gitea_repos": gitea_repos,
-        "new_projects": new_projects,
-        "stats": stats,
-        "timestamp": datetime.now().strftime("%d.%m.%Y %H:%M:%S")
-    })
+        _data_store["data"] = {
+            "projects": list(projects.values()),
+            "containers": containers,
+            "gitea_repos": gitea_repos,
+            "new_projects": new_projects,
+            "stats": stats,
+            "timestamp": datetime.now().strftime("%d.%m.%Y %H:%M:%S")
+        }
+        _data_store["timestamp"] = datetime.now()
+    except Exception as e:
+        print(f"Background-Scan Fehler: {e}")
+    finally:
+        _data_store["scanning"] = False
+
+
+def _trigger_scan():
+    """Startet Scan im Background-Thread falls noetig"""
+    if _data_store["scanning"]:
+        return
+    if _data_store["timestamp"]:
+        age = (datetime.now() - _data_store["timestamp"]).total_seconds()
+        if age < _DATA_REFRESH_INTERVAL:
+            return
+    _data_store["scanning"] = True
+    threading.Thread(target=_do_scan, daemon=True).start()
+
+
+def init_background_scan():
+    """Startet den ersten Scan sofort beim App-Start"""
+    _trigger_scan()
+
+
+@data_bp.route('/api/data')
+def get_data():
+    # Scan im Hintergrund anstossen
+    _trigger_scan()
+
+    # Sofort cached Daten liefern (oder leeres Skelett beim allerersten Aufruf)
+    if _data_store["data"]:
+        return jsonify(_data_store["data"])
+
+    # Allererster Aufruf: Warten bis erste Daten da sind (max 15s)
+    for _ in range(150):
+        import time
+        time.sleep(0.1)
+        if _data_store["data"]:
+            return jsonify(_data_store["data"])
+
+    # Fallback: Leere Daten
+    return jsonify({"projects": [], "containers": [], "gitea_repos": [],
+                     "new_projects": [], "stats": {}, "timestamp": "Laden..."})
 
 
 @data_bp.route('/api/containers')
