@@ -41,11 +41,11 @@
     /* Accent / Brand */
     --accent: #0078d4;
     --accent-hover: #005a9e;
-    --accent-light: #4fc3f7;
-    --accent-link: #4dabf7;
+    --accent-light: #0078d4;
+    --accent-link: #2196f3;
 
     /* Status Colors */
-    --status-success: #4caf50;
+    --status-success: #43a047;
     --status-success-text: #a5d6a7;
     --status-success-border: #2e7d32;
     --status-warning: #ff9800;
