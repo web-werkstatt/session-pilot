@@ -1,4 +1,24 @@
 /* Project Detail Page Styles */
+
+/* Zweispaltiges Grid fuer Uebersicht-Sektionen */
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    margin-bottom: 16px;
+}
+.info-block {
+    background: var(--bg-secondary, #1e1e2e);
+    border: 1px solid var(--border, #333);
+    border-radius: 8px;
+    padding: 14px 18px;
+}
+.info-block h3 {
+    margin-top: 0;
+}
+@media (max-width: 768px) {
+    .info-grid { grid-template-columns: 1fr; }
+}
 .project-hero { padding: 20px 24px 12px; }
 .project-hero h1 { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
 .project-hero .subtitle { color: var(--text-muted); font-size: 14px; }

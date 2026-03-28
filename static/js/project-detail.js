@@ -27,11 +27,18 @@ async function loadProjectInfo() {
         const match = d.description.match(/<h3>Beschreibung<\/h3><p>(.*?)<\/p>/);
         document.getElementById('projectSubtitle').textContent = match ? match[1] : '';
 
-        let html = d.description
+        let sectionHtml = d.description
             .replace(/<h3>README<\/h3>[\s\S]*?(?=<h3>|<div class="export-hint"|$)/, '');
 
+        // Sektionen in Bloecke wrappen fuer Grid-Layout
+        sectionHtml = sectionHtml.replace(/<h3>/g, '</div><div class="info-block"><h3>');
+        sectionHtml = sectionHtml.replace(/^<\/div>/, '');
+        sectionHtml += '</div>';
+
+        let html = '<div class="info-grid">' + sectionHtml + '</div>';
+
         // Platzhalter fuer teure Sections (werden async nachgeladen)
-        html += '<div id="slowSections"><div class="loading" style="padding:10px;font-size:12px;color:#555">Lade weitere Daten...</div></div>';
+        html += '<div class="info-grid" id="slowSections"><div class="info-block"><div class="loading" style="padding:10px;font-size:12px;color:#555">Lade weitere Daten...</div></div></div>';
 
         html += `
         <h3>README</h3>
@@ -70,7 +77,9 @@ async function loadSlowSections() {
                 const countEl = document.getElementById('sessionsCount');
                 if (linkCount > 0) countEl.textContent = linkCount;
             }
-            el.innerHTML = d.html;
+            let slowHtml = d.html.replace(/<h3>/g, '</div><div class="info-block"><h3>');
+            slowHtml = slowHtml.replace(/^<\/div>/, '') + '</div>';
+            el.innerHTML = slowHtml;
         } else {
             el.innerHTML = '';
         }
