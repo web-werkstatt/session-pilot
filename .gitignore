@@ -73,6 +73,9 @@ docs/screenshots/galerie-*
 docs/screenshots/lightbox-*
 docs/screenshots/project-detail-*
 
+# Quality reports
+.quality/
+
 # Internal planning
 sprints/
 
