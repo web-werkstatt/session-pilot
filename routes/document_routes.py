@@ -11,6 +11,7 @@ from datetime import datetime
 from flask import Blueprint, jsonify, request, Response, send_from_directory
 
 from services.path_resolver import resolve_project_path as _resolve_project_path
+from routes.api_utils import api_route
 
 documents_bp = Blueprint('documents', __name__)
 
@@ -125,6 +126,7 @@ def get_documents(name):
 
 
 @documents_bp.route('/api/project/<path:name>/document/<path:doc_path>')
+@api_route
 def get_document(name, doc_path):
     """Liest ein einzelnes Dokument"""
     project_path = _resolve_project_path(name)
@@ -166,25 +168,23 @@ def get_document(name, doc_path):
         })
 
     elif ext in IMAGE_EXTENSIONS:
-        try:
-            with open(filepath, 'rb') as f:
-                data = f.read()
-            mime = mimetypes.guess_type(filepath)[0] or 'image/png'
-            b64 = base64.b64encode(data).decode('utf-8')
-            return jsonify({
-                'data_url': f"data:{mime};base64,{b64}",
-                'type': 'image',
-                'extension': ext,
-                'path': doc_path,
-                'size': len(data),
-            })
-        except Exception as e:
-            return jsonify({"error": str(e)}), 500
+        with open(filepath, 'rb') as f:
+            data = f.read()
+        mime = mimetypes.guess_type(filepath)[0] or 'image/png'
+        b64 = base64.b64encode(data).decode('utf-8')
+        return jsonify({
+            'data_url': f"data:{mime};base64,{b64}",
+            'type': 'image',
+            'extension': ext,
+            'path': doc_path,
+            'size': len(data),
+        })
 
     return jsonify({"error": "Dateityp nicht unterstuetzt"}), 400
 
 
 @documents_bp.route('/api/project/<path:name>/document/<path:doc_path>', methods=['PUT'])
+@api_route
 def save_document(name, doc_path):
     """Speichert ein Dokument"""
     project_path = _resolve_project_path(name)
@@ -205,13 +205,10 @@ def save_document(name, doc_path):
     data = request.get_json()
     content = data.get('content', '')
 
-    try:
-        os.makedirs(os.path.dirname(filepath), exist_ok=True)
-        with open(filepath, 'w', encoding='utf-8') as f:
-            f.write(content)
-        return jsonify({"success": True, "message": f"{doc_path} gespeichert"})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    os.makedirs(os.path.dirname(filepath), exist_ok=True)
+    with open(filepath, 'w', encoding='utf-8') as f:
+        f.write(content)
+    return jsonify({"success": True, "message": f"{doc_path} gespeichert"})
 
 
 @documents_bp.route('/api/project/<path:name>/document-image/<path:img_path>')

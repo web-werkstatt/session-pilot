@@ -5,6 +5,7 @@ Extrahiert aus session_routes.py (Dateigroessen-Limit)
 from flask import Blueprint, jsonify, request
 from services.db_service import execute, ensure_session_review_schema
 from services.session_export import format_duration
+from routes.api_utils import api_route
 
 session_review_bp = Blueprint("session_reviews", __name__)
 
@@ -90,151 +91,146 @@ def load_thread_sessions(thread_ids, current_session_id=None):
 
 
 @session_review_bp.route("/api/sessions/<uuid>/outcome", methods=["POST"])
+@api_route
 def api_session_outcome(uuid):
     """Session-Outcome aktualisieren"""
+    ensure_session_review_schema()
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "JSON Body erforderlich"}), 400
+
+    outcome = data.get("outcome")
+    allowed = {"ok", "needs_fix", "reverted", "partial", None}
+    if outcome not in allowed:
+        return jsonify({"error": f"Ungueltiger Outcome: {outcome}"}), 400
+
+    note = (data.get("note") or "").strip()
+    session = _get_session_row(uuid)
+    if not session:
+        return jsonify({"error": "Session nicht gefunden"}), 404
+
     try:
-        ensure_session_review_schema()
-        data = request.get_json()
-        if not data:
-            return jsonify({"error": "JSON Body erforderlich"}), 400
-
-        outcome = data.get("outcome")
-        allowed = {"ok", "needs_fix", "reverted", "partial", None}
-        if outcome not in allowed:
-            return jsonify({"error": f"Ungueltiger Outcome: {outcome}"}), 400
-
-        note = (data.get("note") or "").strip()
-        session = _get_session_row(uuid)
-        if not session:
-            return jsonify({"error": "Session nicht gefunden"}), 404
-
         thread = _get_or_create_review_thread(session, data.get("thread_id"), data.get("thread_title"))
-        execute("""
-            UPDATE sessions SET outcome = %s, outcome_note = %s, outcome_at = NOW()
-            WHERE session_uuid = %s
-        """, (outcome, note or None, uuid))
-
-        if note:
-            execute("""
-                INSERT INTO session_reviews (session_id, thread_id, outcome_snapshot, note, author)
-                VALUES (%s, %s, %s, %s, %s)
-            """, (session["id"], thread["id"] if thread else None, outcome, note, data.get("author") or "local"))
-            _touch_review_thread(thread["id"] if thread else None)
-
-        return jsonify({"success": True, "thread_id": thread["id"] if thread else None})
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
 
+    execute("""
+        UPDATE sessions SET outcome = %s, outcome_note = %s, outcome_at = NOW()
+        WHERE session_uuid = %s
+    """, (outcome, note or None, uuid))
 
-@session_review_bp.route("/api/sessions/<uuid>/reviews", methods=["POST"])
-def api_session_review_add(uuid):
-    """Review-Notiz zu einer Session hinzufuegen"""
-    try:
-        ensure_session_review_schema()
-        data = request.get_json()
-        if not data:
-            return jsonify({"error": "JSON Body erforderlich"}), 400
-
-        note = (data.get("note") or "").strip()
-        if not note:
-            return jsonify({"error": "Notiz erforderlich"}), 400
-
-        outcome = data.get("outcome")
-        allowed = {"ok", "needs_fix", "reverted", "partial", None}
-        if outcome not in allowed:
-            return jsonify({"error": f"Ungueltiger Outcome: {outcome}"}), 400
-
-        session = _get_session_row(uuid)
-        if not session:
-            return jsonify({"error": "Session nicht gefunden"}), 404
-
-        thread = _get_or_create_review_thread(session, data.get("thread_id"), data.get("thread_title"))
-
+    if note:
         execute("""
             INSERT INTO session_reviews (session_id, thread_id, outcome_snapshot, note, author)
             VALUES (%s, %s, %s, %s, %s)
         """, (session["id"], thread["id"] if thread else None, outcome, note, data.get("author") or "local"))
         _touch_review_thread(thread["id"] if thread else None)
 
-        if outcome is not None:
-            execute("""
-                UPDATE sessions SET outcome = %s, outcome_note = %s, outcome_at = NOW()
-                WHERE session_uuid = %s
-            """, (outcome, note, uuid))
+    return jsonify({"success": True, "thread_id": thread["id"] if thread else None})
 
-        review = execute("""
-            SELECT sr.id, sr.thread_id, rt.title AS thread_title, sr.outcome_snapshot, sr.note, sr.author, sr.created_at
-            FROM session_reviews sr
-            LEFT JOIN review_threads rt ON rt.id = sr.thread_id
-            WHERE sr.session_id = %s
-            ORDER BY sr.created_at DESC
-            LIMIT 1
-        """, (session["id"],), fetchone=True)
-        return jsonify({"success": True, "review": _serialize_review(review), "thread_id": thread["id"] if thread else None})
+
+@session_review_bp.route("/api/sessions/<uuid>/reviews", methods=["POST"])
+@api_route
+def api_session_review_add(uuid):
+    """Review-Notiz zu einer Session hinzufuegen"""
+    ensure_session_review_schema()
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "JSON Body erforderlich"}), 400
+
+    note = (data.get("note") or "").strip()
+    if not note:
+        return jsonify({"error": "Notiz erforderlich"}), 400
+
+    outcome = data.get("outcome")
+    allowed = {"ok", "needs_fix", "reverted", "partial", None}
+    if outcome not in allowed:
+        return jsonify({"error": f"Ungueltiger Outcome: {outcome}"}), 400
+
+    session = _get_session_row(uuid)
+    if not session:
+        return jsonify({"error": "Session nicht gefunden"}), 404
+
+    try:
+        thread = _get_or_create_review_thread(session, data.get("thread_id"), data.get("thread_title"))
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+
+    execute("""
+        INSERT INTO session_reviews (session_id, thread_id, outcome_snapshot, note, author)
+        VALUES (%s, %s, %s, %s, %s)
+    """, (session["id"], thread["id"] if thread else None, outcome, note, data.get("author") or "local"))
+    _touch_review_thread(thread["id"] if thread else None)
+
+    if outcome is not None:
+        execute("""
+            UPDATE sessions SET outcome = %s, outcome_note = %s, outcome_at = NOW()
+            WHERE session_uuid = %s
+        """, (outcome, note, uuid))
+
+    review = execute("""
+        SELECT sr.id, sr.thread_id, rt.title AS thread_title, sr.outcome_snapshot, sr.note, sr.author, sr.created_at
+        FROM session_reviews sr
+        LEFT JOIN review_threads rt ON rt.id = sr.thread_id
+        WHERE sr.session_id = %s
+        ORDER BY sr.created_at DESC
+        LIMIT 1
+    """, (session["id"],), fetchone=True)
+    return jsonify({"success": True, "review": _serialize_review(review), "thread_id": thread["id"] if thread else None})
 
 
 @session_review_bp.route("/api/review-threads", methods=["POST"])
+@api_route
 def api_review_thread_create():
     """Projektbezogenen Review-Thread anlegen oder wiederverwenden"""
-    try:
-        ensure_session_review_schema()
-        data = request.get_json()
-        if not data:
-            return jsonify({"error": "JSON Body erforderlich"}), 400
-        title = (data.get("title") or "").strip()
-        if not title:
-            return jsonify({"error": "Titel erforderlich"}), 400
+    ensure_session_review_schema()
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "JSON Body erforderlich"}), 400
+    title = (data.get("title") or "").strip()
+    if not title:
+        return jsonify({"error": "Titel erforderlich"}), 400
 
-        project_name = data.get("project_name")
-        existing = execute(
-            "SELECT * FROM review_threads WHERE project_name IS NOT DISTINCT FROM %s AND LOWER(title) = LOWER(%s) ORDER BY updated_at DESC LIMIT 1",
-            (project_name, title), fetchone=True
-        )
-        if existing:
-            row = dict(existing)
-            row["created_at"] = row["created_at"].isoformat() if row.get("created_at") else None
-            row["updated_at"] = row["updated_at"].isoformat() if row.get("updated_at") else None
-            return jsonify({"success": True, "thread": row})
-
-        execute("INSERT INTO review_threads (project_name, title) VALUES (%s, %s)", (project_name, title))
-        thread = execute(
-            "SELECT * FROM review_threads WHERE project_name IS NOT DISTINCT FROM %s AND LOWER(title) = LOWER(%s) ORDER BY id DESC LIMIT 1",
-            (project_name, title), fetchone=True
-        )
-        row = dict(thread)
+    project_name = data.get("project_name")
+    existing = execute(
+        "SELECT * FROM review_threads WHERE project_name IS NOT DISTINCT FROM %s AND LOWER(title) = LOWER(%s) ORDER BY updated_at DESC LIMIT 1",
+        (project_name, title), fetchone=True
+    )
+    if existing:
+        row = dict(existing)
         row["created_at"] = row["created_at"].isoformat() if row.get("created_at") else None
         row["updated_at"] = row["updated_at"].isoformat() if row.get("updated_at") else None
         return jsonify({"success": True, "thread": row})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+
+    execute("INSERT INTO review_threads (project_name, title) VALUES (%s, %s)", (project_name, title))
+    thread = execute(
+        "SELECT * FROM review_threads WHERE project_name IS NOT DISTINCT FROM %s AND LOWER(title) = LOWER(%s) ORDER BY id DESC LIMIT 1",
+        (project_name, title), fetchone=True
+    )
+    row = dict(thread)
+    row["created_at"] = row["created_at"].isoformat() if row.get("created_at") else None
+    row["updated_at"] = row["updated_at"].isoformat() if row.get("updated_at") else None
+    return jsonify({"success": True, "thread": row})
 
 
 @session_review_bp.route("/api/sessions/bulk-outcome", methods=["POST"])
+@api_route
 def api_sessions_bulk_outcome():
     """Mehrere Sessions gleichzeitig bewerten"""
-    try:
-        data = request.get_json()
-        uuids = data.get("uuids", [])
-        outcome = data.get("outcome")
+    data = request.get_json()
+    uuids = data.get("uuids", [])
+    outcome = data.get("outcome")
 
-        if not uuids:
-            return jsonify({"error": "uuids erforderlich"}), 400
-        allowed = {"ok", "needs_fix", "reverted", "partial", None}
-        if outcome not in allowed:
-            return jsonify({"error": f"Ungueltiger Outcome: {outcome}"}), 400
+    if not uuids:
+        return jsonify({"error": "uuids erforderlich"}), 400
+    allowed = {"ok", "needs_fix", "reverted", "partial", None}
+    if outcome not in allowed:
+        return jsonify({"error": f"Ungueltiger Outcome: {outcome}"}), 400
 
-        for uuid in uuids:
-            execute("""
-                UPDATE sessions SET outcome = %s, outcome_at = NOW()
-                WHERE session_uuid = %s
-            """, (outcome, uuid))
+    for uuid in uuids:
+        execute("""
+            UPDATE sessions SET outcome = %s, outcome_at = NOW()
+            WHERE session_uuid = %s
+        """, (outcome, uuid))
 
-        return jsonify({"success": True, "count": len(uuids)})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    return jsonify({"success": True, "count": len(uuids)})

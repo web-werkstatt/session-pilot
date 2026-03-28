@@ -4,104 +4,101 @@ Context Effectiveness: Vorher/Nachher-Analyse von CLAUDE.md Aenderungen
 from flask import Blueprint, jsonify, request
 from services.db_service import execute
 from services.cost_service import calculate_cost
+from routes.api_utils import api_route
 
 context_bp = Blueprint('context', __name__)
 
 
 @context_bp.route('/api/timesheets/context-changes')
+@api_route
 def api_context_changes():
     """Liste aller Instruktions-Aenderungen"""
-    try:
-        project = request.args.get('project')
-        conditions = []
-        params = []
-        if project:
-            conditions.append("project_name = %s")
-            params.append(project)
+    project = request.args.get('project')
+    conditions = []
+    params = []
+    if project:
+        conditions.append("project_name = %s")
+        params.append(project)
 
-        where = f"WHERE {' AND '.join(conditions)}" if conditions else ""
+    where = f"WHERE {' AND '.join(conditions)}" if conditions else ""
 
-        rows = execute(f"""
-            SELECT id, project_name, file_path, changed_at,
-                   lines_added, lines_removed, commit_hash, commit_message
-            FROM context_changes {where}
-            ORDER BY changed_at DESC LIMIT 200
-        """, params, fetch=True)
+    rows = execute(f"""
+        SELECT id, project_name, file_path, changed_at,
+               lines_added, lines_removed, commit_hash, commit_message
+        FROM context_changes {where}
+        ORDER BY changed_at DESC LIMIT 200
+    """, params, fetch=True)
 
-        return jsonify([{
-            "id": r["id"], "project": r["project_name"], "file": r["file_path"],
-            "date": r["changed_at"].isoformat() if r["changed_at"] else None,
-            "added": r["lines_added"], "removed": r["lines_removed"],
-            "commit": r["commit_hash"][:7] if r["commit_hash"] else None,
-            "message": r["commit_message"],
-        } for r in (rows or [])])
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    return jsonify([{
+        "id": r["id"], "project": r["project_name"], "file": r["file_path"],
+        "date": r["changed_at"].isoformat() if r["changed_at"] else None,
+        "added": r["lines_added"], "removed": r["lines_removed"],
+        "commit": r["commit_hash"][:7] if r["commit_hash"] else None,
+        "message": r["commit_message"],
+    } for r in (rows or [])])
 
 
 @context_bp.route('/api/timesheets/context-effectiveness')
+@api_route
 def api_context_effectiveness():
     """Vorher/Nachher-Vergleich pro CLAUDE.md-Aenderung"""
-    try:
-        project = request.args.get('project')
-        window_days = request.args.get('window', 14, type=int)
+    project = request.args.get('project')
+    window_days = request.args.get('window', 14, type=int)
 
-        conditions = []
-        params = []
-        if project:
-            conditions.append("project_name = %s")
-            params.append(project)
-        where = f"WHERE {' AND '.join(conditions)}" if conditions else ""
+    conditions = []
+    params = []
+    if project:
+        conditions.append("project_name = %s")
+        params.append(project)
+    where = f"WHERE {' AND '.join(conditions)}" if conditions else ""
 
-        changes = execute(f"""
-            SELECT project_name, file_path, changed_at, commit_hash, commit_message,
-                   lines_added, lines_removed
-            FROM context_changes {where} ORDER BY changed_at DESC
-        """, params, fetch=True)
+    changes = execute(f"""
+        SELECT project_name, file_path, changed_at, commit_hash, commit_message,
+               lines_added, lines_removed
+        FROM context_changes {where} ORDER BY changed_at DESC
+    """, params, fetch=True)
 
-        results = []
-        for ch in (changes or []):
-            proj = ch["project_name"]
-            ts = ch["changed_at"]
-            proj_variants = [proj, proj.replace("_", "-")]
+    results = []
+    for ch in (changes or []):
+        proj = ch["project_name"]
+        ts = ch["changed_at"]
+        proj_variants = [proj, proj.replace("_", "-")]
 
-            before = _get_period_metrics(proj_variants, ts, -window_days, 0)
-            after = _get_period_metrics(proj_variants, ts, 0, window_days)
+        before = _get_period_metrics(proj_variants, ts, -window_days, 0)
+        after = _get_period_metrics(proj_variants, ts, 0, window_days)
 
-            if before["sessions"] < 2 and after["sessions"] < 2:
-                continue
+        if before["sessions"] < 2 and after["sessions"] < 2:
+            continue
 
-            deltas = {}
-            for key in ("avg_messages", "avg_tokens", "avg_cost"):
-                bv = before.get(key, 0)
-                av = after.get(key, 0)
-                deltas[key] = round((av - bv) / bv * 100, 1) if bv and bv > 0 else None
+        deltas = {}
+        for key in ("avg_messages", "avg_tokens", "avg_cost"):
+            bv = before.get(key, 0)
+            av = after.get(key, 0)
+            deltas[key] = round((av - bv) / bv * 100, 1) if bv and bv > 0 else None
 
-            results.append({
-                "project": proj, "file": ch["file_path"], "date": ts.isoformat(),
-                "commit": ch["commit_hash"][:7] if ch["commit_hash"] else None,
-                "message": ch["commit_message"],
-                "added": ch["lines_added"], "removed": ch["lines_removed"],
-                "before": before, "after": after, "deltas": deltas,
+        results.append({
+            "project": proj, "file": ch["file_path"], "date": ts.isoformat(),
+            "commit": ch["commit_hash"][:7] if ch["commit_hash"] else None,
+            "message": ch["commit_message"],
+            "added": ch["lines_added"], "removed": ch["lines_removed"],
+            "before": before, "after": after, "deltas": deltas,
+        })
+
+    summary = []
+    seen = set()
+    for r in results:
+        if r["project"] in seen:
+            continue
+        seen.add(r["project"])
+        d = r["deltas"]
+        if d.get("avg_cost") is not None:
+            summary.append({
+                "project": r["project"], "cost_delta": d["avg_cost"],
+                "tokens_delta": d.get("avg_tokens"), "messages_delta": d.get("avg_messages"),
             })
+    summary.sort(key=lambda x: x["cost_delta"] or 0)
 
-        summary = []
-        seen = set()
-        for r in results:
-            if r["project"] in seen:
-                continue
-            seen.add(r["project"])
-            d = r["deltas"]
-            if d.get("avg_cost") is not None:
-                summary.append({
-                    "project": r["project"], "cost_delta": d["avg_cost"],
-                    "tokens_delta": d.get("avg_tokens"), "messages_delta": d.get("avg_messages"),
-                })
-        summary.sort(key=lambda x: x["cost_delta"] or 0)
-
-        return jsonify({"changes": results, "summary": summary})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    return jsonify({"changes": results, "summary": summary})
 
 
 def _get_period_metrics(project_names, reference_date, offset_start, offset_end):

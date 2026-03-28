@@ -56,8 +56,12 @@ Kein Build-Schritt, keine Tests, kein Linting konfiguriert. Abhaengigkeiten in `
 - `git_service.py` - Lokale Git-Infos via Subprocess
 - `cache_service.py` - JSON-Datei-basierter Cache (120s TTL)
 - `db_service.py` - PostgreSQL Connection-Pool (psycopg2)
-- `session_import.py` - JSONL-Parser fuer Claude Sessions
+- `session_import.py` - JSONL-Parser fuer Claude Sessions (Hash-basierter Cache)
+- `session_import_multi.py` - Parser fuer Codex CLI (JSONL) und Gemini CLI (JSON)
+- `session_import_utils.py` - Shared Helpers: `parse_ts()`, `sanitize_content_json()`
 - `session_export.py` - Export: JSON, MD, HTML, XLSX, TXT
+- `account_discovery.py` - Erkennt AI-Assistenten-Accounts (Claude, Codex, Gemini)
+- `cost_service.py` - Token-Kosten-Berechnung pro Modell
 - `plans_import.py` - Scannt ~/.claude/plans/, erkennt Projekte aus Inhalt, importiert in DB
 
 **Datenspeicher (JSON-Dateien, in .gitignore):**
@@ -80,6 +84,12 @@ Kein Build-Schritt, keine Tests, kein Linting konfiguriert. Abhaengigkeiten in `
 - **Volltextsuche:** Nutzt ripgrep (rg) mit Typ-Filtern, Fallback auf grep.
 - **Dashboard-Widgets:** Chart.js via CDN, Lazy-Loading beim Tab-Wechsel.
 - **Plans-Import:** Scannt `~/.claude/plans/*.md`, erkennt Projekt aus `/mnt/projects/XXX`-Pfaden im Inhalt, verknuepft mit Sessions via Zeitstempel-Korrelation.
+- **Session-Sync:** Hash-basierter Cache (`.sync_hashes.json`), kein Timer. Auto-Sync beim Oeffnen der Sessions-Seite, max 1x/Stunde. Bei unveraenderten Dateien null DB-Zugriffe (<1s).
+- **Shared Helpers:** `session_import_utils.py` enthaelt `parse_ts()` und `sanitize_content_json()` - werden von `session_import.py` und `session_import_multi.py` gemeinsam genutzt (vermeidet Circular Import).
+- **Globale JS-Utilities:** `base.js` enthaelt `formatTokens()`, `formatDate()`, `formatDateTime()` - auf allen Seiten verfuegbar, nicht in einzelnen JS-Dateien duplizieren.
+- **Search-Parser:** `_parse_search_output()` in `search_routes.py` - gemeinsame Ergebnis-Verarbeitung fuer rg und grep.
+- **Timesheet-Filter:** `_build_timesheet_filter()` in `timesheet_routes.py` - baut WHERE-Klausel aus Request-Parametern.
+- **API Error-Handling:** `@api_route` Decorator aus `routes/api_utils.py` statt try/except in jedem Endpoint. Fuer Endpoints mit speziellen Fehler-Responses (z.B. Fallback-Daten) weiterhin manuelles try/except.
 
 ## Scheduled Tasks (Claude Code)
 
