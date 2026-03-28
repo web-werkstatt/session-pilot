@@ -4,6 +4,24 @@
 
 ---
 
+## Session 2026-03-28 (Morgen) - Codebasis-Analyse + Quality Pipeline Planung
+
+### Was wurde erledigt
+- **Codebasis-Analyse** mit Serena: Alle Module, Schichten, Duplikationen identifiziert
+- **Auto-Coder Quality Pipeline** konzipiert (DeRep, Scanner, Fix-Loop, Dashboard)
+- **4 Sprint-Plaene erstellt** (Sprint 5-8)
+- **Auto-Coder Sprint 5** implementiert: Package + 7 Quality Checks + CLI + Scanner
+- **Serena** fuer project_dashboard aktiviert
+
+### Git Commits
+```
+79df878 feat: Auto-Coder Quality Scanner implementiert (Sprint 5), fixes #4
+abb3eb8 docs: Workflow fuer Gitea-Issues bei Aenderungen in CLAUDE.md
+332759e docs: Session 2026-03-28 - Auto-Coder Quality Pipeline geplant
+```
+
+---
+
 ## Session 2026-03-27 (Nacht) - UI-Verbesserungen
 
 ### Was wurde erledigt
