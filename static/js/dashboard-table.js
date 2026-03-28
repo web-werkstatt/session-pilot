@@ -4,9 +4,9 @@
 // === GLOBALE HELPER-FUNKTIONEN FÜR TABELLEN-RENDERING ===
 
 function getPriorityBadge(priority) {
-    if (priority === 'high') return '<span class="priority-high"><i data-lucide="circle" class="icon-priority icon-priority-high"></i></span>';
-    if (priority === 'medium') return '<span class="priority-medium"><i data-lucide="circle" class="icon-priority icon-priority-medium"></i></span>';
-    if (priority === 'low') return '<span class="priority-low"><i data-lucide="circle" class="icon-priority icon-priority-low"></i></span>';
+    if (priority === 'high') return '<span class="priority-high"><i data-lucide="arrow-up" class="icon-priority icon-priority-high"></i></span>';
+    if (priority === 'medium') return '<span class="priority-medium"><i data-lucide="minus" class="icon-priority icon-priority-medium"></i></span>';
+    if (priority === 'low') return '<span class="priority-low"><i data-lucide="arrow-down" class="icon-priority icon-priority-low"></i></span>';
     return '-';
 }
 
