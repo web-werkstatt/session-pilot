@@ -34,7 +34,7 @@ function renderProjects(projects) {
     }
     tbody.innerHTML = projects.map(function(p) {
         return '<tr>' +
-            '<td><a href="#" onclick="showDetail(\'' + escapeHtml(p.name) + '\'); return false;" class="project-link">' + escapeHtml(p.name) + '</a></td>' +
+            '<td><a href="/project/' + encodeURIComponent(p.name) + '" class="project-link">' + escapeHtml(p.name) + '</a></td>' +
             '<td><span class="score-badge ' + scoreClass(p.score) + '">' + p.score + ' <small>' + p.score_numeric + '</small></span></td>' +
             '<td>' + (p.errors > 0 ? '<span class="count-error">' + p.errors + '</span>' : '<span class="count-zero">0</span>') + '</td>' +
             '<td>' + (p.warnings > 0 ? '<span class="count-warning">' + p.warnings + '</span>' : '<span class="count-zero">0</span>') + '</td>' +

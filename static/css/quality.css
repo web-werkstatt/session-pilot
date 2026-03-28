@@ -173,6 +173,16 @@
 .issue-title { flex: 1; }
 .issue-files { color: #666; font-size: 11px; }
 
+/* Stats */
+.quality-stats {
+    display: flex;
+    gap: 20px;
+    padding: 16px 0;
+}
+.quality-stats .stat { text-align: center; }
+.quality-stats .stat-value { font-size: 24px; font-weight: 700; display: block; }
+.quality-stats .stat-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; }
+
 /* Loading */
 .loading-cell {
     text-align: center;

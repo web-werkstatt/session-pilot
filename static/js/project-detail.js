@@ -58,6 +58,7 @@ async function loadProjectInfo() {
 
         // Teure Sections async nachladen
         loadSlowSections();
+        loadQualitySection();
     } catch(e) {
         document.getElementById('projectBody').innerHTML = '<div class="loading" style="color:#ff6666">Fehler: ' + e + '</div>';
     }
@@ -110,6 +111,63 @@ function buildOverviewToc() {
         html += '<a href="#' + id + '" class="toc-link" onclick="document.getElementById(\'' + id + '\').scrollIntoView({behavior:\'smooth\',block:\'start\'});return false;">' + h.textContent + '</a>';
     });
     toc.innerHTML = html;
+}
+
+// === Quality Section ===
+async function loadQualitySection() {
+    try {
+        var d = await api.get('/api/quality/report/' + encodeURIComponent(PROJECT_NAME));
+        var r = d.report;
+        if (!r) return;
+
+        var s = r.summary || {};
+        var scoreClass = (r.score === 'A' || r.score === 'B') ? 'score-good' : (r.score === 'C' || r.score === 'D') ? 'score-medium' : 'score-bad';
+        var scoreColors = { 'score-good': '#43a047', 'score-medium': '#ffc107', 'score-bad': '#f44336' };
+
+        var html = '<h3>Code Quality</h3>';
+        html += '<div style="display:flex;align-items:center;gap:16px;margin-bottom:12px">';
+        html += '<span style="font-size:28px;font-weight:700;color:' + scoreColors[scoreClass] + '">' + r.score + '</span>';
+        html += '<span style="color:#888;font-size:13px">' + r.score_numeric + '/100</span>';
+        html += '<span style="color:#888;font-size:12px">' + (s.errors || 0) + ' Errors, ' + (s.warnings || 0) + ' Warnings</span>';
+
+        if (d.diff) {
+            var delta = d.diff.score_delta;
+            html += '<span style="font-size:12px;color:' + (delta >= 0 ? '#43a047' : '#f44336') + '">vs. Baseline: ' + (delta >= 0 ? '+' : '') + delta + '</span>';
+        }
+        html += '</div>';
+
+        // Top-5 Issues (nur errors und warnings)
+        var topIssues = (r.issues || []).filter(function(i) { return i.level !== 'info' && i.status !== 'ignored'; }).slice(0, 5);
+        if (topIssues.length > 0) {
+            html += '<div style="font-size:12px">';
+            topIssues.forEach(function(i) {
+                var icon = i.level === 'error' ? 'X' : '!';
+                var color = i.level === 'error' ? '#f44336' : '#ffc107';
+                html += '<div style="padding:3px 0;display:flex;gap:8px;align-items:center">';
+                html += '<span style="color:' + color + ';font-weight:700;width:14px;text-align:center">' + icon + '</span>';
+                html += '<span style="color:#ccc">' + escapeHtml(i.title) + '</span>';
+                html += '</div>';
+            });
+            if ((r.issues || []).length > 5) {
+                html += '<div style="padding:4px 0"><a href="/quality" style="color:var(--accent-light);font-size:11px">Alle ' + s.total_issues + ' Issues anzeigen</a></div>';
+            }
+            html += '</div>';
+        }
+
+        var qualityDiv = document.createElement('div');
+        qualityDiv.className = 'info-block';
+        qualityDiv.style.gridColumn = '1 / -1';
+        qualityDiv.innerHTML = html;
+
+        // In slowSections einfuegen
+        var slow = document.getElementById('slowSections');
+        if (slow) {
+            slow.appendChild(qualityDiv);
+        }
+        buildOverviewToc();
+    } catch(e) {
+        // Kein Quality-Report vorhanden - kein Problem
+    }
 }
 
 // === Sessions Tab ===
