@@ -75,6 +75,8 @@ docs/screenshots/project-detail-*
 
 # Quality reports
 .quality/
+AI_QUALITY.md
+AI_TASKS.md
 
 # Internal planning
 sprints/
