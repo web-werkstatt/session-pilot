@@ -138,43 +138,7 @@ def _search_rg(query, search_path, file_type, limit):
     except (subprocess.TimeoutExpired, OSError):
         return []
 
-    matches_by_file = {}
-
-    for line in result.stdout.split('\n'):
-        if not line.strip():
-            continue
-        # vimgrep Format: filepath:line:col:text
-        match = re.match(r'^(.+?):(\d+):\d+:(.*)$', line)
-        if not match:
-            continue
-
-        filepath = match.group(1)
-        line_number = int(match.group(2))
-        line_text = match.group(3).strip()
-
-        rel_path = os.path.relpath(filepath, PROJECTS_DIR)
-        parts = rel_path.split(os.sep, 1)
-        project_name = parts[0] if parts else ''
-        file_in_project = parts[1] if len(parts) > 1 else parts[0]
-
-        if rel_path not in matches_by_file:
-            matches_by_file[rel_path] = {
-                'project': project_name,
-                'file': file_in_project,
-                'extension': os.path.splitext(filepath)[1].lower(),
-                'matches': [],
-            }
-
-        if len(matches_by_file[rel_path]['matches']) < 3:
-            matches_by_file[rel_path]['matches'].append({
-                'line': line_number,
-                'text': line_text[:300],
-            })
-
-        if len(matches_by_file) >= limit:
-            break
-
-    return sorted(matches_by_file.values(), key=lambda x: x['project'])
+    return _parse_search_output(result.stdout, r'^(.+?):(\d+):\d+:(.*)$', limit)
 
 
 def _search_grep(query, search_path, file_type, limit):
@@ -204,13 +168,17 @@ def _search_grep(query, search_path, file_type, limit):
     except (subprocess.TimeoutExpired, OSError):
         return []
 
+    return _parse_search_output(result.stdout, r'^(.+?):(\d+):(.*)$', limit)
+
+
+def _parse_search_output(stdout, pattern, limit):
+    """Parst grep/rg Output in strukturierte Ergebnisse"""
     matches_by_file = {}
 
-    for line in result.stdout.split('\n'):
+    for line in stdout.split('\n'):
         if not line.strip():
             continue
-        # Format: filepath:line_number:text
-        match = re.match(r'^(.+?):(\d+):(.*)$', line)
+        match = re.match(pattern, line)
         if not match:
             continue
 

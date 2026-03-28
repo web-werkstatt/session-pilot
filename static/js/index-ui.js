@@ -1,4 +1,5 @@
-// Index-Seite UI: Lightbox, Stats, More-Menu, Sidebar, Command Palette
+// Index-Seite UI: Lightbox, Stats, More-Menu
+// Sidebar + Command Palette sind in base.js (global)
 
 // Lightbox
 function openLightbox(src) {
@@ -52,79 +53,3 @@ document.addEventListener('click', function(e) {
         if (m) m.classList.remove('show');
     }
 });
-
-// Sidebar Toggle
-function toggleSidebar() {
-    document.getElementById('sidebar').classList.toggle('collapsed');
-    document.querySelector('.main-content').classList.toggle('sidebar-collapsed');
-    localStorage.setItem('sidebar-collapsed', document.getElementById('sidebar').classList.contains('collapsed'));
-}
-if (localStorage.getItem('sidebar-collapsed') === 'true') {
-    document.getElementById('sidebar').classList.add('collapsed');
-    document.querySelector('.main-content').classList.add('sidebar-collapsed');
-}
-
-// Command Palette
-function openCommandPalette() {
-    document.getElementById('cmdOverlay').classList.add('show');
-    document.getElementById('cmdInput').value = '';
-    document.getElementById('cmdInput').focus();
-    resetCmdResults();
-}
-function closeCommandPalette() {
-    document.getElementById('cmdOverlay').classList.remove('show');
-}
-function resetCmdResults() {
-    document.getElementById('cmdResults').innerHTML =
-        '<div class="cmd-group"><div class="cmd-group-label">Schnellzugriff</div>' +
-        '<div class="cmd-item" onclick="location.href=\'/sessions\'">Claude Sessions</div>' +
-        '<div class="cmd-item" onclick="location.href=\'/containers\'">Container</div>' +
-        '<div class="cmd-item" onclick="location.href=\'/dependencies\'">Abhaengigkeiten</div>' +
-        '<div class="cmd-item" onclick="openIdeasModal();closeCommandPalette()">Ideen & Notizen</div>' +
-        '<div class="cmd-item" onclick="loadData();closeCommandPalette()">Daten aktualisieren</div></div>';
-}
-function handleCmdSearch() {
-    const q = document.getElementById('cmdInput').value.trim().toLowerCase();
-    if (!q) { resetCmdResults(); return; }
-    fetch('/api/projects/search?q=' + encodeURIComponent(q) + '&limit=8')
-        .then(r => r.json())
-        .then(results => {
-            let html = '';
-            if (results.length > 0) {
-                html += '<div class="cmd-group"><div class="cmd-group-label">Projekte</div>';
-                results.forEach(p => {
-                    html += '<div class="cmd-item" onclick="openEditModal(\'' + p.name + '\');closeCommandPalette()">' + p.name + ' <span style="color:#666;font-size:11px;margin-left:8px">' + (p.description || '') + '</span></div>';
-                });
-                html += '</div>';
-            }
-            const statics = [
-                {label:'Claude Sessions', url:'/sessions'},
-                {label:'Container', url:'/containers'},
-                {label:'Abhaengigkeiten', url:'/dependencies'},
-                {label:'Vorlagen', url:'/vorlagen'},
-            ].filter(s => s.label.toLowerCase().includes(q));
-            if (statics.length > 0) {
-                html += '<div class="cmd-group"><div class="cmd-group-label">Seiten</div>';
-                statics.forEach(s => { html += '<div class="cmd-item" onclick="location.href=\'' + s.url + '\'">' + s.label + '</div>'; });
-                html += '</div>';
-            }
-            if (!html) html = '<div style="padding:20px;text-align:center;color:#555">Keine Ergebnisse</div>';
-            document.getElementById('cmdResults').innerHTML = html;
-        });
-}
-
-// Ctrl+K Handler
-document.addEventListener('keydown', function(e) {
-    if ((e.key === 'k' && (e.ctrlKey || e.metaKey)) || (e.key === '/' && !['INPUT','TEXTAREA'].includes(document.activeElement.tagName))) {
-        e.preventDefault();
-        if (document.getElementById('cmdOverlay').classList.contains('show')) {
-            closeCommandPalette();
-        } else {
-            openCommandPalette();
-        }
-    }
-    if (e.key === 'Escape' && document.getElementById('cmdOverlay').classList.contains('show')) {
-        closeCommandPalette();
-        e.stopPropagation();
-    }
-}, true);

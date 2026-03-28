@@ -9,6 +9,26 @@ from services.session_export import format_duration
 timesheets_bp = Blueprint('timesheets', __name__)
 
 
+def _build_timesheet_filter():
+    """Baut WHERE-Klausel aus Request-Parametern (days, project, account)"""
+    days = request.args.get('days', 30, type=int)
+    days = min(max(days, 1), 365)
+    project = request.args.get('project')
+    account = request.args.get('account')
+
+    conditions = ["started_at >= NOW() - INTERVAL '%s days'"]
+    params = [days]
+    if project:
+        conditions.append("project_name = %s")
+        params.append(project)
+    if account:
+        conditions.append("account = %s")
+        params.append(account)
+
+    where = "WHERE " + " AND ".join(conditions)
+    return where, params, days
+
+
 @timesheets_bp.route('/timesheets')
 def timesheets_page():
     return render_template('timesheets.html', active_page='timesheets')
@@ -18,22 +38,7 @@ def timesheets_page():
 def api_timesheets_summary():
     """Zusammenfassung: Zeit, Tokens, Kosten aggregiert"""
     try:
-        days = request.args.get('days', 30, type=int)
-        days = min(max(days, 1), 365)
-        project = request.args.get('project')
-        account = request.args.get('account')
-
-        conditions = ["started_at >= NOW() - INTERVAL '%s days'"]
-        params = [days]
-
-        if project:
-            conditions.append("project_name = %s")
-            params.append(project)
-        if account:
-            conditions.append("account = %s")
-            params.append(account)
-
-        where = "WHERE " + " AND ".join(conditions)
+        where, params, days = _build_timesheet_filter()
 
         # Gesamt-Aggregation
         totals = execute(f"""
@@ -136,20 +141,7 @@ def api_timesheets_summary():
 def api_timesheets_daily():
     """Tagesweise Aggregation fuer Charts"""
     try:
-        days = request.args.get('days', 30, type=int)
-        project = request.args.get('project')
-        account = request.args.get('account')
-
-        conditions = ["started_at >= NOW() - INTERVAL '%s days'"]
-        params = [days]
-        if project:
-            conditions.append("project_name = %s")
-            params.append(project)
-        if account:
-            conditions.append("account = %s")
-            params.append(account)
-
-        where = "WHERE " + " AND ".join(conditions)
+        where, params, days = _build_timesheet_filter()
 
         rows = execute(f"""
             SELECT
@@ -187,17 +179,8 @@ def api_timesheets_daily():
 def api_timesheets_projects():
     """Top-Projekte nach Zeit/Tokens/Kosten"""
     try:
-        days = request.args.get('days', 30, type=int)
-        account = request.args.get('account')
         sort = request.args.get('sort', 'cost')
-
-        conditions = ["started_at >= NOW() - INTERVAL '%s days'"]
-        params = [days]
-        if account:
-            conditions.append("account = %s")
-            params.append(account)
-
-        where = "WHERE " + " AND ".join(conditions)
+        where, params, days = _build_timesheet_filter()
 
         rows = execute(f"""
             SELECT
@@ -330,19 +313,7 @@ def api_timesheets_models():
 def api_timesheets_rework():
     """Rework-Statistiken"""
     try:
-        days = request.args.get('days', 30, type=int)
-        project = request.args.get('project')
-        account = request.args.get('account')
-
-        conditions = ["started_at >= NOW() - INTERVAL '%s days'"]
-        params = [days]
-        if project:
-            conditions.append("project_name = %s")
-            params.append(project)
-        if account:
-            conditions.append("account = %s")
-            params.append(account)
-        where = "WHERE " + " AND ".join(conditions)
+        where, params, days = _build_timesheet_filter()
 
         # Outcome-Verteilung
         dist = execute(f"""

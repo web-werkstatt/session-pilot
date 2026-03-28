@@ -87,22 +87,6 @@
     color: var(--warning);
 }
 
-/* Empty State */
-.empty-state {
-    text-align: center;
-    padding: 60px 20px;
-}
-
-.empty-state h3 {
-    margin: 16px 0 8px;
-    color: var(--text-primary);
-}
-
-.empty-state p {
-    color: var(--text-secondary);
-    margin-bottom: 32px;
-}
-
 .empty-icon {
     color: var(--text-secondary);
 }

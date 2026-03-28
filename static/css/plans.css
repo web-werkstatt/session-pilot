@@ -303,30 +303,6 @@
     color: var(--error);
 }
 
-/* Empty State */
-.empty-state {
-    text-align: center;
-    padding: 60px 20px;
-}
-
-.empty-state h3 {
-    margin: 16px 0 8px;
-    color: var(--text-primary);
-}
-
-.empty-state p {
-    color: var(--text-secondary);
-}
-
-.empty-state code {
-    background: var(--elevated);
-    padding: 2px 6px;
-    border-radius: 3px;
-    font-size: 13px;
-}
-
-.text-muted { color: var(--text-secondary); }
-
 /* Spin Animation */
 .spin {
     animation: spin 1s linear infinite;

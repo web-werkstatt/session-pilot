@@ -37,21 +37,6 @@ def get_local_git_info(project_path):
     return info
 
 
-def get_git_status(project_path):
-    """Prueft Git-Status eines Projekts"""
-    try:
-        result = subprocess.run(
-            ["git", "-C", project_path, "status", "--porcelain"],
-            capture_output=True, text=True, timeout=5
-        )
-        if result.returncode == 0:
-            if result.stdout.strip():
-                return "geaendert"
-            return "sauber"
-    except Exception:
-        pass
-    return None
-
 
 def get_git_status_detail(project_path):
     """Detaillierter Git-Status fuer ein Projekt"""

@@ -87,19 +87,3 @@ def format_cost(cost_usd):
     if cost_usd < 1:
         return f"${cost_usd:.2f}"
     return f"${cost_usd:,.2f}"
-
-
-def get_tool_for_model(model_name):
-    """Leitet das AI-Tool aus dem Modellnamen ab"""
-    if not model_name:
-        return "unknown"
-    m = model_name.lower()
-    if "claude" in m:
-        return "claude"
-    if "gpt" in m or "o3" in m or "o4" in m or "codex" in m:
-        return "codex"
-    if "gemini" in m:
-        return "gemini"
-    if "amazon" in m or "nova" in m:
-        return "amazonq"
-    return "other"
