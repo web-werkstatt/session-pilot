@@ -139,7 +139,7 @@ async function loadProjectPlans() {
                 ? `<div class="plan-mini-context">${p.context_summary.substring(0, 120)}${p.context_summary.length > 120 ? '...' : ''}</div>`
                 : '';
             html += `
-            <a href="/plans/${p.id}" class="plan-mini-card" style="background:${sc.bg}; border-left:3px solid ${sc.border}">
+            <div class="plan-mini-card" style="background:${sc.bg}; border-left:3px solid ${sc.border}" onclick="location.href='/plans/${p.id}'">
                 <div class="plan-mini-top">
                     <span class="badge badge-status badge-${p.status}" style="font-size:11px">${sc.label}</span>
                     <span style="font-size:11px;color:#888">${date}</span>
@@ -150,7 +150,7 @@ async function loadProjectPlans() {
                     <span class="badge badge-cat" style="font-size:10px">${p.category || 'plan'}</span>
                     ${sessionLink}
                 </div>
-            </a>`;
+            </div>`;
         });
         html += `</div><div style="text-align:right;margin-top:12px"><a href="/plans?project=${encodeURIComponent(PROJECT_NAME)}" style="color:#0078d4;font-size:13px">Alle Plans anzeigen &rarr;</a></div>`;
         document.getElementById('plansBody').innerHTML = html;
