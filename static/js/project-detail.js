@@ -246,7 +246,7 @@ function _outcomeBadge(outcome) {
     if (outcome === 'needs_fix') return '<span class="outcome-badge outcome-needs_fix">Fix</span>';
     if (outcome === 'reverted') return '<span class="outcome-badge outcome-reverted">Rev</span>';
     if (outcome === 'partial') return '<span class="outcome-badge outcome-partial">Teil</span>';
-    return '-';
+    return '';
 }
 
 async function extractSessions() {
