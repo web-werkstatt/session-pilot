@@ -20,6 +20,7 @@ from routes.scaffold_routes import scaffold_bp
 from routes.context_routes import context_bp
 from routes.scheduled_tasks_routes import scheduled_tasks_bp
 from routes.plans_routes import plans_bp
+from routes.quality_routes import quality_bp
 
 
 def register_blueprints(app):
@@ -44,3 +45,4 @@ def register_blueprints(app):
     app.register_blueprint(context_bp)
     app.register_blueprint(scheduled_tasks_bp)
     app.register_blueprint(plans_bp)
+    app.register_blueprint(quality_bp)

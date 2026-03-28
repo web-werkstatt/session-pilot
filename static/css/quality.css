@@ -1,0 +1,181 @@
+/* Quality Guide */
+.quality-guide {
+    background: var(--bg-secondary, #1e1e2e);
+    border: 1px solid var(--border, #333);
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+.quality-guide h3 {
+    margin: 0 0 16px;
+    font-size: 15px;
+    color: var(--text-primary, #e0e0e0);
+}
+.guide-steps {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+    margin-bottom: 16px;
+}
+.guide-step {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+}
+.step-number {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--accent, #4fc3f7);
+    color: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 13px;
+}
+.step-content strong {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 13px;
+}
+.step-content p {
+    margin: 0;
+    font-size: 12px;
+    color: var(--text-secondary, #999);
+    line-height: 1.5;
+}
+
+/* Score Badges */
+.score-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 10px;
+    border-radius: 4px;
+    font-weight: 700;
+    font-size: 14px;
+}
+.score-badge small {
+    font-weight: 400;
+    font-size: 11px;
+    opacity: 0.7;
+}
+.score-badge.score-lg {
+    font-size: 28px;
+    padding: 8px 20px;
+}
+.score-badge.score-lg small { font-size: 14px; }
+.score-good { background: rgba(76, 175, 80, 0.2); color: #4caf50; }
+.score-medium { background: rgba(255, 193, 7, 0.2); color: #ffc107; }
+.score-bad { background: rgba(244, 67, 54, 0.2); color: #f44336; }
+
+/* Counts */
+.count-error { color: #f44336; font-weight: 600; }
+.count-warning { color: #ffc107; font-weight: 600; }
+.count-info { color: #999; }
+.count-zero { color: #555; }
+
+/* Table */
+.quality-table-container { overflow-x: auto; }
+.project-link { color: var(--accent, #4fc3f7); text-decoration: none; }
+.project-link:hover { text-decoration: underline; }
+.actions-cell { white-space: nowrap; }
+.btn-xs {
+    padding: 2px 8px;
+    font-size: 11px;
+    border-radius: 3px;
+}
+
+/* Detail Modal */
+.detail-header {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border, #333);
+}
+.detail-score {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.score-num {
+    font-size: 16px;
+    color: var(--text-secondary, #999);
+}
+.detail-stats {
+    display: flex;
+    gap: 16px;
+    font-size: 13px;
+    color: var(--text-secondary, #999);
+}
+.detail-diff {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    font-size: 12px;
+    margin-left: auto;
+    padding: 6px 12px;
+    background: var(--bg-secondary, #1e1e2e);
+    border-radius: 4px;
+}
+.diff-label { color: #888; }
+.diff-good { color: #4caf50; font-weight: 600; }
+.diff-bad { color: #f44336; font-weight: 600; }
+
+/* Issue Categories */
+.issue-category {
+    margin-bottom: 8px;
+    border: 1px solid var(--border, #333);
+    border-radius: 6px;
+    overflow: hidden;
+}
+.category-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    background: var(--bg-secondary, #1e1e2e);
+    cursor: pointer;
+    user-select: none;
+}
+.category-header:hover { background: var(--bg-hover, #252535); }
+.category-name { font-weight: 600; font-size: 13px; }
+.category-counts { display: flex; gap: 8px; font-size: 12px; }
+.category-issues { padding: 4px 0; }
+.issue-category.collapsed .category-issues { display: none; }
+
+.issue-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    font-size: 12px;
+    border-top: 1px solid var(--border, #222);
+}
+.issue-icon {
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+}
+.issue-error .issue-icon { background: rgba(244, 67, 54, 0.2); color: #f44336; }
+.issue-warning .issue-icon { background: rgba(255, 193, 7, 0.2); color: #ffc107; }
+.issue-title { flex: 1; }
+.issue-files { color: #666; font-size: 11px; }
+
+/* Loading */
+.loading-cell {
+    text-align: center;
+    padding: 40px;
+    color: #666;
+}
