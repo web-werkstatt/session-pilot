@@ -123,14 +123,18 @@ def quality_scan(project):
         env["PYTHONPATH"] = AUTO_CODER_PATH
         result = subprocess.run(
             [sys.executable, "-m", "auto_coder", "scan", project_path],
-            capture_output=True, text=True, timeout=120, env=env,
+            capture_output=True, text=True, timeout=300, env=env,
         )
         report = _read_report(project_path)
         if report:
             return jsonify({"success": True, "report": report})
         return jsonify({"error": result.stderr or "Scan fehlgeschlagen"}), 500
     except subprocess.TimeoutExpired:
-        return jsonify({"error": "Scan-Timeout (120s)"}), 500
+        # Auch bei Timeout kann ein Teil-Report existieren
+        report = _read_report(project_path)
+        if report:
+            return jsonify({"success": True, "report": report, "warning": "Timeout, Report unvollstaendig"})
+        return jsonify({"error": "Scan-Timeout (300s)"}), 500
 
 
 @quality_bp.route('/api/quality/baseline/<path:project>', methods=['POST'])

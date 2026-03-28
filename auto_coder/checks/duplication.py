@@ -33,7 +33,7 @@ class DuplicationCheck(BaseCheck):
                     "--output", output_dir,
                     "--ignore", ignore_pattern,
                 ],
-                capture_output=True, text=True, timeout=120,
+                capture_output=True, text=True, timeout=60,
             )
         except (subprocess.TimeoutExpired, FileNotFoundError):
             return self._run_fallback(project_path)
