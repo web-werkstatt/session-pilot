@@ -203,12 +203,13 @@ def import_session(filepath, account_name, project_hash):
         if m.get("content"):
             m["content"] = m["content"].replace("\x00", "")
         if m.get("content_json"):
-            # PostgreSQL jsonb: echte Null-Bytes entfernen, dann
-            # als valides JSON neu serialisieren um Escape-Probleme zu vermeiden
-            s = m["content_json"].replace("\x00", "")
+            # PostgreSQL jsonb akzeptiert keine \u0000 Null-Bytes
+            s = m["content_json"].replace("\x00", "").replace("\\u0000", "")
             try:
                 parsed = json.loads(s)
-                m["content_json"] = json.dumps(parsed, ensure_ascii=False)
+                result = json.dumps(parsed, ensure_ascii=True)
+                result = result.replace("\\u0000", "")
+                m["content_json"] = result
             except (json.JSONDecodeError, ValueError):
                 m["content_json"] = None
 
@@ -270,6 +271,8 @@ def import_session(filepath, account_name, project_hash):
         session_id = row["id"]
 
     if messages:
+        # Sicherheitshalber immer alte Messages loeschen bevor neue eingefuegt werden
+        execute("DELETE FROM messages WHERE session_id = %s", (session_id,))
         msg_params = [(session_id, m["uuid"], m["parent_uuid"], m["type"],
                        m["content"], m["content_json"], m["model"],
                        m["input_tokens"], m["output_tokens"], m["duration_ms"],
