@@ -1,55 +1,59 @@
 # Projekt-Dashboard - Naechste Session
 
 > **Letzte Aktualisierung:** 2026-03-28
-> **Status:** Quality Pipeline Sprint 5 komplett, Duplikat-Bereinigung abgeschlossen
-> **Naechste Aufgabe:** Sprint 6 (DeRep + Fixer) oder Scoring-Tuning
+> **Status:** auto_coder als eigenstaendiges Projekt extrahiert, Quality-Workflow komplett
+> **Naechste Aufgabe:** Scoring-Tuning oder Sprint 6 (DeRep + Fixer)
 
 ---
 
-## Session 2026-03-28 (Abend) - Duplikat-Bereinigung + Scanner-Tuning
+## Session 2026-03-28 (Abend) - Quality Pipeline + Duplikat-Sprint
 
 ### Was wurde erledigt
 
-**Tag-Erkennung konsolidiert (Issue #5):**
-- Zentrale `detect_tags()` Funktion in `project_detector.py`
-- 3 duplizierte Stellen in scanner/detector zusammengefuehrt
+**1. Tag-Erkennung konsolidiert (Issue #5):**
+- Zentrale `detect_tags()` in `project_detector.py`, 3 Duplikate entfernt
 
-**Scanner-Rauschen reduziert + Code-Duplikate bereinigt (Issue #6):**
-- `.claude/`, `backups/`, `_archive/` zu IGNORE_DIRS hinzugefuegt (62 false positives eliminiert)
-- Same-File-Duplikate als info statt warning eingestuft (58 Warnings reduziert)
+**2. Scanner-Rauschen + Code-Duplikate bereinigt (Issue #6):**
+- IGNORE_DIRS erweitert (.claude/, backups/, _archive/), Same-File -> info
 - `escapeHtml()` (5x) und `formatTimeAgo()` (2x) nach base.js konsolidiert
-- `create_session_meta()` und `update_time_range()` in session_import_utils.py extrahiert
-- CLAUDE.md House-Style-Regeln fuer Utilities und Shared Helpers dokumentiert
+- `create_session_meta()` und `update_time_range()` in session_import_utils.py
+- **Warnings 347 -> 189 (-46%)**
 
-**Ergebnis:** Warnings 347 -> 188 (-46%), -45 Zeilen netto
+**3. Quality Baseline + Diff-Workflow (Issue #7):**
+- CLI-Befehle: `auto_coder diff` (Delta zur Baseline), `auto_coder baseline`
+- Pre-commit Hook erweitert: Architektur-Guards, Utility-Duplikat-Guard
+- Baseline bei 189 Warnings eingefroren
 
-### Betroffene Dateien
-| Datei | Aenderung |
-|-------|-----------|
-| `services/project_detector.py` | detect_tags() hinzugefuegt |
-| `services/project_scanner.py` | Tag-Duplizierung entfernt |
-| `auto_coder/config.py` | IGNORE_DIRS erweitert |
-| `auto_coder/checks/duplication.py` | Same-File info statt warning |
-| `static/js/base.js` | escapeHtml, formatTimeAgo hinzugefuegt |
-| `static/js/*.js` (6 Dateien) | Duplikate entfernt |
-| `services/session_import_utils.py` | create_session_meta, update_time_range |
-| `services/session_import.py` | Nutzt Shared Helpers |
-| `services/session_import_multi.py` | Nutzt Shared Helpers |
+**4. auto_coder als eigenstaendiges Projekt:**
+- Extrahiert nach `/mnt/projects/auto_coder/` mit eigener Package-Struktur
+- `quality-template/` Bundle: pre-commit, Makefile, CLAUDE-Vorlage
+- Validiert ueber 3 Projekte (A/93, F/33, F/0)
+
+### Commits
+| Commit | Beschreibung |
+|--------|-------------|
+| 59ee90a | refactor: detect_tags() konsolidiert (fixes #5) |
+| 16a729a | refactor: Scanner-Rauschen + Duplikate (fixes #6) |
+| b902488 | docs: CLAUDE.md House-Style-Regeln |
+| eedd1ed | feat: Baseline + Diff + Pre-commit (fixes #7) |
 
 ---
 
 ## Naechste Session
 
 ### Aufgaben
-- [ ] Scoring-Tuning: Score-Cap pro Kategorie oder Gewichtung anpassen (aktuell F bei 188 Warnings)
+- [ ] auto_coder README: Architektur-Skizze + Roadmap-Kapitel ergaenzen
+- [ ] Scoring-Tuning: Score-Cap pro Kategorie (aktuell F bei 189 Warnings)
 - [ ] Sprint 6: DeRep + Fixer (abhaengig von Sprint 5)
-- [ ] Langfristziel: Warnings < 100
+- [ ] Langfristziel: Warnings < 100 (Scout Rule bei jeder Aenderung)
 
 ### Offene Punkte
 - CSS-Duplikate (12x): Warten auf Design-Refactor
-- Gleichnamige JS-Funktionen (loadProjects, loadData etc.): Kein echtes DRY-Problem, seitenspezifische Logik
+- Gleichnamige JS-Funktionen: Kein echtes DRY-Problem, seitenspezifische Logik
+- auto_coder: Weitere Checks (Security, Dependencies), HTML-Reports, CI-Integration
 
 ### Referenz
-- Sprint-Plan Quality: `sprints/sprint-5-scanner.md` (komplett)
+- auto_coder Projekt: `/mnt/projects/auto_coder/`
 - Quality Roadmap: `sprints/05-roadmap-quality-pipeline.md`
-- Aktueller Report: `.quality/report.json`
+- Baseline: `.quality/baseline.json` (189 Warnings, 13 Errors)
+- Report: `.quality/report.json`
