@@ -116,17 +116,6 @@ function markAllNotificationsRead() {
         });
 }
 
-function formatTimeAgo(isoStr) {
-    if (!isoStr) return '';
-    var date = new Date(isoStr);
-    var now = new Date();
-    var diff = Math.floor((now - date) / 1000);
-    if (diff < 60) return 'Gerade eben';
-    if (diff < 3600) return Math.floor(diff / 60) + ' Min.';
-    if (diff < 86400) return Math.floor(diff / 3600) + ' Std.';
-    return Math.floor(diff / 86400) + ' Tage';
-}
-
 function escapeNotifHtml(text) {
     var div = document.createElement('div');
     div.textContent = text || '';

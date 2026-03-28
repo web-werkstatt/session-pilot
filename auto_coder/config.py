@@ -40,6 +40,8 @@ RADON_MIN_GRADE = "C"
 IGNORE_DIRS = {
     "node_modules", ".git", "venv", "__pycache__", ".quality",
     "dist", "build", ".venv", "env", ".env",
+    ".claude", ".jscpd", "backups", "_archive",
+    ".next", ".nuxt", ".svelte-kit",
 }
 
 MAX_HISTORY_ENTRIES = 90

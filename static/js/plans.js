@@ -251,15 +251,4 @@ function showToast(msg, isError) {
     toast.className = 'toast show' + (isError ? ' toast-error' : '');
     setTimeout(() => toast.className = 'toast', 4000);
 }
-
-// === Helpers ===
-// Escape wird global in base.js gehandelt
-
-function escapeHtml(str) {
-    if (!str) return '';
-    const div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
-}
-
 // formatDate: in base.js (global)

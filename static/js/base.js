@@ -335,3 +335,18 @@ function formatDate(iso) {
 function formatDateTime(value) {
     return value ? new Date(value).toLocaleString('de-DE') : '-';
 }
+function escapeHtml(str) {
+    if (!str) return '';
+    var div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+function formatTimeAgo(isoStr) {
+    if (!isoStr) return '-';
+    var diff = Math.floor((new Date() - new Date(isoStr)) / 1000);
+    if (diff < 60) return 'Gerade eben';
+    if (diff < 3600) return 'Vor ' + Math.floor(diff / 60) + ' Min';
+    if (diff < 86400) return 'Vor ' + Math.floor(diff / 3600) + ' Std';
+    if (diff < 604800) return 'Vor ' + Math.floor(diff / 86400) + ' Tagen';
+    return formatDate(isoStr);
+}

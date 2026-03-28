@@ -348,29 +348,5 @@ function closeTaskModal() {
 }
 // Escape wird global in base.js gehandelt
 
-// === Helpers ===
-function escapeHtml(str) {
-    if (!str) return '';
-    const div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
-}
-
-// formatDate: in base.js (global)
-function formatTimeAgo(isoStr) {
-    if (!isoStr) return '-';
-    const d = new Date(isoStr);
-    const diffMs = new Date() - d;
-    const diffMin = Math.floor(diffMs / 60000);
-    const diffH = Math.floor(diffMs / 3600000);
-    const diffD = Math.floor(diffMs / 86400000);
-
-    if (diffMin < 1) return 'Gerade eben';
-    if (diffMin < 60) return `Vor ${diffMin} Min`;
-    if (diffH < 24) return `Vor ${diffH} Std`;
-    if (diffD < 7) return `Vor ${diffD} Tagen`;
-    return formatDate(isoStr);
-}
-
 // Auto-refresh
 setInterval(loadTasks, 30000);

@@ -301,12 +301,6 @@ async function openDocument(path) {
     }
 }
 
-function escapeHtml(text) {
-    var div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
-
 function toggleDocEdit() {
     var rendered = document.getElementById('docViewerBody').querySelector('.doc-rendered, .doc-raw');
     var editorWrap = document.getElementById('docEditorWrap');

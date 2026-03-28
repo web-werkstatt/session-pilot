@@ -56,13 +56,15 @@ class DuplicationCheck(BaseCheck):
             f1 = first.get("name", "?")
             f2 = second.get("name", "?")
             lines = dup.get("lines", 0)
+            # Same-File-Duplikate sind lokale Patterns, kein DRY-Verstoss
+            same_file = f1 == f2
             issues.append(Issue(
                 id=issue_id(self.name, idx),
-                level="warning",
+                level="info" if same_file else "warning",
                 category=self.name,
-                title=f"{lines} duplizierte Zeilen: {f1} <-> {f2}",
+                title=f"{lines} duplizierte Zeilen{' (lokal)' if same_file else ''}: {f1} <-> {f2}",
                 files=[f1, f2],
-                fix_prompt=f"Extrahiere den duplizierten Code ({lines} Zeilen) aus {f1} und {f2} in ein gemeinsames Modul.",
+                fix_prompt=f"Extrahiere den duplizierten Code ({lines} Zeilen) aus {f1}{'' if same_file else ' und ' + f2} in {'eine lokale Helper-Funktion' if same_file else 'ein gemeinsames Modul'}.",
             ))
         return issues
 

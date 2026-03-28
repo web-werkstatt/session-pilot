@@ -237,12 +237,6 @@ function renderDetail(data, newsType) {
     if (typeof lucide !== 'undefined') lucide.createIcons();
 }
 
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
-
 function closeNewsModal() {
     closeModal('detailModal');
 }

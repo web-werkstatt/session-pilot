@@ -6,7 +6,7 @@ Parser und Import-Funktionen fuer Nicht-Claude AI-Assistenten:
 import json
 import os
 from services.db_service import execute, execute_many
-from services.session_import_utils import parse_ts as _parse_ts
+from services.session_import_utils import parse_ts as _parse_ts, create_session_meta, update_time_range
 
 
 def find_sessions_codex(config_dir):
@@ -37,13 +37,7 @@ def find_sessions_codex(config_dir):
 
 def parse_codex_jsonl(filepath):
     """Parsed eine Codex CLI JSONL-Session"""
-    session_meta = {
-        "session_uuid": None, "cwd": None, "git_branch": None,
-        "model": None, "claude_version": None, "slug": None,
-        "started_at": None, "ended_at": None, "duration_ms": 0,
-        "user_message_count": 0, "assistant_message_count": 0,
-        "total_input_tokens": 0, "total_output_tokens": 0,
-    }
+    session_meta = create_session_meta()
     messages = []
 
     try:
@@ -61,11 +55,7 @@ def parse_codex_jsonl(filepath):
                 timestamp_str = entry.get("timestamp")
                 timestamp = _parse_ts(timestamp_str)
 
-                if timestamp:
-                    if not session_meta["started_at"] or timestamp < session_meta["started_at"]:
-                        session_meta["started_at"] = timestamp
-                    if not session_meta["ended_at"] or timestamp > session_meta["ended_at"]:
-                        session_meta["ended_at"] = timestamp
+                update_time_range(session_meta, timestamp)
 
                 if entry_type == "session_meta":
                     payload = entry.get("payload", {})
@@ -231,22 +221,13 @@ def parse_gemini_json(filepath, project_hash):
             by_session.setdefault(sid, []).append(entry)
 
         for sid, entries in by_session.items():
-            meta = {
-                "session_uuid": sid, "cwd": None, "git_branch": None,
-                "model": None, "claude_version": None, "slug": None,
-                "started_at": None, "ended_at": None, "duration_ms": 0,
-                "user_message_count": 0, "assistant_message_count": 0,
-                "total_input_tokens": 0, "total_output_tokens": 0,
-            }
+            meta = create_session_meta()
+            meta["session_uuid"] = sid
             messages = []
 
             for entry in entries:
                 timestamp = _parse_ts(entry.get("timestamp"))
-                if timestamp:
-                    if not meta["started_at"] or timestamp < meta["started_at"]:
-                        meta["started_at"] = timestamp
-                    if not meta["ended_at"] or timestamp > meta["ended_at"]:
-                        meta["ended_at"] = timestamp
+                update_time_range(meta, timestamp)
 
                 role = entry.get("type", "")
                 text = entry.get("message", "")

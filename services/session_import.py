@@ -7,7 +7,7 @@ import json
 import os
 from services.db_service import execute, execute_many
 from services.account_discovery import discover_all_accounts
-from services.session_import_utils import parse_ts, sanitize_content_json
+from services.session_import_utils import parse_ts, sanitize_content_json, create_session_meta, update_time_range
 from services.session_import_multi import (
     find_sessions_codex, import_codex_session,
     find_sessions_gemini, parse_gemini_json, import_gemini_session,
@@ -72,14 +72,7 @@ def has_tool_use(content):
 
 def parse_jsonl(filepath):
     """Parsed eine Claude Code JSONL-Datei"""
-    meta = {
-        "session_uuid": None, "cwd": None, "git_branch": None,
-        "model": None, "claude_version": None, "slug": None,
-        "started_at": None, "ended_at": None, "duration_ms": 0,
-        "user_message_count": 0, "assistant_message_count": 0,
-        "total_input_tokens": 0, "total_output_tokens": 0,
-        "cache_read_tokens": 0, "cache_creation_tokens": 0,
-    }
+    meta = create_session_meta(include_cache_tokens=True)
     messages = []
 
     try:
@@ -105,11 +98,7 @@ def parse_jsonl(filepath):
                     meta["git_branch"] = entry.get("gitBranch")
                     meta["claude_version"] = entry.get("version")
 
-                if timestamp:
-                    if not meta["started_at"] or timestamp < meta["started_at"]:
-                        meta["started_at"] = timestamp
-                    if not meta["ended_at"] or timestamp > meta["ended_at"]:
-                        meta["ended_at"] = timestamp
+                update_time_range(meta, timestamp)
 
                 if entry.get("slug"):
                     meta["slug"] = entry["slug"]

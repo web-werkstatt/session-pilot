@@ -447,7 +447,6 @@ async function loadContext() {
     } catch(e) { console.error('Context error:', e); }
 }
 
-function escapeHtml(t) { const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
 function fmtK(n) { return n >= 1e6 ? (n/1e6).toFixed(1)+'M' : n >= 1e3 ? (n/1e3).toFixed(0)+'K' : n; }
 
 function ctxMetric(label, before, after, delta, lowerIsBetter) {
