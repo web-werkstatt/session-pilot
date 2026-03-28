@@ -63,6 +63,46 @@ SUBPROJECT_DIRS = {
 }
 
 
+def detect_tags(project_path):
+    """Erkennt Technologie- und Framework-Tags anhand von Projektdateien"""
+    tags = set()
+
+    # Sprach-Marker
+    tag_markers = {
+        "package.json": "nodejs", "requirements.txt": "python",
+        "pyproject.toml": "python", "Cargo.toml": "rust", "go.mod": "go",
+    }
+    for marker, tag in tag_markers.items():
+        if os.path.exists(os.path.join(project_path, marker)):
+            tags.add(tag)
+
+    # Docker
+    if any(os.path.exists(os.path.join(project_path, f))
+           for f in ["docker-compose.yml", "docker-compose.yaml", "Dockerfile"]):
+        tags.add("docker")
+
+    # PHP
+    if any(os.path.exists(os.path.join(project_path, f))
+           for f in ["composer.json", "wp-config.php"]):
+        tags.add("php")
+
+    # Framework-Tags aus package.json
+    pkg_path = os.path.join(project_path, "package.json")
+    if os.path.exists(pkg_path):
+        try:
+            with open(pkg_path, 'r') as f:
+                pkg = json.load(f)
+                deps = {**pkg.get("dependencies", {}), **pkg.get("devDependencies", {})}
+                for lib, tag in [("react", "react"), ("vue", "vue"), ("next", "nextjs"),
+                                 ("express", "express"), ("fastify", "fastify")]:
+                    if lib in deps:
+                        tags.add(tag)
+        except (json.JSONDecodeError, OSError):
+            pass
+
+    return sorted(tags)
+
+
 def detect_project_type(project_path, project_name):
     """Erkennt den Projekttyp automatisch"""
     has_docker = any(os.path.exists(os.path.join(project_path, f))
@@ -254,29 +294,14 @@ def generate_subproject_json(subproject_path, subproject_name, parent_name, subp
             pass
 
     description = extract_description(subproject_path, subproject_name)
-    tags = set()
-    if os.path.exists(os.path.join(subproject_path, "package.json")):
-        tags.add("nodejs")
-        try:
-            with open(os.path.join(subproject_path, "package.json"), 'r') as f:
-                pkg = json.load(f)
-                deps = {**pkg.get("dependencies", {}), **pkg.get("devDependencies", {})}
-                for lib, tag in [("react", "react"), ("vue", "vue"), ("next", "nextjs")]:
-                    if lib in deps:
-                        tags.add(tag)
-        except (json.JSONDecodeError, OSError):
-            pass
-    if os.path.exists(os.path.join(subproject_path, "requirements.txt")):
-        tags.add("python")
-    if os.path.exists(os.path.join(subproject_path, "Dockerfile")):
-        tags.add("docker")
+    tags = detect_tags(subproject_path)
 
     project_data = {
         "name": subproject_name,
         "description": description or f"Sub-Projekt von {parent_name}",
         "category": subproject_type,
         "topic": detect_topic(subproject_path, subproject_name, description),
-        "tags": sorted(list(tags)),
+        "tags": tags,
         "group": None, "priority": None, "status": "active",
         "project_type": "subproject", "parent_project": parent_name,
         "created_date": datetime.now().strftime("%Y-%m-%d"),

@@ -14,7 +14,7 @@ from services.cache_service import load_cache, save_cache, is_cache_valid, get_c
 from services.project_detector import (
     SCHEMA_VERSION, SCHEMA_FIELDS,
     detect_project_type, detect_subprojects,
-    is_valid_project, needs_schema_update,
+    detect_tags, is_valid_project, needs_schema_update,
 )
 from services.description_extractor import (
     extract_description, detect_topic, extract_dependencies,
@@ -69,36 +69,7 @@ def generate_project_json(project_path, project_name):
 
     project_data["topic"] = detect_topic(project_path, project_name, description)
 
-    # Tags aus Technologien
-    tags = set()
-    tag_markers = {
-        "package.json": "nodejs", "requirements.txt": "python",
-        "pyproject.toml": "python", "Cargo.toml": "rust", "go.mod": "go",
-    }
-    for marker, tag in tag_markers.items():
-        if os.path.exists(os.path.join(project_path, marker)):
-            tags.add(tag)
-    if any(os.path.exists(os.path.join(project_path, f))
-           for f in ["docker-compose.yml", "docker-compose.yaml", "Dockerfile"]):
-        tags.add("docker")
-    if any(os.path.exists(os.path.join(project_path, f))
-           for f in ["composer.json", "wp-config.php"]):
-        tags.add("php")
-
-    # Framework-Tags aus package.json
-    if os.path.exists(os.path.join(project_path, "package.json")):
-        try:
-            with open(os.path.join(project_path, "package.json"), 'r') as f:
-                pkg = json.load(f)
-                deps = {**pkg.get("dependencies", {}), **pkg.get("devDependencies", {})}
-                for lib, tag in [("react", "react"), ("vue", "vue"), ("next", "nextjs"),
-                                 ("express", "express"), ("fastify", "fastify")]:
-                    if lib in deps:
-                        tags.add(tag)
-        except (json.JSONDecodeError, OSError):
-            pass
-
-    project_data["tags"] = sorted(list(tags))
+    project_data["tags"] = detect_tags(project_path)
 
     if subprojects:
         project_data["subprojects"] = subprojects
@@ -153,20 +124,10 @@ def update_project_json(project_path, project_name, force_description=False):
 
     # Tags
     existing_tags = set(project_data.get("tags", []))
-    new_tags = set()
-    if os.path.exists(os.path.join(project_path, "package.json")):
-        new_tags.add("nodejs")
-    if os.path.exists(os.path.join(project_path, "requirements.txt")):
-        new_tags.add("python")
-    if os.path.exists(os.path.join(project_path, "pyproject.toml")):
-        new_tags.add("python")
-    if any(os.path.exists(os.path.join(project_path, f))
-           for f in ["docker-compose.yml", "docker-compose.yaml", "Dockerfile"]):
-        new_tags.add("docker")
-
+    new_tags = set(detect_tags(project_path))
     merged_tags = existing_tags | new_tags
     if merged_tags != existing_tags:
-        project_data["tags"] = sorted(list(merged_tags))
+        project_data["tags"] = sorted(merged_tags)
         modified = True
 
     if modified:
