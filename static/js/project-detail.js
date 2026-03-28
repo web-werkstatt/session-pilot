@@ -241,6 +241,14 @@ function setProjectBaseline() {
 }
 
 // === Sessions Tab ===
+function _outcomeBadge(outcome) {
+    if (outcome === 'ok') return '<span class="outcome-badge outcome-ok">OK</span>';
+    if (outcome === 'needs_fix') return '<span class="outcome-badge outcome-needs_fix">Fix</span>';
+    if (outcome === 'reverted') return '<span class="outcome-badge outcome-reverted">Rev</span>';
+    if (outcome === 'partial') return '<span class="outcome-badge outcome-partial">Teil</span>';
+    return '-';
+}
+
 async function extractSessions() {
     sessionsExtracted = true;
     var body = document.getElementById('sessionsBody');
@@ -254,32 +262,32 @@ async function extractSessions() {
         var countEl = document.getElementById('sessionsCount');
         if (countEl) countEl.textContent = sessions.length;
 
+        var maxDur = Math.max(1, Math.max.apply(null, sessions.map(function(s) { return s.duration_ms || 0; })));
+
         var html = '<table class="data-table sessions-table"><thead><tr>';
-        html += '<th>Datum</th><th>Dauer</th><th>Nachrichten</th><th>Modell</th><th>Tokens</th><th>Branch</th><th>Bewertung</th>';
+        html += '<th>Account</th><th>Datum</th><th>Dauer</th><th>Msgs</th><th>Modell</th><th>Tokens</th><th>Branch</th><th>Status</th><th></th>';
         html += '</tr></thead><tbody>';
 
         sessions.forEach(function(s) {
             var date = s.started_at ? new Date(s.started_at) : null;
             var dateStr = date ? date.toLocaleDateString('de-DE', {day:'2-digit',month:'2-digit',year:'2-digit'}) : '-';
             var timeStr = date ? date.toLocaleTimeString('de-DE', {hour:'2-digit',minute:'2-digit'}) : '';
+            var acctClass = 'account-' + (s.account || '').replace(/[^a-z0-9]/g, '');
+            var durPct = Math.min(100, ((s.duration_ms || 0) / maxDur) * 100);
             var model = (s.model || '-').replace('claude-', '').replace('opus-4-6', 'Opus').replace('sonnet-4-6', 'Sonnet');
             var msgs = (s.user_message_count || 0) + (s.assistant_message_count || 0);
             var branch = s.git_branch || '';
-            var outcome = s.outcome || '';
-            var outcomeBadge = '';
-            if (outcome === 'ok') outcomeBadge = '<span class="badge" style="background:rgba(46,125,50,0.2);color:#43a047;font-size:10px">OK</span>';
-            else if (outcome === 'needs_fix') outcomeBadge = '<span class="badge" style="background:rgba(255,152,0,0.2);color:#ffa726;font-size:10px">Fix</span>';
-            else if (outcome === 'reverted') outcomeBadge = '<span class="badge" style="background:rgba(244,67,54,0.2);color:#f44336;font-size:10px">Rev</span>';
-            else if (outcome === 'partial') outcomeBadge = '<span class="badge" style="background:rgba(91,155,213,0.2);color:#5b9bd5;font-size:10px">Teil</span>';
 
-            html += '<tr style="cursor:pointer" onclick="location.href=\'/sessions/' + s.session_uuid + '\'">';
+            html += '<tr class="row" style="cursor:pointer" onclick="location.href=\'/sessions/' + s.session_uuid + '\'">';
+            html += '<td><span class="account-badge ' + acctClass + '">' + escapeHtml(s.account || '-') + '</span></td>';
             html += '<td><span style="color:#ccc">' + dateStr + '</span> <span style="color:#666;font-size:11px">' + timeStr + '</span></td>';
-            html += '<td>' + (s.duration_formatted || '-') + '</td>';
+            html += '<td><div class="dur-wrap"><div class="dur-bar" style="width:' + durPct + '%"></div><span class="dur-text">' + (s.duration_formatted || '-') + '</span></div></td>';
             html += '<td>' + msgs + '</td>';
             html += '<td style="color:#888;font-size:12px">' + model + '</td>';
-            html += '<td style="font-size:12px">' + (s.tokens_formatted || '-') + '</td>';
-            html += '<td>' + (branch ? '<span style="background:#222;padding:2px 6px;border-radius:3px;font-size:11px;font-family:monospace">' + escapeHtml(branch) + '</span>' : '') + '</td>';
-            html += '<td>' + outcomeBadge + '</td>';
+            html += '<td class="token-cell">' + (s.tokens_formatted || '-') + '</td>';
+            html += '<td>' + (branch ? '<span class="branch" title="' + escapeHtml(branch) + '">' + escapeHtml(branch) + '</span>' : '') + '</td>';
+            html += '<td>' + _outcomeBadge(s.outcome) + '</td>';
+            html += '<td><div class="row-actions"><button class="row-action" onclick="event.stopPropagation();window.open(\'/api/sessions/' + s.session_uuid + '/export?format=json\')">JSON</button><button class="row-action" onclick="event.stopPropagation();window.open(\'/api/sessions/' + s.session_uuid + '/export?format=md\')">MD</button></div></td>';
             html += '</tr>';
         });
 
