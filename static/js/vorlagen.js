@@ -101,7 +101,7 @@
         });
 
         document.getElementById('modalBody').innerHTML = html;
-        document.getElementById('codeModal').classList.add('show');
+        openModal('codeModal');
         if (typeof lucide !== 'undefined') lucide.createIcons();
 
         // Dateien laden (simuliert - in echt brauchst du eine API)
@@ -111,8 +111,8 @@
         }
     }
 
-    function closeModal() {
-        document.getElementById('codeModal').classList.remove('show');
+    function closeVorlagenModal() {
+        closeModal('codeModal');
     }
 
     function copyPath(path) {

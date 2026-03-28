@@ -204,14 +204,14 @@ function showPlan(id) {
             `;
 
             document.getElementById('modalContent').innerHTML = plan.content_html || '<em>Kein Inhalt</em>';
-            document.getElementById('planModal').classList.add('show');
+            openModal('planModal');
             if (typeof lucide !== 'undefined') lucide.createIcons();
         })
         .catch(err => alert('Fehler: ' + err.message));
 }
 
-function closeModal() {
-    document.getElementById('planModal').classList.remove('show');
+function closePlanModal() {
+    closeModal('planModal');
 }
 
 function setPlanStatus(id, status) {
@@ -263,7 +263,7 @@ function showToast(msg, isError) {
 }
 
 // === Helpers ===
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+// Escape wird global in base.js gehandelt
 
 function escapeHtml(str) {
     if (!str) return '';

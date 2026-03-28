@@ -56,11 +56,11 @@
         </table>
     </div>
 
-    <div class="log-overlay" id="logOverlay" onclick="if(event.target===this)closeLogModal()">
+    <div class="log-overlay modal-overlay" id="logOverlay">
         <div class="log-modal">
             <div class="log-header">
                 <h3 id="logTitle">Container Logs</h3>
-                <button class="log-close" onclick="closeLogModal()">&times;</button>
+                <button class="log-close" onclick="closeModal('logOverlay')">&times;</button>
             </div>
             <div class="log-body" id="logBody">Lade Logs...</div>
         </div>
@@ -167,7 +167,7 @@
     function showLogs(name) {
         document.getElementById('logTitle').textContent = `Logs: ${name}`;
         document.getElementById('logBody').textContent = 'Lade Logs...';
-        document.getElementById('logOverlay').classList.add('show');
+        openModal('logOverlay');
 
         fetch(`/api/container/${encodeURIComponent(name)}/logs?tail=100`)
             .then(r => r.json())
@@ -181,20 +181,13 @@
             });
     }
 
-    function closeLogModal() {
-        document.getElementById('logOverlay').classList.remove('show');
-    }
-
     function showToast(msg, type) {
         const t = document.getElementById('toast');
         t.textContent = msg;
         t.className = `toast show ${type}`;
         setTimeout(() => t.classList.remove('show'), 3000);
     }
-
-    document.addEventListener('keydown', e => {
-        if (e.key === 'Escape') closeLogModal();
-    });
+    // Escape wird global in base.js gehandelt
 
     loadData();
     setInterval(loadData, 15000);

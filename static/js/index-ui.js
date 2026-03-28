@@ -1,27 +1,5 @@
-// Index-Seite UI: Lightbox, Stats, More-Menu
-// Sidebar + Command Palette sind in base.js (global)
-
-// Lightbox
-function openLightbox(src) {
-    document.getElementById('lightboxImg').src = src;
-    document.getElementById('lightbox').classList.add('show');
-}
-function closeLightbox() {
-    document.getElementById('lightbox').classList.remove('show');
-}
-document.addEventListener('click', function(e) {
-    if (e.target.tagName === 'IMG' && !e.target.closest('.lightbox') && !e.target.closest('.sidebar')) {
-        e.preventDefault();
-        e.stopPropagation();
-        openLightbox(e.target.src);
-    }
-}, true);
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape' && document.getElementById('lightbox').classList.contains('show')) {
-        closeLightbox();
-        e.stopPropagation();
-    }
-}, true);
+// Index-Seite UI: Stats, More-Menu
+// Lightbox, Sidebar, Command Palette sind in base.js (global)
 
 // Stats Modal
 function openStatsModal() {
@@ -37,10 +15,10 @@ function openStatsModal() {
         var val = document.getElementById(s.id).textContent;
         return '<div class="stat"><span class="stat-label">' + s.label + '</span><span class="stat-value" style="color:' + s.color + '">' + val + '</span></div>';
     }).join('');
-    document.getElementById('statsModal').classList.add('show');
+    openModal('statsModal');
 }
 function closeStatsModal() {
-    document.getElementById('statsModal').classList.remove('show');
+    closeModal('statsModal');
 }
 
 // More-Menu

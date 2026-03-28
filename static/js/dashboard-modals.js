@@ -4,7 +4,7 @@
 function openEditModal(projectName) {
     currentEditProject = projectName;
     document.getElementById('editProjectName').textContent = projectName;
-    document.getElementById('editModal').classList.add('show');
+    openModal('editModal');
 
     // Gruppen-Dropdown aktualisieren
     updateGroupDropdown();
@@ -40,7 +40,7 @@ function openEditModal(projectName) {
 }
 
 function closeEditModal() {
-    document.getElementById('editModal').classList.remove('show');
+    closeModal('editModal');
     currentEditProject = null;
     // Inline-Gruppen-Formular zurücksetzen
     const inlineForm = document.getElementById('inlineGroupForm');
@@ -299,23 +299,9 @@ document.getElementById('editForm').addEventListener('submit', function(e) {
     });
 });
 
-// Keyboard shortcuts (Escape, Ctrl+K, /)
+// Escape-Fallback: Suche leeren wenn kein Modal offen
 document.addEventListener('keydown', e => {
-    // Escape: Modal schließen oder Suche leeren
-    if (e.key === 'Escape') {
-        if (document.getElementById('groupsModal').classList.contains('show')) {
-            closeGroupsModal();
-        } else if (document.getElementById('infoModal').classList.contains('show')) {
-            closeModal();
-        } else if (document.getElementById('editModal').classList.contains('show')) {
-            closeEditModal();
-        } else if (currentSearchTerm) {
-            clearSearch();
-        }
-    }
-    // Strg+K oder / für Suchfokus (wenn nicht in Input)
-    if ((e.key === 'k' && (e.ctrlKey || e.metaKey)) || (e.key === '/' && !['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName))) {
-        e.preventDefault();
-        document.getElementById('searchInput').focus();
+    if (e.key === 'Escape' && _modalStack.length === 0 && typeof currentSearchTerm !== 'undefined' && currentSearchTerm) {
+        clearSearch();
     }
 });

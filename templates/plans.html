@@ -120,14 +120,14 @@
     <div class="toast" id="syncToast"></div>
 
     <!-- Detail Modal -->
-    <div class="modal-overlay" id="planModal" onclick="if(event.target===this)closeModal()">
+    <div class="modal-overlay" id="planModal">
         <div class="modal-content modal-wide">
             <div class="modal-header">
                 <div class="modal-header-left">
                     <h2 id="modalTitle">Plan</h2>
                     <div class="modal-meta" id="modalMeta"></div>
                 </div>
-                <button class="modal-close" onclick="closeModal()">&times;</button>
+                <button class="modal-close" onclick="closePlanModal()">&times;</button>
             </div>
             <div class="modal-toolbar" id="modalToolbar"></div>
             <div class="modal-body">

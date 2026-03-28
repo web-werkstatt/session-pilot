@@ -87,11 +87,11 @@
     </div>
 
     <!-- Create/Edit Modal -->
-    <div class="modal-overlay" id="taskModal" onclick="if(event.target===this)closeModal()">
+    <div class="modal-overlay" id="taskModal">
         <div class="modal-content">
             <div class="modal-header">
                 <h2 id="modalTitle">Neuer Task</h2>
-                <button class="modal-close" onclick="closeModal()">&times;</button>
+                <button class="modal-close" onclick="closeTaskModal()">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="form-group">
@@ -134,7 +134,7 @@
                     <small>Falls bereits als RemoteTrigger in Claude Code angelegt</small>
                 </div>
                 <div class="modal-actions">
-                    <button class="btn btn-secondary" onclick="closeModal()">Abbrechen</button>
+                    <button class="btn btn-secondary" onclick="closeTaskModal()">Abbrechen</button>
                     <button class="btn btn-primary" id="saveBtn" onclick="saveTask()">Erstellen</button>
                 </div>
             </div>
@@ -142,7 +142,7 @@
     </div>
 
     <!-- Detail Modal -->
-    <div class="modal-overlay" id="detailModal" onclick="if(event.target===this)closeDetailModal()">
+    <div class="modal-overlay" id="detailModal">
         <div class="modal-content">
             <div class="modal-header">
                 <h2 id="detailTitle">Task Details</h2>

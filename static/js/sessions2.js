@@ -10,7 +10,7 @@ function openSessionStats() {
         var val = document.getElementById(s.id).textContent;
         return '<div class="stat"><span class="stat-label">' + s.label + '</span><span class="stat-value" style="color:' + s.color + '">' + val + '</span></div>';
     }).join('');
-    document.getElementById('sessionStatsModal').classList.add('show');
+    openModal('sessionStatsModal');
 }
 
 let currentOffset = 0;

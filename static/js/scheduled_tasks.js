@@ -147,7 +147,7 @@ function showCreateModal() {
     document.getElementById('taskPrompt').value = '';
     document.getElementById('taskTriggerId').value = '';
     document.getElementById('cronPreview').textContent = '';
-    document.getElementById('taskModal').classList.add('show');
+    openModal('taskModal');
 }
 
 function editTask(id) {
@@ -163,7 +163,7 @@ function editTask(id) {
     document.getElementById('taskPrompt').value = task.prompt || '';
     document.getElementById('taskTriggerId').value = task.remote_trigger_id || '';
     updateCronPreview();
-    document.getElementById('taskModal').classList.add('show');
+    openModal('taskModal');
 }
 
 function saveTask() {
@@ -197,7 +197,7 @@ function saveTask() {
     .then(r => r.json())
     .then(result => {
         if (result.success) {
-            closeModal();
+            closeTaskModal();
             loadTasks();
         } else {
             alert(result.error || 'Fehler beim Speichern');
@@ -247,7 +247,7 @@ function createFromTemplate(type) {
     document.getElementById('taskPrompt').value = tpl.prompt;
     document.getElementById('taskTriggerId').value = '';
     updateCronPreview();
-    document.getElementById('taskModal').classList.add('show');
+    openModal('taskModal');
 }
 
 // === Detail View ===
@@ -297,12 +297,12 @@ function showDetail(id) {
         </div>
     `;
 
-    document.getElementById('detailModal').classList.add('show');
+    openModal('detailModal');
     if (typeof lucide !== 'undefined') lucide.createIcons();
 }
 
 function closeDetailModal() {
-    document.getElementById('detailModal').classList.remove('show');
+    closeModal('detailModal');
 }
 
 // === Cron Preview ===
@@ -348,17 +348,11 @@ function describeCron(expr) {
 }
 
 // === Modal ===
-function closeModal() {
-    document.getElementById('taskModal').classList.remove('show');
+function closeTaskModal() {
+    closeModal('taskModal');
     editingTaskId = null;
 }
-
-document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') {
-        closeModal();
-        closeDetailModal();
-    }
-});
+// Escape wird global in base.js gehandelt
 
 // === Helpers ===
 function escapeHtml(str) {

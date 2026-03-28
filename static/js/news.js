@@ -110,7 +110,7 @@ function showDetail(project, type) {
             <div>Lade Details...</div>
         </div>
     `;
-    document.getElementById('detailModal').classList.add('show');
+    openModal('detailModal');
     if (typeof lucide !== 'undefined') lucide.createIcons();
 
     fetch(`/api/news/detail/${encodeURIComponent(project)}`)
@@ -245,14 +245,10 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-function closeModal() {
-    document.getElementById('detailModal').classList.remove('show');
+function closeNewsModal() {
+    closeModal('detailModal');
 }
-
-// Keyboard: ESC schließt Modal
-document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') closeModal();
-});
+// Escape wird global in base.js gehandelt
 
 // Laden
 loadNews();

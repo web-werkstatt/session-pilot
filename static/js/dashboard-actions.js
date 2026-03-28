@@ -70,7 +70,7 @@ document.addEventListener('click', closeAllCtx);
 function showInfo(type, name) {
     document.getElementById('modalTitle').textContent = name;
     document.getElementById('modalBody').innerHTML = '<div class="spinner"></div> Lade Beschreibung...';
-    document.getElementById('infoModal').classList.add('show');
+    openModal('infoModal');
 
     fetch(`/api/info?type=${type}&name=${encodeURIComponent(name)}`)
         .then(r => r.json())
@@ -86,8 +86,8 @@ function showInfo(type, name) {
         });
 }
 
-function closeModal() {
-    document.getElementById('infoModal').classList.remove('show');
+function closeInfoModal() {
+    closeModal('infoModal');
 }
 
 function openTerminal(projectName) {
@@ -116,9 +116,9 @@ function refreshDescriptions() {
                 <small style="color:#aaa">Alle Beschreibungen werden aus den Quellen neu extrahiert</small>
             </button>
         </div>
-        <button class="btn-cancel" onclick="closeModal()" style="margin-top:10px">Abbrechen</button>
+        <button class="btn-cancel" onclick="closeInfoModal()" style="margin-top:10px">Abbrechen</button>
     `;
-    document.getElementById('infoModal').classList.add('show');
+    openModal('infoModal');
 }
 
 function executeRefresh(forceAll) {
@@ -146,7 +146,7 @@ function executeRefresh(forceAll) {
             if (data.errors && data.errors.length > 0) {
                 html += `<p style="color:#ff6666">${data.errors.length} Fehler aufgetreten</p>`;
             }
-            html += '<button class="btn" onclick="closeModal();loadData()" style="margin-top:15px">Schließen & Aktualisieren</button>';
+            html += '<button class="btn" onclick="closeInfoModal();loadData()" style="margin-top:15px">Schließen & Aktualisieren</button>';
             document.getElementById('modalBody').innerHTML = html;
         })
         .catch(err => {
@@ -157,7 +157,7 @@ function executeRefresh(forceAll) {
 function cleanupDocker() {
     document.getElementById('modalTitle').textContent = 'Docker Aufräumen';
     document.getElementById('modalBody').innerHTML = '<div class="spinner"></div> Analysiere...';
-    document.getElementById('infoModal').classList.add('show');
+    openModal('infoModal');
 
     // Erst Analyse anzeigen
     fetch('/api/cleanup?mode=analyze')
@@ -168,7 +168,7 @@ function cleanupDocker() {
             html += '<hr style="border-color:#444;margin:20px 0">';
             html += '<p>Möchtest du die Reinigung durchführen?</p>';
             html += '<button class="btn" onclick="executeCleanup()" style="margin-right:10px"><i data-lucide="check" style="width:14px;height:14px;display:inline-block;vertical-align:middle"></i> Ja, aufräumen</button>';
-            html += '<button class="btn" onclick="closeModal()" style="background:#666"><i data-lucide="x" style="width:14px;height:14px;display:inline-block;vertical-align:middle"></i> Abbrechen</button>';
+            html += '<button class="btn" onclick="closeInfoModal()" style="background:#666"><i data-lucide="x" style="width:14px;height:14px;display:inline-block;vertical-align:middle"></i> Abbrechen</button>';
             if (typeof lucide !== 'undefined') lucide.createIcons();
             document.getElementById('modalBody').innerHTML = html;
         })

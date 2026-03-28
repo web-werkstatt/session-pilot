@@ -1,5 +1,5 @@
 <!-- Stats Modal -->
-<div class="modal-overlay" id="statsModal" onclick="if(event.target===this)closeStatsModal()">
+<div class="modal-overlay" id="statsModal">
     <div class="modal-content" style="max-width:500px">
         <div class="modal-header">
             <h2>System-Statistiken</h2>
@@ -37,18 +37,18 @@
 </div>
 
 <!-- Modal fuer Beschreibung -->
-<div class="modal-overlay" id="infoModal" onclick="if(event.target===this)closeModal()">
+<div class="modal-overlay" id="infoModal">
     <div class="modal-content">
         <div class="modal-header">
             <h2 id="modalTitle">Details</h2>
-            <button class="modal-close" onclick="closeModal()">&times;</button>
+            <button class="modal-close" onclick="closeInfoModal()">&times;</button>
         </div>
         <div class="modal-body" id="modalBody">Lade...</div>
     </div>
 </div>
 
 <!-- Modal fuer Projekt-Bearbeitung -->
-<div class="modal-overlay" id="editModal" onclick="if(event.target===this)closeEditModal()">
+<div class="modal-overlay" id="editModal">
     <div class="modal-content" style="max-width:700px">
         <div class="modal-header">
             <h2>Projekt: <span id="editProjectName"></span></h2>
@@ -131,7 +131,7 @@
 </div>
 
 <!-- Modal fuer Gruppen-Verwaltung -->
-<div class="modal-overlay" id="groupsModal" onclick="if(event.target===this)closeGroupsModal()">
+<div class="modal-overlay" id="groupsModal">
     <div class="modal-content" style="max-width:700px">
         <div class="modal-header">
             <h2>Gruppen verwalten</h2>
@@ -160,7 +160,7 @@
 </div>
 
 <!-- Ideen Modal -->
-<div id="ideasModal" class="modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.75);z-index:2000;align-items:center;justify-content:center;backdrop-filter:blur(2px)">
+<div id="ideasModal" class="modal-overlay" style="z-index:2000">
     <div style="background:#1e1e1e;width:900px;max-width:95%;max-height:90vh;border-radius:12px;display:flex;flex-direction:column;overflow:hidden;border:1px solid #2a2a2a">
         <div style="background:#0078d4;padding:15px 20px;display:flex;justify-content:space-between;align-items:center;">
             <h2 style="margin:0;font-size:18px;">Ideen & Notizen</h2>

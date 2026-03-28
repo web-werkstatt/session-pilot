@@ -265,13 +265,11 @@ function openBewertungModal(prefillText) {
         reviewPrefill = '';
     }
     populateThreadSelect(getLinkedThreadIds()[0]);
-    modal.classList.add('show');
+    openModal('reviewModal');
 }
 
 function closeBewertungModal() {
-    const modal = document.getElementById('reviewModal');
-    if (!modal) return;
-    modal.classList.remove('show');
+    closeModal('reviewModal');
 }
 
 async function ensureThreadSelection() {

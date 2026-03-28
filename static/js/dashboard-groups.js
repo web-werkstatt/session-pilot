@@ -112,12 +112,12 @@ function getGroupBadge(groupId) {
 
 // Gruppen-Modal öffnen
 function openGroupsModal() {
-    document.getElementById('groupsModal').classList.add('show');
+    openModal('groupsModal');
     renderGroupsList();
 }
 
 function closeGroupsModal() {
-    document.getElementById('groupsModal').classList.remove('show');
+    closeModal('groupsModal');
 }
 
 // Gruppen-Liste im Modal rendern

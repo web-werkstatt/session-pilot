@@ -252,6 +252,37 @@ function doFulltextSearch(q) {
         });
 }
 
+// === Generisches Modal-System ===
+var _modalStack = [];
+
+function openModal(id) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.classList.add('show');
+    var idx = _modalStack.indexOf(id);
+    if (idx !== -1) _modalStack.splice(idx, 1);
+    _modalStack.push(id);
+}
+
+function closeModal(id) {
+    if (!id) {
+        if (_modalStack.length === 0) return;
+        id = _modalStack.pop();
+    } else {
+        var idx = _modalStack.indexOf(id);
+        if (idx !== -1) _modalStack.splice(idx, 1);
+    }
+    var el = document.getElementById(id);
+    if (el) el.classList.remove('show');
+}
+
+// Overlay-Click: Klick auf modal-overlay (nicht auf Inhalt) schliesst Modal
+document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('modal-overlay') && e.target.classList.contains('show')) {
+        closeModal(e.target.id);
+    }
+});
+
 // Keyboard shortcuts
 document.addEventListener('keydown', function(e) {
     if ((e.key === 'k' && (e.ctrlKey || e.metaKey)) || (e.key === '/' && !['INPUT','TEXTAREA'].includes(document.activeElement.tagName))) {
@@ -261,7 +292,8 @@ document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
         var lightbox = getLightbox();
         if (lightbox && lightbox.classList.contains('show')) { closeLightbox(); e.stopPropagation(); }
-        else if (document.getElementById('cmdOverlay').classList.contains('show')) { closeCommandPalette(); e.stopPropagation(); }
+        else if (document.getElementById('cmdOverlay') && document.getElementById('cmdOverlay').classList.contains('show')) { closeCommandPalette(); e.stopPropagation(); }
+        else if (_modalStack.length > 0) { closeModal(); e.stopPropagation(); }
     }
 }, true);
 

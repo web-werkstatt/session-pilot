@@ -11,12 +11,12 @@ async function loadIdeas() {
 }
 
 function openIdeasModal() {
-    document.getElementById('ideasModal').style.display = 'flex';
+    openModal('ideasModal');
     loadIdeas();
 }
 
 function closeIdeasModal() {
-    document.getElementById('ideasModal').style.display = 'none';
+    closeModal('ideasModal');
     currentEditIdea = null;
     resetIdeaForm();
 }
