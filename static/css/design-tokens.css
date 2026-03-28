@@ -39,10 +39,10 @@
     --text-disabled: #444444;
 
     /* Accent / Brand */
-    --accent: #0078d4;
-    --accent-hover: #005a9e;
-    --accent-light: #0078d4;
-    --accent-link: #2196f3;
+    --accent: #1a73e8;
+    --accent-hover: #1557b0;
+    --accent-light: #5b9bd5;
+    --accent-link: #5b9bd5;
 
     /* Status Colors */
     --status-success: #43a047;

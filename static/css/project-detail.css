@@ -8,7 +8,7 @@
     margin-bottom: 16px;
 }
 .info-block {
-    background: var(--bg-secondary, #1e1e2e);
+    background: var(--bg-card);
     border: 1px solid var(--border, #333);
     border-radius: 8px;
     padding: 14px 18px;

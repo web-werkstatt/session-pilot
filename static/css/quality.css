@@ -1,6 +1,6 @@
 /* Quality Guide */
 .quality-guide {
-    background: var(--bg-secondary, #1e1e2e);
+    background: var(--bg-card);
     border: 1px solid var(--border, #333);
     border-radius: 8px;
     padding: 20px;
@@ -120,7 +120,7 @@
     font-size: 12px;
     margin-left: auto;
     padding: 6px 12px;
-    background: var(--bg-secondary, #1e1e2e);
+    background: var(--bg-card);
     border-radius: 4px;
 }
 .diff-label { color: #888; }
@@ -139,7 +139,7 @@
     justify-content: space-between;
     align-items: center;
     padding: 10px 14px;
-    background: var(--bg-secondary, #1e1e2e);
+    background: var(--bg-card);
     cursor: pointer;
     user-select: none;
 }
