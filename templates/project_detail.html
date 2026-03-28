@@ -41,6 +41,10 @@
             <i data-lucide="folder-open" class="icon icon-sm"></i> Dokumente
             <span class="tab-count" id="docsCount"></span>
         </button>
+        <button class="project-tab" onclick="switchProjectTab('quality')">
+            <i data-lucide="shield-check" class="icon icon-sm"></i> Quality
+            <span class="tab-count" id="qualityScore"></span>
+        </button>
     </div>
 
     <div class="project-body">
@@ -164,6 +168,13 @@
                         <button class="btn-save" onclick="executeExport()">Exportieren</button>
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <!-- Tab: Quality -->
+        <div class="project-tab-content" id="ptab_quality">
+            <div id="qualityBody">
+                <div class="loading"><div class="spinner"></div> Lade Quality-Report...</div>
             </div>
         </div>
     </div>
