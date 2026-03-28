@@ -1,48 +1,55 @@
 # Projekt-Dashboard - Naechste Session
 
 > **Letzte Aktualisierung:** 2026-03-28
-> **Status:** Fetch-Wrapper implementiert, alle JS-Dateien migriert
-> **Naechste Aufgabe:** Quality Pipeline starten (Sprint 5)
+> **Status:** Quality Pipeline Sprint 5 komplett, Duplikat-Bereinigung abgeschlossen
+> **Naechste Aufgabe:** Sprint 6 (DeRep + Fixer) oder Scoring-Tuning
 
 ---
 
-## Session 2026-03-28 (Nacht) - Zentraler Fetch-Wrapper + CSS-Fix
+## Session 2026-03-28 (Abend) - Duplikat-Bereinigung + Scanner-Tuning
 
 ### Was wurde erledigt
 
-**Fetch-Wrapper `api.js`:**
-- Neues Modul `static/js/api.js` als zentrale HTTP-Schicht
-- ~85 rohe fetch()-Aufrufe in 24 JS-Dateien auf api.get/post/put/del umgestellt
-- Automatisches JSON-Parsing, Content-Type-Header, Status-Check
-- ApiError-Klasse mit status, body, message
-- Convenience-Methoden: get, post, put, patch, del, request (raw fuer Downloads)
-- Eingebunden in base.html vor base.js
+**Tag-Erkennung konsolidiert (Issue #5):**
+- Zentrale `detect_tags()` Funktion in `project_detector.py`
+- 3 duplizierte Stellen in scanner/detector zusammengefuehrt
 
-**CSS-Fix:**
-- `sessions-list.css` und `session-reviews.css` aus Git-History wiederhergestellt
-- Waren in b0a5cd7 faelschlicherweise als "verwaist" geloescht worden
-- Werden per @import in sessions2.css eingebunden
+**Scanner-Rauschen reduziert + Code-Duplikate bereinigt (Issue #6):**
+- `.claude/`, `backups/`, `_archive/` zu IGNORE_DIRS hinzugefuegt (62 false positives eliminiert)
+- Same-File-Duplikate als info statt warning eingestuft (58 Warnings reduziert)
+- `escapeHtml()` (5x) und `formatTimeAgo()` (2x) nach base.js konsolidiert
+- `create_session_meta()` und `update_time_range()` in session_import_utils.py extrahiert
+- CLAUDE.md House-Style-Regeln fuer Utilities und Shared Helpers dokumentiert
+
+**Ergebnis:** Warnings 347 -> 188 (-46%), -45 Zeilen netto
 
 ### Betroffene Dateien
 | Datei | Aenderung |
 |-------|-----------|
-| `static/js/api.js` | NEU - Zentraler Fetch-Wrapper |
-| `templates/base.html` | api.js Script-Tag eingefuegt |
-| `static/js/*.js` (24 Dateien) | fetch() -> api.* migriert |
-| `static/css/sessions-list.css` | Wiederhergestellt aus Git |
-| `static/css/session-reviews.css` | Wiederhergestellt aus Git |
+| `services/project_detector.py` | detect_tags() hinzugefuegt |
+| `services/project_scanner.py` | Tag-Duplizierung entfernt |
+| `auto_coder/config.py` | IGNORE_DIRS erweitert |
+| `auto_coder/checks/duplication.py` | Same-File info statt warning |
+| `static/js/base.js` | escapeHtml, formatTimeAgo hinzugefuegt |
+| `static/js/*.js` (6 Dateien) | Duplikate entfernt |
+| `services/session_import_utils.py` | create_session_meta, update_time_range |
+| `services/session_import.py` | Nutzt Shared Helpers |
+| `services/session_import_multi.py` | Nutzt Shared Helpers |
 
 ---
 
 ## Naechste Session
 
 ### Aufgaben
-- [ ] Quality Pipeline: Sprint 5 - Package + Scanner (auto_coder)
-- [ ] CLAUDE.md aktualisieren: api.js Pattern dokumentieren
+- [ ] Scoring-Tuning: Score-Cap pro Kategorie oder Gewichtung anpassen (aktuell F bei 188 Warnings)
+- [ ] Sprint 6: DeRep + Fixer (abhaengig von Sprint 5)
+- [ ] Langfristziel: Warnings < 100
 
 ### Offene Punkte
-- project_scanner.py vs project_detector.py: Tag-Erkennung teilweise dupliziert
+- CSS-Duplikate (12x): Warten auf Design-Refactor
+- Gleichnamige JS-Funktionen (loadProjects, loadData etc.): Kein echtes DRY-Problem, seitenspezifische Logik
 
 ### Referenz
-- Sprint-Plan Quality: `sprints/sprint-5-scanner.md`
+- Sprint-Plan Quality: `sprints/sprint-5-scanner.md` (komplett)
 - Quality Roadmap: `sprints/05-roadmap-quality-pipeline.md`
+- Aktueller Report: `.quality/report.json`
