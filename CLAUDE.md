@@ -87,6 +87,7 @@ Kein Build-Schritt, keine Tests, kein Linting konfiguriert. Abhaengigkeiten in `
 - **Session-Sync:** Hash-basierter Cache (`.sync_hashes.json`), kein Timer. Auto-Sync beim Oeffnen der Sessions-Seite, max 1x/Stunde. Bei unveraenderten Dateien null DB-Zugriffe (<1s).
 - **Shared Helpers:** `session_import_utils.py` enthaelt `parse_ts()` und `sanitize_content_json()` - werden von `session_import.py` und `session_import_multi.py` gemeinsam genutzt (vermeidet Circular Import).
 - **Globale JS-Utilities:** `base.js` enthaelt `formatTokens()`, `formatDate()`, `formatDateTime()` - auf allen Seiten verfuegbar, nicht in einzelnen JS-Dateien duplizieren.
+- **Generisches Modal-System:** `base.js` enthaelt `openModal(id)`, `closeModal(id)`, Modal-Stack (`_modalStack`), globalen Escape-Handler und delegierten Overlay-Click. Alle `modal-overlay`-Elemente werden automatisch per Overlay-Click geschlossen. Fuer Modals mit Cleanup-Logik: benannte Wrapper-Funktionen (z.B. `closeEditModal()`) die intern `closeModal(id)` aufrufen. KEINE eigenen Escape-Handler oder `classList.add/remove('show')` in Seiten-JS.
 - **Search-Parser:** `_parse_search_output()` in `search_routes.py` - gemeinsame Ergebnis-Verarbeitung fuer rg und grep.
 - **Timesheet-Filter:** `_build_timesheet_filter()` in `timesheet_routes.py` - baut WHERE-Klausel aus Request-Parametern.
 - **API Error-Handling:** `@api_route` Decorator aus `routes/api_utils.py` statt try/except in jedem Endpoint. Fuer Endpoints mit speziellen Fehler-Responses (z.B. Fallback-Daten) weiterhin manuelles try/except.

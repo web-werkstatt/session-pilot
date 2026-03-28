@@ -1,8 +1,8 @@
 # Projekt-Dashboard - Naechste Session
 
 > **Letzte Aktualisierung:** 2026-03-28
-> **Status:** Sprint 6 System Cleanup + Code Quality abgeschlossen
-> **Naechste Aufgabe:** Modal-Handling vereinheitlichen, dann Quality Pipeline fortsetzen
+> **Status:** Modal-Handling vereinheitlicht
+> **Naechste Aufgabe:** Quality Pipeline fortsetzen
 
 ---
 
@@ -52,9 +52,11 @@ b0a5cd7 refactor: Verwaisten Code entfernt, Duplikate bereinigt
 ## Naechste Session
 
 ### Aufgaben
-- [ ] Modal-Handling vereinheitlichen (generische openModal/closeModal in base.js)
-  - 8+ verschiedene Implementierungen, teils classList, teils style.display
-  - Mehrere closeModal() mit identischem Namen in verschiedenen Dateien
+- [x] Modal-Handling vereinheitlicht (generische openModal/closeModal in base.js)
+  - Modal-Stack, globaler Escape-Handler, delegierter Overlay-Click
+  - 5x identisch benannte closeModal() aufgeloest (closePlanModal, closeNewsModal, etc.)
+  - ideasModal von style.display auf classList/modal-overlay umgestellt
+  - Duplizierte Lightbox aus index-ui.js entfernt
 - [ ] Quality Pipeline fortsetzen (auto_coder Sprint 6: DeRep + Fixer)
 
 ### Offene Punkte

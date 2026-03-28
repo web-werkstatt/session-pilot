@@ -27,7 +27,7 @@ def _escape(text):
 
 @project_info_bp.route('/api/info')
 def get_info():
-    """Gibt umfassende Info fuer ein Projekt zurueck"""
+    """Schnelle Basis-Info: Metadaten, Tech-Stack, Env, Changelog, README, Screenshots, Milestones, Relations"""
     name = request.args.get('name', '')
     if not name:
         return jsonify({"error": "Name fehlt"}), 400
@@ -38,43 +38,70 @@ def get_info():
 
     sections = []
 
-    # 1. project.json Metadaten + on-demand Berechnung
+    # project.json Metadaten + schnelle on-demand Berechnung
     pj = _load_project_json(project_path)
 
     if not pj.get("version"):
         pj["version"] = extract_version(project_path)
     if not pj.get("license"):
         pj["license"] = detect_license(project_path)
-    if not pj.get("repo_size"):
-        pj["repo_size"] = get_repo_size(project_path)
-    if not pj.get("loc_stats"):
-        pj["loc_stats"] = count_lines_of_code(project_path)
     if not pj.get("changelog_latest"):
         pj["changelog_latest"] = parse_changelog(project_path)
 
     if pj.get("description"):
         sections.append(f"<h3>Beschreibung</h3><p>{_escape(pj['description'])}</p>")
 
+    # Schnelle Sections (File I/O only, kein Subprocess/Netzwerk)
     _add_metadata_section(sections, pj, project_path)
-    _add_loc_section(sections, pj)
     _add_tech_stack_section(sections, project_path)
-    _add_git_section(sections, project_path)
-    _add_branches_section(sections, project_path)
-    _add_contributors_section(sections, project_path)
     _add_env_section(sections, project_path)
-    add_github_section(sections, project_path)
-    add_health_section(sections, name, pj, project_path)
-    add_security_section(sections, name, project_path)
     _add_changelog_section(sections, pj)
     _add_readme_section(sections, project_path)
     _add_screenshots_section(sections, name, project_path)
     _add_milestones_section(sections, pj)
     _add_relations_section(sections, name)
-    _add_sessions_section(sections, name)
-    _add_containers_section(sections, name)
 
     description = "".join(sections) if sections else f"Keine Informationen fuer '{_escape(name)}' gefunden."
     return jsonify({"description": description, "source": "project", "name": name})
+
+
+@project_info_bp.route('/api/info/slow')
+def get_info_slow():
+    """Teure Sections: Git, LoC, Contributors, Branches, Sessions, Containers, GitHub, Health, Security"""
+    name = request.args.get('name', '')
+    if not name:
+        return jsonify({"error": "Name fehlt"}), 400
+
+    project_path = resolve_project_path(name)
+    if not project_path:
+        return jsonify({"html": "", "name": name})
+
+    pj = _load_project_json(project_path)
+
+    # Teure on-demand Berechnungen
+    if not pj.get("loc_stats"):
+        pj["loc_stats"] = count_lines_of_code(project_path)
+    if not pj.get("repo_size"):
+        pj["repo_size"] = get_repo_size(project_path)
+
+    sections = []
+
+    # Repo-Groesse als eigene Zeile
+    if pj.get("repo_size"):
+        sections.append(
+            f"<h3>Groesse</h3><p style='font-size:13px'>{_escape(pj['repo_size'])}</p>"
+        )
+    _add_loc_section(sections, pj)
+    _add_git_section(sections, project_path)
+    _add_branches_section(sections, project_path)
+    _add_contributors_section(sections, project_path)
+    add_github_section(sections, project_path)
+    add_health_section(sections, name, pj, project_path)
+    add_security_section(sections, name, project_path)
+    _add_sessions_section(sections, name)
+    _add_containers_section(sections, name)
+
+    return jsonify({"html": "".join(sections), "name": name})
 
 
 def _load_project_json(project_path):

@@ -10,8 +10,10 @@ function initGitPanel(projectName) {
     loadGitStatus();
 }
 
-function loadGitStatus() {
-    fetch('/api/git/' + encodeURIComponent(gitProjectName) + '/status')
+function loadGitStatus(doFetch) {
+    var url = '/api/git/' + encodeURIComponent(gitProjectName) + '/status';
+    if (doFetch) url += '?fetch=1';
+    fetch(url)
         .then(r => r.json())
         .then(renderGitPanel)
         .catch(() => {
@@ -51,7 +53,7 @@ function renderGitPanel(data) {
             <span class="git-branch">${data.branch || 'HEAD'}</span>
             <span class="git-status" style="color:${statusColor}">${statusText}</span>
             ${syncInfo ? '<span class="git-sync">' + syncInfo + '</span>' : ''}
-            <button class="git-btn refresh" onclick="loadGitStatus()" title="Aktualisieren">&#8635;</button>
+            <button class="git-btn refresh" onclick="loadGitStatus(true)" title="Aktualisieren (mit Fetch)">&#8635;</button>
         </div>`;
 
     // Geaenderte Dateien

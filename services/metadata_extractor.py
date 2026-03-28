@@ -122,7 +122,7 @@ def get_repo_size(project_path):
             ["du", "-sh", "--exclude=node_modules", "--exclude=.git",
              "--exclude=venv", "--exclude=.venv", "--exclude=__pycache__",
              "--exclude=dist", "--exclude=build", project_path],
-            capture_output=True, text=True, timeout=10
+            capture_output=True, text=True, timeout=5
         )
         if result.returncode == 0 and result.stdout.strip():
             size = result.stdout.strip().split('\t')[0]
@@ -132,8 +132,14 @@ def get_repo_size(project_path):
     return None
 
 
+_LOC_FILE_THRESHOLD = 2000  # Ab dieser Dateianzahl: schneller Ansatz
+
+
 def count_lines_of_code(project_path):
-    """Zaehlt Codezeilen gruppiert nach Sprache"""
+    """Zaehlt Codezeilen gruppiert nach Sprache.
+    Kleine Projekte (<2000 Dateien): Python os.walk (praezise).
+    Grosse Projekte: find+cat+wc pro Extension (schnell, 2s Timeout pro Extension).
+    """
     extensions = {
         '.py': 'Python', '.js': 'JavaScript', '.ts': 'TypeScript',
         '.jsx': 'React JSX', '.tsx': 'React TSX', '.vue': 'Vue',
@@ -146,21 +152,38 @@ def count_lines_of_code(project_path):
         'vendor', 'dist', 'build', '.next', '.nuxt', 'coverage',
         'logs', '.cache', '.turbo',
     }
+
+    # Schneller Datei-Count um Projektgroesse zu bestimmen
+    file_count = 0
+    try:
+        for root, dirs, files in os.walk(project_path):
+            dirs[:] = [d for d in dirs if d not in exclude_dirs and not d.startswith('.')]
+            file_count += len(files)
+            if file_count > _LOC_FILE_THRESHOLD:
+                break
+    except OSError:
+        return None
+
+    if file_count > _LOC_FILE_THRESHOLD:
+        return _count_loc_fast(project_path, extensions, exclude_dirs)
+    return _count_loc_precise(project_path, extensions, exclude_dirs)
+
+
+def _count_loc_precise(project_path, extensions, exclude_dirs):
+    """Praezise Zaehlung via Python os.walk - fuer kleine Projekte"""
     stats = {}
     total = 0
     try:
         for root, dirs, files in os.walk(project_path):
             dirs[:] = [d for d in dirs if d not in exclude_dirs and not d.startswith('.')]
-            rel = os.path.relpath(root, project_path)
-            if rel.count(os.sep) > 5:
+            if os.path.relpath(root, project_path).count(os.sep) > 5:
                 continue
             for f in files:
                 ext = os.path.splitext(f)[1].lower()
                 if ext not in extensions:
                     continue
-                fpath = os.path.join(root, f)
                 try:
-                    with open(fpath, 'r', encoding='utf-8', errors='ignore') as fh:
+                    with open(os.path.join(root, f), 'r', encoding='utf-8', errors='ignore') as fh:
                         lines = sum(1 for _ in fh)
                     lang = extensions[ext]
                     stats[lang] = stats.get(lang, 0) + lines
@@ -169,6 +192,35 @@ def count_lines_of_code(project_path):
                     pass
     except OSError:
         pass
+    if not stats:
+        return None
+    sorted_stats = dict(sorted(stats.items(), key=lambda x: x[1], reverse=True))
+    sorted_stats['total'] = total
+    return sorted_stats
+
+
+def _count_loc_fast(project_path, extensions, exclude_dirs):
+    """Schnelle Zaehlung via find+cat+wc - fuer grosse Projekte (2s Timeout pro Extension)"""
+    exclude_cmd = " ".join(f'! -path "*/{d}/*"' for d in exclude_dirs)
+    stats = {}
+    total = 0
+
+    for ext, lang in extensions.items():
+        try:
+            r = subprocess.run(
+                f'find "{project_path}" -maxdepth 6 -type f -name "*{ext}" {exclude_cmd} -print0 2>/dev/null '
+                f'| xargs -0 wc -l 2>/dev/null | tail -1',
+                shell=True, capture_output=True, text=True, timeout=3
+            )
+            if r.returncode == 0 and r.stdout.strip():
+                # tail -1 gibt "12345 total" oder "12345 insgesamt" oder nur "12345 datei.ext"
+                count = int(r.stdout.strip().split()[0])
+                if count > 0:
+                    stats[lang] = stats.get(lang, 0) + count
+                    total += count
+        except (OSError, subprocess.TimeoutExpired, ValueError):
+            continue
+
     if not stats:
         return None
     sorted_stats = dict(sorted(stats.items(), key=lambda x: x[1], reverse=True))

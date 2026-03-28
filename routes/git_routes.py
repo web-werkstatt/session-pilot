@@ -17,7 +17,8 @@ def api_git_status(name):
     if not project_path:
         return jsonify({"error": "Projekt nicht gefunden"}), 404
 
-    status = get_git_status_detail(project_path)
+    do_fetch = request.args.get('fetch', '0') == '1'
+    status = get_git_status_detail(project_path, do_fetch=do_fetch)
     return jsonify(status)
 
 

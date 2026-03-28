@@ -29,16 +29,10 @@ async function loadProjectInfo() {
         document.getElementById('projectSubtitle').textContent = match ? match[1] : '';
 
         let html = d.description
-            .replace(/<h3>README<\/h3>[\s\S]*?(?=<h3>|<div class="export-hint"|$)/, '')
-            .replace(/<h3>Claude Sessions<\/h3>[\s\S]*?(?=<h3>|<div class="export-hint"|$)/, '');
+            .replace(/<h3>README<\/h3>[\s\S]*?(?=<h3>|<div class="export-hint"|$)/, '');
 
-        const sessMatch = d.description.match(/<h3>Claude Sessions<\/h3>([\s\S]*?)(?=<h3>|<div class="export-hint"|$)/);
-        if (sessMatch) {
-            window._sessionsHtml = sessMatch[0];
-            const linkCount = (sessMatch[1].match(/href=/g) || []).length;
-            const countEl = document.getElementById('sessionsCount');
-            if (linkCount > 0) countEl.textContent = linkCount;
-        }
+        // Platzhalter fuer teure Sections (werden async nachgeladen)
+        html += '<div id="slowSections"><div class="loading" style="padding:10px;font-size:12px;color:#555">Lade weitere Daten...</div></div>';
 
         html += `
         <h3>README</h3>
@@ -54,8 +48,38 @@ async function loadProjectInfo() {
         document.getElementById('projectBody').innerHTML = html;
         if (typeof lucide !== 'undefined') lucide.createIcons();
         loadReadme();
+
+        // Teure Sections async nachladen
+        loadSlowSections();
     } catch(e) {
         document.getElementById('projectBody').innerHTML = '<div class="loading" style="color:#ff6666">Fehler: ' + e + '</div>';
+    }
+}
+
+async function loadSlowSections() {
+    try {
+        const r = await fetch('/api/info/slow?name=' + encodeURIComponent(PROJECT_NAME));
+        const d = await r.json();
+        const el = document.getElementById('slowSections');
+        if (!el) return;
+
+        if (d.html) {
+            // Sessions extrahieren fuer Tab
+            const sessMatch = d.html.match(/<h3>Claude Sessions<\/h3>([\s\S]*?)(?=<h3>|$)/);
+            if (sessMatch) {
+                window._sessionsHtml = sessMatch[0];
+                const linkCount = (sessMatch[1].match(/href=/g) || []).length;
+                const countEl = document.getElementById('sessionsCount');
+                if (linkCount > 0) countEl.textContent = linkCount;
+            }
+            el.innerHTML = d.html;
+        } else {
+            el.innerHTML = '';
+        }
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    } catch(e) {
+        var el = document.getElementById('slowSections');
+        if (el) el.innerHTML = '';
     }
 }
 
@@ -203,17 +227,3 @@ function exportProject(fmt) {
 // === Init ===
 loadProjectInfo();
 initGitPanel(PROJECT_NAME);
-
-// Plans-Count vorladen
-(async () => {
-    const variants = [PROJECT_NAME, PROJECT_NAME.replace(/-/g,'_'), PROJECT_NAME.replace(/_/g,'-')];
-    let total = 0;
-    for (const v of variants) {
-        try {
-            const r = await fetch('/api/plans?project=' + encodeURIComponent(v));
-            const d = await r.json();
-            total += (d.plans || []).length;
-        } catch(e) {}
-    }
-    if (total > 0) document.getElementById('plansCount').textContent = total;
-})();

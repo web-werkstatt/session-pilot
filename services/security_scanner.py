@@ -28,7 +28,7 @@ def scan_npm_audit(project_path):
         r = subprocess.run(
             ["npm", "audit", "--json"],
             cwd=project_path,
-            capture_output=True, text=True, timeout=30
+            capture_output=True, text=True, timeout=10
         )
         # npm audit gibt returncode != 0 bei Vulnerabilities
         data = json.loads(r.stdout) if r.stdout else {}
@@ -77,7 +77,7 @@ def scan_pip_audit(project_path):
         r = subprocess.run(
             args,
             cwd=project_path,
-            capture_output=True, text=True, timeout=60
+            capture_output=True, text=True, timeout=10
         )
         if r.stdout:
             data = json.loads(r.stdout)

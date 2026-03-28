@@ -38,8 +38,8 @@ def get_local_git_info(project_path):
 
 
 
-def get_git_status_detail(project_path):
-    """Detaillierter Git-Status fuer ein Projekt"""
+def get_git_status_detail(project_path, do_fetch=False):
+    """Detaillierter Git-Status fuer ein Projekt. do_fetch=True fuer Remote-Abgleich."""
     result = {"is_git": False, "branch": None, "changes": [], "ahead": 0, "behind": 0, "has_remote": False}
 
     try:
@@ -67,9 +67,9 @@ def get_git_status_detail(project_path):
         result["has_remote"] = r.returncode == 0
 
         if result["has_remote"]:
-            # Fetch (silent, kurzer Timeout)
-            subprocess.run(["git", "-C", project_path, "fetch", "--quiet"],
-                           capture_output=True, timeout=10)
+            if do_fetch:
+                subprocess.run(["git", "-C", project_path, "fetch", "--quiet"],
+                               capture_output=True, timeout=10)
             r = subprocess.run(["git", "-C", project_path, "rev-list", "--left-right", "--count", "HEAD...@{upstream}"],
                                capture_output=True, text=True, timeout=5)
             if r.returncode == 0:
