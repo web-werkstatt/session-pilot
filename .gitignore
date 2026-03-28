@@ -83,3 +83,5 @@ sprints/
 sync_sessions.py
 systemd/
 project.json
+.aider*
+.sync_hashes.json

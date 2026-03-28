@@ -2,6 +2,8 @@
 Flask-Routes fuer Claude Code Sessions
 Review-Routes sind in session_review_routes.py ausgelagert.
 """
+import time
+import threading
 from flask import Blueprint, render_template, jsonify, request, Response
 from services.db_service import execute, ensure_session_review_schema
 from services.session_import import sync_all
@@ -14,6 +16,12 @@ from routes.session_review_routes import (
 )
 
 sessions_bp = Blueprint("sessions", __name__)
+
+# Sync-Cooldown: max 1x pro Stunde automatisch
+_last_sync_time = 0
+_sync_lock = threading.Lock()
+_sync_running = False
+SYNC_COOLDOWN = 3600  # 1 Stunde
 
 
 @sessions_bp.route("/sessions")
@@ -340,11 +348,64 @@ def _api_sessions_search_inner():
     return jsonify({"results": result_list, "total": total_count, "query": query, "limit": limit, "offset": offset})
 
 
+def _try_background_sync():
+    """Startet Sync im Hintergrund wenn Cooldown abgelaufen"""
+    global _last_sync_time, _sync_running
+    now = time.time()
+    if now - _last_sync_time < SYNC_COOLDOWN or _sync_running:
+        return False
+
+    with _sync_lock:
+        if _sync_running:
+            return False
+        _sync_running = True
+
+    def _do_sync():
+        global _last_sync_time, _sync_running
+        try:
+            sync_all()
+            _last_sync_time = time.time()
+        except Exception as e:
+            print(f"Background-Sync Fehler: {e}")
+        finally:
+            _sync_running = False
+
+    threading.Thread(target=_do_sync, daemon=True).start()
+    return True
+
+
 @sessions_bp.route("/api/sessions/sync", methods=["POST"])
 def api_sessions_sync():
     """Manuellen Sync ausloesen"""
+    global _last_sync_time, _sync_running
+    force = request.args.get("force") == "1"
+
+    if _sync_running:
+        return jsonify({"success": False, "message": "Sync laeuft bereits"})
+
+    if not force and time.time() - _last_sync_time < SYNC_COOLDOWN:
+        remaining = int(SYNC_COOLDOWN - (time.time() - _last_sync_time))
+        return jsonify({"success": False, "message": f"Cooldown aktiv, naechster Sync in {remaining}s"})
+
     try:
+        _sync_running = True
         stats = sync_all()
+        _last_sync_time = time.time()
+        _sync_running = False
         return jsonify({"success": True, "stats": stats})
     except Exception as e:
+        _sync_running = False
         return jsonify({"error": str(e)}), 500
+
+
+@sessions_bp.route("/api/sessions/sync/status")
+def api_sessions_sync_status():
+    """Status des Sync-Prozesses"""
+    now = time.time()
+    next_sync = max(0, int(SYNC_COOLDOWN - (now - _last_sync_time)))
+    return jsonify({
+        "running": _sync_running,
+        "last_sync": int(_last_sync_time) if _last_sync_time else None,
+        "next_sync_in": next_sync,
+        "cooldown": SYNC_COOLDOWN,
+    })

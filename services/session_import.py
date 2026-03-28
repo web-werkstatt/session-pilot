@@ -2,16 +2,18 @@
 JSONL-Parser und DB-Import fuer Claude Code Sessions.
 Codex/Gemini-Parser sind in session_import_multi.py ausgelagert.
 """
+import hashlib
 import json
 import os
-import re
-from datetime import datetime, timezone
+from datetime import datetime
 from services.db_service import execute, execute_many
 from services.account_discovery import discover_all_accounts
 from services.session_import_multi import (
     find_sessions_codex, import_codex_session,
     find_sessions_gemini, parse_gemini_json, import_gemini_session,
 )
+
+HASH_CACHE_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), ".sync_hashes.json")
 
 IMPORT_TYPES = {"user", "assistant", "system"}
 IGNORE_TYPES = {"progress", "file-history-snapshot", "queue-operation", "last-prompt"}
@@ -290,32 +292,80 @@ def find_sessions_claude(config_dir):
     return sessions
 
 
-def sync_account(account):
+def _load_hash_cache():
+    """Laedt lokale Hash-Cache-Datei (kein DB-Zugriff)"""
+    try:
+        with open(HASH_CACHE_PATH, "r") as f:
+            return json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return {}
+
+
+def _save_hash_cache(cache):
+    """Speichert Hash-Cache atomar"""
+    tmp = HASH_CACHE_PATH + ".tmp"
+    with open(tmp, "w") as f:
+        json.dump(cache, f)
+    os.replace(tmp, HASH_CACHE_PATH)
+
+
+def _file_hash(filepath):
+    """Berechnet schnellen Hash: MD5 ueber Dateigroesse + erste/letzte 8KB"""
+    try:
+        size = os.path.getsize(filepath)
+        h = hashlib.md5(str(size).encode())
+        with open(filepath, "rb") as f:
+            h.update(f.read(8192))
+            if size > 16384:
+                f.seek(-8192, 2)
+                h.update(f.read(8192))
+        return h.hexdigest()
+    except OSError:
+        return None
+
+
+def sync_account(account, hash_cache=None):
     """Synchronisiert alle Sessions eines Accounts (alle Tools)"""
     name = account["name"]
     config_dir = account["config_dir"]
     tool = account.get("tool", "claude")
     stats = {"imported": 0, "updated": 0, "unchanged": 0, "skipped": 0, "errors": 0}
 
+    if hash_cache is None:
+        hash_cache = _load_hash_cache()
+
+    def _check_and_import(filepath, import_fn):
+        """Prueft Hash und importiert nur bei Aenderung"""
+        current_hash = _file_hash(filepath)
+        if current_hash and hash_cache.get(filepath) == current_hash:
+            stats["unchanged"] += 1
+            return
+        try:
+            result = import_fn()
+            stats[result] += 1
+            if current_hash:
+                hash_cache[filepath] = current_hash
+        except Exception as e:
+            print(f"Fehler bei {filepath}: {e}")
+            stats["errors"] += 1
+
     if tool == "claude":
         for filepath, project_hash in find_sessions_claude(config_dir):
-            try:
-                stats[import_session(filepath, name, project_hash)] += 1
-            except Exception as e:
-                print(f"Fehler bei {filepath}: {e}")
-                stats["errors"] += 1
+            _check_and_import(filepath, lambda fp=filepath, ph=project_hash: import_session(fp, name, ph))
     elif tool == "codex":
         for filepath, _ in find_sessions_codex(config_dir):
-            try:
-                stats[import_codex_session(filepath, name)] += 1
-            except Exception as e:
-                print(f"Fehler bei {filepath}: {e}")
-                stats["errors"] += 1
+            _check_and_import(filepath, lambda fp=filepath: import_codex_session(fp, name))
     elif tool == "gemini":
         for filepath, project_hash in find_sessions_gemini(config_dir):
+            current_hash = _file_hash(filepath)
+            if current_hash and hash_cache.get(filepath) == current_hash:
+                stats["unchanged"] += 1
+                continue
             try:
                 for meta, messages, phash in parse_gemini_json(filepath, project_hash):
                     stats[import_gemini_session(meta, messages, name, phash)] += 1
+                if current_hash:
+                    hash_cache[filepath] = current_hash
             except Exception as e:
                 print(f"Fehler bei {filepath}: {e}")
                 stats["errors"] += 1
@@ -332,16 +382,19 @@ def sync_all():
         print("Keine AI-Assistenten gefunden.")
         return total_stats
 
-    print(f"{len(accounts)} Account(s) erkannt:")
+    hash_cache = _load_hash_cache()
+
+    print(f"{len(accounts)} Account(s) erkannt, {len(hash_cache)} Hashes im Cache:")
     for acc in accounts:
         print(f"  {acc['name']} [{acc['tool']}] -> {acc['config_dir']}")
 
     for account in accounts:
         print(f"Sync {account['name']} [{account['tool']}]...")
-        stats = sync_account(account)
+        stats = sync_account(account, hash_cache=hash_cache)
         for k, v in stats.items():
             total_stats[k] = total_stats.get(k, 0) + v
         print(f"  {stats}")
 
+    _save_hash_cache(hash_cache)
     print(f"Gesamt: {total_stats}")
     return total_stats
