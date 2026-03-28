@@ -167,7 +167,7 @@ def _add_loc_section(sections, pj):
         bars_html += (
             f"<div style='display:flex;align-items:center;gap:8px;padding:2px 0;font-size:12px'>"
             f"<span style='width:90px;color:#ccc'>{_escape(lang)}</span>"
-            f"<div style='flex:1;background:#1a1a2e;border-radius:3px;height:14px;overflow:hidden'>"
+            f"<div style='flex:1;background:#222;border-radius:3px;height:14px;overflow:hidden'>"
             f"<div style='width:{pct}%;background:{color};height:100%;border-radius:3px;min-width:2px'></div></div>"
             f"<span style='width:60px;text-align:right;color:#888'>{count_display}</span>"
             f"<span style='width:40px;text-align:right;color:#666'>{pct}%</span></div>"

@@ -167,9 +167,9 @@ function renderProject(proj, isNew) {
         if (gh.open_issues > 0) parts.push(`I:${gh.open_issues}`);
         if (gh.open_prs > 0) parts.push(`PR:${gh.open_prs}`);
         if (parts.length > 0) {
-            githubBadge = `<span class="badge" style="background:#1a1a2e;color:#e0e0e0;font-size:9px;margin-left:5px" title="GitHub: ${gh.full_name}">${parts.join(' ')}</span>`;
+            githubBadge = `<span class="badge" style="background:#222;color:#e0e0e0;font-size:9px;margin-left:5px" title="GitHub: ${gh.full_name}">${parts.join(' ')}</span>`;
         } else {
-            githubBadge = `<span class="badge" style="background:#1a1a2e;color:#888;font-size:9px;margin-left:5px" title="GitHub: ${gh.full_name}">GH</span>`;
+            githubBadge = `<span class="badge" style="background:#222;color:#888;font-size:9px;margin-left:5px" title="GitHub: ${gh.full_name}">GH</span>`;
         }
     }
 
