@@ -1,50 +1,40 @@
 # Projekt-Dashboard - Naechste Session
 
 > **Letzte Aktualisierung:** 2026-03-28
-> **Status:** Modal-Handling vereinheitlicht
-> **Naechste Aufgabe:** Quality Pipeline fortsetzen
+> **Status:** Sprint 6 System Cleanup abgeschlossen, Performance-Optimierung erledigt
+> **Naechste Aufgabe:** Quality Pipeline starten (Sprint 5)
 
 ---
 
-## Session 2026-03-28 (Nachmittag) - System Cleanup + Code Quality
+## Session 2026-03-28 (Abend) - Modal-Refactoring + Performance
 
 ### Was wurde erledigt
 
-**Performance & Sync:**
-- Session-Sync Timer deaktiviert (lief alle 20 Min, 485s pro Lauf)
-- Hash-basierter Cache (.sync_hashes.json) - Sync jetzt <1s statt 485s
-- Auto-Sync bei Sessions-Seitenaufruf mit 1h Cooldown
-- JSONL-Import Escape-Fehler behoben (\u0000, \x00 in content_json)
+**Modal-Handling vereinheitlicht:**
+- Generisches openModal(id)/closeModal(id) mit Modal-Stack in base.js
+- Globaler Escape-Handler, delegierter Overlay-Click
+- 5x gleichnamige closeModal() aufgeloest, 5 Escape-Handler entfernt
+- ideasModal von style.display auf classList/modal-overlay umgestellt
+- Duplizierte Lightbox aus index-ui.js entfernt
 
-**DB-Bereinigung:**
-- messages-Tabelle von 11 GB auf 713 MB reduziert
-- 4.4 Mio duplizierte Messages entfernt (Bug: DELETE vor INSERT fehlte)
-- NoneType-Absicherung bei Session-INSERT
+**Performance Projekt-Detail (60s -> 20ms):**
+- /api/info aufgeteilt: Basis (4ms) sofort, teure Sections async via /api/info/slow
+- git fetch nur on-demand (Refresh-Button), nicht beim Seitenaufruf
+- count_lines_of_code: Weiche kleine/grosse Projekte (os.walk vs find+wc)
+- Security-Scan Timeouts von 30-60s auf 10s reduziert
 
-**System-Bereinigung:**
-- 20 Docker Container gestoppt, ~300 GB Docker-Muell freigegeben
-- Ollama, PCP, docker-mec-autostart deaktiviert
-
-**Code Cleanup:**
-- 4 verwaiste Dateien geloescht (context_tracker.py, dashboard.js, 2x CSS)
-- 2 ungenutzte Funktionen entfernt
-- session_import_utils.py: Shared Helpers extrahiert (parse_ts, sanitize_content_json)
-- Python-Duplikate: _build_timesheet_filter(), _parse_search_output()
-- JS-Duplikate: formatTokens/formatDate/formatDateTime nach base.js
-- CSS-Duplikate: .empty-state nur noch in components.css
-- @api_route Decorator: 22x try/except in 6 Route-Dateien ersetzt
-- CLAUDE.md mit allen neuen Patterns aktualisiert
+**Performance Dashboard (8-11s -> 5ms):**
+- Background-Scan: Projekt-Scan laeuft async im Thread
+- /api/data liefert sofort cached Daten, Scan startet beim App-Start
+- scan_projects() parallelisiert via ThreadPoolExecutor (8 Workers)
+- GitHub-API/Health-Checks aus Dashboard-Scan entfernt (nur Projekt-Detail)
+- Flask threaded=True aktiviert
 
 ### Git Commits
 ```
-7a7b473 refactor: Zentrales Error-Handling via @api_route Decorator
-3d5cf9c refactor: Doppelte Funktionen konsolidiert
-b0a5cd7 refactor: Verwaisten Code entfernt, Duplikate bereinigt
-3692454 fix: NoneType-Absicherung bei Session-INSERT mit ON CONFLICT
-81a39fd fix: Message-Duplikat-Bug und \u0000 Escape-Fehler behoben
-1b866d8 fix: JSONL-Import Escape-Fehler bei content_json behoben
-5db605e fix: Auto-Sync bei Sessions-Seitenaufruf statt manueller Trigger
-13a78eb fix: Session-Sync durch Hash-Cache optimiert, Timer entfernt, fixes #5
+24d61b0 perf: Dashboard /api/data von 8-11s auf 5ms optimiert
+2271eb6 perf: Projekt-Detail von 60s auf 20ms optimiert
+09a5914 refactor: Generisches Modal-System in base.js, Duplikate bereinigt
 ```
 
 ---
@@ -52,18 +42,12 @@ b0a5cd7 refactor: Verwaisten Code entfernt, Duplikate bereinigt
 ## Naechste Session
 
 ### Aufgaben
-- [x] Modal-Handling vereinheitlicht (generische openModal/closeModal in base.js)
-  - Modal-Stack, globaler Escape-Handler, delegierter Overlay-Click
-  - 5x identisch benannte closeModal() aufgeloest (closePlanModal, closeNewsModal, etc.)
-  - ideasModal von style.display auf classList/modal-overlay umgestellt
-  - Duplizierte Lightbox aus index-ui.js entfernt
-- [ ] Quality Pipeline fortsetzen (auto_coder Sprint 6: DeRep + Fixer)
+- [ ] Quality Pipeline: Sprint 5 - Package + Scanner (auto_coder)
+- [ ] Fetch-Wrapper einfuehren (globale fetchJson() in base.js)
 
 ### Offene Punkte
 - project_scanner.py vs project_detector.py: Tag-Erkennung teilweise dupliziert
-- Firewall: ~100 ufw-Regeln fuer inaktive Projekte (Dev-Server, niedrige Prio)
 
 ### Referenz
-- Sprint-Plan Cleanup: `sprints/sprint-6-system-cleanup.md`
 - Sprint-Plan Quality: `sprints/sprint-5-scanner.md`
-- GitHub Issue: web-werkstatt/session-pilot#5
+- Quality Roadmap: `sprints/05-roadmap-quality-pipeline.md`

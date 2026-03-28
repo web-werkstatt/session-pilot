@@ -4,6 +4,82 @@
 
 ---
 
+## Session 2026-03-28 (Abend) - Modal-Refactoring + Performance
+
+### Was wurde erledigt
+
+**Modal-Handling vereinheitlicht:**
+- Generisches openModal(id)/closeModal(id) mit Modal-Stack in base.js
+- Globaler Escape-Handler, delegierter Overlay-Click
+- 5x gleichnamige closeModal() aufgeloest, 5 Escape-Handler entfernt
+- ideasModal von style.display auf classList/modal-overlay umgestellt
+- Duplizierte Lightbox aus index-ui.js entfernt
+
+**Performance Projekt-Detail (60s -> 20ms):**
+- /api/info aufgeteilt: Basis (4ms) sofort, teure Sections async via /api/info/slow
+- git fetch nur on-demand (Refresh-Button), nicht beim Seitenaufruf
+- count_lines_of_code: Weiche kleine/grosse Projekte (os.walk vs find+wc)
+- Security-Scan Timeouts von 30-60s auf 10s reduziert
+
+**Performance Dashboard (8-11s -> 5ms):**
+- Background-Scan: Projekt-Scan laeuft async im Thread
+- /api/data liefert sofort cached Daten, Scan startet beim App-Start
+- scan_projects() parallelisiert via ThreadPoolExecutor (8 Workers)
+- GitHub-API/Health-Checks aus Dashboard-Scan entfernt (nur Projekt-Detail)
+- Flask threaded=True aktiviert
+
+### Git Commits
+```
+24d61b0 perf: Dashboard /api/data von 8-11s auf 5ms optimiert
+2271eb6 perf: Projekt-Detail von 60s auf 20ms optimiert
+09a5914 refactor: Generisches Modal-System in base.js, Duplikate bereinigt
+```
+
+---
+
+## Session 2026-03-28 (Nachmittag) - System Cleanup + Code Quality
+
+### Was wurde erledigt
+
+**Performance & Sync:**
+- Session-Sync Timer deaktiviert (lief alle 20 Min, 485s pro Lauf)
+- Hash-basierter Cache (.sync_hashes.json) - Sync jetzt <1s statt 485s
+- Auto-Sync bei Sessions-Seitenaufruf mit 1h Cooldown
+- JSONL-Import Escape-Fehler behoben (\u0000, \x00 in content_json)
+
+**DB-Bereinigung:**
+- messages-Tabelle von 11 GB auf 713 MB reduziert
+- 4.4 Mio duplizierte Messages entfernt (Bug: DELETE vor INSERT fehlte)
+- NoneType-Absicherung bei Session-INSERT
+
+**System-Bereinigung:**
+- 20 Docker Container gestoppt, ~300 GB Docker-Muell freigegeben
+- Ollama, PCP, docker-mec-autostart deaktiviert
+
+**Code Cleanup:**
+- 4 verwaiste Dateien geloescht (context_tracker.py, dashboard.js, 2x CSS)
+- 2 ungenutzte Funktionen entfernt
+- session_import_utils.py: Shared Helpers extrahiert (parse_ts, sanitize_content_json)
+- Python-Duplikate: _build_timesheet_filter(), _parse_search_output()
+- JS-Duplikate: formatTokens/formatDate/formatDateTime nach base.js
+- CSS-Duplikate: .empty-state nur noch in components.css
+- @api_route Decorator: 22x try/except in 6 Route-Dateien ersetzt
+- CLAUDE.md mit allen neuen Patterns aktualisiert
+
+### Git Commits
+```
+7a7b473 refactor: Zentrales Error-Handling via @api_route Decorator
+3d5cf9c refactor: Doppelte Funktionen konsolidiert
+b0a5cd7 refactor: Verwaisten Code entfernt, Duplikate bereinigt
+3692454 fix: NoneType-Absicherung bei Session-INSERT mit ON CONFLICT
+81a39fd fix: Message-Duplikat-Bug und \u0000 Escape-Fehler behoben
+1b866d8 fix: JSONL-Import Escape-Fehler bei content_json behoben
+5db605e fix: Auto-Sync bei Sessions-Seitenaufruf statt manueller Trigger
+13a78eb fix: Session-Sync durch Hash-Cache optimiert, Timer entfernt, fixes #5
+```
+
+---
+
 ## Session 2026-03-28 (Morgen) - Codebasis-Analyse + Quality Pipeline Planung
 
 ### Was wurde erledigt
