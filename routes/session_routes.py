@@ -36,7 +36,8 @@ def session_detail_page(uuid):
 
 @sessions_bp.route("/api/sessions")
 def api_sessions():
-    """Session-Liste mit Filtern"""
+    """Session-Liste mit Filtern, triggert Auto-Sync im Hintergrund"""
+    _try_background_sync()
     try:
         return _api_sessions_inner()
     except Exception as e:
