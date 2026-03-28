@@ -17,7 +17,7 @@ function loadGitStatus(doFetch) {
         .then(renderGitPanel)
         .catch(() => {
             const el = document.getElementById('gitPanel');
-            if (el) el.innerHTML = '<span style="color:#555;font-size:12px">Git nicht verfuegbar</span>';
+            if (el) el.innerHTML = '<span style="color:#555;font-size:12px">Git not available</span>';
         });
 }
 
@@ -26,24 +26,24 @@ function renderGitPanel(data) {
     if (!panel) return;
 
     if (!data.is_git) {
-        panel.innerHTML = '<span style="color:#555;font-size:12px">Kein Git-Repository</span>';
+        panel.innerHTML = '<span style="color:#555;font-size:12px">Not a git repository</span>';
         return;
     }
 
     const changeCount = data.changes.length;
     const statusColor = changeCount > 0 ? '#ffaa00' : '#4caf50';
-    const statusText = changeCount > 0 ? changeCount + ' Aenderung' + (changeCount > 1 ? 'en' : '') : 'Sauber';
+    const statusText = changeCount > 0 ? changeCount + ' change' + (changeCount > 1 ? 's' : '') : 'Clean';
 
     let syncInfo = '';
     if (data.has_remote) {
         if (data.ahead > 0 && data.behind > 0) {
-            syncInfo = `<span style="color:#ff9800">${data.ahead} vor, ${data.behind} zurueck</span>`;
+            syncInfo = `<span style="color:#ff9800">${data.ahead} ahead, ${data.behind} behind</span>`;
         } else if (data.ahead > 0) {
-            syncInfo = `<span style="color:#4fc3f7">${data.ahead} Commit${data.ahead > 1 ? 's' : ''} voraus</span>`;
+            syncInfo = `<span style="color:#5b9bd5">${data.ahead} commit${data.ahead > 1 ? 's' : ''} ahead</span>`;
         } else if (data.behind > 0) {
-            syncInfo = `<span style="color:#ff9800">${data.behind} Commit${data.behind > 1 ? 's' : ''} zurueck</span>`;
+            syncInfo = `<span style="color:#ff9800">${data.behind} commit${data.behind > 1 ? 's' : ''} behind</span>`;
         } else {
-            syncInfo = '<span style="color:#4caf50">Synchron</span>';
+            syncInfo = '<span style="color:#4caf50">Up to date</span>';
         }
     }
 
@@ -55,8 +55,14 @@ function renderGitPanel(data) {
             <button class="git-btn refresh" onclick="loadGitStatus(true)" title="Aktualisieren (mit Fetch)">&#8635;</button>
         </div>`;
 
-    // Geaenderte Dateien
+    // Changed files
     if (changeCount > 0) {
+        html += '<div style="display:flex;gap:12px;font-size:10px;color:#666;margin-bottom:6px">';
+        html += '<span><span style="color:#ffaa00;font-weight:700">M</span> Modified</span>';
+        html += '<span><span style="color:#4caf50;font-weight:700">A</span> Added</span>';
+        html += '<span><span style="color:#ef5350;font-weight:700">D</span> Deleted</span>';
+        html += '<span><span style="color:#888;font-weight:700">?</span> Untracked</span>';
+        html += '</div>';
         html += '<div class="git-changes">';
         const shown = data.changes.slice(0, 15);
         shown.forEach(c => {
@@ -65,14 +71,14 @@ function renderGitPanel(data) {
             html += `<div class="git-change"><span class="git-change-status" style="color:${color}">${icon}</span><span class="git-change-file">${c.file}</span></div>`;
         });
         if (data.changes.length > 15) {
-            html += `<div class="git-change" style="color:#555">... und ${data.changes.length - 15} weitere</div>`;
+            html += `<div class="git-change" style="color:#555">... and ${data.changes.length - 15} more</div>`;
         }
         html += '</div>';
 
-        // Commit-Form
+        // Commit form
         html += `
         <div class="git-commit-form">
-            <input type="text" id="gitCommitMsg" class="git-commit-input" placeholder="Commit-Message..." onkeydown="if(event.key==='Enter')doGitCommit()">
+            <input type="text" id="gitCommitMsg" class="git-commit-input" placeholder="Commit message..." onkeydown="if(event.key==='Enter')doGitCommit()">
             <button class="git-btn commit" onclick="doGitCommit()">Commit</button>
         </div>`;
     }
@@ -87,10 +93,10 @@ function renderGitPanel(data) {
             html += `<button class="git-btn pull" onclick="doGitPull()">Pull (${data.behind})</button>`;
         }
         if (data.ahead === 0 && data.behind === 0 && changeCount === 0) {
-            html += '<span style="color:#555;font-size:11px">Alles aktuell</span>';
+            html += '<span style="color:#555;font-size:11px">All up to date</span>';
         }
     } else {
-        html += '<span style="color:#555;font-size:11px">Kein Remote konfiguriert</span>';
+        html += '<span style="color:#555;font-size:11px">No remote configured</span>';
     }
     html += '</div>';
 
@@ -108,33 +114,33 @@ function doGitCommit() {
         input.disabled = false;
         if (data.success) {
             input.value = '';
-            showGitToast('Commit erfolgreich', 'success');
+            showGitToast('Commit successful', 'success');
             loadGitStatus();
         } else {
             showGitToast(data.error || data.output || 'Fehler', 'error');
         }
     })
-    .catch(() => { input.disabled = false; showGitToast('Netzwerkfehler', 'error'); });
+    .catch(() => { input.disabled = false; showGitToast('Network error', 'error'); });
 }
 
 function doGitPush() {
-    showGitToast('Push laeuft...', 'success');
+    showGitToast('Pushing...', 'success');
     api.post('/api/git/' + encodeURIComponent(gitProjectName) + '/push')
         .then(data => {
-            showGitToast(data.success ? 'Push erfolgreich' : (data.error || data.output), data.success ? 'success' : 'error');
+            showGitToast(data.success ? 'Push successful' : (data.error || data.output), data.success ? 'success' : 'error');
             if (data.success) loadGitStatus();
         })
-        .catch(() => showGitToast('Netzwerkfehler', 'error'));
+        .catch(() => showGitToast('Network error', 'error'));
 }
 
 function doGitPull() {
-    showGitToast('Pull laeuft...', 'success');
+    showGitToast('Pulling...', 'success');
     api.post('/api/git/' + encodeURIComponent(gitProjectName) + '/pull')
         .then(data => {
-            showGitToast(data.success ? 'Pull erfolgreich' : (data.error || data.output), data.success ? 'success' : 'error');
+            showGitToast(data.success ? 'Pull successful' : (data.error || data.output), data.success ? 'success' : 'error');
             if (data.success) loadGitStatus();
         })
-        .catch(() => showGitToast('Netzwerkfehler', 'error'));
+        .catch(() => showGitToast('Network error', 'error'));
 }
 
 function showGitToast(msg, type) {
