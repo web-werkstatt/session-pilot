@@ -272,8 +272,4 @@ function escapeHtml(str) {
     return div.innerHTML;
 }
 
-function formatDate(iso) {
-    if (!iso) return '-';
-    const d = new Date(iso);
-    return d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
-}
+// formatDate: in base.js (global)

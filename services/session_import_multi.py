@@ -5,8 +5,8 @@ Parser und Import-Funktionen fuer Nicht-Claude AI-Assistenten:
 """
 import json
 import os
-from datetime import datetime
 from services.db_service import execute, execute_many
+from services.session_import_utils import parse_ts as _parse_ts
 
 
 def find_sessions_codex(config_dir):
@@ -59,12 +59,7 @@ def parse_codex_jsonl(filepath):
 
                 entry_type = entry.get("type")
                 timestamp_str = entry.get("timestamp")
-                timestamp = None
-                if timestamp_str:
-                    try:
-                        timestamp = datetime.fromisoformat(timestamp_str.replace("Z", "+00:00"))
-                    except (ValueError, TypeError):
-                        pass
+                timestamp = _parse_ts(timestamp_str)
 
                 if timestamp:
                     if not session_meta["started_at"] or timestamp < session_meta["started_at"]:
@@ -246,13 +241,7 @@ def parse_gemini_json(filepath, project_hash):
             messages = []
 
             for entry in entries:
-                ts_str = entry.get("timestamp")
-                timestamp = None
-                if ts_str:
-                    try:
-                        timestamp = datetime.fromisoformat(ts_str.replace("Z", "+00:00"))
-                    except (ValueError, TypeError):
-                        pass
+                timestamp = _parse_ts(entry.get("timestamp"))
                 if timestamp:
                     if not meta["started_at"] or timestamp < meta["started_at"]:
                         meta["started_at"] = timestamp

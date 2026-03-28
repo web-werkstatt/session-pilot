@@ -32,16 +32,7 @@ function escapeHtml(text) {
     return d.innerHTML;
 }
 
-function formatTokens(n) {
-    if (!n) return '0';
-    if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
-    if (n >= 1000) return (n / 1000).toFixed(1) + 'K';
-    return String(n);
-}
-
-function formatDateTime(value) {
-    return value ? new Date(value).toLocaleString('de-DE') : '-';
-}
+// formatTokens, formatDateTime: in base.js (global)
 
 function formatDateShort(value) {
     return value ? new Date(value).toLocaleDateString('de-DE') : '-';

@@ -288,3 +288,19 @@ function updateStickyPositions() {
 }
 window.addEventListener('resize', updateStickyPositions);
 setInterval(updateStickyPositions, 500);
+
+// Globale Utility-Funktionen (werden von mehreren Seiten genutzt)
+function formatTokens(n) {
+    if (!n) return '0';
+    if (n >= 1e9) return (n/1e9).toFixed(1) + 'B';
+    if (n >= 1e6) return (n/1e6).toFixed(1) + 'M';
+    if (n >= 1e3) return (n/1e3).toFixed(1) + 'K';
+    return n.toString();
+}
+function formatDate(iso) {
+    if (!iso) return '-';
+    return new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
+function formatDateTime(value) {
+    return value ? new Date(value).toLocaleString('de-DE') : '-';
+}

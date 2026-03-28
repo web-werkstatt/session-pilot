@@ -77,7 +77,7 @@ function renderTasks() {
         const statusIcon = task.enabled ? 'play-circle' : 'pause-circle';
         const typeIcon = getTypeIcon(task.type);
         const lastRun = task.last_run
-            ? formatDate(task.last_run)
+            ? formatTimeAgo(task.last_run)
             : '<span class="text-muted">Noch nie</span>';
         const resultBadge = task.last_result
             ? `<span class="badge badge-${task.last_result === 'ok' ? 'success' : 'error'}">${task.last_result}</span>`
@@ -278,7 +278,7 @@ function showDetail(id) {
             ${triggerInfo}
             <div class="detail-field">
                 <label>Letzter Lauf</label>
-                ${task.last_run ? formatDate(task.last_run) : '<span class="text-muted">Noch nie</span>'}
+                ${task.last_run ? formatTimeAgo(task.last_run) : '<span class="text-muted">Noch nie</span>'}
                 ${task.last_result ? ` <span class="badge badge-${task.last_result === 'ok' ? 'success' : 'error'}">${task.last_result}</span>` : ''}
             </div>
             <div class="detail-field">
@@ -368,11 +368,11 @@ function escapeHtml(str) {
     return div.innerHTML;
 }
 
-function formatDate(isoStr) {
+// formatDate: in base.js (global)
+function formatTimeAgo(isoStr) {
     if (!isoStr) return '-';
     const d = new Date(isoStr);
-    const now = new Date();
-    const diffMs = now - d;
+    const diffMs = new Date() - d;
     const diffMin = Math.floor(diffMs / 60000);
     const diffH = Math.floor(diffMs / 3600000);
     const diffD = Math.floor(diffMs / 86400000);
@@ -381,7 +381,7 @@ function formatDate(isoStr) {
     if (diffMin < 60) return `Vor ${diffMin} Min`;
     if (diffH < 24) return `Vor ${diffH} Std`;
     if (diffD < 7) return `Vor ${diffD} Tagen`;
-    return d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    return formatDate(isoStr);
 }
 
 // Auto-refresh

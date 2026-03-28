@@ -5,9 +5,9 @@ Codex/Gemini-Parser sind in session_import_multi.py ausgelagert.
 import hashlib
 import json
 import os
-from datetime import datetime
 from services.db_service import execute, execute_many
 from services.account_discovery import discover_all_accounts
+from services.session_import_utils import parse_ts, sanitize_content_json
 from services.session_import_multi import (
     find_sessions_codex, import_codex_session,
     find_sessions_gemini, parse_gemini_json, import_gemini_session,
@@ -166,13 +166,8 @@ def parse_jsonl(filepath):
     return meta, messages
 
 
-def _parse_ts(ts_str):
-    if not ts_str:
-        return None
-    try:
-        return datetime.fromisoformat(ts_str.replace("Z", "+00:00"))
-    except (ValueError, TypeError):
-        return None
+_parse_ts = parse_ts
+_sanitize_content_json = sanitize_content_json
 
 
 def import_session(filepath, account_name, project_hash):
@@ -203,15 +198,7 @@ def import_session(filepath, account_name, project_hash):
         if m.get("content"):
             m["content"] = m["content"].replace("\x00", "")
         if m.get("content_json"):
-            # PostgreSQL jsonb akzeptiert keine \u0000 Null-Bytes
-            s = m["content_json"].replace("\x00", "").replace("\\u0000", "")
-            try:
-                parsed = json.loads(s)
-                result = json.dumps(parsed, ensure_ascii=True)
-                result = result.replace("\\u0000", "")
-                m["content_json"] = result
-            except (json.JSONDecodeError, ValueError):
-                m["content_json"] = None
+            m["content_json"] = _sanitize_content_json(m["content_json"])
 
     if session_id:
         execute("""
