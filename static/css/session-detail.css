@@ -1,6 +1,4 @@
-/* ===== SESSION DETAIL - Enhanced Styles ===== */
-
-/* --- Meta Bar --- */
+/* Session Detail Styles */
 .meta-bar {
     background: var(--bg-surface);
     padding: 20px 30px;
@@ -44,14 +42,12 @@
 .meta-badge-outcome.outcome-needs_fix { background: rgba(230,81,0,0.2); color: var(--status-warning-bright); }
 .meta-badge-outcome.outcome-reverted { background: rgba(198,40,40,0.2); color: var(--status-error-bright); }
 .meta-badge-outcome.outcome-partial { background: rgba(79,195,247,0.15); color: var(--accent-light); }
-
 .meta-stats { display: flex; gap: 24px; flex-wrap: wrap; }
 .meta-stat { display: flex; flex-direction: column; min-width: 70px; }
 .meta-stat-label { font-size: 10px; color: var(--text-faint); text-transform: uppercase; letter-spacing: 0.8px; }
 .meta-stat-value { font-size: var(--text-md); color: var(--text-secondary); margin-top: 2px; font-family: var(--font-mono); }
 .meta-stat-value.accent { color: var(--accent-light); }
-
-/* --- Export Bar --- */
+/* Export Bar */
 .export-bar {
     background: var(--bg-elevated);
     padding: 8px 30px;
@@ -66,15 +62,13 @@
 .export-right { display: flex; align-items: center; gap: 8px; margin-left: auto; }
 .export-sep { width: 1px; height: 20px; background: var(--border-muted); margin: 0 4px; }
 .export-label { color: var(--text-faint); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
-
-/* --- Conversation --- */
+/* Conversation */
 .conversation {
     margin: 16px auto;
     padding: 0 20px;
     transition: max-width var(--transition-base);
 }
-
-/* --- Messages --- */
+/* Messages */
 .msg {
     margin: 10px 0;
     padding: 16px 20px;
@@ -101,7 +95,6 @@
     margin: 6px 0;
     border-bottom: 1px solid var(--border-subtle);
 }
-
 .msg-role {
     font-weight: 600;
     color: var(--text-muted);
@@ -119,8 +112,7 @@
 .msg-assistant .msg-role { color: var(--status-valid); }
 .msg-actions { display: flex; gap: 4px; }
 .msg-time { font-weight: 400; color: var(--text-muted); font-size: 11px; margin-left: 8px; letter-spacing: 0; text-transform: none; font-family: var(--font-mono); }
-
-/* --- Message Content --- */
+/* Message Content */
 .msg-content {
     word-wrap: break-word;
     font-size: var(--text-md);
@@ -171,7 +163,7 @@
 .msg-content th, .msg-content td { border: 1px solid var(--border-muted); padding: 6px 10px; }
 .msg-content th { background: var(--bg-elevated); color: var(--text-heading); }
 
-/* --- Tool Use Details --- */
+/* Tool Use */
 details {
     margin: 8px 0;
     border-radius: 6px;
@@ -211,7 +203,7 @@ details .tool-content {
     line-height: 1.5;
 }
 
-/* --- Copy Buttons --- */
+/* Copy + Line Numbers */
 .btn-copy {
     background: transparent;
     color: var(--text-ghost);
@@ -251,10 +243,20 @@ details .tool-content {
     opacity: 0;
 }
 .pre-wrap:hover .btn-copy-code { opacity: 1; }
+.line-num {
+    display: inline-block;
+    color: var(--text-ghost);
+    border-right: 1px solid var(--border-muted);
+    padding-right: 8px;
+    margin-right: 10px;
+    text-align: right;
+    user-select: none;
+    min-width: 2ch;
+}
 .btn-copy-code:hover { background: var(--bg-hover); color: var(--text-heading); border-color: var(--accent); }
 .btn-copy-code.copied { background: rgba(46, 125, 50, 0.2); color: var(--status-valid); border-color: rgba(46, 125, 50, 0.3); opacity: 1; }
 
-/* --- Session Layout with ToC --- */
+/* Layout + ToC */
 .session-layout {
     display: flex;
     gap: 0;
@@ -315,7 +317,7 @@ details .tool-content {
     border-left-color: var(--accent-light);
     background: rgba(79, 195, 247, 0.06);
 }
-/* User = "Kapitel" - visuell staerker */
+/* User/Assistant TOC */
 .toc-item-user {
     margin-top: 6px;
     padding-top: 8px;
@@ -348,7 +350,6 @@ details .tool-content {
     overflow: hidden;
 }
 .toc-item-user.active .toc-text { color: var(--text-heading); }
-/* Assistant = Antwort - kompakter */
 .toc-item-assistant {
     padding-left: 16px;
 }
@@ -362,7 +363,6 @@ details .tool-content {
     overflow: hidden;
 }
 .toc-item-assistant.active .toc-text { color: var(--accent-light); }
-/* Tool badges */
 .toc-tools {
     font-size: 9px;
     font-family: var(--font-mono);
@@ -373,7 +373,7 @@ details .tool-content {
     width: fit-content;
 }
 
-/* --- Review Modal Overrides --- */
+/* Review Modal */
 .review-modal-panel { padding: 24px 28px; border: 1px solid var(--border-hover); }
 .review-modal-head { margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--border-subtle); }
 .review-modal-head h2 { font-size: 18px; }
@@ -387,7 +387,7 @@ details .tool-content {
 .review-entry:hover { border-color: var(--border-hover); }
 .review-entry-note { font-size: var(--text-md); }
 
-/* --- Responsive --- */
+/* Responsive */
 @media (max-width: 1024px) {
     .session-toc { display: none; }
 }

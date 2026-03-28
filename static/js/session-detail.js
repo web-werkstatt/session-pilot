@@ -52,7 +52,12 @@ function renderMarkdown(text) {
     if (typeof marked === 'undefined') return '<pre>' + escapeHtml(text) + '</pre>';
     let html = marked.parse(text, {breaks: true, gfm: true});
     html = html.replace(/<pre><code([\s\S]*?)>([\s\S]*?)<\/code><\/pre>/g, (_, attrs, code) => {
-        return `<div class="pre-wrap"><button class="btn-copy-code" onclick="copyCode(this)">Kopieren</button><pre><code${attrs}>${code}</code></pre></div>`;
+        var lines = code.replace(/\n$/, '').split('\n');
+        var pad = String(lines.length).length;
+        var numbered = lines.map((line, i) =>
+            '<span class="line-num">' + String(i + 1).padStart(pad, ' ') + '</span>' + line
+        ).join('\n');
+        return `<div class="pre-wrap"><button class="btn-copy-code" onclick="copyCode(this)">Kopieren</button><pre><code${attrs}>${numbered}</code></pre></div>`;
     });
     return html;
 }
@@ -234,8 +239,10 @@ function copyMsg(btn, idx) {
 }
 
 function copyCode(btn) {
-    const pre = btn.parentElement.querySelector('code');
-    copyToClipboard(btn, stripLineNumbers(pre.textContent));
+    var code = btn.parentElement.querySelector('code');
+    var clone = code.cloneNode(true);
+    clone.querySelectorAll('.line-num').forEach(function(el) { el.remove(); });
+    copyToClipboard(btn, clone.textContent);
 }
 
 function highlightOutcome(outcome) {
