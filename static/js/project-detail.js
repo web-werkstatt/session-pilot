@@ -131,14 +131,15 @@ async function loadProjectPlans() {
         allPlans.forEach(p => {
             const sc = statusColors[p.status] || statusColors.draft;
             const date = p.created_at ? new Date(p.created_at).toLocaleDateString('de-DE') : '';
-            const sessionLink = p.session_slug
-                ? `<a href="/sessions/${p.session_slug}" style="color:#0078d4;font-size:12px;text-decoration:none">Session</a>`
+            const hasSession = p.session_slug && p.session_slug !== 'None';
+            const sessionLink = hasSession
+                ? `<span class="badge" style="font-size:10px;background:rgba(0,120,212,0.2);color:#4fc3f7">Session</span>`
                 : '';
             const context = p.context_summary
                 ? `<div class="plan-mini-context">${p.context_summary.substring(0, 120)}${p.context_summary.length > 120 ? '...' : ''}</div>`
                 : '';
             html += `
-            <a href="/plans" class="plan-mini-card" style="background:${sc.bg}; border-left:3px solid ${sc.border}">
+            <a href="/plans/${p.id}" class="plan-mini-card" style="background:${sc.bg}; border-left:3px solid ${sc.border}">
                 <div class="plan-mini-top">
                     <span class="badge badge-status badge-${p.status}" style="font-size:11px">${sc.label}</span>
                     <span style="font-size:11px;color:#888">${date}</span>
