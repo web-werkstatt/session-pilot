@@ -14,7 +14,10 @@ document.addEventListener('DOMContentLoaded', () => {
         filters.status = params.get('status');
     }
     loadStats();
-    loadPlans();
+    loadPlans().then(() => {
+        const planId = params.get('plan');
+        if (planId) showPlan(parseInt(planId));
+    });
     loadProjects();
 });
 
@@ -25,7 +28,7 @@ function loadPlans() {
     if (filters.project) params.set('project', filters.project);
     if (filters.category) params.set('category', filters.category);
 
-    api.get('/api/plans?' + params.toString())
+    return api.get('/api/plans?' + params.toString())
         .then(data => {
             allPlans = data.plans || [];
             renderPlans();

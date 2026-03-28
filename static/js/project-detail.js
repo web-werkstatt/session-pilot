@@ -170,7 +170,7 @@ async function loadProjectPlans() {
                 ? `<div class="plan-mini-context">${p.context_summary.substring(0, 120)}${p.context_summary.length > 120 ? '...' : ''}</div>`
                 : '';
             html += `
-            <div class="plan-mini-card" style="background:${sc.bg}; border-left:3px solid ${sc.border}" onclick="location.href='/plans/${p.id}'">
+            <div class="plan-mini-card" style="background:${sc.bg}; border-left:3px solid ${sc.border}" onclick="location.href='/plans?plan=${p.id}'">
                 <div class="plan-mini-top">
                     <span class="badge badge-status badge-${p.status}" style="font-size:11px">${sc.label}</span>
                     <span style="font-size:11px;color:#888">${date}</span>
