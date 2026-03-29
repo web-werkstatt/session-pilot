@@ -81,7 +81,7 @@ def get_plan_detail(plan_id):
         (plan_id,), fetch=True
     )
     if not rows:
-        return jsonify({'error': 'Plan nicht gefunden'}), 404
+        return jsonify({'error': 'Plan not found'}), 404
 
     row = rows[0]
     content_md = row['content'] or ''
@@ -114,7 +114,7 @@ def update_plan(plan_id):
     ensure_plans_schema()
     req = request.get_json()
     if not req:
-        return jsonify({'error': 'Keine Daten'}), 400
+        return jsonify({'error': 'No data'}), 400
 
     allowed = ('project_name', 'category', 'title')
     updates = []
@@ -125,7 +125,7 @@ def update_plan(plan_id):
             params.append(req[field])
 
     if not updates:
-        return jsonify({'error': 'Keine aenderbaren Felder'}), 400
+        return jsonify({'error': 'No editable fields'}), 400
 
     updates.append("updated_at = NOW()")
     params.append(plan_id)

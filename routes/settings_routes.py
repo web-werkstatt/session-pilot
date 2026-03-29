@@ -1,12 +1,16 @@
 """
 Settings: Zentrale Einstellungsseite (SaaS-Pattern)
-Sektionen: Modell-Preise, AI Accounts, Allgemein
+Sektionen: Modell-Preise, AI Accounts, External Links, Allgemein
 """
+import json
+import os
 from flask import Blueprint, jsonify, request, render_template
 from services.db_service import execute
 from services.account_discovery import discover_all_accounts
 from config import PROJECTS_DIR, GITEA_URL, GITEA_USER, HOST, PORT, DB_CONFIG
 from routes.api_utils import api_route
+
+EXTERNAL_LINKS_FILE = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'external_links.json')
 
 settings_bp = Blueprint('settings', __name__)
 
@@ -45,7 +49,7 @@ def api_pricing_list():
 def api_pricing_save():
     data = request.get_json()
     if not data or not data.get("model_pattern"):
-        return jsonify({"error": "model_pattern erforderlich"}), 400
+        return jsonify({"error": "model_pattern required"}), 400
 
     row_id = data.get("id")
     if row_id:
@@ -144,3 +148,62 @@ def api_system_info():
         "total_messages": db_stats["total_messages"] if db_stats else 0,
         "pricing_models": db_stats["pricing_models"] if db_stats else 0,
     })
+
+
+# === External Links ===
+
+def _load_external_links():
+    if os.path.exists(EXTERNAL_LINKS_FILE):
+        with open(EXTERNAL_LINKS_FILE, 'r') as f:
+            return json.load(f)
+    return []
+
+
+def _save_external_links(links):
+    with open(EXTERNAL_LINKS_FILE, 'w') as f:
+        json.dump(links, f, indent=2)
+
+
+@settings_bp.route('/api/settings/external-links')
+@api_route
+def api_external_links_list():
+    return jsonify(_load_external_links())
+
+
+@settings_bp.route('/api/settings/external-links', methods=['POST'])
+@api_route
+def api_external_links_save():
+    data = request.get_json()
+    if not data or not data.get('name') or not data.get('url'):
+        return jsonify({"error": "Name and URL required"}), 400
+
+    links = _load_external_links()
+    link_id = data.get('id')
+
+    if link_id:
+        for link in links:
+            if link['id'] == link_id:
+                link['name'] = data['name']
+                link['url'] = data['url']
+                link['icon'] = data.get('icon', 'external-link')
+                break
+    else:
+        new_id = max((l['id'] for l in links), default=0) + 1
+        links.append({
+            'id': new_id,
+            'name': data['name'],
+            'url': data['url'],
+            'icon': data.get('icon', 'external-link'),
+        })
+
+    _save_external_links(links)
+    return jsonify({"success": True})
+
+
+@settings_bp.route('/api/settings/external-links/<int:link_id>', methods=['DELETE'])
+@api_route
+def api_external_links_delete(link_id):
+    links = _load_external_links()
+    links = [l for l in links if l['id'] != link_id]
+    _save_external_links(links)
+    return jsonify({"success": True})

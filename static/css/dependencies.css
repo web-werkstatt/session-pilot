@@ -26,9 +26,9 @@
 /* Stats */
 .stats-bar {
     background: var(--bg-surface);
-    padding: 15px 30px;
+    padding: 10px 30px;
     display: flex;
-    gap: 30px;
+    gap: 20px;
     border-bottom: 1px solid var(--border-hover);
 }
 .stat { display: flex; align-items: center; gap: 8px; }

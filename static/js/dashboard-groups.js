@@ -10,7 +10,7 @@ function loadGroups() {
             return data;
         })
         .catch(err => {
-            console.error('Fehler beim Laden der Gruppen:', err);
+            console.error('Error loading groups:', err);
             return { groups: [] };
         });
 }
@@ -19,8 +19,8 @@ function loadGroups() {
 function renderGroupFilterButtons() {
     const select = document.getElementById('groupFilterSelect');
     if (!select) return;
-    let html = '<option value="all">Alle Gruppen</option>';
-    html += '<option value="priority">Prioritaet</option>';
+    let html = '<option value="all">All Groups</option>';
+    html += '<option value="priority">Priority</option>';
     html += '<option value="none">Ungrouped</option>';
 
     groupsData.groups.forEach(group => {
@@ -34,7 +34,7 @@ function renderGroupFilterButtons() {
 function updateGroupDropdown(selectNewGroupId = null) {
     const select = document.getElementById('editGroup');
     const currentValue = select.value;
-    let html = '<option value="">-- Keine --</option>';
+    let html = '<option value="">-- None --</option>';
 
     groupsData.groups.forEach(group => {
         html += `<option value="${group.id}">${renderIcon(group.icon)} ${group.name}</option>`;
@@ -75,23 +75,22 @@ function createInlineGroup() {
     const color = document.getElementById('inlineGroupColor').value;
 
     if (!id || !name) {
-        alert('Kurzname und Anzeigename sind erforderlich');
+        alert('Short name and display name are required');
         return;
     }
 
     api.post('/api/groups', { id, name, icon, color, description: '' })
     .then(result => {
         if (result.success) {
-            // Gruppen neu laden und neue Gruppe auswählen
             loadGroups().then(() => {
                 updateGroupDropdown(id);
                 toggleInlineGroupForm();
             });
         } else {
-            alert('Fehler: ' + result.error);
+            alert('Error: ' + result.error);
         }
     })
-    .catch(err => alert('Fehler: ' + err));
+    .catch(err => alert('Error: ' + err));
 }
 
 // Gruppen-Badge dynamisch generieren
@@ -119,7 +118,7 @@ function renderGroupsList() {
     const container = document.getElementById('groupsList');
 
     if (groupsData.groups.length === 0) {
-        container.innerHTML = '<p style="color:#888;text-align:center">Keine Gruppen definiert</p>';
+        container.innerHTML = '<p style="color:#888;text-align:center">No groups defined</p>';
         return;
     }
 
@@ -135,8 +134,8 @@ function renderGroupsList() {
                     ${group.description ? `<div class="group-desc">${group.description}</div>` : ''}
                 </div>
                 <div class="group-actions">
-                    <button onclick="editGroup('${group.id}')">Bearbeiten</button>
-                    <button class="btn-delete" onclick="deleteGroup('${group.id}')">Löschen</button>
+                    <button onclick="editGroup('${group.id}')">Edit</button>
+                    <button class="btn-delete" onclick="deleteGroup('${group.id}')">Delete</button>
                 </div>
             </div>
         `;
@@ -157,7 +156,7 @@ function createGroup() {
     const desc = document.getElementById('newGroupDesc').value.trim();
 
     if (!id || !name) {
-        alert('ID und Name sind erforderlich');
+        alert('ID and name are required');
         return;
     }
 
@@ -176,13 +175,13 @@ function createGroup() {
                 updateGroupDropdown();
             });
         } else {
-            alert('Fehler: ' + result.error);
+            alert('Error: ' + result.error);
         }
     })
-    .catch(err => alert('Fehler: ' + err));
+    .catch(err => alert('Error: ' + err));
 }
 
-// Gruppe bearbeiten
+// Edit group
 function editGroup(groupId) {
     const group = groupsData.groups.find(g => g.id === groupId);
     if (!group) return;
@@ -190,13 +189,13 @@ function editGroup(groupId) {
     const newName = prompt('Name:', group.name);
     if (newName === null) return;
 
-    const newIcon = prompt('Icon (Lucide-Name oder Emoji):', group.icon);
+    const newIcon = prompt('Icon (Lucide name or emoji):', group.icon);
     if (newIcon === null) return;
 
-    const newColor = prompt('Farbe (Hex):', group.color);
+    const newColor = prompt('Color (Hex):', group.color);
     if (newColor === null) return;
 
-    const newDesc = prompt('Beschreibung:', group.description || '');
+    const newDesc = prompt('Description:', group.description || '');
     if (newDesc === null) return;
 
     api.put(`/api/groups/${groupId}`, {
@@ -210,21 +209,21 @@ function editGroup(groupId) {
             loadGroups().then(() => {
                 renderGroupsList();
                 updateGroupDropdown();
-                loadData(); // Tabelle aktualisieren
+                loadData();
             });
         } else {
-            alert('Fehler: ' + result.error);
+            alert('Error: ' + result.error);
         }
     })
-    .catch(err => alert('Fehler: ' + err));
+    .catch(err => alert('Error: ' + err));
 }
 
-// Gruppe löschen
+// Delete group
 function deleteGroup(groupId) {
     const group = groupsData.groups.find(g => g.id === groupId);
     if (!group) return;
 
-    if (!confirm(`Möchten Sie die Gruppe "${group.name}" wirklich löschen?\n\nProjekte mit dieser Gruppe werden auf "Keine Gruppe" gesetzt.`)) {
+    if (!confirm(`Are you sure you want to delete the group "${group.name}"?\n\nProjects with this group will be set to "No Group".`)) {
         return;
     }
 
@@ -234,11 +233,11 @@ function deleteGroup(groupId) {
             loadGroups().then(() => {
                 renderGroupsList();
                 updateGroupDropdown();
-                loadData(); // Tabelle aktualisieren
+                loadData();
             });
         } else {
-            alert('Fehler: ' + result.error);
+            alert('Error: ' + result.error);
         }
     })
-    .catch(err => alert('Fehler: ' + err));
+    .catch(err => alert('Error: ' + err));
 }

@@ -14,8 +14,8 @@ function getProject() { return document.getElementById('filterProject').value; }
 
 function changePeriod() {
     currentDays = getDays();
-    const labels = {7:'7 Tage',14:'14 Tage',30:'30 Tage',90:'Quartal',180:'Halbjahr',365:'Jahr'};
-    document.getElementById('periodLabel').textContent = 'Letzte ' + (labels[currentDays] || currentDays + ' Tage');
+    const labels = {7:'7 days',14:'14 days',30:'30 days',90:'Quarter',180:'Half year',365:'Year'};
+    document.getElementById('periodLabel').textContent = 'Last ' + (labels[currentDays] || currentDays + ' days');
     reloadAll();
 }
 
@@ -37,7 +37,7 @@ function trendHtml(val, invert) {
     // For cost/tokens: up=bad(red), down=good(green). invert for sessions/duration
     const cls = val === 0 ? 'neutral' : (invert ? (isUp ? 'down' : 'up') : (isUp ? 'up' : 'down'));
     const arrow = val > 0 ? '&#9650;' : val < 0 ? '&#9660;' : '&#8211;';
-    return `<span class="ts-kpi-trend ${cls}">${arrow} ${Math.abs(val)}% vs. Vorperiode</span>`;
+    return `<span class="ts-kpi-trend ${cls}">${arrow} ${Math.abs(val)}% vs. prev. period</span>`;
 }
 
 // === Summary KPIs ===
@@ -49,7 +49,7 @@ async function loadSummary() {
     try {
         const d = await api.get('/api/timesheets/summary?' + params);
 
-        document.getElementById('kpiSessions').textContent = d.sessions.toLocaleString('de-DE');
+        document.getElementById('kpiSessions').textContent = d.sessions.toLocaleString('en-US');
         document.getElementById('kpiDuration').textContent = d.duration_formatted;
         document.getElementById('kpiTokens').textContent = formatTokens(d.total_tokens);
         document.getElementById('kpiCost').textContent = d.total_cost_formatted;
@@ -74,12 +74,12 @@ async function loadDaily() {
 
         const labels = data.map(d => {
             const dt = new Date(d.date);
-            return dt.toLocaleDateString('de-DE', {day:'2-digit', month:'2-digit'});
+            return dt.toLocaleDateString('en-US', {day:'2-digit', month:'2-digit'});
         });
 
         const metricMap = {
-            cost: {data: data.map(d => d.cost), label: 'Kosten ($)', color: '#4fc3f7'},
-            duration: {data: data.map(d => d.duration_h), label: 'Stunden', color: '#6ff7b0'},
+            cost: {data: data.map(d => d.cost), label: 'Cost ($)', color: '#4fc3f7'},
+            duration: {data: data.map(d => d.duration_h), label: 'Hours', color: '#6ff7b0'},
             tokens: {data: data.map(d => (d.tokens_in + d.tokens_out) / 1e6), label: 'Tokens (M)', color: '#cf6ff7'},
             sessions: {data: data.map(d => d.sessions), label: 'Sessions', color: '#f7a96f'},
         };
@@ -129,10 +129,10 @@ async function loadProjects() {
         // Donut: Top 8 + Rest
         const top = projectsData.slice(0, 8);
         const rest = projectsData.slice(8);
-        const donutLabels = top.map(p => p.project || 'unbekannt');
+        const donutLabels = top.map(p => p.project || 'unknown');
         const donutData = top.map(p => p.cost);
         if (rest.length) {
-            donutLabels.push('Andere (' + rest.length + ')');
+            donutLabels.push('Other (' + rest.length + ')');
             donutData.push(rest.reduce((s,p) => s + p.cost, 0));
         }
 
@@ -179,7 +179,7 @@ async function loadProjects() {
 function renderProjectTable() {
     const tbody = document.getElementById('projectTableBody');
     if (!projectsData.length) {
-        tbody.innerHTML = '<tr><td colspan="6" class="loading">Keine Daten</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" class="loading">No data</td></tr>';
         return;
     }
 
@@ -193,7 +193,7 @@ function renderProjectTable() {
         const accounts = (p.accounts || []).map(a => `<span class="ts-account-tag">${a}</span>`).join('');
 
         return `<tr>
-            <td><a class="ts-project-link" href="/project/${encodeURIComponent(p.project || '')}">${p.project || 'unbekannt'}</a></td>
+            <td><a class="ts-project-link" href="/project/${encodeURIComponent(p.project || '')}">${p.project || 'unknown'}</a></td>
             <td>${p.sessions}</td>
             <td>${p.duration_formatted}</td>
             <td>
@@ -260,7 +260,7 @@ async function loadTools() {
                 labels: data.map(t => t.account),
                 datasets: [
                     {
-                        label: 'Kosten ($)',
+                        label: 'Cost ($)',
                         data: data.map(t => t.cost),
                         backgroundColor: '#4fc3f788',
                         borderColor: '#4fc3f7',
@@ -300,7 +300,7 @@ async function loadModels() {
                     return name;
                 }),
                 datasets: [{
-                    label: 'Kosten ($)',
+                    label: 'Cost ($)',
                     data: top.map(m => m.cost),
                     backgroundColor: CHART_COLORS.slice(0, top.length).map(c => c + '88'),
                     borderColor: CHART_COLORS.slice(0, top.length),
@@ -325,7 +325,7 @@ async function loadModels() {
 // === Rework ===
 let outcomeDonut, reworkTrend;
 const OUTCOME_COLORS = {ok:'#66bb6a', needs_fix:'#ff9800', reverted:'#ef5350', partial:'#f9a825', unrated:'#444'};
-const OUTCOME_LABELS = {ok:'OK', needs_fix:'Needs Fix', reverted:'Reverted', partial:'Partial', unrated:'Unbewertet'};
+const OUTCOME_LABELS = {ok:'OK', needs_fix:'Needs Fix', reverted:'Reverted', partial:'Partial', unrated:'Unrated'};
 
 async function loadRework() {
     const params = new URLSearchParams({days: getDays()});
@@ -371,7 +371,7 @@ async function loadRework() {
             data: {
                 labels: weeks.map(w => {
                     const dt = new Date(w.week);
-                    return dt.toLocaleDateString('de-DE', {day:'2-digit', month:'2-digit'});
+                    return dt.toLocaleDateString('en-US', {day:'2-digit', month:'2-digit'});
                 }),
                 datasets: [{
                     label: 'Rework-Rate %',
@@ -407,18 +407,18 @@ async function loadContext() {
         const changes = d.changes || [];
 
         if (!changes.length) {
-            container.innerHTML = '<div class="ts-ctx-empty">Keine Instruktions-Aenderungen mit Session-Daten gefunden.</div>';
+            container.innerHTML = '<div class="ts-ctx-empty">No instruction changes with session data found.</div>';
             document.getElementById('contextDesc').textContent =
-                `${d.summary?.length || 0} Projekte mit CLAUDE.md/AGENTS.md Aenderungen analysiert.`;
+                `${d.summary?.length || 0} projects with CLAUDE.md/AGENTS.md changes analyzed.`;
             return;
         }
 
         document.getElementById('contextDesc').textContent =
-            `${changes.length} Aenderungen in ${d.summary?.length || 0} Projekten analysiert.`;
+            `${changes.length} changes in ${d.summary?.length || 0} projects analyzed.`;
 
         // Nur die letzten 10 anzeigen
         container.innerHTML = changes.slice(0, 10).map(ch => {
-            const date = new Date(ch.date).toLocaleDateString('de-DE', {day:'2-digit',month:'2-digit',year:'numeric'});
+            const date = new Date(ch.date).toLocaleDateString('en-US', {day:'2-digit',month:'2-digit',year:'numeric'});
             const b = ch.before;
             const a = ch.after;
             const delta = ch.deltas;
@@ -432,14 +432,14 @@ async function loadContext() {
                     </div>
                     <div>
                         <span class="ts-ctx-date">${date}</span>
-                        <span style="color:#666;font-size:11px;margin-left:8px">+${ch.added}/-${ch.removed} Zeilen</span>
+                        <span style="color:#666;font-size:11px;margin-left:8px">+${ch.added}/-${ch.removed} lines</span>
                     </div>
                 </div>
                 ${ch.message ? `<div class="ts-ctx-msg">${escapeHtml(ch.message)}</div>` : ''}
                 <div class="ts-ctx-metrics">
                     ${ctxMetric('Messages/Session', b.avg_messages, a.avg_messages, delta.avg_messages, true)}
                     ${ctxMetric('Tokens/Session', fmtK(b.avg_tokens), fmtK(a.avg_tokens), delta.avg_tokens, true)}
-                    ${ctxMetric('Kosten/Session', '$'+b.avg_cost.toFixed(2), '$'+a.avg_cost.toFixed(2), delta.avg_cost, true)}
+                    ${ctxMetric('Cost/Session', '$'+b.avg_cost.toFixed(2), '$'+a.avg_cost.toFixed(2), delta.avg_cost, true)}
                     ${ctxMetric('Sessions', b.sessions, a.sessions, null, false)}
                 </div>
             </div>`;

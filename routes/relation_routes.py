@@ -11,12 +11,12 @@ relation_bp = Blueprint('relations', __name__)
 RELATIONS_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'relations.json')
 
 DEFAULT_RELATION_TYPES = [
-    {"id": "depends_on", "name": "hängt ab von", "icon": "link", "color": "#3498db"},
-    {"id": "replaces", "name": "ersetzt", "icon": "refresh-cw", "color": "#e74c3c"},
-    {"id": "extends", "name": "erweitert", "icon": "plus", "color": "#2ecc71"},
-    {"id": "uses", "name": "nutzt", "icon": "settings", "color": "#9b59b6"},
-    {"id": "related", "name": "verwandt mit", "icon": "git-merge", "color": "#f39c12"},
-    {"id": "fork_of", "name": "Fork von", "icon": "git-fork", "color": "#1abc9c"},
+    {"id": "depends_on", "name": "depends on", "icon": "link", "color": "#3498db"},
+    {"id": "replaces", "name": "replaces", "icon": "refresh-cw", "color": "#e74c3c"},
+    {"id": "extends", "name": "extends", "icon": "plus", "color": "#2ecc71"},
+    {"id": "uses", "name": "uses", "icon": "settings", "color": "#9b59b6"},
+    {"id": "related", "name": "related to", "icon": "git-merge", "color": "#f39c12"},
+    {"id": "fork_of", "name": "fork of", "icon": "git-fork", "color": "#1abc9c"},
 ]
 
 
@@ -51,7 +51,7 @@ def get_relations():
 def add_relation():
     req = request.get_json()
     if not req:
-        return jsonify({"error": "Keine Daten"}), 400
+        return jsonify({"error": "No data"}), 400
 
     source = req.get("source")
     target = req.get("target")
@@ -59,15 +59,15 @@ def add_relation():
     note = req.get("note", "")
 
     if not source or not target or not relation_type:
-        return jsonify({"error": "source, target und type sind erforderlich"}), 400
+        return jsonify({"error": "source, target and type are required"}), 400
     if source == target:
-        return jsonify({"error": "Projekt kann nicht mit sich selbst verknüpft werden"}), 400
+        return jsonify({"error": "A project cannot be linked to itself"}), 400
 
     data = load_relations()
 
     for rel in data["relations"]:
         if rel["source"] == source and rel["target"] == target and rel["type"] == relation_type:
-            return jsonify({"error": "Diese Beziehung existiert bereits"}), 400
+            return jsonify({"error": "This relation already exists"}), 400
 
     new_relation = {
         "id": f"{source}_{target}_{relation_type}_{datetime.now().timestamp()}",
@@ -86,7 +86,7 @@ def delete_relation(relation_id):
     data["relations"] = [r for r in data["relations"] if r.get("id") != relation_id]
 
     if len(data["relations"]) == original_count:
-        return jsonify({"error": "Beziehung nicht gefunden"}), 404
+        return jsonify({"error": "Relation not found"}), 404
 
     save_relations(data)
     return jsonify({"success": True})
@@ -102,7 +102,7 @@ def get_relation_types():
 def add_relation_type():
     req = request.get_json()
     if not req:
-        return jsonify({"error": "Keine Daten"}), 400
+        return jsonify({"error": "No data"}), 400
 
     type_id = req.get("id", "").lower().replace(" ", "_")
     name = req.get("name")
@@ -110,11 +110,11 @@ def add_relation_type():
     color = req.get("color", "#666666")
 
     if not type_id or not name:
-        return jsonify({"error": "id und name sind erforderlich"}), 400
+        return jsonify({"error": "id and name are required"}), 400
 
     data = load_relations()
     if any(t["id"] == type_id for t in data["relation_types"]):
-        return jsonify({"error": "Dieser Beziehungstyp existiert bereits"}), 400
+        return jsonify({"error": "This relation type already exists"}), 400
 
     new_type = {"id": type_id, "name": name, "icon": icon, "color": color}
     data["relation_types"].append(new_type)

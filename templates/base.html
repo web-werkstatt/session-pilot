@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -47,28 +47,31 @@
                     <span class="nav-icon"><i data-lucide="bar-chart-3" class="icon"></i></span><span class="nav-text">Dashboard</span>
                 </a>
                 <a href="/" class="nav-item {% if active_page == 'projects' %}active{% endif %}" onclick="if(window.location.pathname==='/'){event.preventDefault();if(typeof showTab==='function')showTab('projects');}">
-                    <span class="nav-icon"><i data-lucide="folder-open" class="icon"></i></span><span class="nav-text">Projekte</span>
+                    <span class="nav-icon"><i data-lucide="folder-open" class="icon"></i></span><span class="nav-text">Projects</span>
                 </a>
                 <a href="/sessions" class="nav-item {% if active_page == 'sessions' %}active{% endif %}">
                     <span class="nav-icon"><i data-lucide="bot" class="icon"></i></span><span class="nav-text">Claude Sessions</span>
                 </a>
                 <a href="/sessions/analysis" class="nav-item {% if active_page == 'analysis' %}active{% endif %}">
-                    <span class="nav-icon"><i data-lucide="trending-up" class="icon"></i></span><span class="nav-text">Session-Analyse</span>
+                    <span class="nav-icon"><i data-lucide="trending-up" class="icon"></i></span><span class="nav-text">Session Analysis</span>
+                </a>
+                <a href="/usage-monitor" class="nav-item {% if active_page == 'usage_monitor' %}active{% endif %}">
+                    <span class="nav-icon"><i data-lucide="activity" class="icon"></i></span><span class="nav-text">Usage Monitor</span>
                 </a>
                 <a href="/timesheets" class="nav-item {% if active_page == 'timesheets' %}active{% endif %}">
                     <span class="nav-icon"><i data-lucide="clock" class="icon"></i></span><span class="nav-text">AI Timesheets</span>
                 </a>
                 <a href="/scaffold" class="nav-item {% if active_page == 'scaffold' %}active{% endif %}">
-                    <span class="nav-icon"><i data-lucide="plus-circle" class="icon"></i></span><span class="nav-text">Neues Projekt</span>
+                    <span class="nav-icon"><i data-lucide="plus-circle" class="icon"></i></span><span class="nav-text">New Project</span>
                 </a>
             </div>
             <div class="nav-section">
                 <div class="nav-label">DevOps</div>
                 <a href="/containers" class="nav-item {% if active_page == 'containers' %}active{% endif %}">
-                    <span class="nav-icon"><i data-lucide="container" class="icon"></i></span><span class="nav-text">Container</span>
+                    <span class="nav-icon"><i data-lucide="container" class="icon"></i></span><span class="nav-text">Containers</span>
                 </a>
                 <a href="/dependencies" class="nav-item {% if active_page == 'dependencies' %}active{% endif %}">
-                    <span class="nav-icon"><i data-lucide="git-branch" class="icon"></i></span><span class="nav-text">Abhängigkeiten</span>
+                    <span class="nav-icon"><i data-lucide="git-branch" class="icon"></i></span><span class="nav-text">Dependencies</span>
                 </a>
                 <a href="/scheduled-tasks" class="nav-item {% if active_page == 'scheduled_tasks' %}active{% endif %}">
                     <span class="nav-icon"><i data-lucide="timer" class="icon"></i></span><span class="nav-text">Scheduled Tasks</span>
@@ -83,25 +86,20 @@
             <div class="nav-section">
                 <div class="nav-label">Content</div>
                 <a href="/vorlagen" class="nav-item {% if active_page == 'vorlagen' %}active{% endif %}">
-                    <span class="nav-icon"><i data-lucide="package" class="icon"></i></span><span class="nav-text">Vorlagen</span>
+                    <span class="nav-icon"><i data-lucide="package" class="icon"></i></span><span class="nav-text">Templates</span>
                 </a>
                 <a href="/news" class="nav-item {% if active_page == 'news' %}active{% endif %}">
                     <span class="nav-icon"><i data-lucide="newspaper" class="icon"></i></span><span class="nav-text">News</span>
                 </a>
             </div>
-            <div class="nav-section">
-                <div class="nav-label">Extern</div>
-                <a href="http://192.168.100.93:9000" target="_blank" class="nav-item">
-                    <span class="nav-icon"><i data-lucide="settings" class="icon"></i></span><span class="nav-text">Portainer</span>
-                </a>
-                <a href="http://192.168.100.93:3000" target="_blank" class="nav-item">
-                    <span class="nav-icon"><i data-lucide="git-fork" class="icon"></i></span><span class="nav-text">Gitea</span>
-                </a>
+            <div class="nav-section" id="externalLinksSection" style="display:none">
+                <div class="nav-label">External</div>
+                <div id="externalLinksNav"></div>
             </div>
         </nav>
         <div class="sidebar-footer">
             <a href="/settings" class="nav-item {% if active_page == 'settings' %}active{% endif %}" style="margin-bottom:8px">
-                <span class="nav-icon"><i data-lucide="settings-2" class="icon"></i></span><span class="nav-text">Einstellungen</span>
+                <span class="nav-icon"><i data-lucide="settings-2" class="icon"></i></span><span class="nav-text">Settings</span>
             </a>
             <span class="timestamp" id="timestamp"></span>
         </div>
@@ -111,7 +109,7 @@
     <main class="main-content">
         <!-- Top Bar -->
         <header class="topbar">
-            <button class="sidebar-toggle" onclick="toggleSidebar()" title="Sidebar"><i data-lucide="menu" class="icon"></i></button>
+            <button class="sidebar-toggle" onclick="toggleSidebar()" title="Toggle Sidebar"><i data-lucide="menu" class="icon"></i></button>
             <div class="breadcrumb">
                 <span>Workspace</span>
                 <span class="bc-sep">/</span>
@@ -119,7 +117,7 @@
             </div>
             <div class="topbar-search" onclick="openCommandPalette()">
                 <i data-lucide="search" class="icon icon-sm"></i>
-                <span class="topbar-search-text">Suche...</span>
+                <span class="topbar-search-text">Search...</span>
                 <kbd>Ctrl+K</kbd>
             </div>
             <div class="topbar-actions">
@@ -128,11 +126,11 @@
                     <span class="notification-badge" id="notificationBadge" style="display:none">0</span>
                     <div class="notification-panel" id="notificationPanel">
                         <div class="notification-header">
-                            <strong>Benachrichtigungen</strong>
-                            <button onclick="event.stopPropagation();markAllNotificationsRead()">Alle gelesen</button>
+                            <strong>Notifications</strong>
+                            <button onclick="event.stopPropagation();markAllNotificationsRead()">Mark all read</button>
                         </div>
                         <div class="notification-list" id="notificationList">
-                            <div class="notification-empty">Lade...</div>
+                            <div class="notification-empty">Loading...</div>
                         </div>
                     </div>
                 </div>
@@ -144,15 +142,15 @@
     </main>
 
     {% block global_lightbox %}
-    <!-- Lightbox mit Navigation -->
+    <!-- Lightbox with navigation -->
     <div class="lightbox" id="lightbox" onclick="if(event.target===this)closeLightbox()">
-        <button class="lb-nav lb-prev" id="lbPrev" onclick="event.stopPropagation();lightboxNav(-1)" title="Vorheriges Bild">&#8249;</button>
+        <button class="lb-nav lb-prev" id="lbPrev" onclick="event.stopPropagation();lightboxNav(-1)" title="Previous image">&#8249;</button>
         <div class="lb-content" onclick="event.stopPropagation()">
             <img id="lightboxImg" src="" alt="">
             <div class="lb-info" id="lbInfo"></div>
         </div>
-        <button class="lb-nav lb-next" id="lbNext" onclick="event.stopPropagation();lightboxNav(1)" title="Nächstes Bild">&#8250;</button>
-        <button class="lb-close" onclick="closeLightbox()" title="Schliessen">&#10005;</button>
+        <button class="lb-nav lb-next" id="lbNext" onclick="event.stopPropagation();lightboxNav(1)" title="Next image">&#8250;</button>
+        <button class="lb-close" onclick="closeLightbox()" title="Close">&#10005;</button>
         <div class="lb-counter" id="lbCounter"></div>
     </div>
     {% endblock %}
@@ -162,7 +160,7 @@
         <div class="cmd-palette">
             <div class="cmd-search">
                 <i data-lucide="search" class="icon"></i>
-                <input type="text" id="cmdInput" placeholder="Suche Projekte, Sessions, Container..." oninput="handleCmdSearch()" autocomplete="off">
+                <input type="text" id="cmdInput" placeholder="Search projects, sessions, containers..." oninput="handleCmdSearch()" autocomplete="off">
             </div>
             <div class="cmd-results" id="cmdResults"></div>
         </div>

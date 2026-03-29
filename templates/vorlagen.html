@@ -1,8 +1,8 @@
 {% extends "base.html" %}
 
-{% block title %}Vorlagen - Dashboard{% endblock %}
+{% block title %}Templates - Dashboard{% endblock %}
 
-{% block breadcrumb %}Vorlagen{% endblock %}
+{% block breadcrumb %}Templates{% endblock %}
 
 {% block head_extra %}
 <link rel="stylesheet" href="/static/css/vorlagen.css">
@@ -10,17 +10,17 @@
 
 {% block content %}
     <div class="container">
-        <h2 class="page-title">Wiederverwendbare Komponenten</h2>
-        <p class="page-subtitle">Sammlung von UI-Komponenten, Code-Snippets und Tools zum Kopieren</p>
+        <h2 class="page-title">Reusable components</h2>
+        <p class="page-subtitle">Collection of UI components, code snippets and tools to copy</p>
 
-        <div id="loading" class="loading"><div class="spinner"></div>Lade Vorlagen...</div>
+        <div id="loading" class="loading"><div class="spinner"></div>Loading templates...</div>
 
         <div class="vorlagen-grid" id="vorlagenGrid" style="display:none;"></div>
 
         <div id="emptyState" class="empty-state" style="display:none;">
             <div class="icon">📭</div>
-            <div>Keine Vorlagen gefunden</div>
-            <p style="margin-top:10px;color:#555;">Erstelle Vorlagen in /mnt/projects/vorlagen/</p>
+            <div>No templates found</div>
+            <p style="margin-top:10px;color:#555;">Create templates in /mnt/projects/vorlagen/</p>
         </div>
     </div>
 
@@ -36,7 +36,7 @@
     </div>
 
     <!-- Toast -->
-    <div class="toast" id="toast">In Zwischenablage kopiert!</div>
+    <div class="toast" id="toast">Copied to clipboard!</div>
 {% endblock %}
 
 {% block scripts %}

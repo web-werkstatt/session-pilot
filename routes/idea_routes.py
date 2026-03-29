@@ -11,12 +11,12 @@ idea_bp = Blueprint('ideas', __name__)
 IDEAS_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'ideas.json')
 
 DEFAULT_CATEGORIES = [
-    {"id": "feature", "name": "Feature-Idee", "icon": "lightbulb", "color": "#f1c40f"},
-    {"id": "improvement", "name": "Verbesserung", "icon": "wrench", "color": "#3498db"},
+    {"id": "feature", "name": "Feature Idea", "icon": "lightbulb", "color": "#f1c40f"},
+    {"id": "improvement", "name": "Improvement", "icon": "wrench", "color": "#3498db"},
     {"id": "bug", "name": "Bug/Problem", "icon": "bug", "color": "#e74c3c"},
-    {"id": "note", "name": "Notiz", "icon": "file-text", "color": "#9b59b6"},
-    {"id": "research", "name": "Recherche", "icon": "search", "color": "#1abc9c"},
-    {"id": "question", "name": "Frage", "icon": "help-circle", "color": "#e67e22"},
+    {"id": "note", "name": "Note", "icon": "file-text", "color": "#9b59b6"},
+    {"id": "research", "name": "Research", "icon": "search", "color": "#1abc9c"},
+    {"id": "question", "name": "Question", "icon": "help-circle", "color": "#e67e22"},
 ]
 
 
@@ -46,11 +46,11 @@ def get_ideas():
 def add_idea():
     req = request.get_json()
     if not req:
-        return jsonify({"error": "Keine Daten"}), 400
+        return jsonify({"error": "No data"}), 400
 
     title = req.get("title", "").strip()
     if not title:
-        return jsonify({"error": "Titel ist erforderlich"}), 400
+        return jsonify({"error": "Title is required"}), 400
 
     data = load_ideas()
     new_idea = {
@@ -73,7 +73,7 @@ def add_idea():
 def update_idea(idea_id):
     req = request.get_json()
     if not req:
-        return jsonify({"error": "Keine Daten"}), 400
+        return jsonify({"error": "No data"}), 400
 
     data = load_ideas()
     for idea in data["ideas"]:
@@ -85,7 +85,7 @@ def update_idea(idea_id):
             save_ideas(data)
             return jsonify({"success": True, "idea": idea})
 
-    return jsonify({"error": "Idee nicht gefunden"}), 404
+    return jsonify({"error": "Idea not found"}), 404
 
 
 @idea_bp.route('/api/ideas/<idea_id>', methods=['DELETE'])
@@ -95,7 +95,7 @@ def delete_idea(idea_id):
     data["ideas"] = [i for i in data["ideas"] if i.get("id") != idea_id]
 
     if len(data["ideas"]) == original_count:
-        return jsonify({"error": "Idee nicht gefunden"}), 404
+        return jsonify({"error": "Idea not found"}), 404
 
     save_ideas(data)
     return jsonify({"success": True})

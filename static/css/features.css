@@ -147,29 +147,30 @@
 .stat {
     background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    padding: 16px 18px;
+    border-radius: var(--radius-md);
+    padding: 8px 14px;
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
+    align-items: baseline;
+    gap: 6px;
     transition: border-color var(--transition-base);
 }
 .stat:hover { border-color: var(--accent); }
 .stat-label {
     color: var(--text-ghost);
-    font-size: var(--text-xs);
+    font-size: 11px;
     text-transform: uppercase;
-    letter-spacing: 0.8px;
-    margin-bottom: 6px;
+    letter-spacing: 0.5px;
 }
-.stat-value { font-weight: 700; font-size: 26px; color: var(--text-heading); line-height: 1; }
+.stat-value { font-weight: 700; font-size: 18px; color: var(--text-heading); line-height: 1; }
 .stats-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
 }
-.stats-grid .stat { padding: 20px; text-align: center; }
-.stats-grid .stat-value { font-size: var(--text-3xl); }
-.stats-grid .stat-label { margin-bottom: 8px; }
+.stats-grid .stat { padding: 8px 16px; text-align: center; }
+.stats-grid .stat-value { font-size: 20px; }
+.stats-grid .stat-label { margin-bottom: 4px; }
 
 /* ===== FILTER BAR ===== */
 .filter-bar {

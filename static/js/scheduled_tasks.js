@@ -21,8 +21,8 @@ function loadTasks() {
             renderTasks();
         })
         .catch(err => {
-            console.error('Fehler beim Laden:', err);
-            document.getElementById('loading').innerHTML = '<div class="error">Fehler beim Laden der Tasks</div>';
+            console.error('Error loading:', err);
+            document.getElementById('loading').innerHTML = '<div class="error">Error loading tasks</div>';
         });
 }
 
@@ -65,7 +65,7 @@ function renderTasks() {
     const tbody = document.getElementById('tasksBody');
 
     if (filtered.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" class="empty-row">Keine Tasks fuer diesen Filter</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" class="empty-row">No tasks for this filter</td></tr>';
         return;
     }
 
@@ -76,7 +76,7 @@ function renderTasks() {
         const typeIcon = getTypeIcon(task.type);
         const lastRun = task.last_run
             ? formatTimeAgo(task.last_run)
-            : '<span class="text-muted">Noch nie</span>';
+            : '<span class="text-muted">Never</span>';
         const resultBadge = task.last_result
             ? `<span class="badge badge-${task.last_result === 'ok' ? 'success' : 'error'}">${task.last_result}</span>`
             : '';
@@ -84,13 +84,13 @@ function renderTasks() {
         html += `
             <tr class="task-row ${statusClass}" onclick="showDetail('${task.id}')">
                 <td>
-                    <button class="status-toggle ${statusClass}" onclick="event.stopPropagation();toggleTask('${task.id}')" title="${task.enabled ? 'Pausieren' : 'Aktivieren'}">
+                    <button class="status-toggle ${statusClass}" onclick="event.stopPropagation();toggleTask('${task.id}')" title="${task.enabled ? 'Pause' : 'Activate'}">
                         <i data-lucide="${statusIcon}" class="icon icon-sm"></i>
                     </button>
                 </td>
                 <td>
                     <div class="task-name">${escapeHtml(task.name)}</div>
-                    ${task.remote_trigger_id ? '<small class="text-muted">RemoteTrigger</small>' : '<small class="text-muted">Lokal</small>'}
+                    ${task.remote_trigger_id ? '<small class="text-muted">RemoteTrigger</small>' : '<small class="text-muted">Local</small>'}
                 </td>
                 <td>
                     <code class="cron-expr">${escapeHtml(task.cron)}</code>
@@ -99,10 +99,10 @@ function renderTasks() {
                 <td><span class="badge badge-type"><i data-lucide="${typeIcon}" class="icon icon-xs"></i> ${escapeHtml(task.type)}</span></td>
                 <td>${lastRun} ${resultBadge}</td>
                 <td class="actions" onclick="event.stopPropagation()">
-                    <button class="btn btn-ghost btn-icon btn-sm" onclick="editTask('${task.id}')" title="Bearbeiten">
+                    <button class="btn btn-ghost btn-icon btn-sm" onclick="editTask('${task.id}')" title="Edit">
                         <i data-lucide="pencil" class="icon icon-sm"></i>
                     </button>
-                    <button class="btn btn-ghost btn-icon btn-sm" onclick="deleteTask('${task.id}')" title="Loeschen">
+                    <button class="btn btn-ghost btn-icon btn-sm" onclick="deleteTask('${task.id}')" title="Delete">
                         <i data-lucide="trash-2" class="icon icon-sm"></i>
                     </button>
                 </td>
@@ -137,8 +137,8 @@ function filterTasks(type) {
 // === CRUD ===
 function showCreateModal() {
     editingTaskId = null;
-    document.getElementById('modalTitle').textContent = 'Neuer Task';
-    document.getElementById('saveBtn').textContent = 'Erstellen';
+    document.getElementById('modalTitle').textContent = 'New Task';
+    document.getElementById('saveBtn').textContent = 'Create';
     document.getElementById('taskName').value = '';
     document.getElementById('taskCron').value = '';
     document.getElementById('taskType').value = 'custom';
@@ -153,8 +153,8 @@ function editTask(id) {
     if (!task) return;
 
     editingTaskId = id;
-    document.getElementById('modalTitle').textContent = 'Task bearbeiten';
-    document.getElementById('saveBtn').textContent = 'Speichern';
+    document.getElementById('modalTitle').textContent = 'Edit Task';
+    document.getElementById('saveBtn').textContent = 'Save';
     document.getElementById('taskName').value = task.name;
     document.getElementById('taskCron').value = task.cron;
     document.getElementById('taskType').value = task.type;
@@ -174,11 +174,11 @@ function saveTask() {
     };
 
     if (!taskData.name) {
-        alert('Name ist erforderlich');
+        alert('Name is required');
         return;
     }
     if (!taskData.cron || taskData.cron.split(' ').length !== 5) {
-        alert('Gueltiger Cron-Ausdruck erforderlich (5 Felder)');
+        alert('Valid cron expression required (5 fields)');
         return;
     }
 
@@ -196,23 +196,23 @@ function saveTask() {
             closeTaskModal();
             loadTasks();
         } else {
-            alert(result.error || 'Fehler beim Speichern');
+            alert(result.error || 'Error saving');
         }
     })
-    .catch(err => alert('Fehler: ' + err.message));
+    .catch(err => alert('Error: ' + err.message));
 }
 
 function deleteTask(id) {
     const task = allTasks.find(t => t.id === id);
     if (!task) return;
-    if (!confirm(`Task "${task.name}" wirklich loeschen?`)) return;
+    if (!confirm(`Really delete task "${task.name}"?`)) return;
 
     api.del(`/api/scheduled-tasks/${id}`)
         .then(result => {
             if (result.success) loadTasks();
-            else alert(result.error || 'Fehler beim Loeschen');
+            else alert(result.error || 'Error deleting');
         })
-        .catch(err => alert('Fehler: ' + err.message));
+        .catch(err => alert('Error: ' + err.message));
 }
 
 function toggleTask(id) {
@@ -220,7 +220,7 @@ function toggleTask(id) {
         .then(result => {
             if (result.success) loadTasks();
         })
-        .catch(err => console.error('Toggle-Fehler:', err));
+        .catch(err => console.error('Toggle error:', err));
 }
 
 // === Templates ===
@@ -233,8 +233,8 @@ function createFromTemplate(type) {
     }
 
     editingTaskId = null;
-    document.getElementById('modalTitle').textContent = 'Neuer Task (Vorlage)';
-    document.getElementById('saveBtn').textContent = 'Erstellen';
+    document.getElementById('modalTitle').textContent = 'New Task (from template)';
+    document.getElementById('saveBtn').textContent = 'Create';
     document.getElementById('taskName').value = tpl.name;
     document.getElementById('taskCron').value = tpl.cron;
     document.getElementById('taskType').value = tpl.type;
@@ -253,41 +253,41 @@ function showDetail(id) {
 
     const triggerInfo = task.remote_trigger_id
         ? `<div class="detail-field"><label>Remote Trigger ID</label><code>${escapeHtml(task.remote_trigger_id)}</code></div>`
-        : '<div class="detail-field"><label>Remote Trigger</label><span class="text-muted">Nicht verknuepft - Task nur lokal im Dashboard</span></div>';
+        : '<div class="detail-field"><label>Remote Trigger</label><span class="text-muted">Not linked - task is local to dashboard only</span></div>';
 
     document.getElementById('detailBody').innerHTML = `
         <div class="detail-grid">
             <div class="detail-field">
                 <label>Status</label>
-                <span class="badge badge-${task.enabled ? 'success' : 'warning'}">${task.enabled ? 'Aktiv' : 'Pausiert'}</span>
+                <span class="badge badge-${task.enabled ? 'success' : 'warning'}">${task.enabled ? 'Active' : 'Paused'}</span>
             </div>
             <div class="detail-field">
                 <label>Typ</label>
                 <span class="badge badge-type">${escapeHtml(task.type)}</span>
             </div>
             <div class="detail-field">
-                <label>Zeitplan</label>
+                <label>Schedule</label>
                 <code>${escapeHtml(task.cron)}</code> - ${escapeHtml(task.cron_human || '')}
             </div>
             ${triggerInfo}
             <div class="detail-field">
-                <label>Letzter Lauf</label>
-                ${task.last_run ? formatTimeAgo(task.last_run) : '<span class="text-muted">Noch nie</span>'}
+                <label>Last Run</label>
+                ${task.last_run ? formatTimeAgo(task.last_run) : '<span class="text-muted">Never</span>'}
                 ${task.last_result ? ` <span class="badge badge-${task.last_result === 'ok' ? 'success' : 'error'}">${task.last_result}</span>` : ''}
             </div>
             <div class="detail-field">
-                <label>Erstellt</label>
+                <label>Created</label>
                 ${formatDate(task.created_at)}
             </div>
         </div>
         <div class="detail-prompt">
             <label>Prompt</label>
-            <pre>${escapeHtml(task.prompt || 'Kein Prompt definiert')}</pre>
+            <pre>${escapeHtml(task.prompt || 'No prompt defined')}</pre>
         </div>
         <div class="detail-info">
             <i data-lucide="info" class="icon icon-sm"></i>
-            Um diesen Task als Claude Code RemoteTrigger anzulegen, verwende in der CLI:<br>
-            <code>RemoteTrigger create</code> mit dem obigen Prompt und Cron-Ausdruck.
+            To create this task as a Claude Code RemoteTrigger, use in the CLI:<br>
+            <code>RemoteTrigger create</code> with the prompt and cron expression above.
         </div>
     `;
 
@@ -305,7 +305,7 @@ function updateCronPreview() {
     const preview = document.getElementById('cronPreview');
 
     if (!cron || cron.split(' ').length !== 5) {
-        preview.textContent = cron ? 'Format: Minute Stunde Tag Monat Wochentag' : '';
+        preview.textContent = cron ? 'Format: Minute Hour Day Month Weekday' : '';
         return;
     }
 
@@ -319,24 +319,24 @@ function setCron(expr) {
 
 function describeCron(expr) {
     const presets = {
-        '* * * * *': 'Jede Minute',
-        '*/5 * * * *': 'Alle 5 Minuten',
-        '*/15 * * * *': 'Alle 15 Minuten',
-        '*/30 * * * *': 'Alle 30 Minuten',
-        '0 * * * *': 'Stuendlich',
+        '* * * * *': 'Every minute',
+        '*/5 * * * *': 'Every 5 minutes',
+        '*/15 * * * *': 'Every 15 minutes',
+        '*/30 * * * *': 'Every 30 minutes',
+        '0 * * * *': 'Hourly',
     };
     if (presets[expr]) return presets[expr];
 
     const [min, hour, dom, , dow] = expr.split(' ');
-    if (min.startsWith('*/')) return `Alle ${min.slice(2)} Minuten`;
-    if (hour.startsWith('*/')) return `Alle ${hour.slice(2)} Stunden`;
+    if (min.startsWith('*/')) return `Every ${min.slice(2)} minutes`;
+    if (hour.startsWith('*/')) return `Every ${hour.slice(2)} hours`;
 
     if (min !== '*' && hour !== '*') {
         const time = `${hour.padStart(2, '0')}:${min.padStart(2, '0')}`;
-        if (dow === '1-5') return `Werktags um ${time}`;
-        if (dow === '0' || dow === '7') return `Sonntags um ${time}`;
-        if (dom !== '*') return `Am ${dom}. um ${time}`;
-        return `Taeglich um ${time}`;
+        if (dow === '1-5') return `Weekdays at ${time}`;
+        if (dow === '0' || dow === '7') return `Sundays at ${time}`;
+        if (dom !== '*') return `On the ${dom}. at ${time}`;
+        return `Daily at ${time}`;
     }
     return expr;
 }

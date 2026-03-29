@@ -18,8 +18,8 @@
         <div class="export-left">
             <a class="btn-export" href="/sessions">Session Liste</a>
             <div class="export-sep"></div>
-            <button class="btn-export" type="button" onclick="openBewertungModal()">Bewertung</button>
-            <span class="outcome-saved" id="outcomeSaved">Gespeichert</span>
+            <button class="btn-export" type="button" onclick="openBewertungModal()">Rating</button>
+            <span class="outcome-saved" id="outcomeSaved">Saved</span>
         </div>
         <div class="export-center">
             <span class="export-label">Export</span>
@@ -30,7 +30,7 @@
             <a class="btn-export" id="expTxt2">TXT</a>
         </div>
         <div class="export-right width-control">
-            <label>Breite:</label>
+            <label>Width:</label>
             <input type="range" id="widthSlider" min="600" max="2400" step="100" oninput="setWidth(this.value)">
             <span id="widthLabel"></span>
         </div>
@@ -38,10 +38,10 @@
 
     <div class="session-layout">
         <div class="conversation" id="conversation">
-            <div class="loading"><div class="spinner"></div>Lade Konversation...</div>
+            <div class="loading"><div class="spinner"></div>Loading conversation...</div>
         </div>
         <aside class="session-toc" id="sessionToc">
-            <div class="toc-header">Inhaltsverzeichnis</div>
+            <div class="toc-header">Table of Contents</div>
             <nav class="toc-nav" id="tocNav"></nav>
         </aside>
     </div>
@@ -50,8 +50,8 @@
     <div class="review-modal-panel">
         <div class="review-modal-head">
             <div>
-                <h2>Session bewerten</h2>
-                <p>Status setzen, Notizen erfassen und mit Threads verknüpfen.</p>
+                <h2>Rate Session</h2>
+                <p>Set status, add notes and link to threads.</p>
             </div>
             <button class="review-close" type="button" onclick="closeBewertungModal()">×</button>
         </div>
@@ -60,15 +60,15 @@
             <button class="outcome-btn" data-outcome="needs_fix" onclick="setOutcome('needs_fix')">Needs Fix</button>
             <button class="outcome-btn" data-outcome="reverted" onclick="setOutcome('reverted')">Reverted</button>
             <button class="outcome-btn" data-outcome="partial" onclick="setOutcome('partial')">Partial</button>
-            <button class="btn-export" type="button" onclick="saveOutcomeOnly()">Status speichern</button>
+            <button class="btn-export" type="button" onclick="saveOutcomeOnly()">Save status</button>
         </div>
-        <textarea id="reviewModalNote" class="review-modal-note" placeholder="Notiz schreiben..."></textarea>
+        <textarea id="reviewModalNote" class="review-modal-note" placeholder="Write a note..."></textarea>
         <div class="review-modal-actions">
             <div class="review-thread-row">
                 <select id="reviewThreadSelect" class="review-thread-select"></select>
-                <input id="reviewThreadTitle" class="review-thread-input" placeholder="Neuer Thread...">
+                <input id="reviewThreadTitle" class="review-thread-input" placeholder="New thread...">
             </div>
-            <button class="btn-export" type="button" onclick="addReviewNote()">Notiz speichern</button>
+            <button class="btn-export" type="button" onclick="addReviewNote()">Save note</button>
         </div>
         <div class="review-history" id="reviewHistory"></div>
     </div>

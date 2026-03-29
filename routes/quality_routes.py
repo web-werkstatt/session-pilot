@@ -10,7 +10,7 @@ from config import PROJECTS_DIR
 
 quality_bp = Blueprint('quality', __name__)
 
-AUTO_CODER_PATH = "/mnt/projects/auto_coder"
+AUTO_CODER_PATH = os.path.join(PROJECTS_DIR, "auto_coder")
 QUALITY_DIR = ".quality"
 
 

@@ -30,7 +30,7 @@ def get_project(name):
     """Lädt project.json für ein Projekt (inkl. Sub-Projekte)"""
     project_path = resolve_project_path(name)
     if not project_path:
-        return jsonify({"error": "Projekt nicht gefunden"}), 404
+        return jsonify({"error": "Project not found"}), 404
 
     json_path = os.path.join(project_path, "project.json")
     if os.path.exists(json_path):
@@ -52,15 +52,15 @@ def save_project():
     """Speichert project.json für ein Projekt (inkl. Sub-Projekte)"""
     data = request.get_json()
     if not data:
-        return jsonify({"error": "Keine Daten erhalten"}), 400
+        return jsonify({"error": "No data received"}), 400
 
     project_name = data.get('name')
     if not project_name:
-        return jsonify({"error": "Projektname fehlt"}), 400
+        return jsonify({"error": "Project name missing"}), 400
 
     project_path = resolve_project_path(project_name)
     if not project_path:
-        return jsonify({"error": f"Projekt '{project_name}' nicht gefunden"}), 404
+        return jsonify({"error": f"Project '{project_name}' not found"}), 404
 
     json_path = os.path.join(project_path, "project.json")
 
@@ -94,7 +94,7 @@ def save_project():
     try:
         with open(json_path, 'w', encoding='utf-8') as f:
             json.dump(existing, f, indent=2, ensure_ascii=False)
-        return jsonify({"success": True, "message": f"project.json für {project_name} gespeichert"})
+        return jsonify({"success": True, "message": f"project.json for {project_name} saved"})
     except OSError as e:
         return jsonify({"error": str(e)}), 500
 
@@ -159,7 +159,7 @@ def get_readme(name):
     """Gibt README.md als Raw-Markdown und gerenderten HTML zurück"""
     project_path = resolve_project_path(name)
     if not project_path:
-        return jsonify({"error": "Projekt nicht gefunden"}), 404
+        return jsonify({"error": "Project not found"}), 404
 
     raw = ""
     filename = None
@@ -187,7 +187,7 @@ def save_readme(name):
     """Speichert README.md"""
     project_path = resolve_project_path(name)
     if not project_path:
-        return jsonify({"error": "Projekt nicht gefunden"}), 404
+        return jsonify({"error": "Project not found"}), 404
 
     data = request.get_json()
     content = data.get('content', '')
@@ -200,7 +200,7 @@ def save_readme(name):
     try:
         with open(filepath, 'w', encoding='utf-8') as f:
             f.write(content)
-        return jsonify({"success": True, "message": f"{filename} gespeichert", "path": filepath})
+        return jsonify({"success": True, "message": f"{filename} saved", "path": filepath})
     except OSError as e:
         return jsonify({"error": str(e)}), 500
 
@@ -233,7 +233,7 @@ def export_project(name):
         if pj.get("description"):
             md_parts.append(f"\n{pj['description']}\n")
         if pj.get("project_type"):
-            md_parts.append(f"\n**Typ:** {pj['project_type']}")
+            md_parts.append(f"\n**Type:** {pj['project_type']}")
         return Response(
             "\n".join(md_parts),
             mimetype="text/markdown",
@@ -242,7 +242,7 @@ def export_project(name):
     elif fmt == 'html':
         desc = _escape(pj.get("description", ""))
         export_html = f"""<!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
 <meta charset="UTF-8"><title>{_escape(name)}</title>
 <style>
@@ -255,7 +255,7 @@ h1 {{ color: #4fc3f7; }} h3 {{ color: #4fc3f7; border-bottom: 1px solid #333; pa
 <h1>{_escape(name)}</h1>
 <p>{desc}</p>
 <footer style="margin-top:40px;padding-top:20px;border-top:1px solid #333;color:#666;font-size:12px">
-Generiert am {datetime.now().strftime('%d.%m.%Y %H:%M')} — Projekt-Dashboard
+Generated on {datetime.now().strftime('%Y-%m-%d %H:%M')} — Project Dashboard
 </footer>
 </body></html>"""
         return Response(
@@ -263,7 +263,7 @@ Generiert am {datetime.now().strftime('%d.%m.%Y %H:%M')} — Projekt-Dashboard
             headers={"Content-Disposition": f"attachment; filename={name}.html"}
         )
 
-    return jsonify({"error": f"Unbekanntes Format: {fmt}"}), 400
+    return jsonify({"error": f"Unknown format: {fmt}"}), 400
 
 
 @project_bp.route('/api/project/<path:name>/archive', methods=['POST'])
@@ -271,7 +271,7 @@ def archive_project(name):
     """Archiviert oder stellt ein Projekt wieder her"""
     project_path = resolve_project_path(name)
     if not project_path:
-        return jsonify({"error": "Projekt nicht gefunden"}), 404
+        return jsonify({"error": "Project not found"}), 404
 
     data = request.get_json() or {}
     archived = data.get('archived', True)
@@ -291,8 +291,8 @@ def archive_project(name):
     try:
         with open(json_path, 'w', encoding='utf-8') as f:
             json.dump(existing, f, indent=2, ensure_ascii=False)
-        action = "archiviert" if archived else "wiederhergestellt"
-        return jsonify({"success": True, "message": f"Projekt '{name}' {action}"})
+        action = "archived" if archived else "restored"
+        return jsonify({"success": True, "message": f"Project '{name}' {action}"})
     except OSError as e:
         return jsonify({"error": str(e)}), 500
 

@@ -31,7 +31,7 @@ function loadData() {
             }
         })
         .catch(err => {
-            console.error('Laden fehlgeschlagen:', err);
+            console.error('Loading failed:', err);
             if (firstLoad) {
                 setTimeout(loadData, 2000);
             }
@@ -57,7 +57,7 @@ function renderData(data) {
     document.getElementById('unhealthyContainers').textContent = data.stats.unhealthy;
     document.getElementById('stoppedContainers').textContent = data.stats.stopped;
     document.getElementById('giteaRepos').textContent = data.stats.gitea_repos || 0;
-    document.getElementById('timestamp').textContent = 'Stand: ' + data.timestamp;
+    document.getElementById('timestamp').textContent = 'As of: ' + data.timestamp;
 
     // Gitea Tabelle rendern
     const giteaBody = document.getElementById('giteaTableBody');
@@ -70,18 +70,18 @@ function renderData(data) {
                 <td class="project-function">${repo.description || '-'}</td>
                 <td>${repo.updated_at || '-'}</td>
                 <td>${repo.open_issues > 0 ? '<span style="color:#ff9800">' + repo.open_issues + '</span>' : '0'}</td>
-                <td><a href="${repo.html_url}" target="_blank" class="action-link">Öffnen</a></td>
+                <td><a href="${repo.html_url}" target="_blank" class="action-link">Open</a></td>
             `;
             giteaBody.appendChild(tr);
         });
     } else {
-        giteaBody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#888">Keine Gitea-Repos gefunden</td></tr>';
+        giteaBody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#888">No Gitea repos found</td></tr>';
     }
 
     // New projects bar mit Konfetti!
     const newBar = document.getElementById('newProjectsBar');
     if (data.new_projects.length > 0) {
-        newBar.textContent = '🆕 ' + data.new_projects.length + ' neue Projekte: ' + data.new_projects.slice(0,5).join(', ') + (data.new_projects.length > 5 ? '...' : '');
+        newBar.textContent = '🆕 ' + data.new_projects.length + ' new project' + (data.new_projects.length > 1 ? 's' : '') + ': ' + data.new_projects.slice(0,5).join(', ') + (data.new_projects.length > 5 ? '...' : '');
         newBar.classList.add('show');
         launchConfetti();
     } else {

@@ -5,7 +5,7 @@ function loadNews() {
     api.get('/api/news')
         .then(data => {
             allNews = data.news;
-            document.getElementById('timestamp').textContent = 'Stand: ' + data.timestamp;
+            document.getElementById('timestamp').textContent = 'As of: ' + data.timestamp;
 
             // Stats
             document.getElementById('totalNews').textContent = data.total;
@@ -29,7 +29,7 @@ function loadNews() {
         })
         .catch(err => {
             document.getElementById('loading').innerHTML =
-                '<div style="color:#e74c3c;">Fehler: ' + err + '</div>';
+                '<div style="color:#e74c3c;">Error: ' + err + '</div>';
         });
 }
 
@@ -64,17 +64,17 @@ function renderNews(news) {
 
     const typeLabels = {
         'commit': 'Commit',
-        'file_change': 'Änderung',
-        'new_project': 'Neu',
-        'sync_warning': 'Warnung'
+        'file_change': 'Change',
+        'new_project': 'New',
+        'sync_warning': 'Warning'
     };
 
     let html = '';
     news.forEach(item => {
         const icon = icons[item.type] || '<i data-lucide="pin" class="icon"></i>';
         const typeLabel = typeLabels[item.type] || item.type;
-        const daysAgoText = item.days_ago === 0 ? 'Heute' :
-            item.days_ago === 1 ? 'Gestern' : `Vor ${item.days_ago} Tagen`;
+        const daysAgoText = item.days_ago === 0 ? 'Today' :
+            item.days_ago === 1 ? 'Yesterday' : `${item.days_ago} days ago`;
 
         html += `
             <tr class="type-${item.type} clickable" onclick="showDetail('${item.project}', '${item.type}')">
@@ -106,7 +106,7 @@ function showDetail(project, type) {
     document.getElementById('modalBody').innerHTML = `
         <div class="loading">
             <div class="spinner"></div>
-            <div>Lade Details...</div>
+            <div>Loading details...</div>
         </div>
     `;
     openModal('detailModal');
@@ -119,7 +119,7 @@ function showDetail(project, type) {
         .catch(err => {
             document.getElementById('modalBody').innerHTML = `
                 <div style="color:#e74c3c;text-align:center;padding:30px;">
-                    Fehler beim Laden: ${err}
+                    Error loading: ${err}
                 </div>
             `;
         });
@@ -133,7 +133,7 @@ function renderDetail(data, newsType) {
     const info = data.project_info || {};
     html += `
         <div class="detail-section">
-            <h3><i data-lucide="clipboard-list" class="icon"></i> Projekt-Info</h3>
+            <h3><i data-lucide="clipboard-list" class="icon"></i> Project Info</h3>
             <div class="detail-card">
                 <div class="detail-row">
                     <span class="detail-label">Name</span>
@@ -141,12 +141,12 @@ function renderDetail(data, newsType) {
                 </div>
                 ${info.description ? `
                 <div class="detail-row">
-                    <span class="detail-label">Beschreibung</span>
+                    <span class="detail-label">Description</span>
                     <span class="detail-value">${info.description}</span>
                 </div>` : ''}
                 ${info.category ? `
                 <div class="detail-row">
-                    <span class="detail-label">Kategorie</span>
+                    <span class="detail-label">Category</span>
                     <span class="detail-value">${info.category}</span>
                 </div>` : ''}
                 ${info.status ? `
@@ -173,11 +173,11 @@ function renderDetail(data, newsType) {
                         <div class="git-stat-value ${gs.clean ? 'git-clean' : 'git-dirty'}">
                             ${gs.clean ? '<i data-lucide="check" class="icon"></i>' : gs.changes}
                         </div>
-                        <div class="git-stat-label">${gs.clean ? 'Sauber' : 'Änderungen'}</div>
+                        <div class="git-stat-label">${gs.clean ? 'Clean' : 'Changes'}</div>
                     </div>
                     <div class="git-stat">
                         <div class="git-stat-value" style="color:#f39c12">${gs.modified}</div>
-                        <div class="git-stat-label">Modifiziert</div>
+                        <div class="git-stat-label">Modified</div>
                     </div>
                     <div class="git-stat">
                         <div class="git-stat-value" style="color:#3498db">${gs.staged}</div>
@@ -196,7 +196,7 @@ function renderDetail(data, newsType) {
     if (data.commits && data.commits.length > 0) {
         html += `
             <div class="detail-section">
-                <h3><i data-lucide="file-text" class="icon"></i> Letzte Commits</h3>
+                <h3><i data-lucide="file-text" class="icon"></i> Recent Commits</h3>
                 ${data.commits.map(c => `
                     <div class="commit-item">
                         <span class="commit-sha">${c.sha}</span>
@@ -212,7 +212,7 @@ function renderDetail(data, newsType) {
     if (data.recent_files && data.recent_files.length > 0) {
         html += `
             <div class="detail-section">
-                <h3><i data-lucide="file" class="icon"></i> Kürzlich geänderte Dateien</h3>
+                <h3><i data-lucide="file" class="icon"></i> Recently Modified Files</h3>
                 ${data.recent_files.map(f => `
                     <div class="file-item">
                         <span class="file-name">${escapeHtml(f.name)}</span>
@@ -226,7 +226,7 @@ function renderDetail(data, newsType) {
     // Pfad
     html += `
         <div class="detail-section" style="margin-bottom:0">
-            <h3><i data-lucide="folder-open" class="icon"></i> Pfad</h3>
+            <h3><i data-lucide="folder-open" class="icon"></i> Path</h3>
             <div class="detail-card" style="font-family:monospace;font-size:13px;color:#888;">
                 ${data.path}
             </div>

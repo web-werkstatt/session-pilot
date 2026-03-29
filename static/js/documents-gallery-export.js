@@ -17,12 +17,12 @@ function renderDocGallery(images) {
     if (!images.length) {
         el.innerHTML = '<div class="doc-gallery-empty">' +
             '<div style="font-size:32px;margin-bottom:8px;opacity:0.3"><i data-lucide="image" class="icon" style="width:32px;height:32px;display:inline-block"></i></div>' +
-            '<div>Keine Bilder geladen</div>' +
-            '<div style="font-size:11px;margin-top:4px">Ordner im Browser anklicken um Bilder zu laden</div></div>';
+            '<div>No images loaded</div>' +
+            '<div style="font-size:11px;margin-top:4px">Click a folder in the browser to load images</div></div>';
         return;
     }
 
-    var html = '<div class="doc-gallery-count">' + images.length + ' Bilder geladen</div>';
+    var html = '<div class="doc-gallery-count">' + images.length + ' image' + (images.length !== 1 ? 's' : '') + ' loaded</div>';
     var show = images.slice(0, 200);
     show.forEach(function(img) {
         var src = '/api/project/' + encodeURIComponent(PROJECT_NAME) + '/document-image/' + encodeURIComponent(img.path);
@@ -36,7 +36,7 @@ function renderDocGallery(images) {
     });
     if (images.length > 200) {
         html += '<div style="padding:20px;text-align:center;color:#666;font-size:12px;grid-column:1/-1">' +
-            (images.length - 200) + ' weitere Bilder nicht angezeigt</div>';
+            (images.length - 200) + ' more images not shown</div>';
     }
     el.innerHTML = html;
     if (typeof lucide !== 'undefined') lucide.createIcons();
@@ -57,7 +57,7 @@ function renderExportFileList() {
 
     if (!loadedFiles.length) {
         el.innerHTML = '<div style="padding:20px;text-align:center;color:#555;font-size:12px">' +
-            'Keine Dateien geladen. Ordner im Browser oeffnen um Dateien zu sehen.</div>';
+            'No files loaded. Open a folder in the browser to see files.</div>';
         updateExportCount();
         return;
     }
@@ -85,7 +85,7 @@ function updateExportCount() {
     var checked = document.querySelectorAll('.export-check:checked').length;
     var total = document.querySelectorAll('.export-check').length;
     var el = document.getElementById('exportCount');
-    if (el) el.textContent = checked + ' / ' + total + ' ausgewaehlt';
+    if (el) el.textContent = checked + ' / ' + total + ' selected';
 }
 
 function selectExportFormat(fmt) {
@@ -102,8 +102,8 @@ async function executeExport() {
     if (!selectedFiles.length) return;
 
     var exportBtn = document.querySelector('.modal-actions .btn-save');
-    if (exportBtn) { exportBtn.textContent = 'Exportiere...'; exportBtn.disabled = true; }
-    setDocStatus('Exportiere ' + selectedFiles.length + ' Dateien als ' + format.toUpperCase() + '...', 'loading');
+    if (exportBtn) { exportBtn.textContent = 'Exporting...'; exportBtn.disabled = true; }
+    setDocStatus('Exporting ' + selectedFiles.length + ' file' + (selectedFiles.length !== 1 ? 's' : '') + ' as ' + format.toUpperCase() + '...', 'loading');
 
     try {
         var r = await api.request('/api/project/' + encodeURIComponent(PROJECT_NAME) + '/export-bundle', {
@@ -120,11 +120,11 @@ async function executeExport() {
         a.download = PROJECT_NAME + '-dokumente' + (extMap[format] || '.zip');
         a.click();
         URL.revokeObjectURL(url);
-        setDocStatus('Export abgeschlossen', 'success');
+        setDocStatus('Export completed', 'success');
     } catch(e) {
-        setDocStatus('Export fehlgeschlagen: ' + e, 'error');
+        setDocStatus('Export failed: ' + e, 'error');
     } finally {
-        if (exportBtn) { exportBtn.textContent = 'Exportieren'; exportBtn.disabled = false; }
+        if (exportBtn) { exportBtn.textContent = 'Export'; exportBtn.disabled = false; }
     }
 }
 
@@ -163,7 +163,7 @@ async function uploadFiles(fileList) {
     var files = Array.from(fileList);
     if (files.length === 0) return;
     if (files.length > 20) {
-        setDocStatus('Maximal 20 Dateien pro Upload', 'error');
+        setDocStatus('Maximum 20 files per upload', 'error');
         return;
     }
 
@@ -178,9 +178,9 @@ async function uploadFiles(fileList) {
 
     progressEl.style.display = 'block';
     progressBar.style.width = '0%';
-    progressText.textContent = 'Hochladen: 0 / ' + files.length + ' Dateien...';
+    progressText.textContent = 'Uploading: 0 / ' + files.length + ' file' + (files.length !== 1 ? 's' : '') + '...';
     resultsEl.innerHTML = '';
-    setDocStatus('Upload laeuft...', 'loading');
+    setDocStatus('Upload in progress...', 'loading');
 
     var formData = new FormData();
     formData.append('directory', targetDir);
@@ -194,7 +194,7 @@ async function uploadFiles(fileList) {
             if (e.lengthComputable) {
                 var pct = Math.round((e.loaded / e.total) * 100);
                 progressBar.style.width = pct + '%';
-                progressText.textContent = 'Hochladen: ' + pct + '%';
+                progressText.textContent = 'Uploading: ' + pct + '%';
             }
         });
 
@@ -219,8 +219,8 @@ async function uploadFiles(fileList) {
             });
             resultsEl.innerHTML = html;
 
-            progressText.textContent = d.uploaded + ' hochgeladen' + (d.failed > 0 ? ', ' + d.failed + ' fehlgeschlagen' : '');
-            setDocStatus(d.uploaded + ' Dateien hochgeladen nach ' + targetDir, 'success');
+            progressText.textContent = d.uploaded + ' uploaded' + (d.failed > 0 ? ', ' + d.failed + ' failed' : '');
+            setDocStatus(d.uploaded + ' file' + (d.uploaded !== 1 ? 's' : '') + ' uploaded to ' + targetDir, 'success');
 
             // Browser-Baum neu laden
             if (d.uploaded > 0) {
@@ -232,14 +232,14 @@ async function uploadFiles(fileList) {
         };
 
         xhr.onerror = function() {
-            progressText.textContent = 'Upload fehlgeschlagen';
-            setDocStatus('Upload fehlgeschlagen', 'error');
+            progressText.textContent = 'Upload failed';
+            setDocStatus('Upload failed', 'error');
         };
 
         xhr.send(formData);
     } catch(e) {
-        progressText.textContent = 'Fehler: ' + e;
-        setDocStatus('Upload fehlgeschlagen: ' + e, 'error');
+        progressText.textContent = 'Error: ' + e;
+        setDocStatus('Upload failed: ' + e, 'error');
     }
 }
 

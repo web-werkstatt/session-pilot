@@ -61,7 +61,7 @@ function addNodeToGraph(projectName, x, y, color = null) {
 
     node.innerHTML = `
         <span class="node-text">${projectName}</span>
-        <button class="node-remove" onclick="removeNodeFromGraph('${projectName}')" title="Aus Graph entfernen">&times;</button>
+        <button class="node-remove" onclick="removeNodeFromGraph('${projectName}')" title="Remove from graph">&times;</button>
     `;
 
     node.addEventListener('mousedown', (e) => onNodeMouseDown(e, projectName));
@@ -224,7 +224,7 @@ function drawConnections() {
         line.style.pointerEvents = 'stroke';
         line.style.cursor = 'pointer';
         line.addEventListener('dblclick', () => {
-            if (confirm(`Beziehung "${rel.source} \u2192 ${rel.target}" loeschen?`)) {
+            if (confirm(`Delete relation "${rel.source} \u2192 ${rel.target}"?`)) {
                 deleteRelation(rel.id);
             }
         });
@@ -332,7 +332,7 @@ function autoLayoutGraph() {
 }
 
 function clearGraph() {
-    if (!confirm('Alle Knoten aus dem Graph entfernen?')) return;
+    if (!confirm('Remove all nodes from the graph?')) return;
     Object.values(graphNodes).forEach(n => n.element.remove());
     graphNodes = {};
     localStorage.removeItem(STORAGE_KEY);
@@ -347,8 +347,8 @@ async function addRelation() {
     const type = document.getElementById('relationType').value;
     const note = document.getElementById('relationNote').value;
 
-    if (!source || !target || !type) { alert('Bitte alle Pflichtfelder ausfuellen'); return; }
-    if (source === target) { alert('Projekte muessen unterschiedlich sein'); return; }
+    if (!source || !target || !type) { alert('Please fill in all required fields'); return; }
+    if (source === target) { alert('Projects must be different'); return; }
 
     const result = await api.post('/api/relations', {source, target, type, note});
     if (result.error) { alert(result.error); return; }
@@ -376,7 +376,7 @@ async function addRelationType() {
     const icon = document.getElementById('newTypeIcon').value.trim() || '';
     const color = document.getElementById('newTypeColor').value;
 
-    if (!name) { alert('Bitte Namen eingeben'); return; }
+    if (!name) { alert('Please enter a name'); return; }
 
     const id = name.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
     const result = await api.post('/api/relations/types', {id, name, icon, color});

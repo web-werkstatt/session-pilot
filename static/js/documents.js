@@ -31,16 +31,16 @@ function hideDocStatus() {
 // === LADEN ===
 
 async function loadDocuments() {
-    setDocStatus('Verzeichnis wird gelesen...', 'loading');
+    setDocStatus('Reading directory...', 'loading');
     await loadDirectory('.');
-    setDocStatus('Bereit', 'success');
+    setDocStatus('Ready', 'success');
 }
 
 async function loadDirectory(dir) {
     try {
         var d = await api.get('/api/project/' + encodeURIComponent(PROJECT_NAME) + '/documents?dir=' + encodeURIComponent(dir));
         if (d.error) {
-            setDocStatus('Fehler: ' + d.error, 'error');
+            setDocStatus('Error: ' + d.error, 'error');
             return;
         }
 
@@ -55,7 +55,7 @@ async function loadDirectory(dir) {
         updateGalleryFromLoaded();
 
     } catch(e) {
-        setDocStatus('Laden fehlgeschlagen: ' + e, 'error');
+        setDocStatus('Loading failed: ' + e, 'error');
     }
 }
 
@@ -65,10 +65,10 @@ function renderDocStats(counts) {
     var el = document.getElementById('docStatsBar');
     if (!el || !counts) return;
     el.innerHTML =
-        '<div class="doc-stat"><span class="doc-stat-value">' + counts.files + '</span> Dateien</div>' +
-        '<div class="doc-stat"><span class="doc-stat-value">' + counts.documents + '</span> Dokumente</div>' +
-        '<div class="doc-stat"><span class="doc-stat-value">' + counts.images + '</span> Bilder</div>' +
-        '<div class="doc-stat"><span class="doc-stat-value">' + counts.subdirs + '</span> Unterordner</div>';
+        '<div class="doc-stat"><span class="doc-stat-value">' + counts.files + '</span> Files</div>' +
+        '<div class="doc-stat"><span class="doc-stat-value">' + counts.documents + '</span> Documents</div>' +
+        '<div class="doc-stat"><span class="doc-stat-value">' + counts.images + '</span> Images</div>' +
+        '<div class="doc-stat"><span class="doc-stat-value">' + counts.subdirs + '</span> Subdirectories</div>';
 }
 
 // === BAUM (Lazy) ===
@@ -156,13 +156,13 @@ async function expandSubdir(el, dirPath, indent) {
 
     // Lade-Animation
     countSpan.innerHTML = '<span class="doc-status-spinner" style="width:12px;height:12px;border-width:2px"></span>';
-    setDocStatus('Lade ' + dirPath + ' ...', 'loading');
+    setDocStatus('Loading ' + dirPath + '...', 'loading');
 
     try {
         var d = await api.get('/api/project/' + encodeURIComponent(PROJECT_NAME) + '/documents?dir=' + encodeURIComponent(dirPath));
         if (d.error) {
             countSpan.textContent = '!';
-            setDocStatus('Fehler: ' + d.error, 'error');
+            setDocStatus('Error: ' + d.error, 'error');
             return;
         }
 
@@ -215,11 +215,11 @@ async function expandSubdir(el, dirPath, indent) {
         if (typeof lucide !== 'undefined') lucide.createIcons();
 
         var newImgs = d.files.filter(function(f) { return f.type === 'image'; }).length;
-        setDocStatus(d.counts.files + ' Dateien, ' + d.counts.subdirs + ' Ordner geladen' + (newImgs ? ' (+' + newImgs + ' Bilder in Galerie)' : ''), 'success');
+        setDocStatus(d.counts.files + ' files, ' + d.counts.subdirs + ' folders loaded' + (newImgs ? ' (+' + newImgs + ' images in gallery)' : ''), 'success');
 
     } catch(e) {
         countSpan.textContent = '!';
-        setDocStatus('Laden fehlgeschlagen: ' + e, 'error');
+        setDocStatus('Loading failed: ' + e, 'error');
     }
 }
 
@@ -266,7 +266,7 @@ async function openDocument(path) {
     if (!viewer) return;
 
     pathEl.textContent = path;
-    viewer.innerHTML = '<div class="doc-viewer-empty"><div class="spinner"></div> Lade ' + escapeHtml(path) + '...</div>';
+    viewer.innerHTML = '<div class="doc-viewer-empty"><div class="spinner"></div> Loading ' + escapeHtml(path) + '...</div>';
 
     if (docEditorMDE) {
         try { docEditorMDE.toTextArea(); } catch(e) { /* CodeMirror cleanup */ }
@@ -278,9 +278,9 @@ async function openDocument(path) {
 
         if (d.type === 'document') {
             actionsEl.innerHTML =
-                '<button class="doc-viewer-btn" id="docEditBtn" onclick="toggleDocEdit()">&#9998; Bearbeiten</button>' +
-                '<button class="doc-viewer-btn" id="docSaveBtn" onclick="saveDocContent()" style="display:none">&#128190; Speichern</button>' +
-                '<button class="doc-viewer-btn" id="docCancelBtn" onclick="cancelDocEdit()" style="display:none">Abbrechen</button>' +
+                '<button class="doc-viewer-btn" id="docEditBtn" onclick="toggleDocEdit()">&#9998; Edit</button>' +
+                '<button class="doc-viewer-btn" id="docSaveBtn" onclick="saveDocContent()" style="display:none">&#128190; Save</button>' +
+                '<button class="doc-viewer-btn" id="docCancelBtn" onclick="cancelDocEdit()" style="display:none">Cancel</button>' +
                 '<span id="docEditStatus" style="color:#666;font-size:11px"></span>';
 
             if (d.html) {
@@ -297,7 +297,7 @@ async function openDocument(path) {
                 '</div>';
         }
     } catch(e) {
-        viewer.innerHTML = '<div class="doc-viewer-empty" style="color:#ff6666">Fehler: ' + e + '</div>';
+        viewer.innerHTML = '<div class="doc-viewer-empty" style="color:#ff6666">Error: ' + e + '</div>';
     }
 }
 
@@ -332,13 +332,13 @@ function toggleDocEdit() {
 async function saveDocContent() {
     if (!activeDocPath || !docEditorMDE) return;
     var status = document.getElementById('docEditStatus');
-    status.textContent = 'Speichern...';
+    status.textContent = 'Saving...';
     status.style.color = '#888';
 
     try {
         var d = await api.put('/api/project/' + encodeURIComponent(PROJECT_NAME) + '/document/' + encodeURIComponent(activeDocPath), {content: docEditorMDE.value()});
         if (d.success) {
-            status.textContent = 'Gespeichert';
+            status.textContent = 'Saved';
             status.style.color = '#4caf50';
             cancelDocEdit();
             openDocument(activeDocPath);
@@ -347,7 +347,7 @@ async function saveDocContent() {
             status.style.color = '#ff4444';
         }
     } catch(e) {
-        status.textContent = 'Fehler: ' + e;
+        status.textContent = 'Error: ' + e;
         status.style.color = '#ff4444';
     }
 }

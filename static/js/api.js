@@ -27,7 +27,7 @@ var api = (function() {
         try {
             res = await fetch(url, opts);
         } catch (err) {
-            throw new ApiError(0, null, 'Netzwerkfehler: ' + err.message);
+            throw new ApiError(0, null, 'Network error: ' + err.message);
         }
 
         if (raw) return res;
@@ -63,7 +63,7 @@ var api = (function() {
         this.name = 'ApiError';
         this.status = status;
         this.body = body;
-        this.message = message || 'Request fehlgeschlagen';
+        this.message = message || 'Request failed';
     }
     ApiError.prototype = Object.create(Error.prototype);
     ApiError.prototype.constructor = ApiError;

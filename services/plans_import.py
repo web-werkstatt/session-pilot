@@ -9,11 +9,12 @@ from datetime import datetime, timezone
 from services.db_service import execute, ensure_plans_schema
 
 
-PLANS_DIR = os.path.expanduser("~/.claude/plans")
-PROJECTS_DIR = "/mnt/projects"
+from config import PROJECTS_DIR
 
-# Regex fuer Projekt-Erkennung aus Plan-Inhalt
-PROJECT_PATH_RE = re.compile(r'/mnt/projects/([a-zA-Z0-9_-]+)/')
+PLANS_DIR = os.path.expanduser("~/.claude/plans")
+
+# Regex fuer Projekt-Erkennung aus Plan-Inhalt (matches PROJECTS_DIR/name/)
+PROJECT_PATH_RE = re.compile(re.escape(PROJECTS_DIR) + r'/([a-zA-Z0-9_-]+)/')
 
 
 def _get_known_projects():

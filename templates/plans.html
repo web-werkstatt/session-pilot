@@ -6,7 +6,7 @@
 
 {% block topbar_actions %}
 <button class="btn btn-primary btn-sm" onclick="syncPlans()"><i data-lucide="download" class="icon icon-sm"></i> Importieren</button>
-<button class="btn btn-secondary btn-sm" onclick="loadPlans()"><i data-lucide="refresh-cw" class="icon icon-sm"></i> Aktualisieren</button>
+<button class="btn btn-secondary btn-sm" onclick="loadPlans()"><i data-lucide="refresh-cw" class="icon icon-sm"></i> Refresh</button>
 {% endblock %}
 
 {% block head_extra %}
@@ -19,7 +19,7 @@
         <div class="kpi-card kpi-progress">
             <div class="kpi-header">
                 <i data-lucide="target" class="icon"></i>
-                <span class="kpi-title">Umsetzung</span>
+                <span class="kpi-title">Completion</span>
             </div>
             <div class="kpi-main">
                 <span class="kpi-value" id="completionRate">0</span><span class="kpi-unit">%</span>
@@ -27,7 +27,7 @@
             <div class="kpi-bar">
                 <div class="kpi-bar-fill" id="completionBar" style="width:0%"></div>
             </div>
-            <div class="kpi-detail" id="completionDetail">- erledigt / - gesamt</div>
+            <div class="kpi-detail" id="completionDetail">- done / - total</div>
         </div>
 
         <div class="kpi-card kpi-pipeline">
@@ -38,17 +38,17 @@
             <div class="kpi-stages" id="pipelineStages">
                 <div class="kpi-stage">
                     <span class="kpi-stage-value" id="draftCount">-</span>
-                    <span class="kpi-stage-label">Entwurf</span>
+                    <span class="kpi-stage-label">Draft</span>
                 </div>
                 <span class="kpi-arrow"><i data-lucide="chevron-right" class="icon icon-xs"></i></span>
                 <div class="kpi-stage">
                     <span class="kpi-stage-value kpi-accent" id="activeCount">-</span>
-                    <span class="kpi-stage-label">Aktiv</span>
+                    <span class="kpi-stage-label">Active</span>
                 </div>
                 <span class="kpi-arrow"><i data-lucide="chevron-right" class="icon icon-xs"></i></span>
                 <div class="kpi-stage">
                     <span class="kpi-stage-value kpi-success" id="completedCount">-</span>
-                    <span class="kpi-stage-label">Erledigt</span>
+                    <span class="kpi-stage-label">Done</span>
                 </div>
             </div>
         </div>
@@ -56,13 +56,13 @@
         <div class="kpi-card kpi-activity">
             <div class="kpi-header">
                 <i data-lucide="activity" class="icon"></i>
-                <span class="kpi-title">Aktivitaet</span>
+                <span class="kpi-title">Activity</span>
             </div>
             <div class="kpi-main">
                 <span class="kpi-value" id="last30d">-</span>
             </div>
             <div class="kpi-detail">
-                Plans letzte 30 Tage
+                Plans last 30 days
                 <span class="kpi-sub" id="last7dInfo"></span>
             </div>
         </div>
@@ -70,17 +70,17 @@
         <div class="kpi-card kpi-coverage">
             <div class="kpi-header">
                 <i data-lucide="scan" class="icon"></i>
-                <span class="kpi-title">Abdeckung</span>
+                <span class="kpi-title">Coverage</span>
             </div>
             <div class="kpi-split">
                 <div>
                     <span class="kpi-value kpi-accent" id="projectCount">-</span>
-                    <span class="kpi-detail">Projekte</span>
+                    <span class="kpi-detail">Projects</span>
                 </div>
                 <div class="kpi-divider"></div>
                 <div>
                     <span class="kpi-value kpi-warn" id="unassignedCount">-</span>
-                    <span class="kpi-detail">Ohne Projekt</span>
+                    <span class="kpi-detail">Without project</span>
                 </div>
             </div>
             <div class="kpi-detail kpi-top-project" id="topProject"></div>
@@ -89,30 +89,30 @@
 
     <div class="filter-bar">
         <span class="filter-label">Status:</span>
-        <button class="filter-btn active" data-filter="status" onclick="setFilter('status','')">Alle</button>
-        <button class="filter-btn" data-filter="status" onclick="setFilter('status','draft')">Entwurf</button>
-        <button class="filter-btn" data-filter="status" onclick="setFilter('status','active')">Aktiv</button>
-        <button class="filter-btn" data-filter="status" onclick="setFilter('status','completed')">Erledigt</button>
-        <button class="filter-btn" data-filter="status" onclick="setFilter('status','archived')">Archiv</button>
+        <button class="filter-btn active" data-filter="status" onclick="setFilter('status','')">All</button>
+        <button class="filter-btn" data-filter="status" onclick="setFilter('status','draft')">Draft</button>
+        <button class="filter-btn" data-filter="status" onclick="setFilter('status','active')">Active</button>
+        <button class="filter-btn" data-filter="status" onclick="setFilter('status','completed')">Done</button>
+        <button class="filter-btn" data-filter="status" onclick="setFilter('status','archived')">Archive</button>
         <span class="filter-divider"></span>
-        <span class="filter-label">Projekt:</span>
+        <span class="filter-label">Project:</span>
         <select id="projectFilter" class="filter-select" onchange="setFilter('project', this.value)">
-            <option value="">Alle Projekte</option>
+            <option value="">All projects</option>
         </select>
     </div>
 
     <div class="plans-container">
         <div id="loading" class="loading">
             <div class="spinner"></div>
-            <div>Lade Plans...</div>
+            <div>Loading plans...</div>
         </div>
 
         <div id="plansGrid" class="plans-grid" style="display:none;"></div>
 
         <div id="emptyState" class="empty-state" style="display:none;">
             <div class="empty-icon"><i data-lucide="file-text" style="width:48px;height:48px;opacity:0.3"></i></div>
-            <h3>Keine Plans gefunden</h3>
-            <p>Klicke "Importieren" um Plans aus <code>~/.claude/plans/</code> zu laden.</p>
+            <h3>No plans found</h3>
+            <p>Click "Import" to load plans from <code>~/.claude/plans/</code>.</p>
         </div>
     </div>
 

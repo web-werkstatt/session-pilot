@@ -32,7 +32,7 @@ def api_notification_count():
 def api_mark_read(notification_id):
     if mark_read(notification_id):
         return jsonify({"success": True})
-    return jsonify({"error": "Nicht gefunden"}), 404
+    return jsonify({"error": "Not found"}), 404
 
 
 @notification_bp.route('/api/notifications/read-all', methods=['POST'])

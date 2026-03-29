@@ -90,8 +90,8 @@ def get_news():
                 if days_ago <= 3:
                     news_items.append({
                         "type": "file_change", "project": proj_name,
-                        "title": f"Dateien geändert in {proj_name}",
-                        "message": f"Letzte Änderung: {proj_info['last_file_change']}",
+                        "title": f"Files changed in {proj_name}",
+                        "message": f"Last change: {proj_info['last_file_change']}",
                         "date": proj_info["last_file_change"],
                         "days_ago": days_ago, "icon": "file-edit"
                     })
@@ -108,8 +108,8 @@ def get_news():
                 if days_ago <= 1:
                     news_items.append({
                         "type": "new_project", "project": proj_name,
-                        "title": f"Neues Projekt: {proj_name}",
-                        "message": proj_info.get("function", "Keine Beschreibung"),
+                        "title": f"New project: {proj_name}",
+                        "message": proj_info.get("function", "No description"),
                         "date": create_date.strftime("%Y-%m-%d %H:%M"),
                         "days_ago": days_ago, "icon": "folder-plus"
                     })
@@ -120,8 +120,8 @@ def get_news():
         if proj_info.get("sync_status") == "differs":
             news_items.append({
                 "type": "sync_warning", "project": proj_name,
-                "title": f"Sync-Konflikt: {proj_name}",
-                "message": "Lokale und Remote-Version unterscheiden sich",
+                "title": f"Sync conflict: {proj_name}",
+                "message": "Local and remote version differ",
                 "date": now.strftime("%Y-%m-%d %H:%M"),
                 "days_ago": 0, "icon": "alert-triangle"
             })
@@ -140,7 +140,7 @@ def get_news_detail(project):
     """Holt detaillierte News-Informationen für ein Projekt"""
     project_path = os.path.join(PROJECTS_DIR, project)
     if not os.path.isdir(project_path):
-        return jsonify({"error": "Projekt nicht gefunden"}), 404
+        return jsonify({"error": "Project not found"}), 404
 
     details = {
         "project": project, "path": project_path,

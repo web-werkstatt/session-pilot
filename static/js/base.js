@@ -110,13 +110,13 @@ function openCommandPalette() {
 function closeCommandPalette() { document.getElementById('cmdOverlay').classList.remove('show'); }
 function resetCmdResults() {
     document.getElementById('cmdResults').innerHTML =
-        '<div class="cmd-group"><div class="cmd-group-label">Schnellzugriff</div>' +
+        '<div class="cmd-group"><div class="cmd-group-label">Quick Access</div>' +
         '<div class="cmd-item" onclick="location.href=\'/\'">&#128202; Dashboard</div>' +
         '<div class="cmd-item" onclick="location.href=\'/sessions\'">&#129302; Claude Sessions</div>' +
-        '<div class="cmd-item" onclick="location.href=\'/sessions/analysis\'">&#128200; Session-Analyse</div>' +
-        '<div class="cmd-item" onclick="location.href=\'/containers\'">&#128051; Container</div>' +
-        '<div class="cmd-item" onclick="location.href=\'/dependencies\'">&#128279; Abh\u00e4ngigkeiten</div>' +
-        '<div class="cmd-item" onclick="location.href=\'/vorlagen\'">&#128230; Vorlagen</div>' +
+        '<div class="cmd-item" onclick="location.href=\'/sessions/analysis\'">&#128200; Session Analysis</div>' +
+        '<div class="cmd-item" onclick="location.href=\'/containers\'">&#128051; Containers</div>' +
+        '<div class="cmd-item" onclick="location.href=\'/dependencies\'">&#128279; Dependencies</div>' +
+        '<div class="cmd-item" onclick="location.href=\'/vorlagen\'">&#128230; Templates</div>' +
         '<div class="cmd-item" onclick="location.href=\'/news\'">&#128240; News</div></div>';
 }
 var cmdActiveTab = 'projects';
@@ -153,7 +153,7 @@ function doProjectSearch(q) {
         var html = '';
 
         if (results.length > 0) {
-            html += '<div class="cmd-group"><div class="cmd-group-label">Projekte</div>';
+            html += '<div class="cmd-group"><div class="cmd-group-label">Projects</div>';
             results.forEach(function(p) {
                 html += '<div class="cmd-item" onclick="location.href=\'/project/' + encodeURIComponent(p.name) + '\'">&#128193; ' + p.name + ' <span style="color:#666;font-size:11px;margin-left:8px">' + (p.description || '') + '</span></div>';
             });
@@ -163,23 +163,23 @@ function doProjectSearch(q) {
         var statics = [
             {label:'Dashboard', icon:'&#128202;', url:'/'},
             {label:'Claude Sessions', icon:'&#129302;', url:'/sessions'},
-            {label:'Session-Analyse', icon:'&#128200;', url:'/sessions/analysis'},
-            {label:'Container', icon:'&#128051;', url:'/containers'},
-            {label:'Abh\u00e4ngigkeiten', icon:'&#128279;', url:'/dependencies'},
-            {label:'Vorlagen', icon:'&#128230;', url:'/vorlagen'},
+            {label:'Session Analysis', icon:'&#128200;', url:'/sessions/analysis'},
+            {label:'Containers', icon:'&#128051;', url:'/containers'},
+            {label:'Dependencies', icon:'&#128279;', url:'/dependencies'},
+            {label:'Templates', icon:'&#128230;', url:'/vorlagen'},
             {label:'News', icon:'&#128240;', url:'/news'},
         ].filter(function(s) { return s.label.toLowerCase().includes(q); });
         if (statics.length > 0) {
-            html += '<div class="cmd-group"><div class="cmd-group-label">Seiten</div>';
+            html += '<div class="cmd-group"><div class="cmd-group-label">Pages</div>';
             statics.forEach(function(s) { html += '<div class="cmd-item" onclick="location.href=\'' + s.url + '\'">' + s.icon + ' ' + s.label + '</div>'; });
             html += '</div>';
         }
 
         if (sessData.results && sessData.results.length > 0) {
             var re = new RegExp('(' + q.split(/\s+/).map(function(w) { return w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }).join('|') + ')', 'gi');
-            html += '<div class="cmd-group"><div class="cmd-group-label">Sessions (' + sessData.total + ' Treffer)</div>';
+            html += '<div class="cmd-group"><div class="cmd-group-label">Sessions (' + sessData.total + ' results)</div>';
             sessData.results.forEach(function(s) {
-                var date = s.started_at ? new Date(s.started_at).toLocaleDateString('de-DE', {day:'2-digit',month:'2-digit',year:'2-digit'}) : '';
+                var date = s.started_at ? new Date(s.started_at).toLocaleDateString('en-US', {month:'short',day:'numeric',year:'2-digit'}) : '';
                 var snippet = (s.snippet || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
                 snippet = snippet.replace(re, '<mark style="background:rgba(79,195,247,0.3);color:#fff;padding:0 2px;border-radius:2px">$1</mark>');
                 html += '<div class="cmd-item" onclick="location.href=\'/sessions/' + s.session_uuid + '\'" style="flex-direction:column;align-items:flex-start;gap:4px">';
@@ -195,17 +195,17 @@ function doProjectSearch(q) {
             html += '</div>';
         }
 
-        if (!html) html = '<div style="padding:20px;text-align:center;color:#555">Keine Ergebnisse</div>';
+        if (!html) html = '<div style="padding:20px;text-align:center;color:#555">No results</div>';
         document.getElementById('cmdResults').innerHTML = html;
     });
 }
 
 function doFulltextSearch(q) {
     if (q.length < 2) {
-        document.getElementById('cmdResults').innerHTML = '<div style="padding:20px;text-align:center;color:#555">Mindestens 2 Zeichen eingeben</div>';
+        document.getElementById('cmdResults').innerHTML = '<div style="padding:20px;text-align:center;color:#555">Enter at least 2 characters</div>';
         return;
     }
-    document.getElementById('cmdResults').innerHTML = '<div style="padding:20px;text-align:center;color:#555"><span class="doc-status-spinner" style="display:inline-block;width:16px;height:16px;border-width:2px;vertical-align:middle;margin-right:8px"></span>Suche in allen Projekten...</div>';
+    document.getElementById('cmdResults').innerHTML = '<div style="padding:20px;text-align:center;color:#555"><span class="doc-status-spinner" style="display:inline-block;width:16px;height:16px;border-width:2px;vertical-align:middle;margin-right:8px"></span>Searching all projects...</div>';
 
     api.get('/api/search?q=' + encodeURIComponent(q) + '&limit=30')
         .then(function(data) {
@@ -214,10 +214,10 @@ function doFulltextSearch(q) {
                 return;
             }
             if (!data.results || data.results.length === 0) {
-                document.getElementById('cmdResults').innerHTML = '<div style="padding:20px;text-align:center;color:#555">Keine Treffer fuer &quot;' + q + '&quot;</div>';
+                document.getElementById('cmdResults').innerHTML = '<div style="padding:20px;text-align:center;color:#555">No results for &quot;' + q + '&quot;</div>';
                 return;
             }
-            var html = '<div class="cmd-group"><div class="cmd-group-label">' + data.total + ' Dateien' + (data.truncated ? '+' : '') + ' gefunden</div>';
+            var html = '<div class="cmd-group"><div class="cmd-group-label">' + data.total + ' file' + (data.total !== 1 ? 's' : '') + (data.truncated ? '+' : '') + ' found</div>';
             data.results.forEach(function(r) {
                 var icon = '&#128196;';
                 if (['.png','.jpg','.jpeg','.gif','.svg','.webp'].indexOf(r.extension) >= 0) icon = '&#128444;';
@@ -247,7 +247,7 @@ function doFulltextSearch(q) {
             document.getElementById('cmdResults').innerHTML = html;
         })
         .catch(function(e) {
-            document.getElementById('cmdResults').innerHTML = '<div style="padding:20px;text-align:center;color:#ff4444">Fehler: ' + e + '</div>';
+            document.getElementById('cmdResults').innerHTML = '<div style="padding:20px;text-align:center;color:#ff4444">Error: ' + e + '</div>';
         });
 }
 
@@ -330,10 +330,10 @@ function formatTokens(n) {
 }
 function formatDate(iso) {
     if (!iso) return '-';
-    return new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 function formatDateTime(value) {
-    return value ? new Date(value).toLocaleString('de-DE') : '-';
+    return value ? new Date(value).toLocaleString('en-US') : '-';
 }
 function escapeHtml(str) {
     if (!str) return '';
@@ -344,9 +344,26 @@ function escapeHtml(str) {
 function formatTimeAgo(isoStr) {
     if (!isoStr) return '-';
     var diff = Math.floor((new Date() - new Date(isoStr)) / 1000);
-    if (diff < 60) return 'Gerade eben';
-    if (diff < 3600) return 'Vor ' + Math.floor(diff / 60) + ' Min';
-    if (diff < 86400) return 'Vor ' + Math.floor(diff / 3600) + ' Std';
-    if (diff < 604800) return 'Vor ' + Math.floor(diff / 86400) + ' Tagen';
+    if (diff < 60) return 'Just now';
+    if (diff < 3600) return Math.floor(diff / 60) + ' min ago';
+    if (diff < 86400) return Math.floor(diff / 3600) + ' h ago';
+    if (diff < 604800) return Math.floor(diff / 86400) + ' days ago';
     return formatDate(isoStr);
 }
+
+// External Links in Sidebar
+(async function loadExternalLinks() {
+    try {
+        var links = await api.get('/api/settings/external-links');
+        var section = document.getElementById('externalLinksSection');
+        var nav = document.getElementById('externalLinksNav');
+        if (!links || !links.length || !section || !nav) return;
+        nav.innerHTML = links.map(function(l) {
+            return '<a href="' + escapeHtml(l.url) + '" target="_blank" class="nav-item">' +
+                '<span class="nav-icon"><i data-lucide="' + escapeHtml(l.icon || 'external-link') + '" class="icon"></i></span>' +
+                '<span class="nav-text">' + escapeHtml(l.name) + '</span></a>';
+        }).join('');
+        section.style.display = '';
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    } catch(e) { /* silent */ }
+})();

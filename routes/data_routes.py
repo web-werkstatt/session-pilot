@@ -74,7 +74,7 @@ def _do_scan():
             for proj_name, proj_info in projects.items():
                 sha = proj_info.get("local_sha", "")
                 if sha and prev_commits.get(proj_name) and prev_commits[proj_name] != sha:
-                    add_notification("new_commit", "info", f"Neuer Commit: {proj_name}",
+                    add_notification("new_commit", "info", f"New commit: {proj_name}",
                                      proj_info.get("last_commit_msg", "")[:80], project=proj_name)
                 if sha:
                     prev_commits[proj_name] = sha
@@ -98,7 +98,7 @@ def _do_scan():
         }
         _data_store["timestamp"] = datetime.now()
     except Exception as e:
-        print(f"Background-Scan Fehler: {e}")
+        print(f"Background scan error: {e}")
     finally:
         _data_store["scanning"] = False
 
@@ -138,7 +138,7 @@ def get_data():
 
     # Fallback: Leere Daten
     return jsonify({"projects": [], "containers": [], "gitea_repos": [],
-                     "new_projects": [], "stats": {}, "timestamp": "Laden..."})
+                     "new_projects": [], "stats": {}, "timestamp": "Loading..."})
 
 
 @data_bp.route('/api/containers')
@@ -167,10 +167,10 @@ def api_security_scan(project_name):
     from services.security_scanner import get_security_for_project
     project_path = os.path.join(PROJECTS_DIR, project_name)
     if not os.path.isdir(project_path):
-        return jsonify({"error": "Projekt nicht gefunden"}), 404
+        return jsonify({"error": "Project not found"}), 404
     result = get_security_for_project(project_name, project_path)
     if not result:
-        return jsonify({"error": "Kein npm/pip Projekt"}), 404
+        return jsonify({"error": "Not an npm/pip project"}), 404
     return jsonify(result)
 
 

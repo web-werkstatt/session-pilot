@@ -52,7 +52,7 @@ function renderGitPanel(data) {
             <span class="git-branch">${data.branch || 'HEAD'}</span>
             <span class="git-status" style="color:${statusColor}">${statusText}</span>
             ${syncInfo ? '<span class="git-sync">' + syncInfo + '</span>' : ''}
-            <button class="git-btn refresh" onclick="loadGitStatus(true)" title="Aktualisieren (mit Fetch)">&#8635;</button>
+            <button class="git-btn refresh" onclick="loadGitStatus(true)" title="Refresh (with fetch)">&#8635;</button>
         </div>`;
 
     // Changed files
@@ -117,7 +117,7 @@ function doGitCommit() {
             showGitToast('Commit successful', 'success');
             loadGitStatus();
         } else {
-            showGitToast(data.error || data.output || 'Fehler', 'error');
+            showGitToast(data.error || data.output || 'Error', 'error');
         }
     })
     .catch(() => { input.disabled = false; showGitToast('Network error', 'error'); });

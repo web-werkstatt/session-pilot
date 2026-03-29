@@ -40,7 +40,6 @@
     flex: 1;
     padding: 30px;
     overflow-y: auto;
-    max-width: 1000px;
 }
 
 .settings-section { }
@@ -96,13 +95,14 @@
     font-size: 11px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    padding: 10px 12px;
+    padding: 10px 8px;
     text-align: left;
     font-weight: 600;
     border-bottom: 1px solid var(--border-subtle);
+    white-space: nowrap;
 }
 .s-table td {
-    padding: 8px 12px;
+    padding: 8px 8px;
     border-bottom: 1px solid var(--bg-hover);
     font-size: 13px;
     color: var(--text-secondary);
@@ -119,10 +119,15 @@
     border-radius: var(--radius-sm);
     font-size: 12px;
     width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
 }
 .s-table input:focus { border-color: var(--accent); outline: none; }
-.s-table input.input-sm { width: 70px; }
-.s-table input.input-xs { width: 55px; }
+.s-table input.input-sm { max-width: 90px; }
+.s-table input.input-xs { max-width: 60px; text-align: right; }
+
+/* Scrollable table wrapper */
+.s-table-wrap { overflow-x: auto; }
 
 /* Provider Badge */
 .s-provider {
@@ -154,7 +159,7 @@
 .s-btn-save:hover { background: var(--success-bg); }
 .s-btn-del { background: transparent; color: var(--text-muted); border: 1px solid var(--border-hover); }
 .s-btn-del:hover { background: var(--status-error-border); color: var(--text-heading); border-color: var(--status-error-border); }
-.s-btn-group { display: flex; gap: 4px; white-space: nowrap; }
+.s-btn-group { display: flex; gap: 4px; white-space: nowrap; min-width: 54px; }
 
 /* Account Cards */
 .s-cards {

@@ -2,14 +2,14 @@
 
 {% block title %}{{ project_name }} - Dashboard{% endblock %}
 
-{% block breadcrumb %}<a href="/" style="color:#4fc3f7;text-decoration:none">Projekte</a> <span class="bc-sep">/</span> {{ project_name }}{% endblock %}
+{% block breadcrumb %}<a href="/" style="color:#4fc3f7;text-decoration:none">Projects</a> <span class="bc-sep">/</span> {{ project_name }}{% endblock %}
 
 {% block topbar_actions %}
-<a href="/" class="topbar-btn" style="text-decoration:none" title="Zurueck zum Dashboard">← Zurueck</a>
+<a href="/" class="topbar-btn" style="text-decoration:none" title="Back to Dashboard">← Back</a>
 <button class="topbar-btn" onclick="exportProject('html')" title="HTML Export">HTML</button>
 <button class="topbar-btn" onclick="exportProject('md')" title="Markdown Export">MD</button>
 <button class="topbar-btn" onclick="exportProject('json')" title="JSON Export">JSON</button>
-<button class="topbar-btn" onclick="openEditModal('{{ project_name }}')" title="Bearbeiten">✏️</button>
+<button class="topbar-btn" onclick="openEditModal('{{ project_name }}')" title="Edit">✏️</button>
 {% endblock %}
 
 {% block head_extra %}
@@ -22,13 +22,13 @@
 {% block content %}
     <div class="project-hero">
         <h1 id="projectTitle">{{ project_name }}</h1>
-        <div class="subtitle" id="projectSubtitle">Lade Projekt-Informationen...</div>
+        <div class="subtitle" id="projectSubtitle">Loading project information...</div>
     </div>
 
-    <!-- Haupt-Tabs -->
+    <!-- Main Tabs -->
     <div class="project-tabs">
         <button class="project-tab active" onclick="switchProjectTab('overview')">
-            <i data-lucide="layout-dashboard" class="icon icon-sm"></i> Übersicht
+            <i data-lucide="layout-dashboard" class="icon icon-sm"></i> Overview
         </button>
         <button class="project-tab" onclick="switchProjectTab('sessions')">
             <i data-lucide="bot" class="icon icon-sm"></i> Sessions
@@ -39,7 +39,7 @@
             <span class="tab-count" id="plansCount"></span>
         </button>
         <button class="project-tab" onclick="switchProjectTab('documents')">
-            <i data-lucide="folder-open" class="icon icon-sm"></i> Dokumente
+            <i data-lucide="folder-open" class="icon icon-sm"></i> Documents
             <span class="tab-count" id="docsCount"></span>
         </button>
         <button class="project-tab" onclick="switchProjectTab('quality')">
@@ -49,13 +49,13 @@
     </div>
 
     <div class="project-body">
-        <!-- Tab: Uebersicht -->
+        <!-- Tab: Overview -->
         <div class="project-tab-content active" id="ptab_overview">
             <div class="overview-layout">
                 <div class="project-info-section" id="projectBody">
                     <div class="loading">
                         <div class="spinner"></div>
-                        Lade...
+                        Loading...
                     </div>
                 </div>
                 <aside class="overview-toc" id="overviewToc"></aside>
@@ -65,28 +65,28 @@
         <!-- Tab: Sessions -->
         <div class="project-tab-content" id="ptab_sessions">
             <div id="sessionsBody">
-                <div class="loading"><div class="spinner"></div> Lade Sessions...</div>
+                <div class="loading"><div class="spinner"></div> Loading sessions...</div>
             </div>
             <div class="git-section">
-                <h3 style="font-size:14px;margin:24px 0 12px;color:var(--text-muted)">Git-Status</h3>
-                <div class="git-panel" id="gitPanel">Lade...</div>
+                <h3 style="font-size:14px;margin:24px 0 12px;color:var(--text-muted)">Git Status</h3>
+                <div class="git-panel" id="gitPanel">Loading...</div>
             </div>
         </div>
 
         <!-- Tab: Plans -->
         <div class="project-tab-content" id="ptab_plans">
             <div id="plansBody">
-                <div class="loading"><div class="spinner"></div> Lade Plans...</div>
+                <div class="loading"><div class="spinner"></div> Loading plans...</div>
             </div>
         </div>
 
-        <!-- Tab: Dokumente -->
+        <!-- Tab: Documents -->
         <div class="project-tab-content" id="ptab_documents">
             <div class="doc-status-bar" id="docStatusBar" style="display:none"></div>
             <div class="doc-stats" id="docStatsBar"></div>
             <div class="doc-tabs">
                 <button class="doc-tab active" data-tab="browser" onclick="switchDocTab('browser')">Browser</button>
-                <button class="doc-tab" data-tab="gallery" onclick="switchDocTab('gallery')">Galerie</button>
+                <button class="doc-tab" data-tab="gallery" onclick="switchDocTab('gallery')">Gallery</button>
                 <button class="doc-tab" data-tab="upload" onclick="switchDocTab('upload')">Upload</button>
                 <button class="doc-tab" data-tab="export" onclick="switchDocTab('export'); renderExportFileList()">Export</button>
             </div>
@@ -95,19 +95,19 @@
                 <div class="doc-browser">
                     <div class="doc-tree">
                         <div class="doc-tree-header">
-                            <input type="text" class="doc-tree-search" id="docTreeSearch" placeholder="Datei suchen..." oninput="filterDocTree()">
+                            <input type="text" class="doc-tree-search" id="docTreeSearch" placeholder="Search file..." oninput="filterDocTree()">
                         </div>
                         <div class="doc-tree-body" id="docTreeBody">
-                            <div style="padding:20px;text-align:center;color:#555;font-size:13px">Lade...</div>
+                            <div style="padding:20px;text-align:center;color:#555;font-size:13px">Loading...</div>
                         </div>
                     </div>
                     <div class="doc-viewer">
                         <div class="doc-viewer-header">
-                            <span class="doc-viewer-path" id="docViewerPath">Datei auswaehlen...</span>
+                            <span class="doc-viewer-path" id="docViewerPath">Select a file...</span>
                             <div class="doc-viewer-actions" id="docViewerActions"></div>
                         </div>
                         <div class="doc-viewer-body" id="docViewerBody">
-                            <div class="doc-viewer-empty">Datei im Baum auswaehlen</div>
+                            <div class="doc-viewer-empty">Select a file in the tree</div>
                         </div>
                     </div>
                 </div>
@@ -115,32 +115,32 @@
 
             <div class="doc-tab-content" id="docTab_gallery">
                 <div class="doc-gallery" id="docGallery">
-                    <div style="padding:30px;text-align:center;color:#555;font-size:13px">Lade...</div>
+                    <div style="padding:30px;text-align:center;color:#555;font-size:13px">Loading...</div>
                 </div>
             </div>
 
             <div class="doc-tab-content" id="docTab_upload">
                 <div style="max-width:700px">
                     <div class="upload-target-dir">
-                        <label style="color:#888;font-size:12px">Zielverzeichnis:</label>
+                        <label style="color:#888;font-size:12px">Target directory:</label>
                         <select id="uploadTargetDir" style="background:#1a1a1a;border:1px solid #333;color:#ddd;padding:6px 10px;border-radius:6px;margin-left:8px;font-size:13px">
-                            <option value=".">/ (Projekt-Root)</option>
+                            <option value=".">/ (Project root)</option>
                             <option value="docs">docs/</option>
                             <option value="images">images/</option>
                             <option value="assets">assets/</option>
                         </select>
-                        <input type="text" id="uploadCustomDir" placeholder="oder eigenen Pfad eingeben..." style="background:#1a1a1a;border:1px solid #333;color:#ddd;padding:6px 10px;border-radius:6px;margin-left:8px;font-size:13px;flex:1">
+                        <input type="text" id="uploadCustomDir" placeholder="or enter custom path..." style="background:#1a1a1a;border:1px solid #333;color:#ddd;padding:6px 10px;border-radius:6px;margin-left:8px;font-size:13px;flex:1">
                     </div>
                     <div class="upload-dropzone" id="uploadDropzone">
                         <div class="upload-dropzone-icon">&#128228;</div>
-                        <div class="upload-dropzone-text">Dateien hierher ziehen</div>
-                        <div class="upload-dropzone-sub">oder klicken zum Auswaehlen</div>
+                        <div class="upload-dropzone-text">Drag files here</div>
+                        <div class="upload-dropzone-sub">or click to select</div>
                         <div class="upload-dropzone-formats">.md .txt .rst .adoc .png .jpg .jpeg .gif .svg .webp</div>
                         <input type="file" id="uploadFileInput" multiple accept=".md,.txt,.rst,.adoc,.png,.jpg,.jpeg,.gif,.svg,.webp,.ico,.bmp" style="display:none">
                     </div>
                     <div class="upload-progress" id="uploadProgress" style="display:none">
                         <div class="upload-progress-bar" id="uploadProgressBar"></div>
-                        <div class="upload-progress-text" id="uploadProgressText">Hochladen...</div>
+                        <div class="upload-progress-text" id="uploadProgressText">Uploading...</div>
                     </div>
                     <div class="upload-results" id="uploadResults"></div>
                 </div>
@@ -149,27 +149,27 @@
             <div class="doc-tab-content" id="docTab_export">
                 <div style="max-width:700px">
                     <div class="export-select-bar">
-                        <button class="export-select-btn" onclick="selectAllExport(true)">Alle</button>
-                        <button class="export-select-btn" onclick="selectAllExport(false)">Keine</button>
+                        <button class="export-select-btn" onclick="selectAllExport(true)">All</button>
+                        <button class="export-select-btn" onclick="selectAllExport(false)">None</button>
                         <span class="export-count" id="exportCount"></span>
                     </div>
                     <div class="export-file-list" id="exportFileList"></div>
                     <div class="export-format-group">
                         <button class="export-format-btn active" data-format="zip" onclick="selectExportFormat('zip')">
-                            <span class="format-icon">&#128230;</span>ZIP<br><span class="format-label">Archiv</span>
+                            <span class="format-icon">&#128230;</span>ZIP<br><span class="format-label">Archive</span>
                         </button>
                         <button class="export-format-btn" data-format="html" onclick="selectExportFormat('html')">
                             <span class="format-icon">&#127760;</span>HTML<br><span class="format-label">Bundle</span>
                         </button>
                         <button class="export-format-btn" data-format="markdown" onclick="selectExportFormat('markdown')">
-                            <span class="format-icon">&#128221;</span>Markdown<br><span class="format-label">Zusammengefuegt</span>
+                            <span class="format-icon">&#128221;</span>Markdown<br><span class="format-label">Merged</span>
                         </button>
                         <button class="export-format-btn" data-format="json" onclick="selectExportFormat('json')">
-                            <span class="format-icon">&#128203;</span>JSON<br><span class="format-label">Struktur</span>
+                            <span class="format-icon">&#128203;</span>JSON<br><span class="format-label">Structure</span>
                         </button>
                     </div>
                     <div class="modal-actions">
-                        <button class="btn-save" onclick="executeExport()">Exportieren</button>
+                        <button class="btn-save" onclick="executeExport()">Export</button>
                     </div>
                 </div>
             </div>
@@ -178,7 +178,7 @@
         <!-- Tab: Quality -->
         <div class="project-tab-content" id="ptab_quality">
             <div id="qualityBody">
-                <div class="loading"><div class="spinner"></div> Lade Quality-Report...</div>
+                <div class="loading"><div class="spinner"></div> Loading quality report...</div>
             </div>
         </div>
     </div>

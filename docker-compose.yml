@@ -8,16 +8,26 @@ services:
     env_file:
       - .env
     volumes:
-      # Projekt-Verzeichnis einbinden (anpassen!)
+      # Projects directory (read-only)
       - ${DASHBOARD_PROJECTS_DIR:-/mnt/projects}:/mnt/projects:ro
-      # JSON-Datenspeicher persistent halten
+      # JSON data stores (persistent)
       - ./groups.json:/app/groups.json
       - ./relations.json:/app/relations.json
       - ./ideas.json:/app/ideas.json
-      # Docker-Socket für Container-Status
+      - ./scheduled_tasks.json:/app/scheduled_tasks.json
+      - ./external_links.json:/app/external_links.json
+      - ./account_plans.json:/app/account_plans.json
+      # Docker socket for container status
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      # Claude Sessions einbinden (optional)
+      # AI assistant accounts (read-only, auto-discovered)
+      # Mount the entire home directory's dotfiles for auto-discovery,
+      # or mount individual accounts:
       - ${HOME}/.claude:/home/user/.claude:ro
+      # Uncomment additional accounts as needed:
+      # - ${HOME}/.claude-account1:/home/user/.claude-account1:ro
+      # - ${HOME}/.claude-work:/home/user/.claude-work:ro
+      # - ${HOME}/.codex:/home/user/.codex:ro
+      # - ${HOME}/.gemini:/home/user/.gemini:ro
     depends_on:
       db:
         condition: service_healthy

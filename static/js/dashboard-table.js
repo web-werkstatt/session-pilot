@@ -96,8 +96,8 @@ function renderProject(proj, isNew) {
     let gitBadge = '';
     if (proj.sync_status === 'synced') gitBadge = '<span class="badge" style="background:#0066cc;font-size:10px">✓</span>';
     else if (proj.sync_status === 'differs') gitBadge = '<span class="badge" style="background:#cc3300;font-size:10px">⚠</span>';
-    else if (proj.git_status === 'geändert') gitBadge = '<span class="badge" style="background:#8b4513;font-size:10px">M</span>';
-    else if (proj.git_status === 'sauber') gitBadge = '<span class="badge" style="background:#2d5a2d;font-size:10px">✓</span>';
+    else if (proj.git_status === 'geändert' || proj.git_status === 'modified') gitBadge = '<span class="badge" style="background:#8b4513;font-size:10px">M</span>';
+    else if (proj.git_status === 'sauber' || proj.git_status === 'clean') gitBadge = '<span class="badge" style="background:#2d5a2d;font-size:10px">✓</span>';
 
     // Letzte Aktivität
     let lastActivity = '-';
@@ -139,7 +139,7 @@ function renderProject(proj, isNew) {
     let activityDot = '';
     if (proj.activity_score) {
         const levelColors = {hot:'#ff4444', active:'#4caf50', moderate:'#ff9800', low:'#666', inactive:'#333'};
-        const levelTitles = {hot:'Sehr aktiv', active:'Aktiv', moderate:'Moderat', low:'Wenig aktiv', inactive:'Inaktiv'};
+        const levelTitles = {hot:'Very active', active:'Active', moderate:'Moderate', low:'Low activity', inactive:'Inactive'};
         const lvl = proj.activity_score.level || 'inactive';
         const c7 = proj.activity_score.commits_7d || 0;
         const c30 = proj.activity_score.commits_30d || 0;
@@ -149,13 +149,13 @@ function renderProject(proj, isNew) {
     // Branch-Count Badge (Sprint 2)
     let branchBadge = '';
     if (proj.branch_count && proj.branch_count > 1) {
-        branchBadge = `<span class="badge" style="background:#1a2a4a;color:#64b5f6;font-size:9px;margin-left:5px" title="${proj.branch_count} Branches">${proj.branch_count}B</span>`;
+        branchBadge = `<span class="badge" style="background:#1a2a4a;color:#64b5f6;font-size:9px;margin-left:5px" title="${proj.branch_count} branches">${proj.branch_count}B</span>`;
     }
 
     // Port-Konflikt Warnung (Sprint 2)
     let portWarnBadge = '';
     if (proj.port_conflict && proj.port_conflict.length > 0) {
-        portWarnBadge = `<span class="badge" style="background:#4a1a1a;color:#ff5252;font-size:9px;margin-left:5px" title="Port-Konflikt mit: ${proj.port_conflict.join(', ')}">PORT!</span>`;
+        portWarnBadge = `<span class="badge" style="background:#4a1a1a;color:#ff5252;font-size:9px;margin-left:5px" title="Port conflict with: ${proj.port_conflict.join(', ')}">PORT!</span>`;
     }
 
     // GitHub-Badge (Sprint 3)
@@ -219,9 +219,9 @@ function renderProject(proj, isNew) {
         <button class="row-ctx-btn" onclick="openRowCtx(event,'${eName}')" title="Aktionen"><i data-lucide="more-horizontal" class="icon"></i></button>
         <div class="row-ctx-menu">
             <div class="row-ctx-item" onclick="event.stopPropagation();location.href='/project/${encodeURIComponent(eName)}'"><i data-lucide="info" class="icon" style="width:14px;height:14px;display:inline-block;vertical-align:middle"></i> Details</div>
-            <div class="row-ctx-item" onclick="event.stopPropagation();openEditModal('${eName}')"><i data-lucide="edit" class="icon" style="width:14px;height:14px;display:inline-block;vertical-align:middle"></i> Bearbeiten</div>
-            <div class="row-ctx-item" onclick="event.stopPropagation();toggleFavorite('${eName}',null)"><i data-lucide="star" class="icon" style="width:14px;height:14px;display:inline-block;vertical-align:middle"></i> Favorit</div>
-            <div class="row-ctx-item" onclick="event.stopPropagation();toggleArchive('${eName}', ${!proj.archived})">${proj.archived ? '<i data-lucide="folder-open" class="icon" style="width:14px;height:14px;display:inline-block;vertical-align:middle"></i> Wiederherstellen' : '<i data-lucide="package" class="icon" style="width:14px;height:14px;display:inline-block;vertical-align:middle"></i> Archivieren'}</div>
+            <div class="row-ctx-item" onclick="event.stopPropagation();openEditModal('${eName}')"><i data-lucide="edit" class="icon" style="width:14px;height:14px;display:inline-block;vertical-align:middle"></i> Edit</div>
+            <div class="row-ctx-item" onclick="event.stopPropagation();toggleFavorite('${eName}',null)"><i data-lucide="star" class="icon" style="width:14px;height:14px;display:inline-block;vertical-align:middle"></i> Favorite</div>
+            <div class="row-ctx-item" onclick="event.stopPropagation();toggleArchive('${eName}', ${!proj.archived})">${proj.archived ? '<i data-lucide="folder-open" class="icon" style="width:14px;height:14px;display:inline-block;vertical-align:middle"></i> Restore' : '<i data-lucide="package" class="icon" style="width:14px;height:14px;display:inline-block;vertical-align:middle"></i> Archive'}</div>
         </div>
     </div>`;
 
@@ -281,7 +281,7 @@ function renderProjectsTable(data) {
         if (projectsWithPriority.length > 0) {
             const top5Header = document.createElement('tr');
             top5Header.classList.add('section-header', 'top5-header');
-            top5Header.innerHTML = '<td colspan="10"><i data-lucide="flame" class="icon" style="width:16px;height:16px;display:inline-block;vertical-align:middle"></i> TOP PROJEKTE (mit Priorität)</td>';
+            top5Header.innerHTML = '<td colspan="10"><i data-lucide="flame" class="icon" style="width:16px;height:16px;display:inline-block;vertical-align:middle"></i> TOP PROJECTS (with priority)</td>';
             tbody.appendChild(top5Header);
 
             projectsWithPriority.forEach(proj => {
@@ -295,7 +295,7 @@ function renderProjectsTable(data) {
         if (projectsWithoutPriority.length > 0) {
             const otherHeader = document.createElement('tr');
             otherHeader.classList.add('section-header');
-            otherHeader.innerHTML = '<td colspan="10"><i data-lucide="folder" class="icon" style="width:16px;height:16px;display:inline-block;vertical-align:middle"></i> WEITERE PROJEKTE</td>';
+            otherHeader.innerHTML = '<td colspan="10"><i data-lucide="folder" class="icon" style="width:16px;height:16px;display:inline-block;vertical-align:middle"></i> MORE PROJECTS</td>';
             tbody.appendChild(otherHeader);
 
             projectsWithoutPriority.forEach(proj => {
@@ -368,7 +368,7 @@ function renderByGroups(data, tbody) {
 
         const header = document.createElement('tr');
         header.classList.add('section-header');
-        header.innerHTML = `<td colspan="10"><i data-lucide="folder" class="icon" style="width:16px;height:16px;display:inline-block;vertical-align:middle"></i> Ohne Gruppe <span style="opacity:0.7;font-weight:normal">(${noGroupProjects.length})</span></td>`;
+        header.innerHTML = `<td colspan="10"><i data-lucide="folder" class="icon" style="width:16px;height:16px;display:inline-block;vertical-align:middle"></i> No Group <span style="opacity:0.7;font-weight:normal">(${noGroupProjects.length})</span></td>`;
         tbody.appendChild(header);
 
         noGroupProjects.forEach(proj => {

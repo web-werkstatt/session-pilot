@@ -5,7 +5,7 @@
 {% block breadcrumb %}Claude Sessions{% endblock %}
 
 {% block topbar_actions %}
-<button class="topbar-btn" onclick="openSessionStats()" title="Statistiken"><i data-lucide="bar-chart-2" class="icon icon-sm"></i></button>
+<button class="topbar-btn" onclick="openSessionStats()" title="Statistics"><i data-lucide="bar-chart-2" class="icon icon-sm"></i></button>
 <button class="topbar-btn btn-sync" onclick="syncSessions()" id="syncBtn" title="Sync"><i data-lucide="refresh-cw" class="icon icon-sm"></i> Sync</button>
 {% endblock %}
 
@@ -29,7 +29,7 @@
     <div class="modal-overlay" id="sessionStatsModal">
         <div class="modal-content" style="max-width:500px">
             <div class="modal-header">
-                <h2>Session-Statistiken</h2>
+                <h2>Session Statistics</h2>
                 <button class="modal-close" onclick="closeModal('sessionStatsModal')">&times;</button>
             </div>
             <div class="modal-body">
@@ -40,33 +40,33 @@
 
     <div class="filter-bar">
         <select id="filterAccount" onchange="resetAndLoad()">
-            <option value="">Alle Accounts</option>
+            <option value="">All Accounts</option>
             <option value="claude">claude</option>
             <option value="claude1">claude1</option>
             <option value="minimax">minimax</option>
         </select>
         <select id="filterProject" onchange="resetAndLoad()">
-            <option value="">Alle Projekte</option>
+            <option value="">All Projects</option>
         </select>
-        <input type="date" id="filterDateFrom" onchange="resetAndLoad()" title="Von">
-        <input type="date" id="filterDateTo" onchange="resetAndLoad()" title="Bis">
+        <input type="date" id="filterDateFrom" onchange="resetAndLoad()" title="From">
+        <input type="date" id="filterDateTo" onchange="resetAndLoad()" title="To">
         <div class="filter-pills">
-            <button class="pill active" onclick="setQuickFilter('all', this)">Alle</button>
-            <button class="pill" onclick="setQuickFilter('today', this)">Heute</button>
-            <button class="pill" onclick="setQuickFilter('week', this)">7 Tage</button>
-            <button class="pill" onclick="setQuickFilter('month', this)">30 Tage</button>
+            <button class="pill active" onclick="setQuickFilter('all', this)">All</button>
+            <button class="pill" onclick="setQuickFilter('today', this)">Today</button>
+            <button class="pill" onclick="setQuickFilter('week', this)">7 days</button>
+            <button class="pill" onclick="setQuickFilter('month', this)">30 days</button>
         </div>
     </div>
 
     <div class="container">
-        <div id="loading" class="loading"><div class="spinner"></div>Lade Sessions...</div>
+        <div id="loading" class="loading"><div class="spinner"></div>Loading sessions...</div>
         <table id="sessionsTable" style="display:none">
             <thead>
                 <tr>
-                    <th style="width:18%" onclick="sortBy('project_name')">Projekt <span class="sort-icon" data-col="project_name"></span></th>
+                    <th style="width:18%" onclick="sortBy('project_name')">Project <span class="sort-icon" data-col="project_name"></span></th>
                     <th style="width:8%" onclick="sortBy('account')">Account <span class="sort-icon" data-col="account"></span></th>
-                    <th style="width:12%" onclick="sortBy('started_at')">Datum <span class="sort-icon" data-col="started_at"></span></th>
-                    <th style="width:10%" onclick="sortBy('duration_ms')">Dauer <span class="sort-icon" data-col="duration_ms"></span></th>
+                    <th style="width:12%" onclick="sortBy('started_at')">Date <span class="sort-icon" data-col="started_at"></span></th>
+                    <th style="width:10%" onclick="sortBy('duration_ms')">Duration <span class="sort-icon" data-col="duration_ms"></span></th>
                     <th style="width:5%" onclick="sortBy('user_message_count')">Msgs <span class="sort-icon" data-col="user_message_count"></span></th>
                     <th style="width:7%" onclick="sortBy('model')">Model <span class="sort-icon" data-col="model"></span></th>
                     <th style="width:12%" onclick="sortBy('total_output_tokens')">Tokens <span class="sort-icon" data-col="total_output_tokens"></span></th>
@@ -79,15 +79,15 @@
         </table>
         <div id="emptyState" class="empty-state" style="display:none">
             <div class="icon">🔍</div>
-            <div class="title">Keine Sessions gefunden</div>
-            <div class="desc">Passe die Filter an oder starte einen Sync.</div>
+            <div class="title">No sessions found</div>
+            <div class="desc">Adjust the filters or start a sync.</div>
         </div>
     </div>
 
     <div class="pagination" id="pagination" style="display:none">
-        <button onclick="changePage(-1)" id="prevBtn">Zurück</button>
+        <button onclick="changePage(-1)" id="prevBtn">Back</button>
         <span class="page-info" id="pageInfo"></span>
-        <button onclick="changePage(1)" id="nextBtn">Weiter</button>
+        <button onclick="changePage(1)" id="nextBtn">Next</button>
     </div>
 
     <div class="preview-tooltip" id="previewTip"></div>

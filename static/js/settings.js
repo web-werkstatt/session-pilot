@@ -12,6 +12,7 @@ function switchTab(tab, btn) {
 
     if (tab === 'pricing' && !pricingData.length) loadPricing();
     if (tab === 'accounts') loadAccounts();
+    if (tab === 'links') loadLinks();
     if (tab === 'system') loadSystem();
 }
 
@@ -42,7 +43,7 @@ function renderPricing() {
         : pricingData.filter(p => p.provider === currentProvider);
 
     if (!filtered.length) {
-        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#666;padding:20px">Keine Modelle</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#666;padding:20px">No models</td></tr>';
         return;
     }
 
@@ -68,7 +69,7 @@ function addPricingRow() {
     const tr = document.createElement('tr');
     tr.dataset.id = '';
     tr.innerHTML = `
-        <td><input type="text" data-field="model_pattern" placeholder="z.B. gpt-6"></td>
+        <td><input type="text" data-field="model_pattern" placeholder="e.g. gpt-6"></td>
         <td><input type="text" data-field="display_name" placeholder="GPT-6"></td>
         <td><input type="text" data-field="provider" placeholder="openai" class="input-sm"></td>
         <td><input type="number" step="0.01" value="3.00" data-field="input_price" class="input-xs"></td>
@@ -100,7 +101,7 @@ async function savePricing(btn) {
 }
 
 async function deletePricing(id) {
-    if (!confirm('Modell-Preis loeschen?')) return;
+    if (!confirm('Delete model price?')) return;
     try {
         await api.del('/api/settings/pricing/' + id);
         loadPricing();
@@ -115,8 +116,8 @@ async function loadAccounts() {
         document.getElementById('accountCards').innerHTML = data.map(a => {
             const toolClass = 's-tool-' + a.tool;
             const lastSession = a.last_session
-                ? new Date(a.last_session).toLocaleDateString('de-DE', {day:'2-digit',month:'2-digit',year:'numeric'})
-                : 'Nie';
+                ? new Date(a.last_session).toLocaleDateString('en-US', {day:'2-digit',month:'2-digit',year:'numeric'})
+                : 'Never';
             return `<div class="s-card">
                 <div class="s-card-header">
                     <span class="s-card-name">${esc(a.name)}</span>
@@ -130,14 +131,14 @@ async function loadAccounts() {
                     </div>
                     <div class="s-card-stat-item">
                         <div class="s-card-stat-value">${lastSession}</div>
-                        <div class="s-card-stat-label">Letzte Session</div>
+                        <div class="s-card-stat-label">Last Session</div>
                     </div>
                 </div>
             </div>`;
         }).join('');
 
         if (!data.length) {
-            document.getElementById('accountCards').innerHTML = '<div style="color:#666">Keine AI-Accounts erkannt.</div>';
+            document.getElementById('accountCards').innerHTML = '<div style="color:#666">No AI accounts detected.</div>';
         }
     } catch(e) { console.error(e); }
 }
@@ -151,22 +152,88 @@ async function loadSystem() {
             <div class="s-info-group">
                 <h3>Server</h3>
                 <div class="s-info-row"><span class="s-info-label">Host</span><span class="s-info-value">${d.host}:${d.port}</span></div>
-                <div class="s-info-row"><span class="s-info-label">Projekte-Pfad</span><span class="s-info-value">${esc(d.projects_dir)}</span></div>
+                <div class="s-info-row"><span class="s-info-label">Projects Path</span><span class="s-info-value">${esc(d.projects_dir)}</span></div>
                 <div class="s-info-row"><span class="s-info-label">Gitea</span><span class="s-info-value">${esc(d.gitea_url)}</span></div>
                 <div class="s-info-row"><span class="s-info-label">Gitea User</span><span class="s-info-value">${esc(d.gitea_user)}</span></div>
             </div>
             <div class="s-info-group">
-                <h3>Datenbank</h3>
+                <h3>Database</h3>
                 <div class="s-info-row"><span class="s-info-label">Host</span><span class="s-info-value">${d.db_host}:${d.db_port}</span></div>
                 <div class="s-info-row"><span class="s-info-label">Name</span><span class="s-info-value">${esc(d.db_name)}</span></div>
-                <div class="s-info-row"><span class="s-info-label">Groesse</span><span class="s-info-value">${d.db_size}</span></div>
+                <div class="s-info-row"><span class="s-info-label">Size</span><span class="s-info-value">${d.db_size}</span></div>
             </div>
             <div class="s-info-group">
-                <h3>Statistiken</h3>
-                <div class="s-info-row"><span class="s-info-label">Sessions</span><span class="s-info-value">${d.total_sessions.toLocaleString('de-DE')}</span></div>
-                <div class="s-info-row"><span class="s-info-label">Messages</span><span class="s-info-value">${d.total_messages.toLocaleString('de-DE')}</span></div>
-                <div class="s-info-row"><span class="s-info-label">Modell-Preise</span><span class="s-info-value">${d.pricing_models}</span></div>
+                <h3>Statistics</h3>
+                <div class="s-info-row"><span class="s-info-label">Sessions</span><span class="s-info-value">${d.total_sessions.toLocaleString('en-US')}</span></div>
+                <div class="s-info-row"><span class="s-info-label">Messages</span><span class="s-info-value">${d.total_messages.toLocaleString('en-US')}</span></div>
+                <div class="s-info-row"><span class="s-info-label">Model Prices</span><span class="s-info-value">${d.pricing_models}</span></div>
             </div>`;
+    } catch(e) { console.error(e); }
+}
+
+// === External Links ===
+let linksData = [];
+
+async function loadLinks() {
+    try {
+        linksData = await api.get('/api/settings/external-links');
+        renderLinks();
+    } catch(e) { console.error(e); }
+}
+
+function renderLinks() {
+    const tbody = document.getElementById('linksBody');
+    if (!linksData.length) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#666;padding:20px">No external links configured. The sidebar section will be hidden.</td></tr>';
+        return;
+    }
+    tbody.innerHTML = linksData.map(l => `<tr data-id="${l.id}">
+        <td><input type="text" value="${esc(l.name)}" data-field="name"></td>
+        <td><input type="text" value="${esc(l.url)}" data-field="url"></td>
+        <td><input type="text" value="${esc(l.icon || 'external-link')}" data-field="icon" class="input-sm"></td>
+        <td class="s-btn-group">
+            <button class="s-btn s-btn-sm s-btn-save" onclick="saveLink(this)">&#10003;</button>
+            <button class="s-btn s-btn-sm s-btn-del" onclick="deleteLink(${l.id})">&#10005;</button>
+        </td>
+    </tr>`).join('');
+}
+
+function addLinkRow() {
+    const tbody = document.getElementById('linksBody');
+    if (tbody.querySelector('td[colspan]')) tbody.innerHTML = '';
+    const tr = document.createElement('tr');
+    tr.dataset.id = '';
+    tr.innerHTML = `
+        <td><input type="text" data-field="name" placeholder="e.g. Portainer"></td>
+        <td><input type="text" data-field="url" placeholder="https://..."></td>
+        <td><input type="text" data-field="icon" placeholder="external-link" class="input-sm"></td>
+        <td class="s-btn-group">
+            <button class="s-btn s-btn-sm s-btn-save" onclick="saveLink(this)">&#10003;</button>
+            <button class="s-btn s-btn-sm s-btn-del" onclick="this.closest('tr').remove()">&#10005;</button>
+        </td>`;
+    tbody.prepend(tr);
+    tr.querySelector('input').focus();
+}
+
+async function saveLink(btn) {
+    const tr = btn.closest('tr');
+    const data = {id: tr.dataset.id ? parseInt(tr.dataset.id) : null};
+    tr.querySelectorAll('input').forEach(inp => { data[inp.dataset.field] = inp.value; });
+    if (!data.name || !data.url) return;
+
+    try {
+        await api.post('/api/settings/external-links', data);
+        btn.textContent = '\u2713';
+        btn.style.background = '#4caf50';
+        setTimeout(() => { btn.style.background = ''; loadLinks(); }, 600);
+    } catch(e) { console.error(e); }
+}
+
+async function deleteLink(id) {
+    if (!confirm('Delete this link?')) return;
+    try {
+        await api.del('/api/settings/external-links/' + id);
+        loadLinks();
     } catch(e) { console.error(e); }
 }
 

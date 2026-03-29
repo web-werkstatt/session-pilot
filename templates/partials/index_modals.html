@@ -2,7 +2,7 @@
 <div class="modal-overlay" id="statsModal">
     <div class="modal-content" style="max-width:500px">
         <div class="modal-header">
-            <h2>System-Statistiken</h2>
+            <h2>System Statistics</h2>
             <button class="modal-close" onclick="closeStatsModal()">&times;</button>
         </div>
         <div class="modal-body">
@@ -11,7 +11,7 @@
     </div>
 </div>
 
-<!-- Lightbox fuer Bilder -->
+<!-- Lightbox for images -->
 <div class="lightbox" id="lightbox" onclick="closeLightbox()">
     <img id="lightboxImg" src="" alt="">
 </div>
@@ -21,167 +21,167 @@
     <div class="cmd-palette">
         <div class="cmd-search">
             <span>&#128269;</span>
-            <input type="text" id="cmdInput" placeholder="Suche Projekte, Sessions, Container..." oninput="handleCmdSearch()" autocomplete="off">
+            <input type="text" id="cmdInput" placeholder="Search projects, sessions, containers..." oninput="handleCmdSearch()" autocomplete="off">
         </div>
         <div class="cmd-results" id="cmdResults">
             <div class="cmd-group">
-                <div class="cmd-group-label">Schnellzugriff</div>
+                <div class="cmd-group-label">Quick Access</div>
                 <div class="cmd-item" onclick="location.href='/sessions'">Claude Sessions</div>
-                <div class="cmd-item" onclick="location.href='/containers'">Container</div>
-                <div class="cmd-item" onclick="location.href='/dependencies'">Abhaengigkeiten</div>
-                <div class="cmd-item" onclick="openIdeasModal();closeCommandPalette()">Ideen & Notizen</div>
-                <div class="cmd-item" onclick="loadData();closeCommandPalette()">Daten aktualisieren</div>
+                <div class="cmd-item" onclick="location.href='/containers'">Containers</div>
+                <div class="cmd-item" onclick="location.href='/dependencies'">Dependencies</div>
+                <div class="cmd-item" onclick="openIdeasModal();closeCommandPalette()">Ideas & Notes</div>
+                <div class="cmd-item" onclick="loadData();closeCommandPalette()">Refresh data</div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Modal fuer Beschreibung -->
+<!-- Modal for description -->
 <div class="modal-overlay" id="infoModal">
     <div class="modal-content">
         <div class="modal-header">
             <h2 id="modalTitle">Details</h2>
             <button class="modal-close" onclick="closeInfoModal()">&times;</button>
         </div>
-        <div class="modal-body" id="modalBody">Lade...</div>
+        <div class="modal-body" id="modalBody">Loading...</div>
     </div>
 </div>
 
-<!-- Modal fuer Projekt-Bearbeitung -->
+<!-- Modal for project editing -->
 <div class="modal-overlay" id="editModal">
     <div class="modal-content" style="max-width:700px">
         <div class="modal-header">
-            <h2>Projekt: <span id="editProjectName"></span></h2>
+            <h2>Project: <span id="editProjectName"></span></h2>
             <button class="modal-close" onclick="closeEditModal()">&times;</button>
         </div>
         <div class="modal-tabs">
-            <button class="modal-tab active" onclick="switchEditTab('general')">Allgemein</button>
-            <button class="modal-tab" onclick="switchEditTab('relations')">Beziehungen</button>
+            <button class="modal-tab active" onclick="switchEditTab('general')">General</button>
+            <button class="modal-tab" onclick="switchEditTab('relations')">Relations</button>
         </div>
         <div class="modal-body">
             <div id="editTabGeneral" class="edit-tab-content active">
             <form class="edit-form" id="editForm">
-                <label>Beschreibung</label>
-                <textarea id="editDescription" rows="2" placeholder="Kurze Projektbeschreibung..."></textarea>
+                <label>Description</label>
+                <textarea id="editDescription" rows="2" placeholder="Short project description..."></textarea>
                 <div class="row">
                     <div>
-                        <label>Gruppe</label>
+                        <label>Group</label>
                         <div style="display:flex;gap:8px">
-                            <select id="editGroup" style="flex:1"><option value="">-- Keine --</option></select>
-                            <button type="button" onclick="toggleInlineGroupForm()" class="btn-add" title="Neue Gruppe erstellen" style="padding:8px 12px">+</button>
+                            <select id="editGroup" style="flex:1"><option value="">-- None --</option></select>
+                            <button type="button" onclick="toggleInlineGroupForm()" class="btn-add" title="Create new group" style="padding:8px 12px">+</button>
                         </div>
                     </div>
                     <div>
-                        <label>Prioritaet</label>
+                        <label>Priority</label>
                         <select id="editPriority">
-                            <option value="">-- Keine --</option>
-                            <option value="high">Hoch</option>
-                            <option value="medium">Mittel</option>
-                            <option value="low">Niedrig</option>
+                            <option value="">-- None --</option>
+                            <option value="high">High</option>
+                            <option value="medium">Medium</option>
+                            <option value="low">Low</option>
                         </select>
                     </div>
                 </div>
                 <div id="inlineGroupForm" style="display:none;background:#141414;padding:15px;border-radius:8px;margin:10px 0;border:1px solid #333">
                     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-                        <strong style="color:#4fc3f7">Neue Gruppe erstellen</strong>
+                        <strong style="color:#4fc3f7">Create new group</strong>
                         <button type="button" onclick="toggleInlineGroupForm()" style="background:none;border:none;color:#666;font-size:18px;cursor:pointer">&times;</button>
                     </div>
                     <div class="row">
-                        <div><label style="margin-top:0">Kurzname</label><input type="text" id="inlineGroupId" placeholder="z.B. kunden_web" style="text-transform:lowercase"></div>
-                        <div><label style="margin-top:0">Anzeigename</label><input type="text" id="inlineGroupName" placeholder="z.B. Web-Kunden"></div>
+                        <div><label style="margin-top:0">Short name</label><input type="text" id="inlineGroupId" placeholder="e.g. client_web" style="text-transform:lowercase"></div>
+                        <div><label style="margin-top:0">Display name</label><input type="text" id="inlineGroupName" placeholder="e.g. Web Clients"></div>
                     </div>
                     <div class="row" style="margin-top:10px">
                         <div><label style="margin-top:0">Icon</label><select id="inlineGroupIcon" style="font-size:16px"><option value="📁">📁</option><option value="🏠">🏠</option><option value="🏢">🏢</option><option value="👤">👤</option><option value="🚀">🚀</option><option value="⭐">⭐</option><option value="🌐">🌐</option><option value="🎨">🎨</option><option value="🤖">🤖</option><option value="📦">📦</option><option value="💰">💰</option></select></div>
-                        <div><label style="margin-top:0">Farbe</label><input type="color" id="inlineGroupColor" value="#666666" style="height:38px;padding:3px"></div>
+                        <div><label style="margin-top:0">Color</label><input type="color" id="inlineGroupColor" value="#666666" style="height:38px;padding:3px"></div>
                     </div>
-                    <div style="margin-top:12px;text-align:right"><button type="button" class="btn-save" onclick="createInlineGroup()" style="padding:8px 20px">Erstellen</button></div>
+                    <div style="margin-top:12px;text-align:right"><button type="button" class="btn-save" onclick="createInlineGroup()" style="padding:8px 20px">Create</button></div>
                 </div>
                 <div class="row">
                     <div><label>Deadline</label><input type="date" id="editDeadline"></div>
-                    <div><label>Fortschritt (%)</label><input type="number" id="editProgress" min="0" max="100" placeholder="0-100"></div>
+                    <div><label>Progress (%)</label><input type="number" id="editProgress" min="0" max="100" placeholder="0-100"></div>
                 </div>
-                <label>Meilensteine</label>
+                <label>Milestones</label>
                 <div class="milestone-list" id="milestoneList"></div>
-                <button type="button" class="btn-add" onclick="addMilestone()" style="margin-top:5px">+ Meilenstein</button>
+                <button type="button" class="btn-add" onclick="addMilestone()" style="margin-top:5px">+ Milestone</button>
                 <div class="modal-actions">
-                    <button type="button" class="btn-cancel" onclick="closeEditModal()">Abbrechen</button>
-                    <button type="submit" class="btn-save">Speichern</button>
+                    <button type="button" class="btn-cancel" onclick="closeEditModal()">Cancel</button>
+                    <button type="submit" class="btn-save">Save</button>
                 </div>
             </form>
             </div>
             <div id="editTabRelations" class="edit-tab-content edit-form">
-                <div class="relations-section"><h4>Ausgehend (dieses Projekt &rarr;)</h4><div id="outgoingRelations" class="project-relations-list"></div></div>
-                <div class="relations-section"><h4>Eingehend (&rarr; dieses Projekt)</h4><div id="incomingRelations" class="project-relations-list"></div></div>
+                <div class="relations-section"><h4>Outgoing (this project &rarr;)</h4><div id="outgoingRelations" class="project-relations-list"></div></div>
+                <div class="relations-section"><h4>Incoming (&rarr; this project)</h4><div id="incomingRelations" class="project-relations-list"></div></div>
                 <div class="relations-section" style="border-top:1px solid var(--border-subtle);padding-top:15px;margin-top:15px;">
-                    <h4>Neue Beziehung</h4>
+                    <h4>New Relation</h4>
                     <div class="relation-direction">
-                        <label class="radio-label"><input type="radio" name="relationDirection" value="outgoing" checked onchange="updateRelationForm()"> Dieses &rarr; Anderes</label>
-                        <label class="radio-label"><input type="radio" name="relationDirection" value="incoming" onchange="updateRelationForm()"> Anderes &rarr; Dieses</label>
+                        <label class="radio-label"><input type="radio" name="relationDirection" value="outgoing" checked onchange="updateRelationForm()"> This &rarr; Other</label>
+                        <label class="radio-label"><input type="radio" name="relationDirection" value="incoming" onchange="updateRelationForm()"> Other &rarr; This</label>
                     </div>
                     <div class="row" style="margin-top:10px">
-                        <div style="flex:2"><label id="relationTargetLabel">Ziel-Projekt</label><div class="autocomplete-wrapper"><input type="text" id="editRelationProject" placeholder="Projekt suchen..." oninput="onEditRelationSearch()" autocomplete="off"><div class="autocomplete-dropdown" id="editRelationDropdown"></div></div></div>
-                        <div style="flex:1"><label>Typ</label><select id="editRelationType"></select></div>
+                        <div style="flex:2"><label id="relationTargetLabel">Target Project</label><div class="autocomplete-wrapper"><input type="text" id="editRelationProject" placeholder="Search project..." oninput="onEditRelationSearch()" autocomplete="off"><div class="autocomplete-dropdown" id="editRelationDropdown"></div></div></div>
+                        <div style="flex:1"><label>Type</label><select id="editRelationType"></select></div>
                     </div>
-                    <div><label>Notiz</label><input type="text" id="editRelationNote" placeholder="z.B. Shared DB..."></div>
-                    <div style="margin-top:10px"><button type="button" class="btn-save" onclick="addProjectRelation()" style="padding:8px 20px">Hinzufuegen</button></div>
+                    <div><label>Note</label><input type="text" id="editRelationNote" placeholder="e.g. Shared DB..."></div>
+                    <div style="margin-top:10px"><button type="button" class="btn-save" onclick="addProjectRelation()" style="padding:8px 20px">Add</button></div>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Modal fuer Gruppen-Verwaltung -->
+<!-- Modal for group management -->
 <div class="modal-overlay" id="groupsModal">
     <div class="modal-content" style="max-width:700px">
         <div class="modal-header">
-            <h2>Gruppen verwalten</h2>
+            <h2>Manage Groups</h2>
             <button class="modal-close" onclick="closeGroupsModal()">&times;</button>
         </div>
         <div class="modal-body">
             <div id="groupsList" class="groups-list"></div>
             <div style="margin-top:20px;padding-top:20px;border-top:1px solid #2a2a2a">
-                <h3 style="margin-bottom:15px">Neue Gruppe erstellen</h3>
+                <h3 style="margin-bottom:15px">Create new group</h3>
                 <div class="edit-form">
                     <div class="row">
-                        <div><label>Kurzname</label><input type="text" id="newGroupId" placeholder="z.B. kunden_web" style="text-transform:lowercase"></div>
-                        <div><label>Anzeigename</label><input type="text" id="newGroupName" placeholder="z.B. Web-Kunden"></div>
+                        <div><label>Short name</label><input type="text" id="newGroupId" placeholder="e.g. client_web" style="text-transform:lowercase"></div>
+                        <div><label>Display name</label><input type="text" id="newGroupName" placeholder="e.g. Web Clients"></div>
                     </div>
                     <div class="row">
                         <div><label>Icon</label><select id="newGroupIcon" style="font-size:18px"><option value="📁">📁</option><option value="🏠">🏠</option><option value="🏢">🏢</option><option value="👤">👤</option><option value="🚀">🚀</option><option value="⭐">⭐</option><option value="🌐">🌐</option><option value="🎨">🎨</option><option value="🤖">🤖</option><option value="📦">📦</option><option value="💰">💰</option></select></div>
-                        <div><label>Farbe</label><input type="color" id="newGroupColor" value="#666666" style="height:42px;padding:5px"></div>
+                        <div><label>Color</label><input type="color" id="newGroupColor" value="#666666" style="height:42px;padding:5px"></div>
                     </div>
-                    <label>Beschreibung</label>
-                    <input type="text" id="newGroupDesc" placeholder="Optionale Beschreibung">
-                    <div style="margin-top:15px"><button type="button" class="btn-save" onclick="createGroup()">Gruppe erstellen</button></div>
+                    <label>Description</label>
+                    <input type="text" id="newGroupDesc" placeholder="Optional description">
+                    <div style="margin-top:15px"><button type="button" class="btn-save" onclick="createGroup()">Create group</button></div>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Ideen Modal -->
+<!-- Ideas Modal -->
 <div id="ideasModal" class="modal-overlay" style="z-index:2000">
     <div style="background:#1e1e1e;width:900px;max-width:95%;max-height:90vh;border-radius:12px;display:flex;flex-direction:column;overflow:hidden;border:1px solid #2a2a2a">
         <div style="background:#0078d4;padding:15px 20px;display:flex;justify-content:space-between;align-items:center;">
-            <h2 style="margin:0;font-size:18px;">Ideen & Notizen</h2>
+            <h2 style="margin:0;font-size:18px;">Ideas & Notes</h2>
             <button onclick="closeIdeasModal()" style="background:none;border:none;color:white;font-size:24px;cursor:pointer;">x</button>
         </div>
         <div style="display:grid;grid-template-columns:1fr 300px;flex:1;overflow:hidden;">
             <div style="padding:20px;overflow-y:auto;border-right:1px solid #2a2a2a;">
                 <div style="display:flex;gap:10px;margin-bottom:15px;">
-                    <select id="ideasFilterCategory" onchange="filterIdeas()" style="flex:1;padding:8px;background:#141414;border:1px solid #333;border-radius:6px;color:#ccc;font-size:13px;"><option value="">Alle Kategorien</option></select>
-                    <select id="ideasFilterStatus" onchange="filterIdeas()" style="padding:8px;background:#141414;border:1px solid #333;border-radius:6px;color:#ccc;font-size:13px;"><option value="">Alle Status</option><option value="open">Offen</option><option value="done">Erledigt</option><option value="archived">Archiviert</option></select>
+                    <select id="ideasFilterCategory" onchange="filterIdeas()" style="flex:1;padding:8px;background:#141414;border:1px solid #333;border-radius:6px;color:#ccc;font-size:13px;"><option value="">All Categories</option></select>
+                    <select id="ideasFilterStatus" onchange="filterIdeas()" style="padding:8px;background:#141414;border:1px solid #333;border-radius:6px;color:#ccc;font-size:13px;"><option value="">All Status</option><option value="open">Open</option><option value="done">Done</option><option value="archived">Archived</option></select>
                 </div>
                 <div id="ideasList" style="display:flex;flex-direction:column;gap:10px;"></div>
             </div>
             <div style="padding:20px;background:#161616;">
-                <h3 id="ideaFormTitle" style="margin:0 0 15px 0;font-size:15px;">Neue Idee</h3>
-                <div style="margin-bottom:12px;"><label style="display:block;font-size:11px;color:#666;margin-bottom:4px;">Titel *</label><input type="text" id="ideaTitle" placeholder="Was ist die Idee?" style="width:100%;padding:8px;background:#141414;border:1px solid #333;border-radius:6px;color:#ccc;font-size:13px;"></div>
-                <div style="margin-bottom:12px;"><label style="display:block;font-size:11px;color:#666;margin-bottom:4px;">Beschreibung</label><textarea id="ideaContent" rows="4" placeholder="Details..." style="width:100%;padding:8px;background:#141414;border:1px solid #333;border-radius:6px;color:#ccc;font-size:13px;resize:vertical;"></textarea></div>
-                <div style="margin-bottom:12px;"><label style="display:block;font-size:11px;color:#666;margin-bottom:4px;">Kategorie</label><select id="ideaCategory" style="width:100%;padding:8px;background:#141414;border:1px solid #333;border-radius:6px;color:#ccc;font-size:13px;"></select></div>
-                <div style="margin-bottom:12px;"><label style="display:block;font-size:11px;color:#666;margin-bottom:4px;">Prioritaet</label><select id="ideaPriority" style="width:100%;padding:8px;background:#141414;border:1px solid #333;border-radius:6px;color:#ccc;font-size:13px;"><option value="low">Niedrig</option><option value="normal" selected>Normal</option><option value="high">Hoch</option></select></div>
-                <div style="margin-bottom:15px;"><label style="display:block;font-size:11px;color:#666;margin-bottom:4px;">Projekt</label><select id="ideaProject" style="width:100%;padding:8px;background:#141414;border:1px solid #333;border-radius:6px;color:#ccc;font-size:13px;"><option value="">Kein Projekt</option></select></div>
-                <div style="display:flex;gap:10px;"><button onclick="resetIdeaForm()" style="flex:1;padding:10px;background:#333;border:none;border-radius:6px;color:#ccc;cursor:pointer;font-size:13px;">Abbrechen</button><button id="ideaSaveBtn" onclick="saveIdea()" style="flex:1;padding:10px;background:#1b4332;border:none;border-radius:6px;color:#fff;cursor:pointer;font-size:13px;">Speichern</button></div>
+                <h3 id="ideaFormTitle" style="margin:0 0 15px 0;font-size:15px;">New Idea</h3>
+                <div style="margin-bottom:12px;"><label style="display:block;font-size:11px;color:#666;margin-bottom:4px;">Title *</label><input type="text" id="ideaTitle" placeholder="What is the idea?" style="width:100%;padding:8px;background:#141414;border:1px solid #333;border-radius:6px;color:#ccc;font-size:13px;"></div>
+                <div style="margin-bottom:12px;"><label style="display:block;font-size:11px;color:#666;margin-bottom:4px;">Description</label><textarea id="ideaContent" rows="4" placeholder="Details..." style="width:100%;padding:8px;background:#141414;border:1px solid #333;border-radius:6px;color:#ccc;font-size:13px;resize:vertical;"></textarea></div>
+                <div style="margin-bottom:12px;"><label style="display:block;font-size:11px;color:#666;margin-bottom:4px;">Category</label><select id="ideaCategory" style="width:100%;padding:8px;background:#141414;border:1px solid #333;border-radius:6px;color:#ccc;font-size:13px;"></select></div>
+                <div style="margin-bottom:12px;"><label style="display:block;font-size:11px;color:#666;margin-bottom:4px;">Priority</label><select id="ideaPriority" style="width:100%;padding:8px;background:#141414;border:1px solid #333;border-radius:6px;color:#ccc;font-size:13px;"><option value="low">Low</option><option value="normal" selected>Normal</option><option value="high">High</option></select></div>
+                <div style="margin-bottom:15px;"><label style="display:block;font-size:11px;color:#666;margin-bottom:4px;">Project</label><select id="ideaProject" style="width:100%;padding:8px;background:#141414;border:1px solid #333;border-radius:6px;color:#ccc;font-size:13px;"><option value="">No project</option></select></div>
+                <div style="display:flex;gap:10px;"><button onclick="resetIdeaForm()" style="flex:1;padding:10px;background:#333;border:none;border-radius:6px;color:#ccc;cursor:pointer;font-size:13px;">Cancel</button><button id="ideaSaveBtn" onclick="saveIdea()" style="flex:1;padding:10px;background:#1b4332;border:none;border-radius:6px;color:#fff;cursor:pointer;font-size:13px;">Save</button></div>
             </div>
         </div>
     </div>

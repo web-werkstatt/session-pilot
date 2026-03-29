@@ -5,7 +5,7 @@
 {% block breadcrumb %}News{% endblock %}
 
 {% block topbar_actions %}
-<button class="btn btn-secondary btn-sm" onclick="loadNews()"><i data-lucide="refresh-cw" class="icon icon-sm"></i> Aktualisieren</button>
+<button class="btn btn-secondary btn-sm" onclick="loadNews()"><i data-lucide="refresh-cw" class="icon icon-sm"></i> Refresh</button>
 {% endblock %}
 
 {% block head_extra %}
@@ -16,7 +16,7 @@
     <div class="stats-bar">
         <div class="stat">
             <span class="stat-value" id="totalNews">-</span>
-            <span class="stat-label">Neuigkeiten</span>
+            <span class="stat-label">News</span>
         </div>
         <div class="stat">
             <span class="stat-value" style="color:#4dabf7" id="commitCount">-</span>
@@ -24,48 +24,48 @@
         </div>
         <div class="stat">
             <span class="stat-value" style="color:#9b59b6" id="changeCount">-</span>
-            <span class="stat-label">Dateiänderungen</span>
+            <span class="stat-label">File changes</span>
         </div>
         <div class="stat">
             <span class="stat-value" style="color:#2ecc71" id="newProjectCount">-</span>
-            <span class="stat-label">Neue Projekte</span>
+            <span class="stat-label">New projects</span>
         </div>
         <div class="stat">
             <span class="stat-value" style="color:#e74c3c" id="warningCount">-</span>
-            <span class="stat-label">Warnungen</span>
+            <span class="stat-label">Warnings</span>
         </div>
     </div>
 
     <div class="filter-bar">
         <span class="filter-label">Filter:</span>
-        <button class="filter-btn active" onclick="filterNews('all')">Alle</button>
+        <button class="filter-btn active" onclick="filterNews('all')">All</button>
         <button class="filter-btn" onclick="filterNews('commit')">Commits</button>
-        <button class="filter-btn" onclick="filterNews('file_change')">Dateiänderungen</button>
-        <button class="filter-btn" onclick="filterNews('new_project')">Neue Projekte</button>
-        <button class="filter-btn" onclick="filterNews('sync_warning')">Warnungen</button>
+        <button class="filter-btn" onclick="filterNews('file_change')">File changes</button>
+        <button class="filter-btn" onclick="filterNews('new_project')">New projects</button>
+        <button class="filter-btn" onclick="filterNews('sync_warning')">Warnings</button>
     </div>
 
     <div class="news-container">
         <div id="loading" class="loading">
             <div class="spinner"></div>
-            <div>Lade Neuigkeiten...</div>
+            <div>Loading news...</div>
         </div>
 
         <table id="newsTable" style="display:none;">
             <thead>
                 <tr>
                     <th style="width:50px;"></th>
-                    <th>Projekt</th>
-                    <th>Nachricht</th>
-                    <th>Typ</th>
-                    <th>Datum</th>
+                    <th>Project</th>
+                    <th>Message</th>
+                    <th>Type</th>
+                    <th>Date</th>
                 </tr>
             </thead>
             <tbody id="newsTableBody"></tbody>
         </table>
 
         <div id="emptyState" class="empty-state" style="display:none;">
-            <div class="empty-state-icon">Keine Neuigkeiten</div>
+            <div class="empty-state-icon">No news</div>
         </div>
     </div>
 
@@ -73,13 +73,13 @@
     <div class="modal-overlay" id="detailModal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2 id="modalTitle"><span id="modalIcon"></span> <span id="modalProject">Projekt</span></h2>
+                <h2 id="modalTitle"><span id="modalIcon"></span> <span id="modalProject">Project</span></h2>
                 <button class="modal-close" onclick="closeNewsModal()">&times;</button>
             </div>
             <div class="modal-body" id="modalBody">
                 <div class="loading">
                     <div class="spinner"></div>
-                    <div>Lade Details...</div>
+                    <div>Loading details...</div>
                 </div>
             </div>
         </div>

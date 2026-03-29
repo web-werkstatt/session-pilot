@@ -138,7 +138,7 @@ But it doesn't stop there — it also monitors your Docker containers, scans you
 
 ## Quick Start
 
-### Option A: Docker (recommended)
+### Option A: Docker (recommended, any platform)
 
 ```bash
 git clone https://github.com/web-werkstatt/session-pilot.git
@@ -150,7 +150,9 @@ docker compose up -d
 
 Open http://localhost:5055
 
-### Option B: Bare Metal (Linux)
+### Option B: Interactive Setup (Linux / macOS)
+
+The setup wizard checks prerequisites, finds free ports, and guides you through each step:
 
 ```bash
 git clone https://github.com/web-werkstatt/session-pilot.git
@@ -158,7 +160,15 @@ cd session-pilot
 ./setup.sh
 ```
 
-### Option C: Manual
+### Option C: Interactive Setup (Windows)
+
+```powershell
+git clone https://github.com/web-werkstatt/session-pilot.git
+cd session-pilot
+powershell -ExecutionPolicy Bypass -File setup.ps1
+```
+
+### Option D: Manual
 
 ```bash
 git clone https://github.com/web-werkstatt/session-pilot.git
@@ -198,6 +208,17 @@ All settings via environment variables (`.env` file):
 | ripgrep (rg) | Optional | Full-text search |
 
 Without PostgreSQL, everything works except the Sessions feature.
+
+### Supported Platforms
+
+| Platform | Status | Notes |
+|---|---|---|
+| **Linux** (Debian/Ubuntu) | Fully tested | Primary platform, systemd service included |
+| **macOS** | Supported | Same paths as Linux (`~/.claude/`), run via `python3 app.py` |
+| **Windows** | Supported | Checks `%APPDATA%` and `%LOCALAPPDATA%` for AI accounts |
+| **Docker** | Supported | `docker compose up -d` on any platform |
+
+All paths are configurable via environment variables. Set `DASHBOARD_PROJECTS_DIR` to your projects root folder (default: `/mnt/projects`).
 
 ## API
 

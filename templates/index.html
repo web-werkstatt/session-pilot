@@ -1,22 +1,22 @@
 {% extends "base.html" %}
 
-{% block title %}Projekt-Dashboard{% endblock %}
+{% block title %}Project Dashboard{% endblock %}
 
-{% block breadcrumb %}Projekte{% endblock %}
+{% block breadcrumb %}Projects{% endblock %}
 
 {% block head_extra %}
 <link rel="stylesheet" href="/static/css/widgets.css">
 {% endblock %}
 
 {% block topbar_actions %}
-<button class="topbar-btn" onclick="openStatsModal()" title="Statistiken"><i data-lucide="bar-chart-2" class="icon icon-sm"></i></button>
-<button class="topbar-btn" onclick="loadData()" title="Aktualisieren"><i data-lucide="refresh-cw" class="icon icon-sm"></i></button>
+<button class="topbar-btn" onclick="openStatsModal()" title="Statistics"><i data-lucide="bar-chart-2" class="icon icon-sm"></i></button>
+<button class="topbar-btn" onclick="loadData()" title="Refresh"><i data-lucide="refresh-cw" class="icon icon-sm"></i></button>
 <div class="topbar-more">
-    <button class="topbar-btn" onclick="toggleMoreMenu()" title="Mehr"><i data-lucide="more-horizontal" class="icon icon-sm"></i></button>
+    <button class="topbar-btn" onclick="toggleMoreMenu()" title="More"><i data-lucide="more-horizontal" class="icon icon-sm"></i></button>
     <div class="more-menu" id="moreMenu">
-        <div class="more-item" onclick="refreshDescriptions();toggleMoreMenu()"><i data-lucide="file-text" class="icon icon-sm"></i> Beschreibungen scannen</div>
-        <div class="more-item" onclick="cleanupDocker();toggleMoreMenu()"><i data-lucide="trash-2" class="icon icon-sm"></i> Docker aufraeumen</div>
-        <div class="more-item" onclick="openGroupsModal();toggleMoreMenu()"><i data-lucide="settings" class="icon icon-sm"></i> Gruppen verwalten</div>
+        <div class="more-item" onclick="refreshDescriptions();toggleMoreMenu()"><i data-lucide="file-text" class="icon icon-sm"></i> Scan descriptions</div>
+        <div class="more-item" onclick="cleanupDocker();toggleMoreMenu()"><i data-lucide="trash-2" class="icon icon-sm"></i> Docker cleanup</div>
+        <div class="more-item" onclick="openGroupsModal();toggleMoreMenu()"><i data-lucide="settings" class="icon icon-sm"></i> Manage groups</div>
     </div>
 </div>
 <span class="topbar-time" id="timestamp"></span>
@@ -28,10 +28,10 @@
         <span class="news-label">NEWS</span>
         <div class="news-ticker">
             <div class="news-ticker-content" id="newsTickerContent">
-                <span class="news-item">Lade Neuigkeiten...</span>
+                <span class="news-item">Loading news...</span>
             </div>
         </div>
-        <a href="/news" class="news-link">Alle News &rarr;</a>
+        <a href="/news" class="news-link">All News &rarr;</a>
     </div>
 
     <div class="new-projects-bar" id="newProjectsBar"></div>
@@ -48,7 +48,7 @@
 
     <!-- Tab Navigation -->
     <div class="tab-bar">
-        <button class="tab-btn active" onclick="showTab('projects')">Projekte</button>
+        <button class="tab-btn active" onclick="showTab('projects')">Projects</button>
         <button class="tab-btn" onclick="showTab('widgets')">Widgets</button>
         <button class="tab-btn" onclick="showTab('gitea')">Gitea Repositories</button>
     </div>
@@ -57,17 +57,17 @@
     <div class="filter-bar" id="filterBar">
         <div class="search-box">
             <i data-lucide="search" class="icon icon-sm" style="color:var(--text-ghost);margin-right:8px"></i>
-            <input type="text" id="searchInput" placeholder="Projekt suchen..." oninput="handleSearch()" autocomplete="off">
+            <input type="text" id="searchInput" placeholder="Search projects..." oninput="handleSearch()" autocomplete="off">
             <span class="search-clear" id="searchClear" onclick="clearSearch()">&times;</span>
         </div>
         <select class="filter-select" id="groupFilterSelect" onchange="setGroupFilter(this.value)" style="background:var(--bg-elevated);color:var(--text-secondary);border:1px solid var(--border-muted);padding:7px 12px;border-radius:var(--radius-md);font-size:var(--text-base);font-family:var(--font-sans);">
-            <option value="all">Alle Gruppen</option>
+            <option value="all">All Groups</option>
         </select>
         <div class="filter-sep"></div>
-        <button class="filter-btn active" id="viewPriorityBtn" onclick="setViewMode('priority')">Prioritaet</button>
-        <button class="filter-btn" id="viewGroupBtn" onclick="setViewMode('groups')">Gruppen</button>
+        <button class="filter-btn active" id="viewPriorityBtn" onclick="setViewMode('priority')">Priority</button>
+        <button class="filter-btn" id="viewGroupBtn" onclick="setViewMode('groups')">Groups</button>
         <div class="filter-sep"></div>
-        <button class="filter-btn" id="archiveToggle" onclick="toggleShowArchived()"><i data-lucide="archive" class="icon icon-sm"></i> Archiv</button>
+        <button class="filter-btn" id="archiveToggle" onclick="toggleShowArchived()"><i data-lucide="archive" class="icon icon-sm"></i> Archive</button>
         <span class="search-results" id="searchResults"></span>
         <!-- Hidden container for JS compat -->
         <div id="groupFilterButtons" style="display:none"></div>
@@ -77,24 +77,24 @@
     <div class="container">
         <div id="loading" class="loading">
             <div class="spinner"></div>
-            <div id="loadingText">Lade Projektdaten...</div>
+            <div id="loadingText">Loading project data...</div>
             <div id="funnyQuote" style="margin-top:15px;font-style:italic;color:var(--text-ghost);font-size:var(--text-base);"></div>
         </div>
 
-        <!-- Projekte Tab -->
+        <!-- Projects Tab -->
         <div id="projectsTab" class="tab-content active">
             <table id="projectTable" style="display:none">
                 <thead>
                     <tr>
-                        <th class="sortable" data-sort="name" style="width:22%">Projekt</th>
-                        <th style="width:25%">Beschreibung</th>
+                        <th class="sortable" data-sort="name" style="width:22%">Project</th>
+                        <th style="width:25%">Description</th>
                         <th style="width:36px">Grp</th>
                         <th class="sortable" data-sort="priority" style="width:32px">Prio</th>
                         <th class="sortable" data-sort="deadline" style="width:80px">Deadline</th>
-                        <th class="sortable" data-sort="progress" style="width:90px">Fortschritt</th>
-                        <th style="width:12%">Meilensteine</th>
+                        <th class="sortable" data-sort="progress" style="width:90px">Progress</th>
+                        <th style="width:12%">Milestones</th>
                         <th style="width:32px">Git</th>
-                        <th class="sortable" data-sort="activity" style="width:76px">Aktivitaet</th>
+                        <th class="sortable" data-sort="activity" style="width:76px">Activity</th>
                         <th style="width:32px"></th>
                     </tr>
                 </thead>
@@ -106,15 +106,15 @@
         <div id="widgetsTab" class="tab-content">
             <div class="widget-grid">
                 <div class="widget-card widget-sm" id="wTotalProjects">
-                    <div class="widget-card-label">Projekte</div>
+                    <div class="widget-card-label">Projects</div>
                     <div class="widget-card-value">-</div>
                 </div>
                 <div class="widget-card widget-sm" id="wActiveProjects">
-                    <div class="widget-card-label">Aktiv (7 Tage)</div>
+                    <div class="widget-card-label">Active (7 days)</div>
                     <div class="widget-card-value">-</div>
                 </div>
                 <div class="widget-card widget-sm" id="wContainers">
-                    <div class="widget-card-label">Container</div>
+                    <div class="widget-card-label">Containers</div>
                     <div class="widget-card-value">-</div>
                 </div>
                 <div class="widget-card widget-sm" id="wGitea">
@@ -123,26 +123,26 @@
                 </div>
 
                 <div class="widget-card widget-wide">
-                    <div class="widget-card-title">Aktivitaet (30 Tage)</div>
+                    <div class="widget-card-title">Activity (30 days)</div>
                     <div class="widget-heatmap" id="wHeatmap"></div>
                 </div>
 
                 <div class="widget-card">
-                    <div class="widget-card-title">Projekttypen</div>
+                    <div class="widget-card-title">Project Types</div>
                     <canvas id="chartTypes" height="220"></canvas>
                 </div>
                 <div class="widget-card">
-                    <div class="widget-card-title">Technologien</div>
+                    <div class="widget-card-title">Technologies</div>
                     <canvas id="chartTech" height="220"></canvas>
                 </div>
 
                 <div class="widget-card widget-wide">
-                    <div class="widget-card-title">Claude Sessions (7 Tage)</div>
+                    <div class="widget-card-title">Claude Sessions (7 days)</div>
                     <canvas id="chartSessions" height="140"></canvas>
                 </div>
 
                 <div class="widget-card widget-wide">
-                    <div class="widget-card-title">Top Aktive Projekte</div>
+                    <div class="widget-card-title">Top Active Projects</div>
                     <div class="widget-list" id="wTopActive"></div>
                 </div>
             </div>
@@ -154,10 +154,10 @@
                 <thead>
                     <tr>
                         <th>Repository</th>
-                        <th>Beschreibung</th>
-                        <th>Letzte Aenderung</th>
+                        <th>Description</th>
+                        <th>Last Change</th>
                         <th>Issues</th>
-                        <th>Aktionen</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody id="giteaTableBody"></tbody>

@@ -11,9 +11,9 @@ group_bp = Blueprint('groups', __name__)
 GROUPS_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'groups.json')
 
 DEFAULT_GROUPS = [
-    {"id": "private", "name": "Privat", "icon": "home", "color": "#6b5b95", "description": "Private Projekte"},
-    {"id": "business", "name": "Geschäftlich", "icon": "building-2", "color": "#0077b6", "description": "Geschäftliche Projekte"},
-    {"id": "customer", "name": "Kunde", "icon": "user", "color": "#2d6a4f", "description": "Kundenprojekte"},
+    {"id": "private", "name": "Private", "icon": "home", "color": "#6b5b95", "description": "Private projects"},
+    {"id": "business", "name": "Business", "icon": "building-2", "color": "#0077b6", "description": "Business projects"},
+    {"id": "customer", "name": "Customer", "icon": "user", "color": "#2d6a4f", "description": "Customer projects"},
 ]
 
 
@@ -49,7 +49,7 @@ def api_get_groups():
 def api_create_group():
     data = request.get_json()
     if not data:
-        return jsonify({"error": "Keine Daten erhalten"}), 400
+        return jsonify({"error": "No data received"}), 400
 
     group_id = data.get('id', '').strip().lower()
     group_name = data.get('name', '').strip()
@@ -58,41 +58,41 @@ def api_create_group():
     group_desc = data.get('description', '')
 
     if not group_id or not group_name:
-        return jsonify({"error": "ID und Name sind erforderlich"}), 400
+        return jsonify({"error": "ID and name are required"}), 400
 
     if not re.match(r'^[a-z0-9_]+$', group_id):
-        return jsonify({"error": "ID darf nur Kleinbuchstaben, Zahlen und Unterstriche enthalten"}), 400
+        return jsonify({"error": "ID may only contain lowercase letters, numbers and underscores"}), 400
 
     groups_data = load_groups()
     existing_ids = [g['id'] for g in groups_data['groups']]
     if group_id in existing_ids:
-        return jsonify({"error": f"Gruppe mit ID '{group_id}' existiert bereits"}), 400
+        return jsonify({"error": f"Group with ID '{group_id}' already exists"}), 400
 
     groups_data['groups'].append({
         "id": group_id, "name": group_name, "icon": group_icon,
         "color": group_color, "description": group_desc
     })
     save_groups(groups_data)
-    return jsonify({"success": True, "message": f"Gruppe '{group_name}' erstellt"})
+    return jsonify({"success": True, "message": f"Group '{group_name}' created"})
 
 
 @group_bp.route('/api/groups/<group_id>', methods=['PUT'])
 def api_update_group(group_id):
     data = request.get_json()
     if not data:
-        return jsonify({"error": "Keine Daten erhalten"}), 400
+        return jsonify({"error": "No data received"}), 400
 
     groups_data = load_groups()
     group = next((g for g in groups_data['groups'] if g['id'] == group_id), None)
     if not group:
-        return jsonify({"error": f"Gruppe '{group_id}' nicht gefunden"}), 404
+        return jsonify({"error": f"Group '{group_id}' not found"}), 404
 
     for field in ('name', 'icon', 'color', 'description'):
         if field in data:
             group[field] = data[field]
 
     save_groups(groups_data)
-    return jsonify({"success": True, "message": f"Gruppe '{group_id}' aktualisiert"})
+    return jsonify({"success": True, "message": f"Group '{group_id}' updated"})
 
 
 @group_bp.route('/api/groups/<group_id>', methods=['DELETE'])
@@ -100,8 +100,8 @@ def api_delete_group(group_id):
     groups_data = load_groups()
     group = next((g for g in groups_data['groups'] if g['id'] == group_id), None)
     if not group:
-        return jsonify({"error": f"Gruppe '{group_id}' nicht gefunden"}), 404
+        return jsonify({"error": f"Group '{group_id}' not found"}), 404
 
     groups_data['groups'].remove(group)
     save_groups(groups_data)
-    return jsonify({"success": True, "message": f"Gruppe '{group['name']}' gelöscht"})
+    return jsonify({"success": True, "message": f"Group '{group['name']}' deleted"})

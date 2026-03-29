@@ -89,7 +89,7 @@ function applyFiltersAndSort() {
     // Suchergebnis-Anzeige aktualisieren
     const resultsEl = document.getElementById('searchResults');
     if (currentSearchTerm) {
-        resultsEl.innerHTML = `<span class="count">${visibleCount}</span> von ${totalCount} Projekten`;
+        resultsEl.innerHTML = `<span class="count">${visibleCount}</span> of ${totalCount} projects`;
     } else {
         resultsEl.innerHTML = '';
     }

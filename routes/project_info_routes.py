@@ -30,11 +30,11 @@ def get_info():
     """Schnelle Basis-Info: Metadaten, Tech-Stack, Env, Changelog, README, Screenshots, Milestones, Relations"""
     name = request.args.get('name', '')
     if not name:
-        return jsonify({"error": "Name fehlt"}), 400
+        return jsonify({"error": "Name missing"}), 400
 
     project_path = resolve_project_path(name)
     if not project_path:
-        return jsonify({"description": f"Projekt '{_escape(name)}' nicht gefunden.", "source": "", "name": name})
+        return jsonify({"description": f"Project '{_escape(name)}' not found.", "source": "", "name": name})
 
     sections = []
 
@@ -49,7 +49,7 @@ def get_info():
         pj["changelog_latest"] = parse_changelog(project_path)
 
     if pj.get("description"):
-        sections.append(f"<h3>Beschreibung</h3><p>{_escape(pj['description'])}</p>")
+        sections.append(f"<h3>Description</h3><p>{_escape(pj['description'])}</p>")
 
     # Schnelle Sections (File I/O only, kein Subprocess/Netzwerk)
     _add_metadata_section(sections, pj, project_path)
@@ -61,7 +61,7 @@ def get_info():
     _add_milestones_section(sections, pj)
     _add_relations_section(sections, name)
 
-    description = "".join(sections) if sections else f"Keine Informationen fuer '{_escape(name)}' gefunden."
+    description = "".join(sections) if sections else f"No information found for '{_escape(name)}'."
     return jsonify({"description": description, "source": "project", "name": name})
 
 
@@ -70,7 +70,7 @@ def get_info_slow():
     """Teure Sections: Git, LoC, Contributors, Branches, Sessions, Containers, GitHub, Health, Security"""
     name = request.args.get('name', '')
     if not name:
-        return jsonify({"error": "Name fehlt"}), 400
+        return jsonify({"error": "Name missing"}), 400
 
     project_path = resolve_project_path(name)
     if not project_path:
@@ -89,7 +89,7 @@ def get_info_slow():
     # Repo-Groesse als eigene Zeile
     if pj.get("repo_size"):
         sections.append(
-            f"<h3>Groesse</h3><p style='font-size:13px'>{_escape(pj['repo_size'])}</p>"
+            f"<h3>Size</h3><p style='font-size:13px'>{_escape(pj['repo_size'])}</p>"
         )
     _add_loc_section(sections, pj)
     _add_git_section(sections, project_path)
@@ -118,23 +118,23 @@ def _load_project_json(project_path):
 def _add_metadata_section(sections, pj, project_path):
     meta = []
     if pj.get("project_type"):
-        meta.append(("Typ", _escape(pj["project_type"])))
+        meta.append(("Type", _escape(pj["project_type"])))
     if pj.get("group"):
-        meta.append(("Gruppe", _escape(pj["group"])))
+        meta.append(("Group", _escape(pj["group"])))
     if pj.get("priority"):
-        icons = {"high": "Hoch", "medium": "Mittel", "low": "Niedrig"}
-        meta.append(("Prioritaet", _escape(icons.get(pj["priority"], pj["priority"]))))
+        icons = {"high": "High", "medium": "Medium", "low": "Low"}
+        meta.append(("Priority", _escape(icons.get(pj["priority"], pj["priority"]))))
     if pj.get("deadline"):
         meta.append(("Deadline", _escape(pj["deadline"])))
     if pj.get("progress") is not None:
-        meta.append(("Fortschritt", f"{_escape(pj['progress'])}%"))
+        meta.append(("Progress", f"{_escape(pj['progress'])}%"))
     if pj.get("version"):
         meta.append(("Version", f"<code style='color:#4fc3f7'>{_escape(pj['version'])}</code>"))
     if pj.get("license"):
-        meta.append(("Lizenz", _escape(pj["license"])))
+        meta.append(("License", _escape(pj["license"])))
     if pj.get("repo_size"):
-        meta.append(("Groesse", _escape(pj["repo_size"])))
-    meta.append(("Pfad", _escape(project_path)))
+        meta.append(("Size", _escape(pj["repo_size"])))
+    meta.append(("Path", _escape(project_path)))
 
     if meta:
         rows = "".join(
@@ -173,8 +173,8 @@ def _add_loc_section(sections, pj):
             f"<span style='width:40px;text-align:right;color:#666'>{pct}%</span></div>"
         )
     sections.append(
-        f"<h3>Code-Statistiken <span style='font-weight:normal;color:#888;font-size:12px'>"
-        f"({total_display} Zeilen)</span></h3>{bars_html}"
+        f"<h3>Code Statistics <span style='font-weight:normal;color:#888;font-size:12px'>"
+        f"({total_display} lines)</span></h3>{bars_html}"
     )
 
 
@@ -218,7 +218,7 @@ def _add_tech_stack_section(sections, project_path):
             f"{_escape(t)}</code>"
             for t in tech
         )
-        sections.append(f"<h3>Tech-Stack</h3><p>{badges}</p>")
+        sections.append(f"<h3>Tech Stack</h3><p>{badges}</p>")
 
 
 def _add_git_section(sections, project_path):
@@ -240,7 +240,7 @@ def _add_git_section(sections, project_path):
                             f"<span style='color:#666;font-size:11px'>{_escape(parts[2])}</span></div>"
                         )
             if commits_html:
-                sections.append(f"<h3>Letzte Commits</h3>{commits_html}")
+                sections.append(f"<h3>Recent Commits</h3>{commits_html}")
 
         branch = subprocess.run(
             ["git", "branch", "--show-current"],
@@ -296,7 +296,7 @@ def _add_milestones_section(sections, pj):
             f"{'done' if m.get('done') else 'pending'} {_escape(m.get('name', ''))}</div>"
             for m in pj["milestones"]
         )
-        sections.append(f"<h3>Meilensteine</h3>{ms_html}")
+        sections.append(f"<h3>Milestones</h3>{ms_html}")
 
 
 def _add_relations_section(sections, name):
@@ -324,7 +324,7 @@ def _add_relations_section(sections, name):
                     f"{_escape(t.get('icon', 'link'))} {_escape(t.get('name', r.get('type', '')))} <- "
                     f"<strong>{_escape(r.get('source', ''))}</strong>{note}</div>"
                 )
-            sections.append(f"<h3>Beziehungen</h3>{rel_html}")
+            sections.append(f"<h3>Relations</h3>{rel_html}")
     except Exception:
         pass
 
@@ -397,7 +397,7 @@ def _add_branches_section(sections, project_path):
             return
         rows = ""
         for b in branch_data["branches"]:
-            current = " <strong>(aktuell)</strong>" if b["is_current"] else ""
+            current = " <strong>(current)</strong>" if b["is_current"] else ""
             rows += (
                 f"<div style='display:flex;gap:10px;padding:4px 0;font-size:13px'>"
                 f"<code style='color:#64b5f6'>{_escape(b['name'])}</code>{current}"
@@ -423,7 +423,7 @@ def _add_contributors_section(sections, project_path):
                 f"<div style='display:flex;gap:10px;padding:4px 0;font-size:13px'>"
                 f"<strong>{_escape(c['name'])}</strong>"
                 f"<span style='color:#888'>{_escape(c['email'])}</span>"
-                f"<span style='color:#4caf50;margin-left:auto'>{c['commits']} Commits</span></div>"
+                f"<span style='color:#4caf50;margin-left:auto'>{c['commits']} commits</span></div>"
             )
         sections.append(f"<h3>Contributors</h3>{rows}")
     except Exception:
@@ -440,13 +440,13 @@ def _add_env_section(sections, project_path):
         for v in env_vars:
             color = "#1a3a2a" if v["has_default"] else "#3a1a1a"
             text_color = "#4caf50" if v["has_default"] else "#ff8a80"
-            title = _escape(v["comment"]) if v["comment"] else ("Hat Default" if v["has_default"] else "Muss gesetzt werden")
+            title = _escape(v["comment"]) if v["comment"] else ("Has default" if v["has_default"] else "Must be set")
             badges += (
                 f"<code style='background:{color};color:{text_color};padding:2px 8px;"
                 f"border-radius:4px;font-size:11px;margin:2px' title='{title}'>"
                 f"{_escape(v['key'])}</code> "
             )
-        sections.append(f"<h3>Environment-Variablen</h3><p>{badges}</p>")
+        sections.append(f"<h3>Environment Variables</h3><p>{badges}</p>")
     except Exception:
         pass
 

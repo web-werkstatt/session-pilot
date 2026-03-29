@@ -12,14 +12,14 @@ function loadNews() {
                 renderNewsTicker(data.headlines);
             }
         })
-        .catch(err => console.error('News laden fehlgeschlagen:', err));
+        .catch(err => console.error('Loading news failed:', err));
 }
 
 function renderNewsTicker(headlines) {
     const container = document.getElementById('newsTickerContent');
     if (!headlines || headlines.length === 0) {
-        if (container.innerHTML.includes('Lade')) {
-            container.innerHTML = '<span class="news-item">Keine aktuellen Neuigkeiten</span>';
+        if (container.innerHTML.includes('Loading')) {
+            container.innerHTML = '<span class="news-item">No current news</span>';
         }
         return;
     }

@@ -26,8 +26,8 @@ function resetIdeaForm() {
     document.getElementById('ideaCategory').value = 'note';
     document.getElementById('ideaPriority').value = 'normal';
     document.getElementById('ideaProject').value = '';
-    document.getElementById('ideaFormTitle').textContent = 'Neue Idee';
-    document.getElementById('ideaSaveBtn').textContent = 'Speichern';
+    document.getElementById('ideaFormTitle').textContent = 'New Idea';
+    document.getElementById('ideaSaveBtn').textContent = 'Save';
     currentEditIdea = null;
 }
 
@@ -45,7 +45,7 @@ function renderIdeasList() {
     }
 
     if (filtered.length === 0) {
-        container.innerHTML = '<div style="text-align:center;color:#666;padding:40px;">Keine Ideen vorhanden</div>';
+        container.innerHTML = '<div style="text-align:center;color:#666;padding:40px;">No ideas found</div>';
         return;
     }
 
@@ -53,7 +53,7 @@ function renderIdeasList() {
         const cat = ideasData.categories.find(c => c.id === idea.category) || {icon: '<i data-lucide="file-text" class="icon"></i>', color: '#666'};
         const priorityIcon = idea.priority === 'high' ? '<i data-lucide="circle" class="icon-priority-high"></i>' : idea.priority === 'low' ? '<i data-lucide="circle" class="icon-priority-low"></i>' : '';
         const statusClass = idea.status === 'done' ? 'idea-done' : idea.status === 'archived' ? 'idea-archived' : '';
-        const date = new Date(idea.created).toLocaleDateString('de-DE');
+        const date = new Date(idea.created).toLocaleDateString('en-US');
         return `
             <div class="idea-card ${statusClass}" onclick="editIdea('${idea.id}')">
                 <div class="idea-header">
@@ -64,7 +64,7 @@ function renderIdeasList() {
                 ${idea.content ? `<div class="idea-content">${idea.content.substring(0, 150)}${idea.content.length > 150 ? '...' : ''}</div>` : ''}
                 ${idea.project ? `<div class="idea-project"><i data-lucide="folder" class="icon"></i> ${idea.project}</div>` : ''}
                 <div class="idea-actions">
-                    <button class="idea-status-btn" onclick="event.stopPropagation();toggleIdeaStatus('${idea.id}','${idea.status}')">${idea.status === 'done' ? '<i data-lucide="rotate-ccw" class="icon"></i> Öffnen' : '<i data-lucide="check" class="icon"></i> Erledigt'}</button>
+                    <button class="idea-status-btn" onclick="event.stopPropagation();toggleIdeaStatus('${idea.id}','${idea.status}')">${idea.status === 'done' ? '<i data-lucide="rotate-ccw" class="icon"></i> Reopen' : '<i data-lucide="check" class="icon"></i> Done'}</button>
                     <button class="idea-delete-btn" onclick="event.stopPropagation();deleteIdea('${idea.id}')"><i data-lucide="trash-2" class="icon"></i></button>
                 </div>
             </div>
@@ -73,7 +73,7 @@ function renderIdeasList() {
     if (typeof lucide !== 'undefined') lucide.createIcons();
 
     // Kategorien für Filter
-    document.getElementById('ideasFilterCategory').innerHTML = '<option value="">Alle Kategorien</option>' +
+    document.getElementById('ideasFilterCategory').innerHTML = '<option value="">All Categories</option>' +
         ideasData.categories.map(c => `<option value="${c.id}">${renderIcon(c.icon)} ${c.name}</option>`).join('');
 
     // Kategorien für Form
@@ -87,7 +87,7 @@ function renderIdeasList() {
             .filter(p => p.project_type !== 'subproject')
             .map(p => `<option value="${p.name}">${p.name}</option>`)
             .join('');
-        document.getElementById('ideaProject').innerHTML = '<option value="">Kein Projekt</option>' + projectOptions;
+        document.getElementById('ideaProject').innerHTML = '<option value="">No Project</option>' + projectOptions;
     }
 }
 
@@ -101,8 +101,8 @@ function editIdea(ideaId) {
     document.getElementById('ideaCategory').value = idea.category;
     document.getElementById('ideaPriority').value = idea.priority;
     document.getElementById('ideaProject').value = idea.project || '';
-    document.getElementById('ideaFormTitle').textContent = 'Idee bearbeiten';
-    document.getElementById('ideaSaveBtn').textContent = 'Aktualisieren';
+    document.getElementById('ideaFormTitle').textContent = 'Edit Idea';
+    document.getElementById('ideaSaveBtn').textContent = 'Update';
 }
 
 async function saveIdea() {
@@ -113,7 +113,7 @@ async function saveIdea() {
     const project = document.getElementById('ideaProject').value || null;
 
     if (!title) {
-        alert('Bitte einen Titel eingeben');
+        alert('Please enter a title');
         return;
     }
 
@@ -130,7 +130,7 @@ async function saveIdea() {
 }
 
 async function deleteIdea(ideaId) {
-    if (!confirm('Idee wirklich löschen?')) return;
+    if (!confirm('Really delete this idea?')) return;
     await api.del(`/api/ideas/${ideaId}`);
     loadIdeas();
 }

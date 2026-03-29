@@ -9,7 +9,7 @@
 {% endblock %}
 
 {% block topbar_actions %}
-<button class="btn btn-secondary btn-sm" onclick="loadData()"><i data-lucide="refresh-cw" class="icon icon-sm"></i> Aktualisieren</button>
+<button class="btn btn-secondary btn-sm" onclick="loadData()"><i data-lucide="refresh-cw" class="icon icon-sm"></i> Refresh</button>
 {% endblock %}
 
 {% block content %}
@@ -19,7 +19,7 @@
             <span class="stat-value" id="totalContainers">-</span>
         </div>
         <div class="stat-card">
-            <span class="stat-label">Aktiv</span>
+            <span class="stat-label">Active</span>
             <span class="stat-value" style="color: var(--status-healthy)" id="runningContainers">-</span>
         </div>
         <div class="stat-card">
@@ -27,20 +27,20 @@
             <span class="stat-value" style="color: var(--status-unhealthy)" id="unhealthyContainers">-</span>
         </div>
         <div class="stat-card">
-            <span class="stat-label">Gestoppt</span>
+            <span class="stat-label">Stopped</span>
             <span class="stat-value" style="color: var(--status-stopped)" id="stoppedContainers">-</span>
         </div>
     </div>
 
     <div class="filter-bar">
         <span style="color: var(--text-muted)">Filter:</span>
-        <button class="filter-pill active" onclick="filterContainers('all', this)">Alle</button>
-        <button class="filter-pill" onclick="filterContainers('running', this)">Aktiv</button>
-        <button class="filter-pill" onclick="filterContainers('stopped', this)">Gestoppt</button>
+        <button class="filter-pill active" onclick="filterContainers('all', this)">All</button>
+        <button class="filter-pill" onclick="filterContainers('running', this)">Active</button>
+        <button class="filter-pill" onclick="filterContainers('stopped', this)">Stopped</button>
     </div>
 
     <div class="container-section">
-        <div class="loading" id="containerLoading"><div class="spinner"></div>Lade Container...</div>
+        <div class="loading" id="containerLoading"><div class="spinner"></div>Loading containers...</div>
         <table id="containerTable" style="display:none">
             <thead>
                 <tr>
@@ -48,8 +48,8 @@
                     <th>Status</th>
                     <th>Image</th>
                     <th>Port</th>
-                    <th>Erstellt</th>
-                    <th>Aktionen</th>
+                    <th>Created</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody id="tableBody"></tbody>
@@ -62,7 +62,7 @@
                 <h3 id="logTitle">Container Logs</h3>
                 <button class="log-close" onclick="closeModal('logOverlay')">&times;</button>
             </div>
-            <div class="log-body" id="logBody">Lade Logs...</div>
+            <div class="log-body" id="logBody">Loading logs...</div>
         </div>
     </div>
     <div class="toast" id="toast"></div>
@@ -82,13 +82,13 @@
                 document.getElementById('runningContainers').textContent = data.stats.running;
                 document.getElementById('unhealthyContainers').textContent = data.stats.unhealthy;
                 document.getElementById('stoppedContainers').textContent = data.stats.stopped;
-                document.getElementById('timestamp').textContent = 'Stand: ' + data.timestamp;
+                document.getElementById('timestamp').textContent = 'As of: ' + data.timestamp;
                 document.getElementById('containerLoading').style.display = 'none';
                 document.getElementById('containerTable').style.display = '';
                 renderContainers();
             })
             .catch(() => {
-                document.getElementById('containerLoading').innerHTML = '<div style="color:var(--status-error)">Fehler beim Laden</div>';
+                document.getElementById('containerLoading').innerHTML = '<div style="color:var(--status-error)">Error loading data</div>';
             });
     }
 
@@ -125,7 +125,7 @@
         filtered.forEach(c => {
             const tr = document.createElement('tr');
             const running = isRunning(c.status);
-            const portLink = c.port ? `<a href="http://192.168.100.93:${c.port}" target="_blank" class="action-link">Oeffnen</a>` : '';
+            const portLink = c.port ? `<a href="http://192.168.100.93:${c.port}" target="_blank" class="action-link">Open</a>` : '';
             const actions = `<div class="actions-cell">
                 ${running
                     ? `<button class="act-btn stop" onclick="doAction('${c.name}','stop')">Stop</button>
@@ -148,7 +148,7 @@
     }
 
     function doAction(name, action) {
-        const labels = {start: 'Starte', stop: 'Stoppe', restart: 'Neustarte'};
+        const labels = {start: 'Starting', stop: 'Stopping', restart: 'Restarting'};
         showToast(`${labels[action]} ${name}...`, 'success');
 
         fetch(`/api/container/${encodeURIComponent(name)}/${action}`, {method: 'POST'})
@@ -158,26 +158,26 @@
                     showToast(data.message, 'success');
                     setTimeout(loadData, 1000);
                 } else {
-                    showToast(data.error || 'Fehler', 'error');
+                    showToast(data.error || 'Error', 'error');
                 }
             })
-            .catch(() => showToast('Netzwerkfehler', 'error'));
+            .catch(() => showToast('Network error', 'error'));
     }
 
     function showLogs(name) {
         document.getElementById('logTitle').textContent = `Logs: ${name}`;
-        document.getElementById('logBody').textContent = 'Lade Logs...';
+        document.getElementById('logBody').textContent = 'Loading logs...';
         openModal('logOverlay');
 
         fetch(`/api/container/${encodeURIComponent(name)}/logs?tail=100`)
             .then(r => r.json())
             .then(data => {
                 const body = document.getElementById('logBody');
-                body.textContent = data.success ? (data.logs || '(keine Logs)') : data.error;
+                body.textContent = data.success ? (data.logs || '(no logs)') : data.error;
                 body.scrollTop = body.scrollHeight;
             })
             .catch(() => {
-                document.getElementById('logBody').textContent = 'Fehler beim Laden der Logs';
+                document.getElementById('logBody').textContent = 'Error loading logs';
             });
     }
 

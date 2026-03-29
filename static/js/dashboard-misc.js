@@ -8,7 +8,7 @@ function guessDescription(name, image) {
     if (n.includes('traefik')) return 'Reverse Proxy / Load Balancer';
     if (n.includes('nginx')) return 'Web Server / Reverse Proxy';
     if (n.includes('redis')) return 'In-Memory Cache / Message Broker';
-    if (n.includes('postgres') || n.includes('mariadb') || n.includes('mysql')) return 'Datenbank';
+    if (n.includes('postgres') || n.includes('mariadb') || n.includes('mysql')) return 'Database';
     if (n.includes('grafana')) return 'Monitoring Dashboard';
     if (n.includes('prometheus')) return 'Metrics Collection';
     if (n.includes('gitea')) return 'Git Server';
@@ -25,25 +25,25 @@ function guessDescription(name, image) {
 // Lustige Entwickler-Sprüche
 const funnyQuotes = [
     "Mass Container Deployment Unit... 🚀",
-    "Suche nach dem fehlenden Semikolon... 🔍",
-    "Kaffee wird in Code umgewandelt... ☕",
+    "Looking for the missing semicolon... 🔍",
+    "Converting coffee to code... ☕",
     "99 little bugs in the code, 99 little bugs... 🐛",
-    "Kompiliere Ausreden für den Chef... 📋",
-    "Lösche node_modules zum 47. Mal... 📁",
-    "Stack Overflow wird konsultiert... 📚",
-    "Container werden geweckt... 🐳",
-    "Git blame läuft... 🕵️",
-    "Versuche Docker zu verstehen... 🤔",
-    "README.md wird ignoriert... 📄",
-    "Generiere zufällige Bugs... 🎲",
-    "Lösche System32... nur Spaß! 😅",
-    "Backup? Welches Backup? 💾",
-    "Es funktioniert auf meinem Rechner... 🖥️",
-    "chmod 777 auf alles... 🔓",
+    "Compiling excuses for the boss... 📋",
+    "Deleting node_modules for the 47th time... 📁",
+    "Consulting Stack Overflow... 📚",
+    "Waking up containers... 🐳",
+    "Running git blame... 🕵️",
+    "Trying to understand Docker... 🤔",
+    "README.md is being ignored... 📄",
+    "Generating random bugs... 🎲",
+    "Deleting System32... just kidding! 😅",
+    "Backup? What backup? 💾",
+    "It works on my machine... 🖥️",
+    "chmod 777 on everything... 🔓",
     "sudo make me a sandwich 🥪",
     "while(true) { coffee++; } ☕",
-    "DNS propagiert noch... ⏳",
-    "Warte auf npm install... 📦"
+    "DNS still propagating... ⏳",
+    "Waiting for npm install... 📦"
 ];
 
 function showFunnyQuote() {

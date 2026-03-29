@@ -9,7 +9,7 @@ function loadProjects() {
         })
         .catch(function() {
             document.getElementById('projectBody').innerHTML =
-                '<tr><td colspan="7" class="loading-cell">Keine gescannten Projekte gefunden</td></tr>';
+                '<tr><td colspan="7" class="loading-cell">No scanned projects found</td></tr>';
         });
 }
 
@@ -29,7 +29,7 @@ function scoreClass(score) {
 function renderProjects(projects) {
     var tbody = document.getElementById('projectBody');
     if (!projects.length) {
-        tbody.innerHTML = '<tr><td colspan="7" class="loading-cell">Noch keine Projekte gescannt. Klicke "Scan" um zu starten.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" class="loading-cell">No projects scanned yet. Click "Scan" to start.</td></tr>';
         return;
     }
     tbody.innerHTML = projects.map(function(p) {
@@ -50,7 +50,7 @@ function renderProjects(projects) {
 
 function showDetail(project) {
     document.getElementById('detailTitle').textContent = project;
-    document.getElementById('detailBody').innerHTML = '<div class="loading-cell">Lade Report...</div>';
+    document.getElementById('detailBody').innerHTML = '<div class="loading-cell">Loading report...</div>';
     openModal('detailModal');
 
     api.get('/api/quality/report/' + encodeURIComponent(project))
@@ -58,7 +58,7 @@ function showDetail(project) {
             renderDetail(data);
         })
         .catch(function(err) {
-            document.getElementById('detailBody').innerHTML = '<div class="loading-cell">Fehler: ' + err + '</div>';
+            document.getElementById('detailBody').innerHTML = '<div class="loading-cell">Error: ' + err + '</div>';
         });
 }
 
@@ -80,8 +80,8 @@ function renderDetail(data) {
         html += '<div class="detail-diff">';
         html += '<span class="diff-label">vs. Baseline:</span>';
         html += '<span class="' + (d.score_delta >= 0 ? 'diff-good' : 'diff-bad') + '">Score ' + (d.score_delta >= 0 ? '+' : '') + d.score_delta + '</span>';
-        if (d.new_issues > 0) html += '<span class="diff-bad">+' + d.new_issues + ' neu</span>';
-        if (d.fixed_issues > 0) html += '<span class="diff-good">' + d.fixed_issues + ' behoben</span>';
+        if (d.new_issues > 0) html += '<span class="diff-bad">+' + d.new_issues + ' new</span>';
+        if (d.fixed_issues > 0) html += '<span class="diff-good">' + d.fixed_issues + ' fixed</span>';
         html += '</div>';
     }
     html += '</div>';
@@ -96,14 +96,14 @@ function renderDetail(data) {
     });
 
     var catNames = {
-        'duplication': 'Duplikate',
-        'complexity': 'Komplexitaet',
-        'file_size': 'Dateigroessen',
-        'css_tokens': 'CSS-Qualitaet',
-        'css_undefined': 'CSS-Variablen',
-        'architecture': 'Architektur',
+        'duplication': 'Duplicates',
+        'complexity': 'Complexity',
+        'file_size': 'File Sizes',
+        'css_tokens': 'CSS Quality',
+        'css_undefined': 'CSS Variables',
+        'architecture': 'Architecture',
         'test_failure': 'Tests',
-        'js_quality': 'JS-Qualitaet'
+        'js_quality': 'JS Quality'
     };
 
     Object.keys(categories).sort().forEach(function(cat) {
@@ -142,7 +142,7 @@ function renderDetail(data) {
 
     if (r.history && r.history.length > 1) {
         html += '<div class="history-section">';
-        html += '<h4>Score-Verlauf</h4>';
+        html += '<h4>Score History</h4>';
         html += '<div class="history-chart" id="historyChart"></div>';
         html += '</div>';
     }
@@ -161,28 +161,28 @@ function scanSingle(project) {
             setTimeout(function() { loadProjects(); }, 500);
         })
         .catch(function(err) {
-            btn.textContent = 'Fehler';
+            btn.textContent = 'Error';
             console.error(err);
         });
 }
 
 function scanProject() {
-    var project = prompt('Projektname eingeben (oder leer fuer project_dashboard):');
+    var project = prompt('Enter project name (or leave empty for project_dashboard):');
     if (project === null) return;
     if (!project) project = 'project_dashboard';
     scanSingle(project);
 }
 
 function setBaseline(project) {
-    if (!confirm('Baseline fuer "' + project + '" auf aktuellen Stand setzen?')) return;
+    if (!confirm('Set baseline for "' + project + '" to current state?')) return;
 
     api.post('/api/quality/baseline/' + encodeURIComponent(project))
         .then(function(data) {
-            alert('Baseline gesetzt: ' + data.score + ' (' + data.score_numeric + '/100)');
+            alert('Baseline set: ' + data.score + ' (' + data.score_numeric + '/100)');
             loadProjects();
         })
         .catch(function(err) {
-            alert('Fehler: ' + err);
+            alert('Error: ' + err);
         });
 }
 

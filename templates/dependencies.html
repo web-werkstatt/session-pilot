@@ -1,8 +1,8 @@
 {% extends "base.html" %}
 
-{% block title %}Projekt-Abhängigkeiten - Dashboard{% endblock %}
+{% block title %}Project Dependencies - Dashboard{% endblock %}
 
-{% block breadcrumb %}Abhängigkeiten{% endblock %}
+{% block breadcrumb %}Dependencies{% endblock %}
 
 {% block head_extra %}
 <link rel="stylesheet" href="/static/css/dependencies.css">
@@ -10,24 +10,24 @@
 {% endblock %}
 
 {% block topbar_actions %}
-<button class="btn btn-secondary btn-sm" onclick="showAddTypeModal()"><i data-lucide="plus" class="icon icon-sm"></i> Beziehungstyp</button>
+<button class="btn btn-secondary btn-sm" onclick="showAddTypeModal()"><i data-lucide="plus" class="icon icon-sm"></i> Relationship type</button>
 {% endblock %}
 
 {% block content %}
     <div class="stats-bar">
         <div class="stat">
             <span class="stat-value" id="totalRelations">0</span>
-            <span class="stat-label">Beziehungen</span>
+            <span class="stat-label">Relationships</span>
         </div>
         <div class="stat">
             <span class="stat-value" id="totalProjects">0</span>
-            <span class="stat-label">Verknuepfte Projekte</span>
+            <span class="stat-label">Linked projects</span>
         </div>
         <div id="typeStats"></div>
     </div>
 
     <div class="tabs">
-        <button class="tab-btn active" onclick="switchTab('list')"><i data-lucide="list" class="icon icon-sm"></i> Liste</button>
+        <button class="tab-btn active" onclick="switchTab('list')"><i data-lucide="list" class="icon icon-sm"></i> List</button>
         <button class="tab-btn" onclick="switchTab('graph')"><i data-lucide="git-branch" class="icon icon-sm"></i> Graph</button>
     </div>
 
@@ -37,40 +37,40 @@
             <div class="page-layout">
                 <div class="dep-main-content">
                     <div class="filter-bar">
-                        <input type="text" class="filter-input" id="searchFilter" placeholder="Projekt suchen..." oninput="filterRelations()">
+                        <input type="text" class="filter-input" id="searchFilter" placeholder="Search project..." oninput="filterRelations()">
                         <select class="filter-select" id="typeFilter" onchange="filterRelations()">
-                            <option value="">Alle Typen</option>
+                            <option value="">All types</option>
                         </select>
                     </div>
                     <div class="relations-list" id="relationsList"></div>
                 </div>
                 <div class="add-panel">
-                    <h3>Neue Beziehung</h3>
+                    <h3>New relationship</h3>
                     <div class="form-group">
-                        <label>Quell-Projekt</label>
+                        <label>Source project</label>
                         <div class="autocomplete-wrapper">
-                            <input type="text" id="sourceProjectInput" class="autocomplete-input" placeholder="Projekt eingeben..." oninput="onProjectSearch('source')" onfocus="onProjectSearch('source')">
+                            <input type="text" id="sourceProjectInput" class="autocomplete-input" placeholder="Enter project..." oninput="onProjectSearch('source')" onfocus="onProjectSearch('source')">
                             <input type="hidden" id="sourceProject">
                             <div class="autocomplete-dropdown" id="sourceDropdown"></div>
                         </div>
                     </div>
                     <div class="form-group">
-                        <label>Beziehungstyp</label>
+                        <label>Relationship type</label>
                         <select id="relationType"></select>
                     </div>
                     <div class="form-group">
-                        <label>Ziel-Projekt</label>
+                        <label>Target project</label>
                         <div class="autocomplete-wrapper">
-                            <input type="text" id="targetProjectInput" class="autocomplete-input" placeholder="Projekt eingeben..." oninput="onProjectSearch('target')" onfocus="onProjectSearch('target')">
+                            <input type="text" id="targetProjectInput" class="autocomplete-input" placeholder="Enter project..." oninput="onProjectSearch('target')" onfocus="onProjectSearch('target')">
                             <input type="hidden" id="targetProject">
                             <div class="autocomplete-dropdown" id="targetDropdown"></div>
                         </div>
                     </div>
                     <div class="form-group">
-                        <label>Notiz (optional)</label>
-                        <textarea id="relationNote" placeholder="z.B. 'Nutzt API fuer Datenabfrage'"></textarea>
+                        <label>Note (optional)</label>
+                        <textarea id="relationNote" placeholder="e.g. 'Uses API for data queries'"></textarea>
                     </div>
-                    <button class="btn btn-primary" style="width: 100%;" onclick="addRelation()">Beziehung erstellen</button>
+                    <button class="btn btn-primary" style="width: 100%;" onclick="addRelation()">Create relationship</button>
                     <div class="type-list" id="typeList"></div>
                 </div>
             </div>
@@ -90,7 +90,7 @@
                         </defs>
                     </svg>
                     <div class="node-color-menu" id="nodeColorMenu">
-                        <h5>Knoten-Farbe waehlen</h5>
+                        <h5>Choose node color</h5>
                         <div class="color-options">
                             <div class="color-option" style="background:#404040" onclick="setNodeColor('#404040')"></div>
                             <div class="color-option" style="background:#e74c3c" onclick="setNodeColor('#e74c3c')"></div>
@@ -105,35 +105,35 @@
                         </div>
                     </div>
                     <div class="graph-instructions">
-                        <strong>Bedienung:</strong><br>
-                        Projekt aus Liste ziehen zum Hinzufuegen |
-                        <kbd>Klick</kbd> = Auswaehlen |
-                        <kbd>Shift+Klick</kbd> = Verbinden |
-                        <kbd>Rechtsklick</kbd> = Farbe |
-                        <kbd>Doppelklick</kbd> auf Linie = Loeschen
+                        <strong>Controls:</strong><br>
+                        Drag project from list to add |
+                        <kbd>Click</kbd> = Select |
+                        <kbd>Shift+Click</kbd> = Connect |
+                        <kbd>Right-click</kbd> = Color |
+                        <kbd>Double-click</kbd> on line = Delete
                     </div>
                 </div>
                 <div class="graph-sidebar">
                     <div class="graph-panel connect-mode-info" id="connectInfo">
-                        <strong>Verbindungsmodus</strong><br>
+                        <strong>Connection mode</strong><br>
                         <span id="connectSource">-</span><br>
-                        Klicken Sie auf das Ziel-Projekt oder <kbd>Esc</kbd> zum Abbrechen
+                        Click the target project or press <kbd>Esc</kbd> to cancel
                     </div>
                     <div class="graph-panel">
-                        <h4>Beziehungstyp fuer neue Verbindung</h4>
+                        <h4>Relationship type for new connection</h4>
                         <select id="graphRelationType" class="input"></select>
                     </div>
                     <div class="graph-panel">
-                        <h4>Projekte (zum Graph ziehen)</h4>
-                        <input type="text" id="projectSearch" placeholder="Filtern..." class="input" style="margin-bottom: 8px;" oninput="filterProjectList()">
+                        <h4>Projects (drag to graph)</h4>
+                        <input type="text" id="projectSearch" placeholder="Filter..." class="input" style="margin-bottom: 8px;" oninput="filterProjectList()">
                         <div class="project-list" id="projectList"></div>
                     </div>
                     <div class="graph-panel">
-                        <h4>Legende</h4>
+                        <h4>Legend</h4>
                         <div class="graph-legend" id="graphLegend"></div>
                     </div>
-                    <button class="btn btn-secondary btn-sm" onclick="autoLayoutGraph()" style="width: 100%;"><i data-lucide="refresh-cw" class="icon icon-sm"></i> Auto-Layout</button>
-                    <button class="btn btn-destructive btn-sm" onclick="clearGraph()" style="width: 100%; margin-top: 6px;"><i data-lucide="trash-2" class="icon icon-sm"></i> Graph leeren</button>
+                    <button class="btn btn-secondary btn-sm" onclick="autoLayoutGraph()" style="width: 100%;"><i data-lucide="refresh-cw" class="icon icon-sm"></i> Auto-layout</button>
+                    <button class="btn btn-destructive btn-sm" onclick="clearGraph()" style="width: 100%; margin-top: 6px;"><i data-lucide="trash-2" class="icon icon-sm"></i> Clear graph</button>
                 </div>
             </div>
         </div>
@@ -142,22 +142,22 @@
     <!-- Add Type Modal -->
     <div id="addTypeModal" class="modal">
         <div class="modal-content">
-            <h3>Neuen Beziehungstyp erstellen</h3>
+            <h3>Create new relationship type</h3>
             <div class="form-group">
                 <label>Name</label>
-                <input type="text" id="newTypeName" placeholder="z.B. 'basiert auf'">
+                <input type="text" id="newTypeName" placeholder="e.g. 'based on'">
             </div>
             <div class="form-group">
                 <label>Icon (Emoji)</label>
-                <input type="text" id="newTypeIcon" placeholder="z.B." value="">
+                <input type="text" id="newTypeIcon" placeholder="e.g." value="">
             </div>
             <div class="form-group">
-                <label>Farbe</label>
+                <label>Color</label>
                 <input type="color" id="newTypeColor" value="#3498db">
             </div>
             <div style="display: flex; gap: 10px; margin-top: 20px;">
-                <button class="btn btn-secondary" style="flex: 1;" onclick="hideAddTypeModal()">Abbrechen</button>
-                <button class="btn btn-primary" style="flex: 1;" onclick="addRelationType()">Erstellen</button>
+                <button class="btn btn-secondary" style="flex: 1;" onclick="hideAddTypeModal()">Cancel</button>
+                <button class="btn btn-primary" style="flex: 1;" onclick="addRelationType()">Create</button>
             </div>
         </div>
     </div>
@@ -165,19 +165,19 @@
     <!-- Connect Modal -->
     <div id="connectModal" class="modal">
         <div class="modal-content">
-            <h3>Verbindung erstellen</h3>
+            <h3>Create connection</h3>
             <p style="margin-bottom: 15px; color: var(--text-muted);" id="connectModalInfo"></p>
             <div class="form-group">
-                <label>Beziehungstyp</label>
+                <label>Relationship type</label>
                 <select id="connectModalType"></select>
             </div>
             <div class="form-group">
-                <label>Notiz (optional)</label>
-                <textarea id="connectModalNote" placeholder="Beschreibung der Beziehung..."></textarea>
+                <label>Note (optional)</label>
+                <textarea id="connectModalNote" placeholder="Description of the relationship..."></textarea>
             </div>
             <div style="display: flex; gap: 10px; margin-top: 20px;">
-                <button class="btn btn-secondary" style="flex: 1;" onclick="hideConnectModal()">Abbrechen</button>
-                <button class="btn btn-primary" style="flex: 1;" onclick="confirmConnection()">Verbinden</button>
+                <button class="btn btn-secondary" style="flex: 1;" onclick="hideConnectModal()">Cancel</button>
+                <button class="btn btn-primary" style="flex: 1;" onclick="confirmConnection()">Connect</button>
             </div>
         </div>
     </div>

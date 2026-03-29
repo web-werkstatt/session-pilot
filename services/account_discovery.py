@@ -8,8 +8,13 @@ Unterstuetzte Assistenten:
 - Google Gemini CLI (~/.gemini)
 - GitHub Copilot CLI (~/.copilot)
 - Amazon Q Developer CLI (~/.aws/amazonq)
+
+Cross-platform: uses os.path.expanduser("~") which resolves to:
+- Linux/macOS: /home/user or /Users/user
+- Windows: C:\\Users\\user
 """
 import os
+import sys
 import glob
 
 # Bekannte Verzeichnisse die KEINE Accounts sind
@@ -144,18 +149,33 @@ def discover_amazonq_accounts(home_dir):
     }]
 
 
+def _get_home_dirs():
+    """Returns list of home directories to search for AI accounts.
+    On Windows, also checks APPDATA and LOCALAPPDATA."""
+    dirs = [os.path.expanduser("~")]
+    if sys.platform == "win32":
+        for var in ("APPDATA", "LOCALAPPDATA"):
+            p = os.environ.get(var)
+            if p and p not in dirs:
+                dirs.append(p)
+    return dirs
+
+
 def discover_all_accounts():
     """Entdeckt alle AI Coding Assistenten auf dem System.
     Returns: Liste von Account-Dicts mit name, tool, config_dir, session_format
     """
-    home_dir = os.path.expanduser("~")
     accounts = []
+    seen_dirs = set()
 
-    accounts.extend(discover_claude_accounts(home_dir))
-    accounts.extend(discover_codex_accounts(home_dir))
-    accounts.extend(discover_gemini_accounts(home_dir))
-    accounts.extend(discover_copilot_accounts(home_dir))
-    accounts.extend(discover_amazonq_accounts(home_dir))
+    for home_dir in _get_home_dirs():
+        for discover_fn in (discover_claude_accounts, discover_codex_accounts,
+                            discover_gemini_accounts, discover_copilot_accounts,
+                            discover_amazonq_accounts):
+            for acc in discover_fn(home_dir):
+                if acc["config_dir"] not in seen_dirs:
+                    seen_dirs.add(acc["config_dir"])
+                    accounts.append(acc)
 
     return accounts
 

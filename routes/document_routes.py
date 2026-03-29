@@ -104,13 +104,13 @@ def get_documents(name):
     """Lazy-Loading: Listet nur ein Verzeichnis (default: root)"""
     project_path = _resolve_project_path(name)
     if not project_path:
-        return jsonify({"error": "Projekt nicht gefunden"}), 404
+        return jsonify({"error": "Project not found"}), 404
 
     rel_dir = request.args.get('dir', '.')
 
     files, subdirs = _list_directory(project_path, rel_dir)
     if files is None:
-        return jsonify({"error": "Verzeichnis nicht gefunden"}), 404
+        return jsonify({"error": "Directory not found"}), 404
 
     return jsonify({
         'directory': rel_dir,
@@ -131,7 +131,7 @@ def get_document(name, doc_path):
     """Liest ein einzelnes Dokument"""
     project_path = _resolve_project_path(name)
     if not project_path:
-        return jsonify({"error": "Projekt nicht gefunden"}), 404
+        return jsonify({"error": "Project not found"}), 404
 
     filepath = os.path.join(project_path, doc_path)
 
@@ -139,10 +139,10 @@ def get_document(name, doc_path):
     real_project = os.path.realpath(project_path)
     real_file = os.path.realpath(filepath)
     if not real_file.startswith(real_project):
-        return jsonify({"error": "Zugriff verweigert"}), 403
+        return jsonify({"error": "Access denied"}), 403
 
     if not os.path.isfile(filepath):
-        return jsonify({"error": "Datei nicht gefunden"}), 404
+        return jsonify({"error": "File not found"}), 404
 
     ext = os.path.splitext(doc_path)[1].lower()
 
@@ -180,7 +180,7 @@ def get_document(name, doc_path):
             'size': len(data),
         })
 
-    return jsonify({"error": "Dateityp nicht unterstuetzt"}), 400
+    return jsonify({"error": "File type not supported"}), 400
 
 
 @documents_bp.route('/api/project/<path:name>/document/<path:doc_path>', methods=['PUT'])
@@ -189,18 +189,18 @@ def save_document(name, doc_path):
     """Speichert ein Dokument"""
     project_path = _resolve_project_path(name)
     if not project_path:
-        return jsonify({"error": "Projekt nicht gefunden"}), 404
+        return jsonify({"error": "Project not found"}), 404
 
     filepath = os.path.join(project_path, doc_path)
 
     real_project = os.path.realpath(project_path)
     real_file = os.path.realpath(filepath)
     if not real_file.startswith(real_project):
-        return jsonify({"error": "Zugriff verweigert"}), 403
+        return jsonify({"error": "Access denied"}), 403
 
     ext = os.path.splitext(doc_path)[1].lower()
     if ext not in DOC_EXTENSIONS:
-        return jsonify({"error": "Nur Textdateien koennen bearbeitet werden"}), 400
+        return jsonify({"error": "Only text files can be edited"}), 400
 
     data = request.get_json()
     content = data.get('content', '')
@@ -208,7 +208,7 @@ def save_document(name, doc_path):
     os.makedirs(os.path.dirname(filepath), exist_ok=True)
     with open(filepath, 'w', encoding='utf-8') as f:
         f.write(content)
-    return jsonify({"success": True, "message": f"{doc_path} gespeichert"})
+    return jsonify({"success": True, "message": f"{doc_path} saved"})
 
 
 @documents_bp.route('/api/project/<path:name>/document-image/<path:img_path>')
@@ -238,7 +238,7 @@ def upload_files(name):
     """Upload von Dateien (Dokumente + Bilder) in ein Projekt-Verzeichnis"""
     project_path = _resolve_project_path(name)
     if not project_path:
-        return jsonify({"error": "Projekt nicht gefunden"}), 404
+        return jsonify({"error": "Project not found"}), 404
 
     target_dir = request.form.get('directory', '.')
     if target_dir and target_dir != '.':
@@ -250,18 +250,18 @@ def upload_files(name):
     real_project = os.path.realpath(project_path)
     real_target = os.path.realpath(abs_target)
     if not real_target.startswith(real_project):
-        return jsonify({"error": "Zugriff verweigert"}), 403
+        return jsonify({"error": "Access denied"}), 403
 
     if not os.path.isdir(abs_target):
         os.makedirs(abs_target, exist_ok=True)
 
     files = request.files.getlist('files')
     if not files:
-        return jsonify({"error": "Keine Dateien gesendet"}), 400
+        return jsonify({"error": "No files sent"}), 400
 
     # Max 20 Dateien pro Upload
     if len(files) > 20:
-        return jsonify({"error": "Maximal 20 Dateien pro Upload"}), 400
+        return jsonify({"error": "Maximum 20 files per upload"}), 400
 
     results = []
     for f in files:
@@ -273,12 +273,12 @@ def upload_files(name):
         # Doppelpunkte, Backslashes etc. entfernen
         filename = filename.replace('\\', '/').split('/')[-1]
         if not filename or filename.startswith('.'):
-            results.append({"name": f.filename, "error": "Ungueltiger Dateiname"})
+            results.append({"name": f.filename, "error": "Invalid filename"})
             continue
 
         ext = os.path.splitext(filename)[1].lower()
         if ext not in ALL_EXTENSIONS:
-            results.append({"name": filename, "error": f"Dateityp {ext} nicht erlaubt"})
+            results.append({"name": filename, "error": f"File type {ext} not allowed"})
             continue
 
         # Dateigroesse pruefen (max 10 MB)
@@ -286,7 +286,7 @@ def upload_files(name):
         size = f.tell()
         f.seek(0)
         if size > 10 * 1024 * 1024:
-            results.append({"name": filename, "error": "Datei zu gross (max 10 MB)"})
+            results.append({"name": filename, "error": "File too large (max 10 MB)"})
             continue
 
         filepath = os.path.join(abs_target, filename)
@@ -294,7 +294,7 @@ def upload_files(name):
         # Sicherheitscheck fuer finale Datei
         real_file = os.path.realpath(filepath)
         if not real_file.startswith(real_project):
-            results.append({"name": filename, "error": "Pfad nicht erlaubt"})
+            results.append({"name": filename, "error": "Path not allowed"})
             continue
 
         try:
@@ -328,14 +328,14 @@ def export_bundle(name):
     """Exportiert ausgewaehlte Dokumente als Bundle"""
     project_path = _resolve_project_path(name)
     if not project_path:
-        return jsonify({"error": "Projekt nicht gefunden"}), 404
+        return jsonify({"error": "Project not found"}), 404
 
     data = request.get_json()
     selected_files = data.get('files', [])
     export_format = data.get('format', 'zip')
 
     if not selected_files:
-        return jsonify({"error": "Keine Dateien ausgewaehlt"}), 400
+        return jsonify({"error": "No files selected"}), 400
 
     # Max 500 Dateien pro Export
     selected_files = selected_files[:500]
@@ -373,7 +373,7 @@ def export_bundle(name):
     elif export_format == 'json':
         return _export_json(name, files_data)
 
-    return jsonify({"error": "Unbekanntes Format"}), 400
+    return jsonify({"error": "Unknown format"}), 400
 
 
 def _export_zip(name, files_data):
@@ -388,7 +388,7 @@ def _export_zip(name, files_data):
     return Response(
         buf.getvalue(),
         mimetype='application/zip',
-        headers={'Content-Disposition': f'attachment; filename={name}-dokumente.zip'}
+        headers={'Content-Disposition': f'attachment; filename={name}-documents.zip'}
     )
 
 
@@ -411,10 +411,10 @@ def _export_html_bundle(name, files_data):
             )
 
     html_doc = f"""<!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>{name} - Dokumentation</title>
+<title>{name} - Documentation</title>
 <style>
 body {{ font-family: 'Segoe UI', sans-serif; max-width: 900px; margin: 0 auto; padding: 40px 20px; background: #fff; color: #333; line-height: 1.7; }}
 h1 {{ border-bottom: 2px solid #eee; padding-bottom: 10px; }}
@@ -433,7 +433,7 @@ blockquote {{ border-left: 3px solid #4fc3f7; padding: 8px 16px; margin: 12px 0;
 </head>
 <body>
 <h1>{name}</h1>
-<p style="color:#888;font-size:13px">Exportiert am {datetime.now().strftime('%d.%m.%Y %H:%M')} &middot; {len(files_data)} Dateien</p>
+<p style="color:#888;font-size:13px">Exported on {datetime.now().strftime('%Y-%m-%d %H:%M')} &middot; {len(files_data)} files</p>
 {''.join(sections)}
 </body>
 </html>"""
@@ -441,7 +441,7 @@ blockquote {{ border-left: 3px solid #4fc3f7; padding: 8px 16px; margin: 12px 0;
     return Response(
         html_doc,
         mimetype='text/html',
-        headers={'Content-Disposition': f'attachment; filename={name}-dokumentation.html'}
+        headers={'Content-Disposition': f'attachment; filename={name}-documentation.html'}
     )
 
 
@@ -453,7 +453,7 @@ def _export_markdown(name, files_data):
     return Response(
         ''.join(parts),
         mimetype='text/markdown',
-        headers={'Content-Disposition': f'attachment; filename={name}-dokumentation.md'}
+        headers={'Content-Disposition': f'attachment; filename={name}-documentation.md'}
     )
 
 
@@ -475,5 +475,5 @@ def _export_json(name, files_data):
     return Response(
         json.dumps(result, indent=2, ensure_ascii=False),
         mimetype='application/json',
-        headers={'Content-Disposition': f'attachment; filename={name}-dokumente.json'}
+        headers={'Content-Disposition': f'attachment; filename={name}-documents.json'}
     )

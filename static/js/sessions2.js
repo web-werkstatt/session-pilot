@@ -2,8 +2,8 @@ function openSessionStats() {
     var grid = document.getElementById('sessionStatsGrid');
     grid.innerHTML = [
         {label:'Sessions', id:'statSessions', color:'#4fc3f7'},
-        {label:'Projekte', id:'statProjects', color:'#fff'},
-        {label:'Gesamt-Dauer', id:'statDuration', color:'#66bb6a'},
+        {label:'Projects', id:'statProjects', color:'#fff'},
+        {label:'Total Duration', id:'statDuration', color:'#66bb6a'},
         {label:'Input-Tokens', id:'statTokensIn', color:'#ff9800'},
         {label:'Output-Tokens', id:'statTokensOut', color:'#cf6ff7'},
     ].map(function(s) {
@@ -86,7 +86,7 @@ async function loadStats() {
             document.getElementById('statAccountsSub').textContent = d.accounts.map(a => `${a.account}: ${a.cnt}`).join(' · ');
         }
         if (d.total_user_messages) {
-            document.getElementById('statMsgSub').textContent = `${(d.total_user_messages||0).toLocaleString('de-DE')} Nachrichten`;
+            document.getElementById('statMsgSub').textContent = `${(d.total_user_messages||0).toLocaleString('en-US')} messages`;
         }
 
         const sel = document.getElementById('filterProject');
@@ -125,7 +125,7 @@ async function loadSessions() {
         renderPagination();
     } catch(e) {
         console.error('Sessions Error:', e);
-        document.getElementById('loading').innerHTML = '<p style="color:var(--danger)">Fehler beim Laden der Sessions</p>';
+        document.getElementById('loading').innerHTML = '<p style="color:var(--danger)">Error loading sessions</p>';
     }
 }
 
@@ -154,8 +154,8 @@ function renderSessions(sessions) {
 
 function renderSessionRow(s, i) {
     const date = s.started_at ? new Date(s.started_at) : null;
-    const dateStr = date ? date.toLocaleDateString('de-DE', {day:'2-digit',month:'2-digit',year:'2-digit'}) : '-';
-    const timeStr = date ? date.toLocaleTimeString('de-DE', {hour:'2-digit',minute:'2-digit'}) : '';
+    const dateStr = date ? date.toLocaleDateString('en-US', {month:'short',day:'numeric',year:'2-digit'}) : '-';
+    const timeStr = date ? date.toLocaleTimeString('en-US', {hour:'2-digit',minute:'2-digit'}) : '';
     const acctClass = 'account-' + (s.account || '').replace(/[^a-z0-9]/g, '');
     const durPct = Math.min(100, ((s.duration_ms || 0) / maxDuration) * 100);
     const model = (s.model || '-').replace('claude-', '').replace('opus-4-6', 'Opus').replace('sonnet-4-6', 'Sonnet');
@@ -184,13 +184,13 @@ function showPreview(e, idx) {
     const s = sessionsData[idx];
     if (!s) return;
     const tip = document.getElementById('previewTip');
-    const date = s.started_at ? new Date(s.started_at).toLocaleString('de-DE') : '-';
+    const date = s.started_at ? new Date(s.started_at).toLocaleString('en-US') : '-';
     tip.innerHTML = `
         <div class="pt-title">${s.project_name || '-'}</div>
         <div class="pt-row"><span class="pt-label">Account</span><span class="pt-value">${s.account}</span></div>
-        <div class="pt-row"><span class="pt-label">Datum</span><span class="pt-value">${date}</span></div>
-        <div class="pt-row"><span class="pt-label">Dauer</span><span class="pt-value">${s.duration_formatted}</span></div>
-        <div class="pt-row"><span class="pt-label">Nachrichten</span><span class="pt-value">${(s.user_message_count||0)} User / ${(s.assistant_message_count||0)} Assistant</span></div>
+        <div class="pt-row"><span class="pt-label">Date</span><span class="pt-value">${date}</span></div>
+        <div class="pt-row"><span class="pt-label">Duration</span><span class="pt-value">${s.duration_formatted}</span></div>
+        <div class="pt-row"><span class="pt-label">Messages</span><span class="pt-value">${(s.user_message_count||0)} User / ${(s.assistant_message_count||0)} Assistant</span></div>
         <div class="pt-row"><span class="pt-label">Tokens</span><span class="pt-value">${s.tokens_formatted}</span></div>
         <div class="pt-row"><span class="pt-label">Model</span><span class="pt-value">${s.model || '-'}</span></div>
         <div class="pt-row"><span class="pt-label">Branch</span><span class="pt-value">${s.git_branch || '-'}</span></div>
@@ -230,8 +230,8 @@ async function syncSessions() {
             btn.textContent = `+${d.stats.imported} neu`;
             loadStats();
             loadSessions();
-        } else { btn.textContent = 'Fehler'; }
-    } catch(e) { btn.textContent = 'Fehler'; }
+        } else { btn.textContent = 'Error'; }
+    } catch(e) { btn.textContent = 'Error'; }
     btn.classList.remove('syncing');
     setTimeout(() => { btn.innerHTML = '<i data-lucide="refresh-cw" style="width:14px;height:14px;display:inline-block;vertical-align:middle"></i> Sync'; if (typeof lucide !== 'undefined') lucide.createIcons(); }, 3000);
 }
@@ -242,7 +242,7 @@ async function loadSessionsWithFulltext(query) {
     const signal = searchAbort.signal;
 
     document.getElementById('loading').style.display = 'block';
-    document.getElementById('loading').innerHTML = '<div class="spinner"></div>Durchsuche Sessions...';
+    document.getElementById('loading').innerHTML = '<div class="spinner"></div>Searching sessions...';
     document.getElementById('sessionsTable').style.display = 'none';
     document.getElementById('emptyState').style.display = 'none';
     hideFulltextResults();
@@ -304,7 +304,7 @@ async function loadSessionsWithFulltext(query) {
     } catch(e) {
         if (e.name === 'AbortError') return;
         console.error('Search error:', e);
-        document.getElementById('loading').innerHTML = '<p style="color:var(--danger)">Fehler bei der Suche</p>';
+        document.getElementById('loading').innerHTML = '<p style="color:var(--danger)">Search error</p>';
     }
 }
 
@@ -321,9 +321,9 @@ function renderFulltextResults(results, query, ftTotal) {
     const words = query.split(/\s+/).filter(w => w.length > 0).map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
     const re = new RegExp('(' + words.join('|') + ')', 'gi');
 
-    container.innerHTML = '<div class="fulltext-header">Weitere Treffer in Nachrichteninhalten (' + ftTotal + ' Sessions gesamt)</div>' +
+    container.innerHTML = '<div class="fulltext-header">More matches in message contents (' + ftTotal + ' sessions total)</div>' +
         results.map(r => {
-            const date = r.started_at ? new Date(r.started_at).toLocaleDateString('de-DE', {day:'2-digit',month:'2-digit',year:'2-digit'}) : '-';
+            const date = r.started_at ? new Date(r.started_at).toLocaleDateString('en-US', {month:'short',day:'numeric',year:'2-digit'}) : '-';
             const snippet = (r.snippet || '').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(re, '<mark>$1</mark>');
             const acctClass = 'account-' + (r.account || '').replace(/[^a-z0-9]/g, '');
             const msgType = r.match_type === 'human' ? 'User' : 'Assistant';

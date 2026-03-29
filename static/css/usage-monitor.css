@@ -1,0 +1,193 @@
+/* Usage Monitor Page */
+
+.um-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 24px;
+    border-bottom: 1px solid var(--border-subtle);
+}
+.um-live-dot {
+    display: inline-block;
+    width: 8px; height: 8px;
+    background: var(--status-success);
+    border-radius: 50%;
+    margin-right: 6px;
+    animation: um-pulse 2s infinite;
+}
+@keyframes um-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+}
+.um-status-text { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+.um-last-update { font-size: 12px; color: var(--text-muted); margin-left: 12px; }
+.um-loading { text-align: center; padding: 60px; color: var(--text-muted); }
+
+.um-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 16px;
+    padding: 20px 24px;
+}
+
+/* Account Card */
+.um-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    transition: border-color var(--transition-base);
+}
+.um-card:hover { border-color: var(--accent); }
+.um-card.inactive { opacity: 0.5; }
+
+.um-card-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+}
+.um-account-name {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-heading);
+}
+.um-plan-badge {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: var(--radius-full);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+}
+.um-plan-pro { background: rgba(91,155,213,0.15); color: var(--accent-light); }
+.um-plan-max5 { background: rgba(255,183,77,0.15); color: #ffb74d; }
+.um-plan-max20 { background: rgba(129,199,132,0.15); color: #81c784; }
+.um-sessions-badge {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-left: auto;
+}
+
+/* Metric Rows */
+.um-metric {
+    margin-bottom: 12px;
+}
+.um-metric-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 4px;
+}
+.um-metric-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+.um-metric-value {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+    font-family: var(--font-mono);
+}
+
+/* Progress Bar */
+.um-bar {
+    height: 6px;
+    background: var(--bg-hover);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+}
+.um-bar-fill {
+    height: 100%;
+    border-radius: var(--radius-full);
+    transition: width 0.6s ease, background 0.3s ease;
+}
+.um-bar-green { background: var(--status-success); }
+.um-bar-yellow { background: #ffb74d; }
+.um-bar-red { background: var(--status-error); }
+
+/* Divider */
+.um-divider {
+    border: none;
+    border-top: 1px solid var(--border-subtle);
+    margin: 14px 0;
+}
+
+/* Burn Rate / Predictions */
+.um-stats-row {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+.um-stat {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+.um-stat strong {
+    color: var(--text-primary);
+    font-family: var(--font-mono);
+}
+
+.um-prediction {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 8px;
+}
+.um-prediction .warn { color: #ffb74d; }
+.um-prediction .danger { color: var(--status-error); }
+.um-prediction .safe { color: var(--status-success); }
+
+/* Model Distribution */
+.um-models {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+}
+.um-model-tag {
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: var(--radius-full);
+    background: var(--bg-hover);
+    color: var(--text-secondary);
+    font-family: var(--font-mono);
+}
+
+/* Plan Dropdown */
+.um-plan-select {
+    font-size: 11px;
+    background: var(--bg-surface);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-muted);
+    border-radius: var(--radius-sm);
+    padding: 2px 6px;
+    cursor: pointer;
+}
+
+/* Reset timer */
+.um-reset {
+    font-size: 12px;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.um-reset strong {
+    color: var(--text-primary);
+    font-family: var(--font-mono);
+}
+
+/* Idle state */
+.um-idle-text {
+    color: var(--text-faint);
+    font-size: 13px;
+    text-align: center;
+    padding: 20px 0;
+}
+
+@media (max-width: 860px) {
+    .um-grid { grid-template-columns: 1fr; }
+}

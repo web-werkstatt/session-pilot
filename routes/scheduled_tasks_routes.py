@@ -18,58 +18,58 @@ TASK_TEMPLATES = {
     "health-check": {
         "name": "Dashboard Health Check",
         "cron": "23 8 * * *",
-        "cron_human": "Taeglich um 8:23",
+        "cron_human": "Daily at 8:23",
         "type": "health-check",
         "prompt": (
-            "Pruefe den Zustand des Project Dashboard:\n"
+            "Check the status of the Project Dashboard:\n"
             "1. systemctl is-active project-dashboard\n"
             "2. curl -s http://localhost:5055/api/data | head -5\n"
             "3. df -h /mnt/projects | tail -1\n"
             "4. ls -lt /mnt/projects/backups/project-dashboard/daily/ | head -3\n"
-            "Erstelle kurzen Status-Report (OK/Warnung/Fehler)."
+            "Create a brief status report (OK/Warning/Error)."
         ),
     },
     "backup": {
         "name": "Backup Verification",
         "cron": "17 2 * * *",
-        "cron_human": "Taeglich um 2:17",
+        "cron_human": "Daily at 2:17",
         "type": "backup",
         "prompt": (
-            "Pruefe ob das Dashboard-Backup erfolgreich war:\n"
-            "1. Heutiges Backup-Verzeichnis vorhanden?\n"
-            "2. Wichtige Dateien nicht leer? (groups.json, relations.json, ideas.json)\n"
-            "3. Backup-Log pruefen: tail -20 dashboard-backup.log\n"
-            "Nur bei Fehler: Alert erstellen."
+            "Check if the dashboard backup was successful:\n"
+            "1. Is today's backup directory present?\n"
+            "2. Are important files non-empty? (groups.json, relations.json, ideas.json)\n"
+            "3. Check backup log: tail -20 dashboard-backup.log\n"
+            "Only on error: create alert."
         ),
     },
     "issue-tracker": {
         "name": "Issue Check",
         "cron": "0 9 * * *",
-        "cron_human": "Taeglich um 9:00",
+        "cron_human": "Daily at 9:00",
         "type": "issue-tracker",
         "prompt": (
-            "Pruefe ob GitHub Issue #{issue_number} geschlossen wurde.\n"
+            "Check if GitHub Issue #{issue_number} has been closed.\n"
             "1. curl -s https://api.github.com/repos/{owner}/{repo}/issues/{issue_number}\n"
-            "2. Pruefe das Feld 'state' in der Antwort.\n"
-            "3. Falls closed: Melde Datum und Version des Fixes.\n"
-            "4. Falls open: Kurz bestaetigen dass es weiterhin offen ist."
+            "2. Check the 'state' field in the response.\n"
+            "3. If closed: report date and version of the fix.\n"
+            "4. If open: briefly confirm it is still open."
         ),
     },
 }
 
 CRON_DESCRIPTIONS = {
-    "* * * * *": "Jede Minute",
-    "*/5 * * * *": "Alle 5 Minuten",
-    "*/15 * * * *": "Alle 15 Minuten",
-    "*/30 * * * *": "Alle 30 Minuten",
-    "0 * * * *": "Stuendlich",
-    "0 */2 * * *": "Alle 2 Stunden",
-    "0 */6 * * *": "Alle 6 Stunden",
-    "0 0 * * *": "Taeglich um Mitternacht",
-    "0 9 * * *": "Taeglich um 9:00",
-    "0 9 * * 1-5": "Werktags um 9:00",
-    "0 0 * * 0": "Woechentlich (Sonntag)",
-    "0 0 1 * *": "Monatlich (1. des Monats)",
+    "* * * * *": "Every minute",
+    "*/5 * * * *": "Every 5 minutes",
+    "*/15 * * * *": "Every 15 minutes",
+    "*/30 * * * *": "Every 30 minutes",
+    "0 * * * *": "Hourly",
+    "0 */2 * * *": "Every 2 hours",
+    "0 */6 * * *": "Every 6 hours",
+    "0 0 * * *": "Daily at midnight",
+    "0 9 * * *": "Daily at 9:00",
+    "0 9 * * 1-5": "Weekdays at 9:00",
+    "0 0 * * 0": "Weekly (Sunday)",
+    "0 0 1 * *": "Monthly (1st of month)",
 }
 
 
@@ -102,22 +102,22 @@ def describe_cron(cron_expr):
     desc_parts = []
 
     if minute.startswith("*/"):
-        return f"Alle {minute[2:]} Minuten"
+        return f"Every {minute[2:]} minutes"
     if hour.startswith("*/"):
-        return f"Alle {hour[2:]} Stunden"
+        return f"Every {hour[2:]} hours"
 
     if minute != "*" and hour != "*":
         time_str = f"{hour.zfill(2)}:{minute.zfill(2)}"
         if dow == "1-5":
-            desc_parts.append(f"Werktags um {time_str}")
+            desc_parts.append(f"Weekdays at {time_str}")
         elif dow == "0" or dow == "7":
-            desc_parts.append(f"Sonntags um {time_str}")
+            desc_parts.append(f"Sundays at {time_str}")
         elif dom != "*":
-            desc_parts.append(f"Am {dom}. um {time_str}")
+            desc_parts.append(f"On the {dom}. at {time_str}")
         elif dow == "*" and dom == "*":
-            desc_parts.append(f"Taeglich um {time_str}")
+            desc_parts.append(f"Daily at {time_str}")
         else:
-            desc_parts.append(f"Um {time_str}")
+            desc_parts.append(f"At {time_str}")
 
     return " ".join(desc_parts) if desc_parts else cron_expr
 
@@ -142,15 +142,15 @@ def get_tasks():
 def create_task():
     req = request.get_json()
     if not req:
-        return jsonify({"error": "Keine Daten"}), 400
+        return jsonify({"error": "No data"}), 400
 
     name = req.get("name", "").strip()
     if not name:
-        return jsonify({"error": "Name ist erforderlich"}), 400
+        return jsonify({"error": "Name is required"}), 400
 
     cron = req.get("cron", "").strip()
     if not cron or len(cron.split()) != 5:
-        return jsonify({"error": "Gueltiger Cron-Ausdruck erforderlich (5 Felder)"}), 400
+        return jsonify({"error": "Valid cron expression required (5 fields)"}), 400
 
     data = load_tasks()
     new_task = {
@@ -176,7 +176,7 @@ def create_task():
 def update_task(task_id):
     req = request.get_json()
     if not req:
-        return jsonify({"error": "Keine Daten"}), 400
+        return jsonify({"error": "No data"}), 400
 
     data = load_tasks()
     for task in data["tasks"]:
@@ -191,7 +191,7 @@ def update_task(task_id):
             save_tasks(data)
             return jsonify({"success": True, "task": task})
 
-    return jsonify({"error": "Task nicht gefunden"}), 404
+    return jsonify({"error": "Task not found"}), 404
 
 
 @scheduled_tasks_bp.route('/api/scheduled-tasks/<task_id>', methods=['DELETE'])
@@ -201,7 +201,7 @@ def delete_task(task_id):
     data["tasks"] = [t for t in data["tasks"] if t.get("id") != task_id]
 
     if len(data["tasks"]) == original_count:
-        return jsonify({"error": "Task nicht gefunden"}), 404
+        return jsonify({"error": "Task not found"}), 404
 
     save_tasks(data)
     return jsonify({"success": True})
@@ -217,7 +217,7 @@ def toggle_task(task_id):
             save_tasks(data)
             return jsonify({"success": True, "task": task})
 
-    return jsonify({"error": "Task nicht gefunden"}), 404
+    return jsonify({"error": "Task not found"}), 404
 
 
 @scheduled_tasks_bp.route('/api/scheduled-tasks/templates')

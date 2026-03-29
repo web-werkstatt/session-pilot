@@ -5,6 +5,7 @@ Parser und Import-Funktionen fuer Nicht-Claude AI-Assistenten:
 """
 import json
 import os
+from config import PROJECTS_DIR
 from services.db_service import execute, execute_many
 from services.session_import_utils import parse_ts as _parse_ts, create_session_meta, update_time_range
 
@@ -145,8 +146,8 @@ def import_codex_session(filepath, account_name):
     project_name = None
     if meta.get("cwd"):
         cwd = meta["cwd"]
-        if "/mnt/projects/" in cwd:
-            project_name = cwd.split("/mnt/projects/")[-1].split("/")[0]
+        if PROJECTS_DIR in cwd:
+            project_name = cwd.split(PROJECTS_DIR + "/")[-1].split("/")[0]
         else:
             project_name = os.path.basename(cwd)
     project_hash = f"codex:{project_name or 'unknown'}"

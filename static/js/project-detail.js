@@ -26,7 +26,7 @@ async function loadProjectInfo() {
     try {
         const d = await api.get('/api/info?name=' + encodeURIComponent(PROJECT_NAME));
 
-        const match = d.description.match(/<h3>Beschreibung<\/h3><p>(.*?)<\/p>/);
+        const match = d.description.match(/<h3>(?:Beschreibung|Description)<\/h3><p>(.*?)<\/p>/);
         document.getElementById('projectSubtitle').textContent = match ? match[1] : '';
 
         let sectionHtml = d.description
@@ -40,17 +40,17 @@ async function loadProjectInfo() {
         let html = '<div class="info-grid">' + sectionHtml + '</div>';
 
         // Platzhalter fuer teure Sections (werden async nachgeladen)
-        html += '<div class="info-grid" id="slowSections"><div class="info-block"><div class="loading" style="padding:10px;font-size:12px;color:#555">Lade weitere Daten...</div></div></div>';
+        html += '<div class="info-grid" id="slowSections"><div class="info-block"><div class="loading" style="padding:10px;font-size:12px;color:#555">Loading additional data...</div></div></div>';
 
         html += `
         <h3>README</h3>
         <div class="readme-actions">
-            <button class="btn-edit" onclick="toggleReadmeEdit()" id="readmeEditBtn"><i data-lucide="edit" class="icon"></i> Bearbeiten</button>
-            <button class="btn-save" onclick="saveReadme()" id="readmeSaveBtn" style="display:none"><i data-lucide="save" class="icon"></i> Speichern</button>
-            <button class="btn-cancel" onclick="cancelReadmeEdit()" id="readmeCancelBtn" style="display:none">Abbrechen</button>
+            <button class="btn-edit" onclick="toggleReadmeEdit()" id="readmeEditBtn"><i data-lucide="edit" class="icon"></i> Edit</button>
+            <button class="btn-save" onclick="saveReadme()" id="readmeSaveBtn" style="display:none"><i data-lucide="save" class="icon"></i> Save</button>
+            <button class="btn-cancel" onclick="cancelReadmeEdit()" id="readmeCancelBtn" style="display:none">Cancel</button>
             <span class="status" id="readmeStatus"></span>
         </div>
-        <div id="readmeRendered" class="readme-rendered">Lade README...</div>
+        <div id="readmeRendered" class="readme-rendered">Loading README...</div>
         <div id="readmeEditor"><textarea id="readmeTextarea"></textarea></div>`;
 
         document.getElementById('projectBody').innerHTML = html;
@@ -65,7 +65,7 @@ async function loadProjectInfo() {
             .then(function(d) { if (d.report) document.getElementById('qualityScore').textContent = d.report.score; })
             .catch(function() {});
     } catch(e) {
-        document.getElementById('projectBody').innerHTML = '<div class="loading" style="color:#ff6666">Fehler: ' + e + '</div>';
+        document.getElementById('projectBody').innerHTML = '<div class="loading" style="color:#ff6666">Error: ' + e + '</div>';
     }
 }
 
@@ -107,7 +107,7 @@ function buildOverviewToc() {
     var headings = body.querySelectorAll('.info-block h3, #slowSections h3, #projectBody > h3');
     if (headings.length < 2) return;
 
-    var html = '<div class="toc-title">Inhalt</div>';
+    var html = '<div class="toc-title">Contents</div>';
     var idx = 0;
     headings.forEach(function(h) {
         if (h.closest('.readme-rendered')) return;
@@ -126,7 +126,7 @@ async function loadQualityTab() {
         var d = await api.get('/api/quality/report/' + encodeURIComponent(PROJECT_NAME));
         var r = d.report;
         if (!r) {
-            body.innerHTML = '<div style="text-align:center;padding:40px;color:#888"><p>Kein Quality-Report vorhanden.</p><button class="btn btn-primary btn-sm" onclick="runQualityScan()">Jetzt scannen</button></div>';
+            body.innerHTML = '<div style="text-align:center;padding:40px;color:#888"><p>No quality report available.</p><button class="btn btn-primary btn-sm" onclick="runQualityScan()">Scan now</button></div>';
             return;
         }
 
@@ -147,14 +147,14 @@ async function loadQualityTab() {
             html += '<div style="padding:8px 14px;background:var(--bg-card);border-radius:6px;font-size:12px">';
             html += '<div style="color:#888;margin-bottom:4px">vs. Baseline</div>';
             html += '<span style="color:' + (delta >= 0 ? '#43a047' : '#f44336') + ';font-weight:600">Score ' + (delta >= 0 ? '+' : '') + delta + '</span>';
-            if (d.diff.new_issues > 0) html += ' <span style="color:#f44336">+' + d.diff.new_issues + ' neu</span>';
-            if (d.diff.fixed_issues > 0) html += ' <span style="color:#43a047">' + d.diff.fixed_issues + ' behoben</span>';
+            if (d.diff.new_issues > 0) html += ' <span style="color:#f44336">+' + d.diff.new_issues + ' new</span>';
+            if (d.diff.fixed_issues > 0) html += ' <span style="color:#43a047">' + d.diff.fixed_issues + ' fixed</span>';
             html += '</div>';
         }
 
         html += '<div style="margin-left:auto;display:flex;gap:8px">';
-        html += '<button class="btn btn-sm" onclick="runQualityScan()">Neu scannen</button>';
-        html += '<button class="btn btn-sm" onclick="setProjectBaseline()">Baseline setzen</button>';
+        html += '<button class="btn btn-sm" onclick="runQualityScan()">Re-scan</button>';
+        html += '<button class="btn btn-sm" onclick="setProjectBaseline()">Set baseline</button>';
         html += '</div>';
         html += '</div>';
 
@@ -166,7 +166,7 @@ async function loadQualityTab() {
             categories[i.category].push(i);
         });
 
-        var catNames = { duplication: 'Duplikate', complexity: 'Komplexitaet', file_size: 'Dateigroessen', css_tokens: 'CSS-Qualitaet', css_undefined: 'CSS-Variablen', architecture: 'Architektur', test_failure: 'Tests', js_quality: 'JS-Qualitaet' };
+        var catNames = { duplication: 'Duplicates', complexity: 'Complexity', file_size: 'File Sizes', css_tokens: 'CSS Quality', css_undefined: 'CSS Variables', architecture: 'Architecture', test_failure: 'Tests', js_quality: 'JS Quality' };
 
         Object.keys(categories).sort().forEach(function(cat) {
             var items = categories[cat];
@@ -200,21 +200,21 @@ async function loadQualityTab() {
         html += '<style>.q-collapsed .q-issues { display: none; }</style>';
         body.innerHTML = html;
     } catch(e) {
-        body.innerHTML = '<div style="text-align:center;padding:40px;color:#888"><p>Kein Quality-Report vorhanden.</p><button class="btn btn-primary btn-sm" onclick="runQualityScan()">Jetzt scannen</button></div>';
+        body.innerHTML = '<div style="text-align:center;padding:40px;color:#888"><p>No quality report available.</p><button class="btn btn-primary btn-sm" onclick="runQualityScan()">Scan now</button></div>';
     }
 }
 
 var _scanPollTimer = null;
 var _checkNames = {
-    file_sizes: 'Dateigroessen', duplication: 'Duplikate (jscpd)',
-    complexity: 'Komplexitaet (radon)', css_quality: 'CSS-Qualitaet',
-    js_quality: 'JS-Duplikate', architecture: 'Architektur-Regeln',
-    tests: 'Tests', done: 'Fertig'
+    file_sizes: 'File Sizes', duplication: 'Duplicates (jscpd)',
+    complexity: 'Complexity (radon)', css_quality: 'CSS Quality',
+    js_quality: 'JS Duplicates', architecture: 'Architecture Rules',
+    tests: 'Tests', done: 'Done'
 };
 
 function runQualityScan() {
     var body = document.getElementById('qualityBody');
-    body.innerHTML = '<div id="scanProgress" style="padding:30px;text-align:center"><div class="spinner" style="margin:0 auto 12px"></div><div id="scanStep" style="font-size:13px;color:#888">Starte Scan...</div><div id="scanBar" style="margin:16px auto;width:300px;height:6px;background:#222;border-radius:3px;overflow:hidden"><div id="scanFill" style="width:0%;height:100%;background:var(--accent);border-radius:3px;transition:width 0.3s"></div></div></div>';
+    body.innerHTML = '<div id="scanProgress" style="padding:30px;text-align:center"><div class="spinner" style="margin:0 auto 12px"></div><div id="scanStep" style="font-size:13px;color:#888">Starting scan...</div><div id="scanBar" style="margin:16px auto;width:300px;height:6px;background:#222;border-radius:3px;overflow:hidden"><div id="scanFill" style="width:0%;height:100%;background:var(--accent);border-radius:3px;transition:width 0.3s"></div></div></div>';
 
     _scanPollTimer = setInterval(function() {
         api.get('/api/quality/progress/' + encodeURIComponent(PROJECT_NAME))
@@ -231,13 +231,13 @@ function runQualityScan() {
 
     api.post('/api/quality/scan/' + encodeURIComponent(PROJECT_NAME))
         .then(function() { clearInterval(_scanPollTimer); qualityLoaded = false; loadQualityTab(); })
-        .catch(function(e) { clearInterval(_scanPollTimer); body.innerHTML = '<div style="color:#f44336;padding:20px">Fehler: ' + e + '</div>'; });
+        .catch(function(e) { clearInterval(_scanPollTimer); body.innerHTML = '<div style="color:#f44336;padding:20px">Error: ' + e + '</div>'; });
 }
 
 function setProjectBaseline() {
     api.post('/api/quality/baseline/' + encodeURIComponent(PROJECT_NAME))
-        .then(function(d) { alert('Baseline gesetzt: ' + d.score + ' (' + d.score_numeric + '/100)'); qualityLoaded = false; loadQualityTab(); })
-        .catch(function(e) { alert('Fehler: ' + e); });
+        .then(function(d) { alert('Baseline set: ' + d.score + ' (' + d.score_numeric + '/100)'); qualityLoaded = false; loadQualityTab(); })
+        .catch(function(e) { alert('Error: ' + e); });
 }
 
 // === Sessions Tab ===
@@ -256,7 +256,7 @@ async function extractSessions() {
         var d = await api.get('/api/sessions?project=' + encodeURIComponent(PROJECT_NAME) + '&limit=100');
         var sessions = d.sessions || [];
         if (!sessions.length) {
-            body.innerHTML = '<p style="color:#888;padding:20px;text-align:center">Keine Claude Sessions fuer dieses Projekt</p>';
+            body.innerHTML = '<p style="color:#888;padding:20px;text-align:center">No Claude sessions for this project</p>';
             return;
         }
         var countEl = document.getElementById('sessionsCount');
@@ -265,13 +265,13 @@ async function extractSessions() {
         var maxDur = Math.max(1, Math.max.apply(null, sessions.map(function(s) { return s.duration_ms || 0; })));
 
         var html = '<table class="data-table sessions-table"><thead><tr>';
-        html += '<th>Account</th><th>Datum</th><th>Dauer</th><th>Msgs</th><th>Modell</th><th>Tokens</th><th>Branch</th><th>Status</th><th></th>';
+        html += '<th>Account</th><th>Date</th><th>Duration</th><th>Msgs</th><th>Model</th><th>Tokens</th><th>Branch</th><th>Status</th><th></th>';
         html += '</tr></thead><tbody>';
 
         sessions.forEach(function(s) {
             var date = s.started_at ? new Date(s.started_at) : null;
-            var dateStr = date ? date.toLocaleDateString('de-DE', {day:'2-digit',month:'2-digit',year:'2-digit'}) : '-';
-            var timeStr = date ? date.toLocaleTimeString('de-DE', {hour:'2-digit',minute:'2-digit'}) : '';
+            var dateStr = date ? date.toLocaleDateString('en-US', {month:'short',day:'numeric',year:'2-digit'}) : '-';
+            var timeStr = date ? date.toLocaleTimeString('en-US', {hour:'2-digit',minute:'2-digit'}) : '';
             var acctClass = 'account-' + (s.account || '').replace(/[^a-z0-9]/g, '');
             var durPct = Math.min(100, ((s.duration_ms || 0) / maxDur) * 100);
             var model = (s.model || '-').replace('claude-', '').replace('opus-4-6', 'Opus').replace('sonnet-4-6', 'Sonnet');
@@ -294,7 +294,7 @@ async function extractSessions() {
         html += '</tbody></table>';
         body.innerHTML = html;
     } catch(e) {
-        body.innerHTML = '<p style="color:#f44336;padding:20px">Fehler: ' + e + '</p>';
+        body.innerHTML = '<p style="color:#f44336;padding:20px">Error: ' + e + '</p>';
     }
 }
 
@@ -321,23 +321,23 @@ async function loadProjectPlans() {
         if (allPlans.length === 0) {
             document.getElementById('plansBody').innerHTML = `
                 <div style="text-align:center;padding:40px;color:#888">
-                    <p>Keine Plans fuer dieses Projekt</p>
-                    <a href="/plans" style="color:#0078d4">Alle Plans anzeigen</a>
+                    <p>No plans for this project</p>
+                    <a href="/plans" style="color:#0078d4">View all plans</a>
                 </div>`;
             return;
         }
 
         const statusColors = {
-            draft: { bg: 'transparent', border: '#666', label: 'Entwurf' },
-            active: { bg: 'rgba(0,120,212,0.12)', border: '#0078d4', label: 'Aktiv' },
-            completed: { bg: 'rgba(46,204,113,0.10)', border: '#2ecc71', label: 'Erledigt' },
-            archived: { bg: 'rgba(80,80,80,0.15)', border: '#555', label: 'Archiv' },
+            draft: { bg: 'transparent', border: '#666', label: 'Draft' },
+            active: { bg: 'rgba(0,120,212,0.12)', border: '#0078d4', label: 'Active' },
+            completed: { bg: 'rgba(46,204,113,0.10)', border: '#2ecc71', label: 'Done' },
+            archived: { bg: 'rgba(80,80,80,0.15)', border: '#555', label: 'Archive' },
         };
 
         let html = '<div class="plans-cards">';
         allPlans.forEach(p => {
             const sc = statusColors[p.status] || statusColors.draft;
-            const date = p.created_at ? new Date(p.created_at).toLocaleDateString('de-DE') : '';
+            const date = p.created_at ? new Date(p.created_at).toLocaleDateString('en-US') : '';
             const hasSession = p.session_slug && p.session_slug !== 'None';
             const sessionLink = hasSession
                 ? `<span class="badge" style="font-size:10px;background:rgba(0,120,212,0.2);color:#4fc3f7">Session</span>`
@@ -359,10 +359,10 @@ async function loadProjectPlans() {
                 </div>
             </div>`;
         });
-        html += `</div><div style="text-align:right;margin-top:12px"><a href="/plans?project=${encodeURIComponent(PROJECT_NAME)}" style="color:#0078d4;font-size:13px">Alle Plans anzeigen &rarr;</a></div>`;
+        html += `</div><div style="text-align:right;margin-top:12px"><a href="/plans?project=${encodeURIComponent(PROJECT_NAME)}" style="color:#0078d4;font-size:13px">View all plans &rarr;</a></div>`;
         document.getElementById('plansBody').innerHTML = html;
     } catch(e) {
-        document.getElementById('plansBody').innerHTML = '<p style="color:#ff6666;padding:20px">Fehler: ' + e + '</p>';
+        document.getElementById('plansBody').innerHTML = '<p style="color:#ff6666;padding:20px">Error: ' + e + '</p>';
     }
 }
 
@@ -374,11 +374,11 @@ async function loadReadme() {
         if (d.html) {
             document.getElementById('readmeRendered').innerHTML = d.html;
         } else {
-            document.getElementById('readmeRendered').innerHTML = '<p style="color:#666;font-style:italic">Keine README.md vorhanden</p>';
+            document.getElementById('readmeRendered').innerHTML = '<p style="color:#666;font-style:italic">No README.md found</p>';
         }
         document.getElementById('readmeTextarea').value = d.raw || '';
     } catch(e) {
-        document.getElementById('readmeRendered').innerHTML = '<p style="color:#ff6666">Fehler: ' + e + '</p>';
+        document.getElementById('readmeRendered').innerHTML = '<p style="color:#ff6666">Error: ' + e + '</p>';
     }
 }
 
@@ -412,12 +412,12 @@ function cancelReadmeEdit() {
 async function saveReadme() {
     const content = easyMDE ? easyMDE.value() : document.getElementById('readmeTextarea').value;
     const status = document.getElementById('readmeStatus');
-    status.textContent = 'Speichern...'; status.style.color = '#888';
+    status.textContent = 'Saving...'; status.style.color = '#888';
     try {
         const d = await api.put('/api/project/' + encodeURIComponent(PROJECT_NAME) + '/readme', {content, filename: readmeFilename});
-        if (d.success) { status.textContent = 'Gespeichert'; status.style.color = '#4caf50'; await loadReadme(); cancelReadmeEdit(); }
+        if (d.success) { status.textContent = 'Saved'; status.style.color = '#4caf50'; await loadReadme(); cancelReadmeEdit(); }
         else { status.textContent = d.error; status.style.color = '#ff4444'; }
-    } catch(e) { status.textContent = 'Fehler: ' + e; status.style.color = '#ff4444'; }
+    } catch(e) { status.textContent = 'Error: ' + e; status.style.color = '#ff4444'; }
 }
 
 function exportProject(fmt) {

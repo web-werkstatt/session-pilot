@@ -32,7 +32,7 @@ function validateName() {
 
     if (!name) {
         input.className = '';
-        hint.textContent = 'Kleinbuchstaben, Zahlen, Bindestriche';
+        hint.textContent = 'Lowercase letters, numbers, hyphens';
         hint.className = 'sc-hint';
         btn.disabled = true;
         return;
@@ -40,14 +40,14 @@ function validateName() {
 
     if (!/^[a-z][a-z0-9_-]*$/.test(name)) {
         input.className = 'invalid';
-        hint.textContent = 'Nur Kleinbuchstaben, Zahlen, - und _ (muss mit Buchstabe beginnen)';
+        hint.textContent = 'Only lowercase letters, numbers, - and _ (must start with a letter)';
         hint.className = 'sc-hint error';
         btn.disabled = true;
         return;
     }
 
     input.className = 'valid';
-    hint.textContent = 'Projektpfad: /mnt/projects/' + name;
+    hint.textContent = 'Project path: /mnt/projects/' + name;
     hint.className = 'sc-hint';
     btn.disabled = false;
 }
@@ -103,7 +103,7 @@ async function loadPreview() {
     const config = getConfig();
     document.getElementById('previewName').textContent = config.name;
     document.getElementById('previewType').textContent = config.type;
-    document.getElementById('previewDesc').textContent = config.description || 'Keine Beschreibung';
+    document.getElementById('previewDesc').textContent = config.description || 'No description';
 
     try {
         const d = await api.post('/api/scaffold/preview', config);
@@ -118,7 +118,7 @@ async function loadPreview() {
         }).join('');
         document.getElementById('btnCreate').disabled = false;
     } catch(e) {
-        document.getElementById('previewFiles').innerHTML = '<span style="color:#ef5350">Fehler beim Laden der Vorschau</span>';
+        document.getElementById('previewFiles').innerHTML = '<span style="color:#ef5350">Error loading preview</span>';
     }
 }
 
@@ -126,7 +126,7 @@ async function loadPreview() {
 async function createProject() {
     const btn = document.getElementById('btnCreate');
     btn.disabled = true;
-    btn.textContent = 'Erstelle...';
+    btn.textContent = 'Creating...';
 
     try {
         const d = await api.post('/api/scaffold/create', getConfig());
@@ -139,24 +139,24 @@ async function createProject() {
             const logHtml = d.log.map(l => `<div>${l}</div>`).join('');
             document.getElementById('resultContent').innerHTML = `
                 <div class="sc-result-icon">&#10003;</div>
-                <h2>Projekt "${d.name}" erstellt!</h2>
+                <h2>Project "${d.name}" created!</h2>
                 <div class="sc-result-log">${logHtml}</div>
                 <div class="sc-result-actions">
-                    <a href="/project/${d.name}" class="sc-btn sc-btn-primary">Projekt oeffnen</a>
+                    <a href="/project/${d.name}" class="sc-btn sc-btn-primary">Open project</a>
                     <a href="/" class="sc-btn">Dashboard</a>
                 </div>`;
         } else {
             document.getElementById('resultContent').innerHTML = `
                 <div class="sc-result-icon" style="color:#ef5350">&#10007;</div>
-                <h2 style="color:#ef5350">Fehler</h2>
+                <h2 style="color:#ef5350">Error</h2>
                 <p style="color:#aaa">${d.error}</p>
                 <div class="sc-result-actions">
-                    <button class="sc-btn" onclick="goStep(1)">Zurueck</button>
+                    <button class="sc-btn" onclick="goStep(1)">Back</button>
                 </div>`;
         }
     } catch(e) {
         btn.disabled = false;
-        btn.textContent = 'Projekt erstellen';
+        btn.textContent = 'Create project';
         console.error(e);
     }
 }

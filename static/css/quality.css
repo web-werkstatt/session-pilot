@@ -176,11 +176,11 @@
 /* Stats */
 .quality-stats {
     display: flex;
-    gap: 20px;
-    padding: 16px 0;
+    gap: 12px;
+    padding: 12px 0;
 }
 .quality-stats .stat { text-align: center; }
-.quality-stats .stat-value { font-size: 24px; font-weight: 700; display: block; }
+.quality-stats .stat-value { font-size: 18px; font-weight: 700; }
 .quality-stats .stat-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; }
 
 /* Loading */

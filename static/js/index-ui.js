@@ -5,11 +5,11 @@
 function openStatsModal() {
     var grid = document.getElementById('statsGrid');
     grid.innerHTML = [
-        {label:'Projekte', id:'totalProjects', color:'#4fc3f7'},
-        {label:'Container', id:'totalContainers', color:'#fff'},
-        {label:'Aktiv', id:'runningContainers', color:'#4caf50'},
+        {label:'Projects', id:'totalProjects', color:'#4fc3f7'},
+        {label:'Containers', id:'totalContainers', color:'#fff'},
+        {label:'Active', id:'runningContainers', color:'#4caf50'},
         {label:'Unhealthy', id:'unhealthyContainers', color:'#ff9800'},
-        {label:'Gestoppt', id:'stoppedContainers', color:'#f44336'},
+        {label:'Stopped', id:'stoppedContainers', color:'#f44336'},
         {label:'Gitea Repos', id:'giteaRepos', color:'#85e085'},
     ].map(function(s) {
         var val = document.getElementById(s.id).textContent;

@@ -14,7 +14,7 @@
                 }
             })
             .catch(err => {
-                document.getElementById('loading').innerHTML = 'Fehler: ' + err;
+                document.getElementById('loading').innerHTML = 'Error: ' + err;
             });
     }
 
@@ -32,7 +32,7 @@
             const icon = icons[v.name] || icons['default'];
             const description = v.readme
                 ? v.readme.split('\n').slice(0, 3).join(' ').substring(0, 150) + '...'
-                : 'Keine Beschreibung verfügbar';
+                : 'No description available';
 
             html += `
                 <div class="vorlage-card">
@@ -44,7 +44,7 @@
                         <p class="vorlage-description">${description}</p>
 
                         <div class="vorlage-files">
-                            <h4>Dateien</h4>
+                            <h4>Files</h4>
                             <div class="file-list">
                                 ${v.files.map(f => {
                                     const ext = f.split('.').pop();
@@ -54,9 +54,9 @@
                         </div>
 
                         <div class="vorlage-actions">
-                            ${v.preview ? `<button class="action-btn primary" onclick="openPreview('${v.name}', '${v.preview}')"><i data-lucide="eye" class="icon"></i> Vorschau</button>` : ''}
-                            <button class="action-btn secondary" onclick="showCode('${v.name}')"><i data-lucide="file" class="icon"></i> Code anzeigen</button>
-                            <button class="action-btn copy" onclick="copyPath('${v.path}')"><i data-lucide="clipboard" class="icon"></i> Pfad kopieren</button>
+                            ${v.preview ? `<button class="action-btn primary" onclick="openPreview('${v.name}', '${v.preview}')"><i data-lucide="eye" class="icon"></i> Preview</button>` : ''}
+                            <button class="action-btn secondary" onclick="showCode('${v.name}')"><i data-lucide="file" class="icon"></i> Show code</button>
+                            <button class="action-btn copy" onclick="copyPath('${v.path}')"><i data-lucide="clipboard" class="icon"></i> Copy path</button>
                         </div>
 
                         <div class="path-display">
@@ -89,11 +89,11 @@
                     <div class="code-header">
                         <span>${file}</span>
                         <button class="action-btn copy" onclick="copyFile('${vorlage.path}/${file}')" style="padding:5px 10px;font-size:11px;">
-                            <i data-lucide="clipboard" class="icon"></i> Kopieren
+                            <i data-lucide="clipboard" class="icon"></i> Copy
                         </button>
                     </div>
                     <div class="code-content" id="code-${file.replace('.', '-')}">
-                        Lade...
+                        Loading...
                     </div>
                 </div>
             `;
@@ -116,13 +116,13 @@
 
     function copyPath(path) {
         navigator.clipboard.writeText(path).then(() => {
-            showToast('Pfad kopiert: ' + path);
+            showToast('Path copied: ' + path);
         });
     }
 
     function copyFile(path) {
         navigator.clipboard.writeText(path).then(() => {
-            showToast('Dateipfad kopiert!');
+            showToast('File path copied!');
         });
     }
 

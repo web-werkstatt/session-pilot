@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
-{% block title %}Neues Projekt - Dashboard{% endblock %}
-{% block breadcrumb %}Neues Projekt{% endblock %}
+{% block title %}New Project - Dashboard{% endblock %}
+{% block breadcrumb %}New Project{% endblock %}
 
 {% block head_extra %}
 <link rel="stylesheet" href="/static/css/scaffold.css">
@@ -11,27 +11,27 @@
 <div class="scaffold-page">
     <!-- Wizard Steps -->
     <div class="wizard-steps">
-        <div class="wizard-step active" data-step="1"><span class="step-num">1</span><span class="step-label">Grundlagen</span></div>
+        <div class="wizard-step active" data-step="1"><span class="step-num">1</span><span class="step-label">Basics</span></div>
         <div class="wizard-step" data-step="2"><span class="step-num">2</span><span class="step-label">Template</span></div>
         <div class="wizard-step" data-step="3"><span class="step-num">3</span><span class="step-label">AI & DevOps</span></div>
-        <div class="wizard-step" data-step="4"><span class="step-num">4</span><span class="step-label">Erstellen</span></div>
+        <div class="wizard-step" data-step="4"><span class="step-num">4</span><span class="step-label">Create</span></div>
     </div>
 
-    <!-- Step 1: Grundlagen -->
+    <!-- Step 1: Basics -->
     <div class="wizard-panel" id="step1">
-        <h2>Grundlagen</h2>
+        <h2>Basics</h2>
         <div class="sc-field">
-            <label>Projektname *</label>
-            <input type="text" id="projName" placeholder="z.B. mein-projekt" oninput="validateName()">
-            <div class="sc-hint" id="nameHint">Kleinbuchstaben, Zahlen, Bindestriche</div>
+            <label>Project name *</label>
+            <input type="text" id="projName" placeholder="e.g. my-project" oninput="validateName()">
+            <div class="sc-hint" id="nameHint">Lowercase letters, numbers, hyphens</div>
         </div>
         <div class="sc-field">
-            <label>Beschreibung</label>
-            <textarea id="projDesc" placeholder="Kurzbeschreibung des Projekts" rows="3"></textarea>
+            <label>Description</label>
+            <textarea id="projDesc" placeholder="Short description of the project" rows="3"></textarea>
         </div>
         <div class="sc-row">
             <div class="sc-field">
-                <label>Typ</label>
+                <label>Type</label>
                 <select id="projType">
                     <option value="app">App</option>
                     <option value="service">Service / API</option>
@@ -40,30 +40,30 @@
                 </select>
             </div>
             <div class="sc-field">
-                <label>Gruppe</label>
+                <label>Group</label>
                 <select id="projGroup">
-                    <option value="">Keine</option>
-                    <option value="privat">Privat</option>
-                    <option value="geschaeftlich">Geschaeftlich</option>
-                    <option value="kunde">Kunde</option>
+                    <option value="">None</option>
+                    <option value="privat">Private</option>
+                    <option value="geschaeftlich">Business</option>
+                    <option value="kunde">Client</option>
                 </select>
             </div>
         </div>
         <div class="wizard-nav">
             <span></span>
-            <button class="sc-btn sc-btn-primary" onclick="goStep(2)" id="btnNext1" disabled>Weiter</button>
+            <button class="sc-btn sc-btn-primary" onclick="goStep(2)" id="btnNext1" disabled>Next</button>
         </div>
     </div>
 
     <!-- Step 2: Template -->
     <div class="wizard-panel" id="step2" style="display:none">
-        <h2>Template waehlen</h2>
+        <h2>Choose template</h2>
         <div class="sc-templates" id="templateGrid">
-            <div class="loading"><div class="spinner"></div>Lade Templates...</div>
+            <div class="loading"><div class="spinner"></div>Loading templates...</div>
         </div>
         <div class="wizard-nav">
-            <button class="sc-btn" onclick="goStep(1)">Zurueck</button>
-            <button class="sc-btn sc-btn-primary" onclick="goStep(3)">Weiter</button>
+            <button class="sc-btn" onclick="goStep(1)">Back</button>
+            <button class="sc-btn sc-btn-primary" onclick="goStep(3)">Next</button>
         </div>
     </div>
 
@@ -71,7 +71,7 @@
     <div class="wizard-panel" id="step3" style="display:none">
         <h2>AI & DevOps</h2>
         <div class="sc-section">
-            <h3>AI-Instruktionsdateien</h3>
+            <h3>AI instruction files</h3>
             <div class="sc-checks">
                 <label class="sc-check"><input type="checkbox" id="aiClaude" checked> CLAUDE.md (Claude Code)</label>
                 <label class="sc-check"><input type="checkbox" id="aiCodex"> AGENTS.md (OpenAI Codex)</label>
@@ -81,34 +81,34 @@
         <div class="sc-section">
             <h3>DevOps</h3>
             <div class="sc-checks">
-                <label class="sc-check"><input type="checkbox" id="optDocker"> Docker-Setup generieren</label>
-                <label class="sc-check"><input type="checkbox" id="optGit" checked> Git initialisieren</label>
-                <label class="sc-check"><input type="checkbox" id="optGitea"> Gitea Repository erstellen</label>
+                <label class="sc-check"><input type="checkbox" id="optDocker"> Generate Docker setup</label>
+                <label class="sc-check"><input type="checkbox" id="optGit" checked> Initialize Git</label>
+                <label class="sc-check"><input type="checkbox" id="optGitea"> Create Gitea repository</label>
             </div>
         </div>
         <div class="wizard-nav">
-            <button class="sc-btn" onclick="goStep(2)">Zurueck</button>
-            <button class="sc-btn sc-btn-primary" onclick="goStep(4)">Weiter</button>
+            <button class="sc-btn" onclick="goStep(2)">Back</button>
+            <button class="sc-btn sc-btn-primary" onclick="goStep(4)">Next</button>
         </div>
     </div>
 
-    <!-- Step 4: Vorschau & Erstellen -->
+    <!-- Step 4: Preview & Create -->
     <div class="wizard-panel" id="step4" style="display:none">
-        <h2>Vorschau</h2>
+        <h2>Preview</h2>
         <div class="sc-preview">
             <div class="sc-preview-header">
                 <span class="sc-preview-name" id="previewName">-</span>
                 <span class="sc-preview-type" id="previewType">-</span>
             </div>
             <div class="sc-preview-desc" id="previewDesc"></div>
-            <h3>Dateien die erstellt werden:</h3>
+            <h3>Files to be created:</h3>
             <div class="sc-file-tree" id="previewFiles">
-                <div class="loading"><div class="spinner"></div>Lade Vorschau...</div>
+                <div class="loading"><div class="spinner"></div>Loading preview...</div>
             </div>
         </div>
         <div class="wizard-nav">
-            <button class="sc-btn" onclick="goStep(3)">Zurueck</button>
-            <button class="sc-btn sc-btn-create" onclick="createProject()" id="btnCreate">Projekt erstellen</button>
+            <button class="sc-btn" onclick="goStep(3)">Back</button>
+            <button class="sc-btn sc-btn-create" onclick="createProject()" id="btnCreate">Create project</button>
         </div>
     </div>
 

@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Usage Monitor - Dashboard{% endblock %}
+{% block breadcrumb %}Usage Monitor{% endblock %}
+
+{% block head_extra %}
+<link rel="stylesheet" href="/static/css/usage-monitor.css">
+{% endblock %}
+
+{% block content %}
+<div class="um-header">
+    <div>
+        <span class="um-live-dot"></span>
+        <span class="um-status-text">Live</span>
+        <span class="um-last-update" id="umLastUpdate">updating...</span>
+    </div>
+</div>
+<div class="um-grid" id="umGrid">
+    <div class="um-loading"><div class="spinner"></div> Loading usage data...</div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/usage-monitor.js"></script>
+{% endblock %}

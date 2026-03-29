@@ -15,7 +15,7 @@ def api_git_status(name):
     """Detaillierter Git-Status"""
     project_path = resolve_project_path(name)
     if not project_path:
-        return jsonify({"error": "Projekt nicht gefunden"}), 404
+        return jsonify({"error": "Project not found"}), 404
 
     do_fetch = request.args.get('fetch', '0') == '1'
     status = get_git_status_detail(project_path, do_fetch=do_fetch)
@@ -27,17 +27,17 @@ def api_git_commit(name):
     """Staged alles und committed"""
     project_path = resolve_project_path(name)
     if not project_path:
-        return jsonify({"error": "Projekt nicht gefunden"}), 404
+        return jsonify({"error": "Project not found"}), 404
 
     data = request.get_json() or {}
     message = data.get('message', '').strip()
     if not message:
-        return jsonify({"success": False, "error": "Commit-Message fehlt"}), 400
+        return jsonify({"success": False, "error": "Commit message required"}), 400
 
     # Stage all
     ok, err = git_add_all(project_path)
     if not ok:
-        return jsonify({"success": False, "error": f"git add fehlgeschlagen: {err}"}), 400
+        return jsonify({"success": False, "error": f"git add failed: {err}"}), 400
 
     # Commit
     ok, output = git_commit(project_path, message)
@@ -49,7 +49,7 @@ def api_git_push(name):
     """Pusht zum Remote"""
     project_path = resolve_project_path(name)
     if not project_path:
-        return jsonify({"error": "Projekt nicht gefunden"}), 404
+        return jsonify({"error": "Project not found"}), 404
 
     ok, output = git_push(project_path)
     return jsonify({"success": ok, "output": output}), (200 if ok else 400)
@@ -60,7 +60,7 @@ def api_git_pull(name):
     """Pullt vom Remote (fast-forward only)"""
     project_path = resolve_project_path(name)
     if not project_path:
-        return jsonify({"error": "Projekt nicht gefunden"}), 404
+        return jsonify({"error": "Project not found"}), 404
 
     ok, output = git_pull(project_path)
     return jsonify({"success": ok, "output": output}), (200 if ok else 400)

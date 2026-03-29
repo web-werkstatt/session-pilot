@@ -72,7 +72,7 @@ function populateSelects() {
     graphTypeSelect.innerHTML = typeOptions;
     connectModalType.innerHTML = typeOptions;
 
-    typeFilter.innerHTML = '<option value="">Alle Typen</option>' + typeOptions;
+    typeFilter.innerHTML = '<option value="">All Types</option>' + typeOptions;
 
     document.getElementById('typeList').innerHTML = relationTypes.map(t =>
         `<span class="type-badge" style="background: ${t.color}20; border: 1px solid ${t.color};">${renderIcon(t.icon)} ${t.name}</span>`
@@ -102,7 +102,7 @@ function onProjectSearch(type) {
 async function fetchProjects(type, query) {
     const dropdown = document.getElementById(type + 'Dropdown');
 
-    dropdown.innerHTML = '<div class="autocomplete-loading">Suche...</div>';
+    dropdown.innerHTML = '<div class="autocomplete-loading">Searching...</div>';
     dropdown.classList.add('show');
 
     if (currentSearchController) {
@@ -116,7 +116,7 @@ async function fetchProjects(type, query) {
         });
 
         if (results.length === 0) {
-            dropdown.innerHTML = '<div class="autocomplete-no-results">Keine Projekte gefunden</div>';
+            dropdown.innerHTML = '<div class="autocomplete-no-results">No projects found</div>';
             return;
         }
 
@@ -131,7 +131,7 @@ async function fetchProjects(type, query) {
         highlightedIndex = -1;
     } catch (err) {
         if (err.name !== 'AbortError') {
-            dropdown.innerHTML = '<div class="autocomplete-no-results">Fehler beim Laden</div>';
+            dropdown.innerHTML = '<div class="autocomplete-no-results">Error loading</div>';
         }
     }
 }
@@ -209,7 +209,7 @@ function renderRelations() {
         container.innerHTML = `
             <div class="empty-state">
                 <div class="empty-state-icon"><i data-lucide="link" class="icon icon-xl"></i></div>
-                <div class="empty-state-title">${allRelations.length === 0 ? 'Keine Beziehungen' : 'Keine Treffer'}</div>
+                <div class="empty-state-title">${allRelations.length === 0 ? 'No relations' : 'No results'}</div>
             </div>`;
         if (typeof lucide !== 'undefined') lucide.createIcons();
         return;
@@ -225,7 +225,7 @@ function renderRelations() {
                 <span class="relation-arrow">&rarr;</span>
                 <div class="relation-target" title="${rel.target}">${rel.target}</div>
                 ${rel.note ? `<span class="relation-note" title="${rel.note}">${rel.note}</span>` : ''}
-                <button class="relation-delete" onclick="deleteRelation('${rel.id}')" title="Loeschen">&times;</button>
+                <button class="relation-delete" onclick="deleteRelation('${rel.id}')" title="Delete">&times;</button>
             </div>`;
     }).join('');
 }

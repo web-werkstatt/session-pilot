@@ -34,8 +34,8 @@ function loadPlans() {
             renderPlans();
         })
         .catch(err => {
-            console.error('Fehler:', err);
-            document.getElementById('loading').innerHTML = '<div class="error">Fehler beim Laden</div>';
+            console.error('Error:', err);
+            document.getElementById('loading').innerHTML = '<div class="error">Error loading</div>';
         });
 }
 
@@ -47,7 +47,7 @@ function loadStats() {
             document.getElementById('completionBar').style.width = s.completion_rate + '%';
             const total = s.completed + s.active + s.draft;
             document.getElementById('completionDetail').textContent =
-                `${s.completed} erledigt / ${total} gesamt`;
+                `${s.completed} completed / ${total} total`;
 
             // Pipeline
             document.getElementById('draftCount').textContent = s.draft;
@@ -57,8 +57,8 @@ function loadStats() {
             // Aktivitaet
             document.getElementById('last30d').textContent = s.last_30d;
             const sub = s.last_7d > 0
-                ? `davon ${s.last_7d} diese Woche`
-                : 'keine diese Woche';
+                ? `of which ${s.last_7d} this week`
+                : 'none this week';
             document.getElementById('last7dInfo').textContent = sub;
 
             // Abdeckung
@@ -113,7 +113,7 @@ function renderPlans() {
         const date = formatDate(plan.created_at);
         const projectName = plan.project_name
             ? escapeHtml(plan.project_name)
-            : '<span class="text-muted">Kein Projekt</span>';
+            : '<span class="text-muted">No project</span>';
         const sessionLink = plan.session_slug
             ? `<a href="/sessions/${plan.session_slug}" class="session-link" onclick="event.stopPropagation()"><i data-lucide="bot" class="icon icon-xs"></i> Session</a>`
             : '';
@@ -151,12 +151,12 @@ function getCategoryIcon(cat) {
 
 function statusLabel(status) {
     const labels = {
-        'draft': 'Entwurf',
-        'active': 'Aktiv',
-        'completed': 'Erledigt',
-        'archived': 'Archiv',
+        'draft': 'Draft',
+        'active': 'Active',
+        'completed': 'Done',
+        'archived': 'Archive',
     };
-    return labels[status] || status || 'Entwurf';
+    return labels[status] || status || 'Draft';
 }
 
 // === Filter ===
@@ -184,7 +184,7 @@ function showPlan(id) {
             if (plan.project_name) meta.push(`<span class="meta-item"><i data-lucide="folder" class="icon icon-xs"></i> ${escapeHtml(plan.project_name)}</span>`);
             meta.push(`<span class="meta-item"><i data-lucide="calendar" class="icon icon-xs"></i> ${formatDate(plan.created_at)}</span>`);
             if (plan.session_slug) {
-                meta.push(`<a href="/sessions/${plan.session_slug}" class="meta-item session-link"><i data-lucide="bot" class="icon icon-xs"></i> Session anzeigen</a>`);
+                meta.push(`<a href="/sessions/${plan.session_slug}" class="meta-item session-link"><i data-lucide="bot" class="icon icon-xs"></i> View session</a>`);
             }
             document.getElementById('modalMeta').innerHTML = meta.join('');
 
@@ -195,11 +195,11 @@ function showPlan(id) {
                 <code class="filename">${escapeHtml(plan.filename)}</code>
             `;
 
-            document.getElementById('modalContent').innerHTML = plan.content_html || '<em>Kein Inhalt</em>';
+            document.getElementById('modalContent').innerHTML = plan.content_html || '<em>No content</em>';
             openModal('planModal');
             if (typeof lucide !== 'undefined') lucide.createIcons();
         })
-        .catch(err => alert('Fehler: ' + err.message));
+        .catch(err => alert('Error: ' + err.message));
 }
 
 function closePlanModal() {
@@ -210,22 +210,22 @@ function closePlanModal() {
 function syncPlans() {
     const btn = document.querySelector('[onclick="syncPlans()"]');
     btn.disabled = true;
-    btn.innerHTML = '<i data-lucide="loader" class="icon icon-sm spin"></i> Importiere...';
+    btn.innerHTML = '<i data-lucide="loader" class="icon icon-sm spin"></i> Importing...';
 
     api.post('/api/plans/sync')
         .then(result => {
             if (result.success) {
                 const s = result.stats;
-                showToast(`Import: ${s.imported} neu, ${s.updated} aktualisiert, ${s.unchanged} unverändert (${s.total} Dateien)`);
+                showToast(`Import: ${s.imported} new, ${s.updated} updated, ${s.unchanged} unchanged (${s.total} files)`);
                 loadPlans();
                 loadStats();
                 loadProjects();
             }
         })
-        .catch(err => showToast('Fehler: ' + err.message, true))
+        .catch(err => showToast('Error: ' + err.message, true))
         .finally(() => {
             btn.disabled = false;
-            btn.innerHTML = '<i data-lucide="download" class="icon icon-sm"></i> Importieren';
+            btn.innerHTML = '<i data-lucide="download" class="icon icon-sm"></i> Import';
             if (typeof lucide !== 'undefined') lucide.createIcons();
         });
 }

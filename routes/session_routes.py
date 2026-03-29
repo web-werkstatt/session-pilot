@@ -41,7 +41,7 @@ def api_sessions():
     try:
         return _api_sessions_inner()
     except Exception as e:
-        return jsonify({"error": f"Datenbankfehler: {e}", "sessions": [], "total": 0}), 500
+        return jsonify({"error": f"Database error: {e}", "sessions": [], "total": 0}), 500
 
 
 def _api_sessions_inner():
@@ -121,7 +121,7 @@ def api_sessions_stats():
     try:
         return _api_sessions_stats_inner()
     except Exception as e:
-        return jsonify({"error": f"Datenbankfehler: {e}"}), 500
+        return jsonify({"error": f"Database error: {e}"}), 500
 
 
 def _api_sessions_stats_inner():
@@ -177,14 +177,14 @@ def api_session_detail(uuid):
     try:
         return _api_session_detail_inner(uuid)
     except Exception as e:
-        return jsonify({"error": f"Datenbankfehler: {e}"}), 500
+        return jsonify({"error": f"Database error: {e}"}), 500
 
 
 def _api_session_detail_inner(uuid):
     ensure_session_review_schema()
     session = execute("SELECT * FROM sessions WHERE session_uuid = %s", (uuid,), fetchone=True)
     if not session:
-        return jsonify({"error": "Session nicht gefunden"}), 404
+        return jsonify({"error": "Session not found"}), 404
 
     messages = execute(
         "SELECT * FROM messages WHERE session_id = %s ORDER BY timestamp ASC",
@@ -256,13 +256,13 @@ def api_session_export(uuid):
     }
 
     if fmt not in exporters:
-        return jsonify({"error": f"Unbekanntes Format: {fmt}"}), 400
+        return jsonify({"error": f"Unknown format: {fmt}"}), 400
 
     export_fn, content_type = exporters[fmt]
     content, filename = export_fn(uuid)
 
     if content is None:
-        return jsonify({"error": "Session nicht gefunden"}), 404
+        return jsonify({"error": "Session not found"}), 404
 
     return Response(
         content,
@@ -277,13 +277,13 @@ def api_sessions_search():
     try:
         return _api_sessions_search_inner()
     except Exception as e:
-        return jsonify({"error": f"Datenbankfehler: {e}", "results": [], "total": 0}), 500
+        return jsonify({"error": f"Database error: {e}", "results": [], "total": 0}), 500
 
 
 def _api_sessions_search_inner():
     query = request.args.get("q", "").strip()
     if not query or len(query) < 2:
-        return jsonify({"error": "Suchbegriff muss mindestens 2 Zeichen haben", "results": [], "total": 0}), 400
+        return jsonify({"error": "Search term must be at least 2 characters", "results": [], "total": 0}), 400
 
     account = request.args.get("account")
     project = request.args.get("project")
@@ -367,7 +367,7 @@ def _try_background_sync():
             sync_all()
             _last_sync_time = time.time()
         except Exception as e:
-            print(f"Background-Sync Fehler: {e}")
+            print(f"Background sync error: {e}")
         finally:
             _sync_running = False
 
@@ -382,11 +382,11 @@ def api_sessions_sync():
     force = request.args.get("force") == "1"
 
     if _sync_running:
-        return jsonify({"success": False, "message": "Sync laeuft bereits"})
+        return jsonify({"success": False, "message": "Sync already running"})
 
     if not force and time.time() - _last_sync_time < SYNC_COOLDOWN:
         remaining = int(SYNC_COOLDOWN - (time.time() - _last_sync_time))
-        return jsonify({"success": False, "message": f"Cooldown aktiv, naechster Sync in {remaining}s"})
+        return jsonify({"success": False, "message": f"Cooldown active, next sync in {remaining}s"})
 
     try:
         _sync_running = True

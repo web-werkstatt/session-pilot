@@ -48,7 +48,7 @@ function renderNotifications(notifications) {
     if (!list) return;
 
     if (!notifications.length) {
-        list.innerHTML = '<div class="notification-empty">Keine Benachrichtigungen</div>';
+        list.innerHTML = '<div class="notification-empty">No notifications</div>';
         return;
     }
 
@@ -75,7 +75,7 @@ function renderNotifications(notifications) {
         }
         html += '<div class="notification-time">' + time + '</div>';
         html += '</div>';
-        html += '<button class="notification-dismiss" onclick="event.stopPropagation();dismissNotification(\'' + n.id + '\')" title="Entfernen">&#10005;</button>';
+        html += '<button class="notification-dismiss" onclick="event.stopPropagation();dismissNotification(\'' + n.id + '\')" title="Remove">&#10005;</button>';
         html += '</div>';
     });
     list.innerHTML = html;

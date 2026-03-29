@@ -39,7 +39,7 @@ def fulltext_search():
     limit = min(int(request.args.get('limit', 50)), 200)
 
     if not query or len(query) < 2:
-        return jsonify({"error": "Suchbegriff muss mindestens 2 Zeichen haben"}), 400
+        return jsonify({"error": "Search term must be at least 2 characters"}), 400
 
     search_path = PROJECTS_DIR
     if project:
@@ -47,7 +47,7 @@ def fulltext_search():
         if resolved:
             search_path = resolved
         else:
-            return jsonify({"error": "Projekt nicht gefunden"}), 404
+            return jsonify({"error": "Project not found"}), 404
 
     # rg (ripgrep) oder grep nutzen
     use_rg = _has_command('rg')
@@ -63,7 +63,7 @@ def fulltext_search():
 
     return jsonify({
         "query": query,
-        "project": project or "(alle)",
+        "project": project or "(all)",
         "results": results,
         "total": len(results),
         "truncated": len(results) >= limit,

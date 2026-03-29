@@ -1,0 +1,7 @@
+{
+  "claude": {"plan": "max20", "cost_limit": 140, "message_limit": 2000},
+  "account1": {"plan": "max5", "cost_limit": 35, "message_limit": 1000},
+  "minimax": {"plan": "pro", "cost_limit": 18, "message_limit": 250},
+  "codex": {"plan": "max5", "cost_limit": 35, "message_limit": 1000},
+  "gemini": {"plan": "pro", "cost_limit": 18, "message_limit": 250}
+}

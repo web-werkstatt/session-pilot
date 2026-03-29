@@ -5,7 +5,7 @@ function setWidth(val) {
     if (!conv || !label || !slider) return;
     if (val >= 2400) {
         conv.style.maxWidth = '100%';
-        label.textContent = 'Voll';
+        label.textContent = 'Full';
     } else {
         conv.style.maxWidth = val + 'px';
         label.textContent = val + 'px';
@@ -35,7 +35,7 @@ function escapeHtml(text) {
 // formatTokens, formatDateTime: in base.js (global)
 
 function formatDateShort(value) {
-    return value ? new Date(value).toLocaleDateString('de-DE') : '-';
+    return value ? new Date(value).toLocaleDateString('en-US') : '-';
 }
 
 function formatModel(model) {
@@ -43,7 +43,7 @@ function formatModel(model) {
 }
 
 function formatOutcomeLabel(outcome) {
-    if (!outcome) return 'Offen';
+    if (!outcome) return 'Open';
     return outcome.replace('_', ' ');
 }
 
@@ -57,7 +57,7 @@ function renderMarkdown(text) {
         var numbered = lines.map((line, i) =>
             '<span class="line-num">' + String(i + 1).padStart(pad, ' ') + '</span>' + line
         ).join('\n');
-        return `<div class="pre-wrap"><button class="btn-copy-code" onclick="copyCode(this)">Kopieren</button><pre><code${attrs}>${numbered}</code></pre></div>`;
+        return `<div class="pre-wrap"><button class="btn-copy-code" onclick="copyCode(this)">Copy</button><pre><code${attrs}>${numbered}</code></pre></div>`;
     });
     return html;
 }
@@ -85,7 +85,7 @@ function renderToolUse(contentJson) {
         } else if (block.type === 'tool_result') {
             const content = typeof block.content === 'string' ? block.content : JSON.stringify(block.content || '', null, 2);
             const preview = String(content).substring(0, 80);
-            html += `<details><summary>Ergebnis&ensp;${escapeHtml(preview)}${content.length > 80 ? '...' : ''}</summary><div class="tool-content">${escapeHtml(content)}</div></details>`;
+            html += `<details><summary>Result&ensp;${escapeHtml(preview)}${content.length > 80 ? '...' : ''}</summary><div class="tool-content">${escapeHtml(content)}</div></details>`;
         }
     }
     return html;
@@ -121,10 +121,10 @@ function renderMeta(session) {
     ].filter(Boolean).join('');
 
     const stats = [
-        ['Datum', formatDateTime(session.started_at)],
-        ['Dauer', session.duration_formatted || '-'],
+        ['Date', formatDateTime(session.started_at)],
+        ['Duration', session.duration_formatted || '-'],
         ['Version', session.claude_version || '-'],
-        ['Nachrichten', `${session.user_message_count || 0} / ${session.assistant_message_count || 0}`],
+        ['Messages', `${session.user_message_count || 0} / ${session.assistant_message_count || 0}`],
         ['Input', formatTokens(session.total_input_tokens)],
         ['Output', formatTokens(session.total_output_tokens)],
     ];
@@ -145,9 +145,9 @@ function renderReviewSummary(session, reviews) {
     const latest = reviews && reviews.length ? reviews[0] : null;
     const summary = [
         ['Status', formatOutcomeLabel(session.outcome)],
-        ['Notizen', String(reviews.length)],
-        ['Zuletzt', latest ? formatDateTime(latest.created_at) : 'Noch keiner'],
-        ['Hinweis', latest ? latest.note : (session.outcome_note || 'Noch keine Bewertungs-Notiz')]
+        ['Notes', String(reviews.length)],
+        ['Last', latest ? formatDateTime(latest.created_at) : 'None yet'],
+        ['Note', latest ? latest.note : (session.outcome_note || 'No review note yet')]
     ];
     const el = document.getElementById('reviewSummary');
     if (!el) return;
@@ -162,12 +162,12 @@ function renderLinkedThreads() {
     if (!el) return;
     const linkedIds = getLinkedThreadIds();
     if (!linkedIds.length) {
-        el.innerHTML = '<div class="review-empty">Noch kein Thread mit anderen Sessions verknüpft.</div>';
+        el.innerHTML = '<div class="review-empty">No thread linked with other sessions yet.</div>';
         return;
     }
     const linked = projectThreads.filter(thread => linkedIds.includes(thread.id));
     el.innerHTML = linked.map(thread =>
-        `<div class="thread-chip"><span class="thread-chip-title">${escapeHtml(thread.title)}</span><span class="thread-chip-meta">${thread.session_count || 0} Sessions · ${thread.note_count || 0} Notizen</span></div>`
+        `<div class="thread-chip"><span class="thread-chip-title">${escapeHtml(thread.title)}</span><span class="thread-chip-meta">${thread.session_count || 0} sessions · ${thread.note_count || 0} notes</span></div>`
     ).join('');
 }
 
@@ -179,7 +179,7 @@ function renderRelatedThreadSessions() {
         return;
     }
     const items = relatedThreadSessions.slice(0, 8);
-    el.innerHTML = '<div class="related-thread-head">Verknüpfte Sessions</div>' + items.map(item =>
+    el.innerHTML = '<div class="related-thread-head">Linked Sessions</div>' + items.map(item =>
         `<a class="related-session-item" href="/sessions/${encodeURIComponent(item.session_uuid)}"><span class="related-session-thread">${escapeHtml(item.thread_title)}</span><span class="related-session-date">${escapeHtml(formatDateShort(item.started_at))}</span><span class="related-session-meta">${escapeHtml(item.duration_formatted || '-')} · ${escapeHtml(formatOutcomeLabel(item.outcome))}</span></a>`
     ).join('');
 }
@@ -188,7 +188,7 @@ function renderReviewHistory(reviews) {
     const el = document.getElementById('reviewHistory');
     if (!el) return;
     if (!reviews || !reviews.length) {
-        el.innerHTML = '<div class="review-empty">Noch keine Bewertungs-Notizen vorhanden.</div>';
+        el.innerHTML = '<div class="review-empty">No review notes yet.</div>';
         return;
     }
     el.innerHTML = reviews.map(review => {
@@ -215,9 +215,9 @@ function stripLineNumbers(text) {
 
 function copyToClipboard(btn, text) {
     function onSuccess() {
-        btn.textContent = 'Kopiert!';
+        btn.textContent = 'Copied!';
         btn.classList.add('copied');
-        setTimeout(() => { btn.textContent = 'Kopieren'; btn.classList.remove('copied'); }, 1500);
+        setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 1500);
     }
     if (navigator.clipboard && window.isSecureContext) {
         navigator.clipboard.writeText(text).then(onSuccess);
@@ -348,7 +348,7 @@ async function reloadReviewData() {
 
 function renderMessages(messages) {
     const conv = document.getElementById('conversation');
-    if (!messages || !messages.length) { conv.innerHTML = '<div class="loading">Keine Nachrichten</div>'; return; }
+    if (!messages || !messages.length) { conv.innerHTML = '<div class="loading">No messages</div>'; return; }
 
     let html = '';
     let msgIndex = 0;
@@ -369,7 +369,7 @@ function renderMessages(messages) {
         }
         if (msg.content_json) contentHtml += renderToolUse(msg.content_json);
 
-        const time = msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit', second:'2-digit'}) : '';
+        const time = msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit', second:'2-digit'}) : '';
         html += `<div class="msg ${cls}" id="msg-${msgIndex}" data-msg-index="${msgIndex}"><div class="msg-role"><span>${role}${time ? `<span class="msg-time">${time}</span>` : ''}</span><span class="msg-actions"><button class="btn-copy" onclick="copyMsg(this, ${index})">Kopieren</button><button class="btn-copy" onclick="openReviewFromMessage(${index})">Bewertung</button></span></div>${contentHtml}</div>`;
         msgIndex++;
     });
@@ -418,7 +418,7 @@ async function loadSession() {
         renderMessages(d.messages || []);
     } catch(e) {
         console.error(e);
-        document.getElementById('conversation').innerHTML = '<div class="loading">Fehler beim Laden</div>';
+        document.getElementById('conversation').innerHTML = '<div class="loading">Error loading</div>';
     }
 }
 

@@ -10,34 +10,34 @@
 
 {% block topbar_actions %}
 <select id="periodSelect" onchange="changePeriod()" class="topbar-select">
-    <option value="7">7 Tage</option>
-    <option value="14">14 Tage</option>
-    <option value="30" selected>30 Tage</option>
-    <option value="90">Quartal</option>
-    <option value="180">Halbjahr</option>
-    <option value="365">Jahr</option>
+    <option value="7">7 days</option>
+    <option value="14">14 days</option>
+    <option value="30" selected>30 days</option>
+    <option value="90">Quarter</option>
+    <option value="180">Half year</option>
+    <option value="365">Year</option>
 </select>
-<a href="/settings" class="topbar-btn" title="Einstellungen">&#9881;</a>
+<a href="/settings" class="topbar-btn" title="Settings">&#9881;</a>
 {% endblock %}
 
 {% block content %}
 <!-- Loading Overlay -->
 <div class="loading" id="tsLoading">
     <div class="spinner"></div>
-    <div>Lade Timesheets...</div>
+    <div>Loading timesheets...</div>
 </div>
 
 <!-- Filter Bar -->
 <div class="ts-filter-bar">
     <div class="ts-filters">
         <select id="filterAccount" onchange="reloadAll()">
-            <option value="">Alle Accounts</option>
+            <option value="">All accounts</option>
         </select>
         <select id="filterProject" onchange="reloadAll()">
-            <option value="">Alle Projekte</option>
+            <option value="">All projects</option>
         </select>
     </div>
-    <div class="ts-period-label" id="periodLabel">Letzte 30 Tage</div>
+    <div class="ts-period-label" id="periodLabel">Last 30 days</div>
 </div>
 
 <!-- KPI Cards -->
@@ -48,7 +48,7 @@
         <div class="ts-kpi-trend" id="kpiSessionsTrend"></div>
     </div>
     <div class="ts-kpi">
-        <div class="ts-kpi-label">AI-Zeit</div>
+        <div class="ts-kpi-label">AI time</div>
         <div class="ts-kpi-value" id="kpiDuration">-</div>
         <div class="ts-kpi-trend" id="kpiDurationTrend"></div>
     </div>
@@ -58,12 +58,12 @@
         <div class="ts-kpi-trend" id="kpiTokensTrend"></div>
     </div>
     <div class="ts-kpi">
-        <div class="ts-kpi-label">Kosten</div>
+        <div class="ts-kpi-label">Cost</div>
         <div class="ts-kpi-value ts-kpi-cost" id="kpiCost">-</div>
         <div class="ts-kpi-trend" id="kpiCostTrend"></div>
     </div>
     <div class="ts-kpi">
-        <div class="ts-kpi-label">Kosten/Session</div>
+        <div class="ts-kpi-label">Cost/Session</div>
         <div class="ts-kpi-value" id="kpiAvgCost">-</div>
         <div class="ts-kpi-sub" id="kpiAvgDuration"></div>
     </div>
@@ -73,10 +73,10 @@
 <div class="ts-charts-row">
     <div class="ts-chart-card ts-chart-wide">
         <div class="ts-chart-header">
-            <h3>Tagesaktivitaet</h3>
+            <h3>Daily activity</h3>
             <div class="ts-chart-toggle">
-                <button class="ts-toggle active" data-metric="cost" onclick="setDailyMetric('cost')">Kosten</button>
-                <button class="ts-toggle" data-metric="duration" onclick="setDailyMetric('duration')">Zeit</button>
+                <button class="ts-toggle active" data-metric="cost" onclick="setDailyMetric('cost')">Cost</button>
+                <button class="ts-toggle" data-metric="duration" onclick="setDailyMetric('duration')">Time</button>
                 <button class="ts-toggle" data-metric="tokens" onclick="setDailyMetric('tokens')">Tokens</button>
                 <button class="ts-toggle" data-metric="sessions" onclick="setDailyMetric('sessions')">Sessions</button>
             </div>
@@ -84,7 +84,7 @@
         <div style="position:relative;height:220px"><canvas id="dailyChart"></canvas></div>
     </div>
     <div class="ts-chart-card ts-chart-narrow">
-        <h3>Verteilung nach Projekt</h3>
+        <h3>Distribution by project</h3>
         <div style="position:relative;height:220px"><canvas id="projectDonut"></canvas></div>
     </div>
 </div>
@@ -92,11 +92,11 @@
 <!-- Tool Comparison -->
 <div class="ts-charts-row">
     <div class="ts-chart-card ts-chart-half">
-        <h3>Tool-Vergleich</h3>
+        <h3>Tool comparison</h3>
         <div style="position:relative;height:200px"><canvas id="toolChart"></canvas></div>
     </div>
     <div class="ts-chart-card ts-chart-half">
-        <h3>Modell-Kosten</h3>
+        <h3>Model costs</h3>
         <div style="position:relative;height:200px"><canvas id="modelChart"></canvas></div>
     </div>
 </div>
@@ -111,10 +111,10 @@
                 <span class="ts-rework-label">Rework-Rate</span>
                 <span class="ts-rework-sep">|</span>
                 <span class="ts-rework-kpi" id="reworkRated">-</span>
-                <span class="ts-rework-label">bewertet</span>
+                <span class="ts-rework-label">rated</span>
                 <span class="ts-rework-sep">|</span>
                 <span class="ts-rework-kpi ts-cost-wasted" id="reworkWasted">-</span>
-                <span class="ts-rework-label">verschwendet</span>
+                <span class="ts-rework-label">wasted</span>
             </div>
         </div>
         <div style="display:flex;gap:16px">
@@ -127,26 +127,26 @@
 <!-- Context Effectiveness -->
 <div class="ts-table-section" id="contextSection">
     <h3>Context Effectiveness (CLAUDE.md / AGENTS.md)</h3>
-    <p class="ts-section-desc" id="contextDesc">Aenderungen an Instruktionsdateien und deren Auswirkung auf AI-Effizienz.</p>
+    <p class="ts-section-desc" id="contextDesc">Changes to instruction files and their impact on AI efficiency.</p>
     <div id="contextCards" class="ts-context-cards"></div>
 </div>
 
 <!-- Project Table -->
 <div class="ts-table-section">
-    <h3>Projekte</h3>
+    <h3>Projects</h3>
     <table class="ts-table">
         <thead>
             <tr>
-                <th class="sortable" onclick="sortProjects('project')">Projekt</th>
+                <th class="sortable" onclick="sortProjects('project')">Project</th>
                 <th class="sortable" onclick="sortProjects('sessions')">Sessions</th>
-                <th class="sortable" onclick="sortProjects('duration')">Zeit</th>
+                <th class="sortable" onclick="sortProjects('duration')">Time</th>
                 <th class="sortable" onclick="sortProjects('tokens')">Tokens</th>
-                <th class="sortable active-sort" onclick="sortProjects('cost')">Kosten</th>
+                <th class="sortable active-sort" onclick="sortProjects('cost')">Cost</th>
                 <th>Accounts</th>
             </tr>
         </thead>
         <tbody id="projectTableBody">
-            <tr><td colspan="6" class="loading">Lade...</td></tr>
+            <tr><td colspan="6" class="loading">Loading...</td></tr>
         </tbody>
     </table>
 </div>

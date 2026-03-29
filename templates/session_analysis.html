@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
-{% block title %}Session-Analyse - Dashboard{% endblock %}
-{% block breadcrumb %}Session-Analyse{% endblock %}
+{% block title %}Session Analysis - Dashboard{% endblock %}
+{% block breadcrumb %}Session Analysis{% endblock %}
 
 {% block head_extra %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -11,47 +11,47 @@
 
 {% block content %}
     <div class="period-btns">
-        <button class="period-btn" onclick="loadAnalysis(7, this)">7 Tage</button>
-        <button class="period-btn active" onclick="loadAnalysis(30, this)">30 Tage</button>
-        <button class="period-btn" onclick="loadAnalysis(90, this)">90 Tage</button>
-        <button class="period-btn" onclick="loadAnalysis(365, this)">1 Jahr</button>
+        <button class="period-btn" onclick="loadAnalysis(7, this)">7 days</button>
+        <button class="period-btn active" onclick="loadAnalysis(30, this)">30 days</button>
+        <button class="period-btn" onclick="loadAnalysis(90, this)">90 days</button>
+        <button class="period-btn" onclick="loadAnalysis(365, this)">1 year</button>
     </div>
 
-    <div class="loading" id="analysisLoading"><div class="spinner"></div>Lade Analyse...</div>
+    <div class="loading" id="analysisLoading"><div class="spinner"></div>Loading analysis...</div>
     <div class="analysis-grid" id="analysisGrid" style="display:none">
         <div class="analysis-card">
-            <h3>Geschaetzte Kosten</h3>
+            <h3>Estimated Costs</h3>
             <div class="cost-total" id="totalCost">-</div>
             <div class="cost-sub" id="tokenSummary">-</div>
         </div>
 
         <div class="analysis-card">
-            <h3>Kosten nach Modell</h3>
+            <h3>Cost by Model</h3>
             <div id="modelList"></div>
         </div>
 
         <div class="analysis-card">
-            <h3>Wochentage</h3>
+            <h3>Weekdays</h3>
             <div class="weekday-grid" id="weekdayGrid"></div>
         </div>
 
         <div class="analysis-card wide-card">
-            <h3>Aktivitaet</h3>
+            <h3>Activity</h3>
             <div class="chart-container"><canvas id="activityChart"></canvas></div>
         </div>
 
         <div class="analysis-card">
-            <h3>Stunden-Verteilung</h3>
+            <h3>Hourly Distribution</h3>
             <div class="chart-container"><canvas id="hourlyChart"></canvas></div>
         </div>
 
         <div class="analysis-card">
-            <h3>Haeufigste Tools</h3>
+            <h3>Most Used Tools</h3>
             <div id="toolList"></div>
         </div>
 
         <div class="analysis-card wide-card">
-            <h3>Top-Projekte nach Kosten</h3>
+            <h3>Top Projects by Cost</h3>
             <div id="projectList"></div>
         </div>
     </div>
@@ -88,7 +88,7 @@
             .then(r => r.json())
             .then(render)
             .catch(() => {
-                document.getElementById('totalCost').textContent = 'Fehler';
+                document.getElementById('totalCost').textContent = 'Error';
                 document.getElementById('analysisLoading').style.display = 'none';
                 document.getElementById('analysisGrid').style.display = '';
             });
@@ -98,7 +98,7 @@
         document.getElementById('analysisLoading').style.display = 'none';
         document.getElementById('analysisGrid').style.display = '';
 
-        // Kosten-Card mit Mini-KPIs
+        // Cost card with mini KPIs
         const totalSessions = data.cost.by_model.reduce((s, m) => s + m.sessions, 0);
         document.getElementById('totalCost').textContent = '$' + data.cost.total_usd.toFixed(2);
         document.getElementById('tokenSummary').innerHTML = `
@@ -117,7 +117,7 @@
                 </div>
             </div>`;
 
-        // Modelle mit Badges + Hintergrundbalken
+        // Models with badges + background bars
         const maxModelCost = Math.max(...data.cost.by_model.map(m => m.cost_usd), 1);
         const modelHtml = data.cost.by_model.map(m => {
             const pct = (m.cost_usd / maxModelCost * 100).toFixed(0);
@@ -127,15 +127,15 @@
             return `<div class="model-row" style="--model-pct:${pct}%">
                 <div class="model-bar-bg"></div>
                 <div class="model-info">
-                    <span class="model-badge model-${tier}">${name || 'unbekannt'}</span>
+                    <span class="model-badge model-${tier}">${name || 'unknown'}</span>
                     <span class="model-tokens">${formatTokens(m.input_tokens)} in / ${formatTokens(m.output_tokens)} out &middot; ${m.sessions} Sessions</span>
                 </div>
                 <div class="model-cost">$${m.cost_usd.toFixed(2)}</div>
             </div>`;
         }).join('');
-        document.getElementById('modelList').innerHTML = modelHtml || '<div class="cost-sub">Keine Daten</div>';
+        document.getElementById('modelList').innerHTML = modelHtml || '<div class="cost-sub">No data</div>';
 
-        // Wochentage mit Heatmap-Effekt
+        // Weekdays with heatmap effect
         const maxWdSessions = Math.max(...data.weekdays.map(d => d.sessions), 1);
         const wdHtml = data.weekdays.map(d => {
             const intensity = d.sessions / maxWdSessions;
@@ -150,7 +150,7 @@
         }).join('');
         document.getElementById('weekdayGrid').innerHTML = wdHtml || '<div class="cost-sub">-</div>';
 
-        // Tools mit Rang, formatierten Counts, dickeren Balken
+        // Tools with rank, formatted counts, thicker bars
         const maxToolCount = data.tools.length > 0 ? data.tools[0].count : 1;
         const fmtCount = c => c >= 1e6 ? (c/1e6).toFixed(1)+'M' : c >= 1e3 ? (c/1e3).toFixed(1)+'K' : c;
         const toolHtml = data.tools.slice(0, 12).map((t, i) => {
@@ -163,9 +163,9 @@
             </div>
             <div class="tool-bar"><div class="tool-bar-fill ${isTop ? 'tool-bar-accent' : ''}" style="width:${pct}%"></div></div>`;
         }).join('');
-        document.getElementById('toolList').innerHTML = toolHtml || '<div class="cost-sub">Keine Tool-Daten</div>';
+        document.getElementById('toolList').innerHTML = toolHtml || '<div class="cost-sub">No tool data</div>';
 
-        // Projekte mit Hintergrundbalken + Kosten-Differenzierung
+        // Projects with background bars + cost differentiation
         const maxProjCost = data.cost.by_project.length > 0 ? data.cost.by_project[0].cost_usd : 1;
         const projHtml = data.cost.by_project.map(p => {
             const pct = (p.cost_usd / maxProjCost * 100).toFixed(0);
@@ -180,7 +180,7 @@
                 <span class="project-cost project-cost-${tier}">$${p.cost_usd.toFixed(2)}</span>
             </div>`;
         }).join('');
-        document.getElementById('projectList').innerHTML = projHtml || '<div class="cost-sub">Keine Daten</div>';
+        document.getElementById('projectList').innerHTML = projHtml || '<div class="cost-sub">No data</div>';
 
         renderActivityChart(data.activity);
         renderHourlyChart(data.hourly);

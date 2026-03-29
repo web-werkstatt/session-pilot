@@ -22,7 +22,7 @@ def add_github_section(sections, project_path):
         rows += f"<td><a href='https://github.com/{_escape(gh['full_name'])}' target='_blank' "
         rows += f"style='color:#4fc3f7'>{_escape(gh['full_name'])}</a></td></tr>"
         for label, key in [("Stars", "stars"), ("Forks", "forks"), ("Issues", "open_issues"),
-                           ("Pull Requests", "open_prs"), ("Sprache", "language")]:
+                           ("Pull Requests", "open_prs"), ("Language", "language")]:
             val = gh.get(key)
             if val:
                 rows += f"<tr><td style='color:#888;padding:4px 12px 4px 0'>{label}</td><td>{_escape(val)}</td></tr>"
@@ -38,7 +38,7 @@ def add_github_section(sections, project_path):
             )
 
         if gh.get("is_fork"):
-            rows += "<tr><td style='color:#888;padding:4px 12px 4px 0'>Fork</td><td>Ja</td></tr>"
+            rows += "<tr><td style='color:#888;padding:4px 12px 4px 0'>Fork</td><td>Yes</td></tr>"
 
         sections.append(f"<h3>GitHub</h3><table style='font-size:13px'>{rows}</table>")
     except Exception:
@@ -56,7 +56,7 @@ def add_health_section(sections, name, pj, project_path):
         if not health:
             return
         status_colors = {"up": "#4caf50", "down": "#ff5252", "error": "#ff9800"}
-        status_labels = {"up": "Erreichbar", "down": "Nicht erreichbar", "error": "Fehler"}
+        status_labels = {"up": "Reachable", "down": "Unreachable", "error": "Error"}
         s = health["status"]
         color = status_colors.get(s, "#888")
         label = status_labels.get(s, s)
@@ -82,19 +82,19 @@ def add_security_section(sections, name, project_path):
         if total == 0 and not vulns.get("note"):
             sections.append(
                 f"<h3>Security</h3>"
-                f"<div style='font-size:13px;color:#4caf50'>Keine bekannten Schwachstellen ({result['type']})</div>"
+                f"<div style='font-size:13px;color:#4caf50'>No known vulnerabilities ({result['type']})</div>"
             )
             return
         if total == -1:
             sections.append(
                 f"<h3>Security</h3>"
-                f"<div style='font-size:13px;color:#888'>npm audit nicht moeglich (kein package-lock.json)</div>"
+                f"<div style='font-size:13px;color:#888'>npm audit not possible (no package-lock.json)</div>"
             )
             return
         if vulns.get("note") == "pip_audit_not_installed":
             sections.append(
                 f"<h3>Security</h3>"
-                f"<div style='font-size:13px;color:#888'>pip-audit nicht installiert</div>"
+                f"<div style='font-size:13px;color:#888'>pip-audit not installed</div>"
             )
             return
 
@@ -110,7 +110,7 @@ def add_security_section(sections, name, project_path):
                 )
         sections.append(
             f"<h3>Security <span style='font-weight:normal;color:#ff5252;font-size:12px'>"
-            f"({total} Schwachstellen)</span></h3>"
+            f"({total} vulnerabilities)</span></h3>"
             f"<div style='font-size:13px'>{badges}</div>"
         )
     except Exception:

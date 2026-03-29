@@ -34,7 +34,7 @@ async function loadWidgets() {
         renderSessionChart(overview.sessions);
         renderTopActive(overview.top_active);
     } catch (e) {
-        console.error('Widget-Fehler:', e);
+        console.error('Widget error:', e);
     }
 }
 
@@ -65,7 +65,7 @@ function renderHeatmap(days) {
                  intensity < 0.25 ? '#0e3a1e' :
                  intensity < 0.5 ? '#1a6b2f' :
                  intensity < 0.75 ? '#2ea043' : '#3fb950';
-        var label = d.date.slice(5) + ': ' + d.count + ' Aktivitaeten';
+        var label = d.date.slice(5) + ': ' + d.count + ' activities';
         html += '<div class="heatmap-cell" title="' + label + '" style="background:' + bg + '">';
         html += '<span class="heatmap-day">' + d.weekday.slice(0, 2) + '</span>';
         html += '</div>';
@@ -74,11 +74,11 @@ function renderHeatmap(days) {
 
     // Legende
     html += '<div class="heatmap-legend">';
-    html += '<span style="color:#555;font-size:10px">Wenig</span>';
+    html += '<span style="color:#555;font-size:10px">Less</span>';
     ['#1a1a1a', '#0e3a1e', '#1a6b2f', '#2ea043', '#3fb950'].forEach(function(c) {
         html += '<div style="width:12px;height:12px;border-radius:2px;background:' + c + '"></div>';
     });
-    html += '<span style="color:#555;font-size:10px">Viel</span>';
+    html += '<span style="color:#555;font-size:10px">More</span>';
     html += '</div>';
 
     el.innerHTML = html;
@@ -167,7 +167,7 @@ function renderSessionChart(sessions) {
                     yAxisID: 'y',
                 },
                 {
-                    label: 'Minuten',
+                    label: 'Minutes',
                     data: durations,
                     type: 'line',
                     borderColor: '#66bb6a',
@@ -186,7 +186,7 @@ function renderSessionChart(sessions) {
                 y: { position: 'left', grid: { color: '#222' }, ticks: { color: '#4fc3f7' },
                      title: { display: true, text: 'Sessions', color: '#4fc3f7' } },
                 y1: { position: 'right', grid: { display: false }, ticks: { color: '#66bb6a' },
-                      title: { display: true, text: 'Minuten', color: '#66bb6a' } },
+                      title: { display: true, text: 'Minutes', color: '#66bb6a' } },
             }
         }
     });
@@ -197,15 +197,15 @@ function renderTopActive(projects) {
     if (!el) return;
 
     if (!projects || !projects.length) {
-        el.innerHTML = '<div style="padding:16px;color:#555;text-align:center">Keine aktiven Projekte in den letzten 7 Tagen</div>';
+        el.innerHTML = '<div style="padding:16px;color:#555;text-align:center">No active projects in the last 7 days</div>';
         return;
     }
 
     var html = '';
     projects.forEach(function(p) {
-        var statusDot = p.git_status === 'geaendert' || p.git_status === 'geändert'
-            ? '<span style="color:#ffa726" title="Ungespeicherte Aenderungen">&#9679;</span>'
-            : '<span style="color:#66bb6a" title="Sauber">&#9679;</span>';
+        var statusDot = p.git_status === 'geaendert' || p.git_status === 'geändert' || p.git_status === 'modified'
+            ? '<span style="color:#ffa726" title="Unsaved changes">&#9679;</span>'
+            : '<span style="color:#66bb6a" title="Clean">&#9679;</span>';
         var typeLabel = p.type === 'monorepo' ? '<span style="color:#ab47bc;font-size:10px;margin-left:4px">MONO</span>' : '';
 
         html += '<div class="widget-list-item" onclick="location.href=\'/project/' + encodeURIComponent(p.name) + '\'">';

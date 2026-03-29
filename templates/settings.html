@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
-{% block title %}Einstellungen - Dashboard{% endblock %}
-{% block breadcrumb %}Einstellungen{% endblock %}
+{% block title %}Settings - Dashboard{% endblock %}
+{% block breadcrumb %}Settings{% endblock %}
 
 {% block head_extra %}
 <link rel="stylesheet" href="/static/css/settings.css">
@@ -11,8 +11,9 @@
 <div class="settings-page">
     <!-- Sidebar Tabs -->
     <nav class="settings-nav">
-        <button class="settings-tab active" onclick="switchTab('pricing', this)">Modell-Preise</button>
+        <button class="settings-tab active" onclick="switchTab('pricing', this)">Model prices</button>
         <button class="settings-tab" onclick="switchTab('accounts', this)">AI Accounts</button>
+        <button class="settings-tab" onclick="switchTab('links', this)">External Links</button>
         <button class="settings-tab" onclick="switchTab('system', this)">System</button>
     </nav>
 
@@ -23,37 +24,37 @@
         <section class="settings-section" id="section-pricing">
             <div class="settings-header">
                 <div>
-                    <h2>Modell-Preise</h2>
-                    <p class="settings-desc">Preise pro 1M Tokens (USD). Werden fuer die Kostenberechnung in AI Timesheets verwendet.</p>
+                    <h2>Model prices</h2>
+                    <p class="settings-desc">Prices per 1M tokens (USD). Used for cost calculations in AI Timesheets.</p>
                 </div>
-                <button class="s-btn s-btn-primary" onclick="addPricingRow()">+ Modell</button>
+                <button class="s-btn s-btn-primary" onclick="addPricingRow()">+ Model</button>
             </div>
 
             <div class="settings-filters">
-                <button class="s-filter active" onclick="filterProvider('all', this)">Alle</button>
+                <button class="s-filter active" onclick="filterProvider('all', this)">All</button>
                 <button class="s-filter" onclick="filterProvider('anthropic', this)">Anthropic</button>
                 <button class="s-filter" onclick="filterProvider('openai', this)">OpenAI</button>
                 <button class="s-filter" onclick="filterProvider('google', this)">Google</button>
                 <button class="s-filter" onclick="filterProvider('amazon', this)">Amazon</button>
             </div>
 
-            <table class="s-table" id="pricingTable">
+            <div class="s-table-wrap"><table class="s-table" id="pricingTable">
                 <thead>
                     <tr>
                         <th>Pattern</th>
-                        <th>Anzeigename</th>
+                        <th>Display name</th>
                         <th>Provider</th>
-                        <th>Input $/1M</th>
-                        <th>Output $/1M</th>
-                        <th>Cache Read</th>
-                        <th>Cache Write</th>
+                        <th>In $/1M</th>
+                        <th>Out $/1M</th>
+                        <th>C.Read</th>
+                        <th>C.Write</th>
                         <th></th>
                     </tr>
                 </thead>
                 <tbody id="pricingBody">
-                    <tr><td colspan="8" class="loading"><div class="spinner"></div>Lade...</td></tr>
+                    <tr><td colspan="8" class="loading"><div class="spinner"></div>Loading...</td></tr>
                 </tbody>
-            </table>
+            </table></div>
         </section>
 
         <!-- Accounts Section -->
@@ -61,13 +62,42 @@
             <div class="settings-header">
                 <div>
                     <h2>AI Accounts</h2>
-                    <p class="settings-desc">Automatisch erkannte AI-Coding-Assistenten auf diesem System.</p>
+                    <p class="settings-desc">Automatically detected AI coding assistants on this system.</p>
                 </div>
             </div>
 
             <div class="s-cards" id="accountCards">
-                <div class="loading"><div class="spinner"></div>Lade...</div>
+                <div class="loading"><div class="spinner"></div>Loading...</div>
             </div>
+        </section>
+
+        <!-- External Links Section -->
+        <section class="settings-section" id="section-links" style="display:none">
+            <div class="settings-header">
+                <div>
+                    <h2>External Links</h2>
+                    <p class="settings-desc">Links shown in the sidebar under "External". Leave empty to hide the section.</p>
+                </div>
+                <button class="s-btn s-btn-primary" onclick="addLinkRow()">+ Link</button>
+            </div>
+
+            <table class="s-table" id="linksTable">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>URL</th>
+                        <th>Icon</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody id="linksBody">
+                    <tr><td colspan="4" class="loading"><div class="spinner"></div>Loading...</td></tr>
+                </tbody>
+            </table>
+            <p class="settings-desc" style="margin-top:12px">
+                Icons: any <a href="https://lucide.dev/icons/" target="_blank" style="color:#5b9bd5">Lucide icon name</a>
+                (e.g. <code>settings</code>, <code>git-fork</code>, <code>globe</code>, <code>external-link</code>)
+            </p>
         </section>
 
         <!-- System Section -->
@@ -75,12 +105,12 @@
             <div class="settings-header">
                 <div>
                     <h2>System</h2>
-                    <p class="settings-desc">Server-Konfiguration und Datenbank-Statistiken.</p>
+                    <p class="settings-desc">Server configuration and database statistics.</p>
                 </div>
             </div>
 
             <div class="s-info-grid" id="systemInfo">
-                <div class="loading"><div class="spinner"></div>Lade...</div>
+                <div class="loading"><div class="spinner"></div>Loading...</div>
             </div>
         </section>
 

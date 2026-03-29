@@ -5,8 +5,8 @@
 {% block breadcrumb %}Scheduled Tasks{% endblock %}
 
 {% block topbar_actions %}
-<button class="btn btn-primary btn-sm" onclick="showCreateModal()"><i data-lucide="plus" class="icon icon-sm"></i> Neuer Task</button>
-<button class="btn btn-secondary btn-sm" onclick="loadTasks()"><i data-lucide="refresh-cw" class="icon icon-sm"></i> Aktualisieren</button>
+<button class="btn btn-primary btn-sm" onclick="showCreateModal()"><i data-lucide="plus" class="icon icon-sm"></i> New Task</button>
+<button class="btn btn-secondary btn-sm" onclick="loadTasks()"><i data-lucide="refresh-cw" class="icon icon-sm"></i> Refresh</button>
 {% endblock %}
 
 {% block head_extra %}
@@ -17,25 +17,25 @@
     <div class="stats-bar">
         <div class="stat">
             <span class="stat-value" id="totalTasks">-</span>
-            <span class="stat-label">Gesamt</span>
+            <span class="stat-label">Total</span>
         </div>
         <div class="stat">
             <span class="stat-value" style="color:var(--success)" id="activeTasks">-</span>
-            <span class="stat-label">Aktiv</span>
+            <span class="stat-label">Active</span>
         </div>
         <div class="stat">
             <span class="stat-value" style="color:var(--warning)" id="pausedTasks">-</span>
-            <span class="stat-label">Pausiert</span>
+            <span class="stat-label">Paused</span>
         </div>
         <div class="stat">
             <span class="stat-value" style="color:var(--accent)" id="typeCount">-</span>
-            <span class="stat-label">Typen</span>
+            <span class="stat-label">Types</span>
         </div>
     </div>
 
     <div class="filter-bar">
         <span class="filter-label">Filter:</span>
-        <button class="filter-btn active" onclick="filterTasks('all')">Alle</button>
+        <button class="filter-btn active" onclick="filterTasks('all')">All</button>
         <button class="filter-btn" onclick="filterTasks('health-check')">Health Check</button>
         <button class="filter-btn" onclick="filterTasks('backup')">Backup</button>
         <button class="filter-btn" onclick="filterTasks('issue-tracker')">Issue Tracker</button>
@@ -45,7 +45,7 @@
     <div class="tasks-container">
         <div id="loading" class="loading">
             <div class="spinner"></div>
-            <div>Lade Tasks...</div>
+            <div>Loading tasks...</div>
         </div>
 
         <table id="tasksTable" style="display:none;">
@@ -53,10 +53,10 @@
                 <tr>
                     <th style="width:40px;">Status</th>
                     <th>Name</th>
-                    <th>Zeitplan</th>
-                    <th>Typ</th>
-                    <th>Letzter Lauf</th>
-                    <th style="width:120px;">Aktionen</th>
+                    <th>Schedule</th>
+                    <th>Type</th>
+                    <th>Last Run</th>
+                    <th style="width:120px;">Actions</th>
                 </tr>
             </thead>
             <tbody id="tasksBody"></tbody>
@@ -64,23 +64,23 @@
 
         <div id="emptyState" class="empty-state" style="display:none;">
             <div class="empty-icon"><i data-lucide="timer" style="width:48px;height:48px;opacity:0.3"></i></div>
-            <h3>Keine Scheduled Tasks</h3>
-            <p>Erstelle geplante Aufgaben um automatische Checks einzurichten.</p>
+            <h3>No Scheduled Tasks</h3>
+            <p>Create scheduled tasks to set up automatic checks.</p>
             <div class="template-cards">
                 <div class="template-card" onclick="createFromTemplate('health-check')">
                     <i data-lucide="heart-pulse" class="icon"></i>
                     <strong>Health Check</strong>
-                    <span>Dashboard-Status pruefen</span>
+                    <span>Check dashboard status</span>
                 </div>
                 <div class="template-card" onclick="createFromTemplate('backup')">
                     <i data-lucide="shield-check" class="icon"></i>
                     <strong>Backup Check</strong>
-                    <span>Backup-Integritaet pruefen</span>
+                    <span>Verify backup integrity</span>
                 </div>
                 <div class="template-card" onclick="createFromTemplate('issue-tracker')">
                     <i data-lucide="git-pull-request" class="icon"></i>
                     <strong>Issue Tracker</strong>
-                    <span>GitHub/Gitea-Issue ueberwachen</span>
+                    <span>Monitor GitHub/Gitea issues</span>
                 </div>
             </div>
         </div>
@@ -90,22 +90,22 @@
     <div class="modal-overlay" id="taskModal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2 id="modalTitle">Neuer Task</h2>
+                <h2 id="modalTitle">New Task</h2>
                 <button class="modal-close" onclick="closeTaskModal()">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="form-group">
                     <label for="taskName">Name</label>
-                    <input type="text" id="taskName" placeholder="z.B. Dashboard Health Check" class="form-input">
+                    <input type="text" id="taskName" placeholder="e.g. Dashboard Health Check" class="form-input">
                 </div>
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="taskCron">Cron-Ausdruck</label>
+                        <label for="taskCron">Cron Expression</label>
                         <input type="text" id="taskCron" placeholder="23 8 * * *" class="form-input" oninput="updateCronPreview()">
                         <small class="cron-preview" id="cronPreview"></small>
                     </div>
                     <div class="form-group">
-                        <label for="taskType">Typ</label>
+                        <label for="taskType">Type</label>
                         <select id="taskType" class="form-input">
                             <option value="custom">Custom</option>
                             <option value="health-check">Health Check</option>
@@ -115,27 +115,27 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label>Schnellauswahl Zeitplan</label>
+                    <label>Quick Schedule</label>
                     <div class="cron-presets">
                         <button type="button" class="btn btn-ghost btn-sm" onclick="setCron('*/15 * * * *')">15 Min</button>
-                        <button type="button" class="btn btn-ghost btn-sm" onclick="setCron('0 * * * *')">Stuendlich</button>
-                        <button type="button" class="btn btn-ghost btn-sm" onclick="setCron('23 8 * * *')">Taeglich 8:23</button>
-                        <button type="button" class="btn btn-ghost btn-sm" onclick="setCron('0 9 * * 1-5')">Werktags 9:00</button>
-                        <button type="button" class="btn btn-ghost btn-sm" onclick="setCron('17 2 * * *')">Nachts 2:17</button>
+                        <button type="button" class="btn btn-ghost btn-sm" onclick="setCron('0 * * * *')">Hourly</button>
+                        <button type="button" class="btn btn-ghost btn-sm" onclick="setCron('23 8 * * *')">Daily 8:23</button>
+                        <button type="button" class="btn btn-ghost btn-sm" onclick="setCron('0 9 * * 1-5')">Weekdays 9:00</button>
+                        <button type="button" class="btn btn-ghost btn-sm" onclick="setCron('17 2 * * *')">Nightly 2:17</button>
                     </div>
                 </div>
                 <div class="form-group">
-                    <label for="taskPrompt">Prompt / Beschreibung</label>
-                    <textarea id="taskPrompt" rows="6" placeholder="Was soll geprueft werden?" class="form-input"></textarea>
+                    <label for="taskPrompt">Prompt / Description</label>
+                    <textarea id="taskPrompt" rows="6" placeholder="What should be checked?" class="form-input"></textarea>
                 </div>
                 <div class="form-group">
                     <label for="taskTriggerId">Remote Trigger ID (optional)</label>
                     <input type="text" id="taskTriggerId" placeholder="trig_..." class="form-input">
-                    <small>Falls bereits als RemoteTrigger in Claude Code angelegt</small>
+                    <small>If already set up as a RemoteTrigger in Claude Code</small>
                 </div>
                 <div class="modal-actions">
-                    <button class="btn btn-secondary" onclick="closeTaskModal()">Abbrechen</button>
-                    <button class="btn btn-primary" id="saveBtn" onclick="saveTask()">Erstellen</button>
+                    <button class="btn btn-secondary" onclick="closeTaskModal()">Cancel</button>
+                    <button class="btn btn-primary" id="saveBtn" onclick="saveTask()">Create</button>
                 </div>
             </div>
         </div>

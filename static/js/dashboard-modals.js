@@ -34,7 +34,7 @@ function openEditModal(projectName) {
             }
         })
         .catch(err => {
-            console.error('Fehler beim Laden:', err);
+            console.error('Error loading:', err);
         });
 }
 
@@ -91,7 +91,7 @@ async function loadProjectRelations() {
     const incomingDiv = document.getElementById('incomingRelations');
 
     if (data.outgoing.length === 0) {
-        outgoingDiv.innerHTML = '<div style="color:#666;font-style:italic">Keine ausgehenden Beziehungen</div>';
+        outgoingDiv.innerHTML = '<div style="color:#666;font-style:italic">No outgoing relations</div>';
     } else {
         outgoingDiv.innerHTML = data.outgoing.map(rel => {
             const typeInfo = relationTypes.find(t => t.id === rel.type) || {icon: 'link', name: rel.type, color: '#888'};
@@ -100,7 +100,7 @@ async function loadProjectRelations() {
                     <span class="relation-type">${renderIcon(typeInfo.icon)} ${typeInfo.name}</span>
                     <span class="relation-target">→ ${rel.target}</span>
                     ${rel.note ? `<span class="relation-note">(${rel.note})</span>` : ''}
-                    <button class="btn-remove" onclick="deleteProjectRelation('${rel.id}')" title="Löschen">×</button>
+                    <button class="btn-remove" onclick="deleteProjectRelation('${rel.id}')" title="Delete">×</button>
                 </div>
             `;
         }).join('');
@@ -108,7 +108,7 @@ async function loadProjectRelations() {
     }
 
     if (data.incoming.length === 0) {
-        incomingDiv.innerHTML = '<div style="color:#666;font-style:italic">Keine eingehenden Beziehungen</div>';
+        incomingDiv.innerHTML = '<div style="color:#666;font-style:italic">No incoming relations</div>';
     } else {
         incomingDiv.innerHTML = data.incoming.map(rel => {
             const typeInfo = relationTypes.find(t => t.id === rel.type) || {icon: 'link', name: rel.type, color: '#888'};
@@ -117,21 +117,21 @@ async function loadProjectRelations() {
                     <span class="relation-type">${renderIcon(typeInfo.icon)} ${typeInfo.name}</span>
                     <span class="relation-target">← ${rel.source}</span>
                     ${rel.note ? `<span class="relation-note">(${rel.note})</span>` : ''}
-                    <button class="btn-remove" onclick="deleteProjectRelation('${rel.id}')" title="Löschen">×</button>
+                    <button class="btn-remove" onclick="deleteProjectRelation('${rel.id}')" title="Delete">×</button>
                 </div>
             `;
         }).join('');
         if (typeof lucide !== 'undefined') lucide.createIcons();
     }
 
-    // Lucide Icons rendern nach DOM-Update
+    // Render Lucide Icons after DOM update
     if (typeof lucide !== 'undefined') lucide.createIcons();
 }
 
 function updateRelationForm() {
     const direction = document.querySelector('input[name="relationDirection"]:checked').value;
     document.getElementById('relationTargetLabel').textContent =
-        direction === 'outgoing' ? 'Ziel-Projekt' : 'Quell-Projekt';
+        direction === 'outgoing' ? 'Target Project' : 'Source Project';
 }
 
 function onEditRelationSearch() {
@@ -157,7 +157,7 @@ function onEditRelationSearch() {
             const filtered = results.filter(p => p.name !== currentEditProject);
 
             if (filtered.length === 0) {
-                dropdown.innerHTML = '<div class="dropdown-item" style="color:#888">Keine Treffer</div>';
+                dropdown.innerHTML = '<div class="dropdown-item" style="color:#888">No results</div>';
             } else {
                 dropdown.innerHTML = filtered.map(p => `
                     <div class="dropdown-item" onclick="selectEditRelationProject('${p.name}')">
@@ -185,7 +185,7 @@ async function addProjectRelation() {
     const direction = document.querySelector('input[name="relationDirection"]:checked').value;
 
     if (!targetProject) {
-        alert('Bitte ein Projekt auswählen');
+        alert('Please select a project');
         return;
     }
 
@@ -199,12 +199,12 @@ async function addProjectRelation() {
         loadProjectRelations();
         loadData();
     } catch (err) {
-        alert('Fehler: ' + (err.message || 'Unbekannter Fehler'));
+        alert('Error: ' + (err.message || 'Unknown error'));
     }
 }
 
 async function deleteProjectRelation(id) {
-    if (!confirm('Beziehung wirklich löschen?')) return;
+    if (!confirm('Really delete this relation?')) return;
 
     await api.del(`/api/relations/${id}`);
     loadProjectRelations();
@@ -232,7 +232,7 @@ function addMilestoneRow(name, done, idx) {
     div.className = 'milestone-item';
     div.innerHTML = `
         <input type="checkbox" ${done ? 'checked' : ''} data-idx="${idx}">
-        <input type="text" value="${name}" placeholder="Meilenstein-Name" data-idx="${idx}">
+        <input type="text" value="${name}" placeholder="Milestone name" data-idx="${idx}">
         <button type="button" class="btn-remove" onclick="this.parentElement.remove()">×</button>
     `;
     milestoneList.appendChild(div);
@@ -274,11 +274,11 @@ document.getElementById('editForm').addEventListener('submit', function(e) {
             closeEditModal();
             loadData();
         } else {
-            alert('Fehler: ' + result.error);
+            alert('Error: ' + result.error);
         }
     })
     .catch(err => {
-        alert('Fehler beim Speichern: ' + err);
+        alert('Error saving: ' + err);
     });
 });
 
