@@ -245,42 +245,74 @@ def is_valid_subproject(item_path):
         return False
 
 
+SKIP_DIRS = {"node_modules", "__pycache__", ".git", "venv", ".venv", ".tox", ".mypy_cache"}
+
+CONFIG_FILES = [
+    # Python
+    "requirements.txt", "pyproject.toml", "setup.py", "setup.cfg", "Pipfile",
+    # JavaScript / TypeScript
+    "package.json", "deno.json", "deno.jsonc", "bun.lockb",
+    # Rust / Go / C / Zig
+    "Cargo.toml", "go.mod", "CMakeLists.txt", "Makefile", "build.zig",
+    # Java / Kotlin
+    "pom.xml", "build.gradle", "build.gradle.kts",
+    # Ruby / Elixir / PHP
+    "Gemfile", "mix.exs", "composer.json",
+    # Docker / CI
+    "Dockerfile", "docker-compose.yml", "docker-compose.yaml", "compose.yml",
+    # Project markers
+    "project.json", "CLAUDE.md", ".editorconfig",
+]
+
+SOURCE_EXTENSIONS = [
+    ".py", ".js", ".ts", ".jsx", ".tsx", ".vue", ".svelte",
+    ".php", ".go", ".rs", ".java", ".kt", ".scala",
+    ".rb", ".ex", ".exs", ".swift", ".dart",
+    ".c", ".cpp", ".h", ".cs", ".lua", ".zig",
+    ".astro", ".mdx",
+]
+
+
 def is_valid_project(project_path, project_name):
-    """Prüft ob es sich um ein gültiges Projekt handelt"""
-    if project_name in ["node_modules", "__pycache__", ".git", "venv", ".venv"]:
+    """Checks if a directory is a valid project.
+    Recognizes: git repos, config files, source code, documentation."""
+    if project_name in SKIP_DIRS:
         return False
     try:
-        visible_items = [f for f in os.listdir(project_path) if not f.startswith('.')]
+        all_items = os.listdir(project_path)
+        visible_items = [f for f in all_items if not f.startswith('.')]
         if len(visible_items) == 0:
             return False
     except OSError:
         return False
 
-    has_any_config = any(os.path.exists(os.path.join(project_path, f)) for f in [
-        "package.json", "requirements.txt", "pyproject.toml", "Cargo.toml",
-        "docker-compose.yml", "docker-compose.yaml", "compose.yml",
-        "Makefile", "CMakeLists.txt", "pom.xml", "build.gradle"
-    ])
+    # Git repo is always a project
+    if ".git" in all_items:
+        return True
 
-    has_source = False
-    for ext in [".py", ".js", ".ts", ".php", ".go", ".rs", ".java", ".vue", ".jsx", ".tsx"]:
+    # Any known config file
+    if any(os.path.exists(os.path.join(project_path, f)) for f in CONFIG_FILES):
+        return True
+
+    # Has a README or docs (intentional project, even if empty code-wise)
+    if any(f.lower() in ("readme.md", "readme.txt", "readme.rst", "readme") for f in visible_items):
+        return True
+
+    # Source code in root or one level deep
+    for ext in SOURCE_EXTENSIONS:
         try:
-            for item in os.listdir(project_path):
+            for item in visible_items:
                 if item.endswith(ext):
-                    has_source = True
-                    break
+                    return True
                 item_path = os.path.join(project_path, item)
-                if os.path.isdir(item_path) and item not in ["node_modules", ".git", "__pycache__"]:
+                if os.path.isdir(item_path) and item not in SKIP_DIRS:
                     for subitem in os.listdir(item_path)[:10]:
                         if subitem.endswith(ext):
-                            has_source = True
-                            break
+                            return True
         except OSError:
             pass
-        if has_source:
-            break
 
-    return has_any_config or has_source
+    return False
 
 
 def generate_subproject_json(subproject_path, subproject_name, parent_name, subproject_type):
