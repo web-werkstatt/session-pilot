@@ -50,6 +50,8 @@ groups.json
 ideas.json
 relations.json
 scheduled_tasks.json
+external_links.json
+account_plans.json
 
 # Session notes (personal)
 next-session.md
@@ -67,6 +69,7 @@ backups/
 
 # Old dev docs
 docs/changes-*.md
+docs/plan-*.md
 docs/screenshots/doc-*
 docs/screenshots/lazy-*
 docs/screenshots/galerie-*
