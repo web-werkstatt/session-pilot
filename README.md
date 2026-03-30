@@ -33,19 +33,19 @@
 
 ## The Problem
 
-Claude Code gives you `/usage` — a tiny status bar that disappears when you close it. No history, no trends, no alerts. You hit your limit mid-session and lose your flow. You have no idea how much you spent this week or which project burns through tokens fastest.
+You use Claude Code across multiple projects and accounts. After a few days you have dozens of sessions — but no way to find, review, or learn from them. What did Claude change last Tuesday? Which session broke that config? How much did that refactor actually cost?
 
-**SessionPilot fixes this.** It reads your local JSONL session files in real-time — the same data Claude uses internally — and gives you a permanent, always-on dashboard with:
+Claude Code stores everything locally as JSONL files, but gives you no tools to work with that data. Sessions vanish behind UUIDs, costs are invisible, and when something goes wrong you're scrolling through raw logs.
 
-- **Live burn rate** so you see the limit coming before it hits
-- **P90-based predictions** that learn from your usage patterns and tell you *when* you'll run out (with exact clock times)
-- **Cost tracking per session, project, and week** across all accounts
-- **Session history with full conversation replay** — what did Claude do yesterday at 3pm?
-- **OpenTelemetry receiver** for real Anthropic rate-limit data when available
+**SessionPilot turns your local session data into an actionable dashboard:**
+
+- **Full session replay** — browse every conversation with Markdown rendering, tool results, and timestamps
+- **Review workflow** — rate sessions (OK / Needs Fix / Reverted), add notes, link related sessions
+- **Cost visibility** — spending by model, project, and time period across all accounts
+- **Live usage monitor** — real-time burn rate, P90-based limit predictions, and session block tracking
+- **Project management** — auto-discovery, dependency tracking, code quality scores, Docker status
 
 No API keys needed. No cloud service. Just point it at `~/.claude/` and go.
-
-![Usage Monitor](docs/screenshots/10-usage-monitor.png)
 
 ## Features
 
