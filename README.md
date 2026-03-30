@@ -17,7 +17,7 @@
 </p>
 
 <p align="center">
-  <a href="https://session-pilot.com">session-pilot.com</a> (coming soon)
+  <a href="https://session-pilot.com">session-pilot.com</a>
 </p>
 
 <p align="center">
