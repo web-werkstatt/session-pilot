@@ -163,7 +163,7 @@ cp .env.example .env
 docker compose up -d
 ```
 
-Open http://localhost:5055
+Open http://localhost:5055 (or your configured `DASHBOARD_PORT`)
 
 ### Option B: Interactive Setup (Linux / macOS)
 
@@ -443,7 +443,7 @@ cp .env.example .env
 docker compose up -d
 ```
 
-Dashboard oeffnen: http://localhost:5055
+Dashboard oeffnen: http://localhost:5055 (oder konfigurierter `DASHBOARD_PORT`)
 
 ### Konfiguration
 
