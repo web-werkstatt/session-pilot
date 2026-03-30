@@ -8,14 +8,29 @@
 
 {% block content %}
 <div class="um-header">
-    <div>
+    <div class="um-header-left">
         <span class="um-live-dot"></span>
         <span class="um-status-text">Live</span>
-        <span class="um-last-update" id="umLastUpdate">updating...</span>
+        <span class="um-last-update" id="umLastUpdate">loading...</span>
+    </div>
+    <div class="um-controls">
+        <select id="umWindow" class="um-window-select" onchange="umChangeWindow(this.value)" title="Time window">
+            <option value="1">1h</option>
+            <option value="2">2h</option>
+            <option value="5" selected>5h</option>
+            <option value="12">12h</option>
+            <option value="24">24h</option>
+        </select>
+        <select id="umRefresh" class="um-refresh-select" onchange="umChangeRefresh(this.value)" title="Refresh rate">
+            <option value="5">5s</option>
+            <option value="10" selected>10s</option>
+            <option value="30">30s</option>
+            <option value="60">60s</option>
+        </select>
     </div>
 </div>
 <div class="um-grid" id="umGrid">
-    <div class="um-loading"><div class="spinner"></div> Loading usage data...</div>
+    <div class="um-loading"><div class="spinner"></div> Loading live usage data...</div>
 </div>
 {% endblock %}
 

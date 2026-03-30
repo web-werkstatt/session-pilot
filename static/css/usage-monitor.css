@@ -1,18 +1,17 @@
-/* Usage Monitor Page */
+/* Usage Monitor - Terminal-Style Live Dashboard */
 
 .um-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 12px 24px;
+    padding: 10px 24px;
     border-bottom: 1px solid var(--border-subtle);
 }
+.um-header-left { display: flex; align-items: center; gap: 8px; }
 .um-live-dot {
-    display: inline-block;
     width: 8px; height: 8px;
     background: var(--status-success);
     border-radius: 50%;
-    margin-right: 6px;
     animation: um-pulse 2s infinite;
 }
 @keyframes um-pulse {
@@ -20,174 +19,235 @@
     50% { opacity: 0.3; }
 }
 .um-status-text { font-size: 13px; font-weight: 600; color: var(--text-primary); }
-.um-last-update { font-size: 12px; color: var(--text-muted); margin-left: 12px; }
-.um-loading { text-align: center; padding: 60px; color: var(--text-muted); }
-
-.um-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-    gap: 16px;
-    padding: 20px 24px;
+.um-last-update { font-size: 12px; color: var(--text-muted); }
+.um-controls { display: flex; align-items: center; gap: 8px; }
+.um-window-select, .um-refresh-select {
+    background: var(--bg-card); color: var(--text-primary);
+    border: 1px solid var(--border-subtle); border-radius: var(--radius-sm);
+    padding: 4px 8px; font-size: 12px; cursor: pointer;
 }
 
-/* Account Card */
-.um-card {
+.um-grid {
+    display: flex; flex-direction: column;
+    gap: 16px; padding: 20px 24px;
+}
+.um-loading { text-align: center; padding: 60px; color: var(--text-muted); }
+
+/* === Monitor Card === */
+.um-monitor {
     background: var(--bg-card);
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-lg);
-    padding: 20px;
-    transition: border-color var(--transition-base);
-}
-.um-card:hover { border-color: var(--accent); }
-.um-card.inactive { opacity: 0.5; }
-
-.um-card-header {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 16px;
-}
-.um-account-name {
-    font-size: 16px;
-    font-weight: 700;
-    color: var(--text-heading);
-}
-.um-plan-badge {
-    font-size: 10px;
-    font-weight: 700;
-    padding: 2px 8px;
-    border-radius: var(--radius-full);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    cursor: pointer;
-}
-.um-plan-pro { background: rgba(91,155,213,0.15); color: var(--accent-light); }
-.um-plan-max5 { background: rgba(255,183,77,0.15); color: #ffb74d; }
-.um-plan-max20 { background: rgba(129,199,132,0.15); color: #81c784; }
-.um-sessions-badge {
-    font-size: 11px;
-    color: var(--text-muted);
-    margin-left: auto;
-}
-
-/* Metric Rows */
-.um-metric {
-    margin-bottom: 12px;
-}
-.um-metric-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    margin-bottom: 4px;
-}
-.um-metric-label {
-    font-size: 11px;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.3px;
-}
-.um-metric-value {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--text-primary);
     font-family: var(--font-mono);
-}
-
-/* Progress Bar */
-.um-bar {
-    height: 6px;
-    background: var(--bg-hover);
-    border-radius: var(--radius-full);
     overflow: hidden;
 }
-.um-bar-fill {
-    height: 100%;
-    border-radius: var(--radius-full);
-    transition: width 0.6s ease, background 0.3s ease;
-}
-.um-bar-green { background: var(--status-success); }
-.um-bar-yellow { background: #ffb74d; }
-.um-bar-red { background: var(--status-error); }
+.um-monitor.inactive { opacity: 0.4; }
 
-/* Divider */
-.um-divider {
+/* Title Banner */
+.um-banner {
+    text-align: center;
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--border-subtle);
+    background: var(--bg-surface);
+    position: relative;
+}
+.um-banner-deco {
+    font-size: 11px;
+    color: var(--text-faint);
+    letter-spacing: 2px;
+}
+.um-banner-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-heading);
+    margin: 2px 0;
+}
+.um-banner-sub {
+    font-size: 11px;
+    color: var(--text-muted);
+}
+.um-banner-controls {
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+.um-plan-select {
+    font-size: 11px; background: var(--bg-card); color: var(--text-secondary);
+    border: 1px solid var(--border-muted); border-radius: var(--radius-sm);
+    padding: 2px 6px; cursor: pointer; font-family: var(--font-mono);
+}
+
+/* Section headers */
+.um-section-head {
+    font-size: 11px;
+    color: var(--text-muted);
+    padding: 10px 20px 4px;
+}
+
+/* Separator */
+.um-sep {
     border: none;
     border-top: 1px solid var(--border-subtle);
-    margin: 14px 0;
+    margin: 0;
+}
+.um-sep-dashed {
+    border: none;
+    border-top: 1px dashed var(--border-subtle);
+    margin: 4px 20px;
 }
 
-/* Burn Rate / Predictions */
-.um-stats-row {
-    display: flex;
-    gap: 16px;
-    flex-wrap: wrap;
-}
-.um-stat {
-    font-size: 12px;
-    color: var(--text-muted);
-}
-.um-stat strong {
-    color: var(--text-primary);
-    font-family: var(--font-mono);
-}
-
-.um-prediction {
-    font-size: 12px;
-    color: var(--text-muted);
-    margin-top: 8px;
-}
-.um-prediction .warn { color: #ffb74d; }
-.um-prediction .danger { color: var(--status-error); }
-.um-prediction .safe { color: var(--status-success); }
-
-/* Model Distribution */
-.um-models {
-    display: flex;
+/* === Progress Bar Rows === */
+.um-row {
+    display: grid;
+    grid-template-columns: 180px 28px auto 60px 160px;
+    align-items: center;
     gap: 8px;
-    flex-wrap: wrap;
-    margin-top: 8px;
+    padding: 5px 20px;
+    font-size: 13px;
 }
-.um-model-tag {
-    font-size: 10px;
-    padding: 2px 8px;
-    border-radius: var(--radius-full);
-    background: var(--bg-hover);
+.um-row-label {
     color: var(--text-secondary);
-    font-family: var(--font-mono);
+    white-space: nowrap;
 }
-
-/* Plan Dropdown */
-.um-plan-select {
-    font-size: 11px;
-    background: var(--bg-surface);
-    color: var(--text-secondary);
-    border: 1px solid var(--border-muted);
-    border-radius: var(--radius-sm);
-    padding: 2px 6px;
-    cursor: pointer;
+.um-row-icon {
+    text-align: center;
+    font-size: 16px;
+    line-height: 1;
 }
-
-/* Reset timer */
-.um-reset {
-    font-size: 12px;
+.um-row-bar {
+    height: 18px;
+    background: rgba(255,255,255,0.04);
+    border-radius: 2px;
+    position: relative;
+    overflow: hidden;
+    min-width: 200px;
+}
+.um-row-bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.8s ease;
+}
+.um-bar-green { background: #4caf50; }
+.um-bar-yellow { background: #ff9800; }
+.um-bar-red { background: #f44336; }
+.um-row-pct {
+    text-align: right;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+.um-row-values {
     color: var(--text-muted);
+    text-align: right;
+    white-space: nowrap;
+}
+.um-row-values strong {
+    color: var(--text-primary);
+}
+
+/* === Burn Rate / Predictions section === */
+.um-info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+}
+.um-info-col {
+    padding: 8px 20px;
+}
+.um-info-col + .um-info-col {
+    border-left: 1px solid var(--border-subtle);
+}
+.um-info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 3px 0;
+    font-size: 13px;
+}
+.um-info-label {
+    color: var(--text-muted);
+}
+.um-info-value {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+.um-info-value.safe { color: #4caf50; }
+.um-info-value.warn { color: #ff9800; }
+.um-info-value.danger { color: #f44336; }
+
+/* === Token Breakdown Row === */
+.um-token-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+    border-top: 1px solid var(--border-subtle);
+}
+.um-token-cell {
+    padding: 8px 20px;
+    border-right: 1px solid var(--border-subtle);
+}
+.um-token-cell:last-child { border-right: none; }
+.um-token-label { font-size: 10px; color: var(--text-faint); text-transform: uppercase; }
+.um-token-val { font-size: 14px; font-weight: 700; color: var(--text-primary); }
+
+/* === Session Block Rows === */
+.um-blocks {
+    padding: 6px 20px 10px;
+}
+.um-block {
+    display: grid;
+    grid-template-columns: 100px 1fr 80px 70px;
+    gap: 10px;
+    align-items: center;
+    padding: 4px 0;
+    font-size: 12px;
+}
+.um-block-time { color: var(--text-muted); }
+.um-block-bar {
+    height: 14px; background: rgba(255,255,255,0.04);
+    border-radius: 2px; overflow: hidden; position: relative;
+}
+.um-block-bar-fill {
+    height: 100%; border-radius: 2px;
+    transition: width 0.6s ease;
+}
+.um-block-bar-text {
+    position: absolute; top: 0; left: 6px;
+    line-height: 14px; font-size: 10px; font-weight: 600;
+    color: var(--text-primary);
+}
+.um-block-cost { text-align: right; font-weight: 600; color: var(--text-primary); }
+.um-block-status-active { color: #4caf50; font-weight: 700; font-size: 10px; text-transform: uppercase; }
+.um-block-status-ended { color: var(--text-faint); font-size: 10px; }
+
+/* === Footer status bar === */
+.um-footer {
     display: flex;
     align-items: center;
-    gap: 4px;
+    justify-content: space-between;
+    padding: 6px 20px;
+    border-top: 1px solid var(--border-subtle);
+    background: var(--bg-surface);
+    font-size: 11px;
+    color: var(--text-muted);
 }
-.um-reset strong {
-    color: var(--text-primary);
-    font-family: var(--font-mono);
-}
+.um-footer strong { color: var(--text-primary); }
+.um-footer-left { display: flex; gap: 12px; }
+.um-footer-right { color: var(--text-faint); }
 
-/* Idle state */
-.um-idle-text {
+/* Idle card */
+.um-idle {
+    text-align: center;
+    padding: 24px 20px;
     color: var(--text-faint);
     font-size: 13px;
-    text-align: center;
-    padding: 20px 0;
 }
 
-@media (max-width: 860px) {
-    .um-grid { grid-template-columns: 1fr; }
+@media (max-width: 900px) {
+    .um-row { grid-template-columns: 140px 24px 1fr 50px; }
+    .um-row-values { display: none; }
+    .um-info-grid { grid-template-columns: 1fr; }
+    .um-info-col + .um-info-col { border-left: none; border-top: 1px solid var(--border-subtle); }
+    .um-token-row { grid-template-columns: 1fr 1fr; }
+    .um-block { grid-template-columns: 80px 1fr 60px; }
 }

@@ -90,3 +90,4 @@ systemd/
 project.json
 .aider*
 .sync_hashes.json
+.otel_metrics.json

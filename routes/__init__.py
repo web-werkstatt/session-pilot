@@ -22,6 +22,7 @@ from routes.scheduled_tasks_routes import scheduled_tasks_bp
 from routes.plans_routes import plans_bp
 from routes.quality_routes import quality_bp
 from routes.usage_monitor_routes import usage_monitor_bp
+from routes.otel_routes import otel_bp
 
 
 def register_blueprints(app):
@@ -48,3 +49,4 @@ def register_blueprints(app):
     app.register_blueprint(plans_bp)
     app.register_blueprint(quality_bp)
     app.register_blueprint(usage_monitor_bp)
+    app.register_blueprint(otel_bp)

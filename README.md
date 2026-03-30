@@ -47,6 +47,18 @@ But it doesn't stop there — it also monitors your Docker containers, scans you
 - **Session Reviews** — Rate sessions (OK / Needs Fix / Reverted / Partial), add notes, link review threads across sessions
 - **Export** — JSON, Markdown, HTML, XLSX, TXT
 
+### Live Usage Monitor
+- **Real-time JSONL Parsing** — Reads Claude Code session files directly for instant metrics, no database sync needed
+- **Terminal-Style Dashboard** — Inspired by [Claude-Code-Usage-Monitor](https://github.com/Maciek-roboblog/Claude-Code-Usage-Monitor), with progress bars, burn rates, and predictions
+- **P90 Dynamic Limits** — Automatically calculates session limits from your historical usage patterns (90th percentile)
+- **Session & Week Tracking** — Current 5h billing window with reset time, plus 7-day aggregate totals
+- **Burn Rate Analytics** — Tokens/min, cost/min, cost/hour with recent vs. average comparison
+- **Predictions** — When cost, token, and message limits will be reached, with exact clock times
+- **Token Breakdown** — Input, output, cache read, cache create tokens displayed separately
+- **5h Session Blocks** — Visual blocks showing each billing window with activity bars
+- **OpenTelemetry Ready** — Built-in OTLP receiver for real Anthropic rate-limit data when `CLAUDE_CODE_ENABLE_TELEMETRY=1` is set
+- **Multi-Account** — Monitors all Claude Code accounts simultaneously
+
 ### Cost Analysis & Analytics
 - **Cost Dashboard** — Estimated API costs by model (Opus, Sonnet, Haiku), project, and time period
 - **Token Tracking** — Input/output tokens per session, model, and project
@@ -98,7 +110,7 @@ But it doesn't stop there — it also monitors your Docker containers, scans you
 - **Document Browser** — Browse, view, edit, and upload files
 
 ### Technical
-- Flask with modular Blueprint architecture (20 route modules, 19 services)
+- Flask with modular Blueprint architecture (21 route modules, 21 services)
 - PostgreSQL for session data with connection pooling
 - JSON file cache with TTL for fast project scans
 - `auto_coder` quality scanner with baseline/diff workflow
@@ -129,6 +141,9 @@ But it doesn't stop there — it also monitors your Docker containers, scans you
 
 **Scheduled Tasks** — Manage scheduled automation tasks with RemoteTrigger integration.
 ![Scheduled Tasks](docs/screenshots/08-scheduled-tasks.png)
+
+**Usage Monitor** — Real-time token usage, burn rates, cost predictions, and session blocks with P90-based limits.
+![Usage Monitor](docs/screenshots/10-usage-monitor.png)
 
 **Code Quality** — Score overview for all projects with drill-down into issues by category.
 ![Quality](docs/screenshots/09-quality.png)
@@ -196,6 +211,19 @@ All settings via environment variables (`.env` file):
 | `DB_USER` | DB user | `autodns` |
 | `DB_PASSWORD` | DB password | — |
 
+### OpenTelemetry (Usage Monitor)
+
+To get real Anthropic rate-limit data in the Usage Monitor, set these environment variables before starting Claude Code:
+
+```bash
+export CLAUDE_CODE_ENABLE_TELEMETRY=1
+export OTEL_METRICS_EXPORTER=otlp
+export OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
+export OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:5055
+```
+
+Add to `~/.bashrc` for persistence. Without OTel, the monitor uses P90-based limit estimation from JSONL files.
+
 ## Prerequisites
 
 | Component | Required | Used for |
@@ -258,6 +286,9 @@ All paths are configurable via environment variables. Set `DASHBOARD_PROJECTS_DI
 | `/api/quality/report/<name>` | GET | Detailed quality report + baseline diff |
 | `/api/quality/scan/<name>` | POST | Trigger quality scan |
 | `/api/quality/baseline/<name>` | POST | Set current report as baseline |
+| `/api/usage-monitor/live` | GET | Live usage data (JSONL + OTel) |
+| `/api/otel/metrics` | GET | Debug: raw OpenTelemetry metrics |
+| `/v1/metrics` | POST | OTLP HTTP receiver for Claude Code telemetry |
 
 ## Backup
 
@@ -318,6 +349,7 @@ SessionPilot is actively developed. Here's what's coming next:
 | **Planned** | **Session Comparison** | Side-by-side comparison of two sessions — same task, different model (Opus vs. Sonnet), different prompt strategy. What worked better? |
 | **Planned** | **LLM Model Benchmarking** | "Opus vs. Sonnet: rework rate over time" across all projects. Unique research-grade insights. |
 | **Planned** | **Prompt Library** | Extract and rate reusable initial prompts per task type. Build a personal prompt playbook from real session data. |
+| **Done** | ~~**Live Usage Monitor**~~ | Real-time token tracking with P90 limits, burn rates, predictions, and OpenTelemetry support. |
 | **Done** | ~~**Multi-LLM Support**~~ | Codex CLI and Gemini CLI sessions are now supported alongside Claude Code. |
 | **Planned** | **Quality CI Integration** | Run `auto_coder diff` in CI pipelines, block PRs on regressions. |
 | **Future** | **Team Mode** | Shared dashboard for small teams with role-based views. |
@@ -353,6 +385,13 @@ Aber das ist nicht alles — es ueberwacht auch Docker-Container, scannt Projekt
 - Multi-Account-Support fuer mehrere Claude Code Accounts
 - Session-Bewertungen mit Status, Notizen und uebergreifenden Review-Threads
 - Export als JSON, Markdown, HTML, XLSX, TXT
+
+**Live Usage Monitor**
+- Echtzeit-JSONL-Parsing: liest Claude Code Session-Dateien direkt, kein DB-Sync noetig
+- Terminal-Style Dashboard mit Progress Bars, Burn Rates und Predictions
+- P90-basierte dynamische Limits aus der Nutzungshistorie
+- Session- und Wochen-Tracking mit Reset-Zeiten
+- OpenTelemetry-Empfaenger fuer echte Anthropic Rate-Limit-Daten
 
 **Kosten-Analyse & Statistiken**
 - Geschaetzte API-Kosten nach Modell, Projekt und Zeitraum
