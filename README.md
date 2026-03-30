@@ -31,11 +31,21 @@
 
 ---
 
-## Why SessionPilot?
+## The Problem
 
-If you use **Claude Code** daily across multiple projects, you know the pain: sessions scattered across accounts, no cost visibility, no way to review what happened yesterday. SessionPilot solves this by importing your Claude Code JSONL session files into a searchable, browsable, and analyzable web interface.
+Claude Code gives you `/usage` — a tiny status bar that disappears when you close it. No history, no trends, no alerts. You hit your limit mid-session and lose your flow. You have no idea how much you spent this week or which project burns through tokens fastest.
 
-But it doesn't stop there — it also monitors your Docker containers, scans your project directories, integrates with Gitea, and gives you a unified command center for your entire dev environment.
+**SessionPilot fixes this.** It reads your local JSONL session files in real-time — the same data Claude uses internally — and gives you a permanent, always-on dashboard with:
+
+- **Live burn rate** so you see the limit coming before it hits
+- **P90-based predictions** that learn from your usage patterns and tell you *when* you'll run out (with exact clock times)
+- **Cost tracking per session, project, and week** across all accounts
+- **Session history with full conversation replay** — what did Claude do yesterday at 3pm?
+- **OpenTelemetry receiver** for real Anthropic rate-limit data when available
+
+No API keys needed. No cloud service. Just point it at `~/.claude/` and go.
+
+![Usage Monitor](docs/screenshots/10-usage-monitor.png)
 
 ## Features
 
