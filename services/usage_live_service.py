@@ -41,7 +41,7 @@ def get_live_usage(window_hours=5):
         if not os.path.isdir(projects_dir):
             continue
 
-        entries = _read_all_jsonl_entries(projects_dir, cutoff)
+        entries = read_all_jsonl_entries(projects_dir, cutoff)
         if not entries:
             result[name] = _empty_account(name, window_hours)
             continue
@@ -55,7 +55,7 @@ def get_live_usage(window_hours=5):
     }
 
 
-def _read_all_jsonl_entries(projects_dir, cutoff):
+def read_all_jsonl_entries(projects_dir, cutoff):
     """Liest alle JSONL-Dateien im projects-Verzeichnis."""
     entries = []
     projects_path = Path(projects_dir)
@@ -409,4 +409,4 @@ def _empty_account(name, window_hours):
 
 def calculate_p90_limits(config_dir):
     """Wrapper fuer P90-Berechnung aus usage_limits.py."""
-    return _calc_p90(config_dir, _read_all_jsonl_entries)
+    return _calc_p90(config_dir, read_all_jsonl_entries)

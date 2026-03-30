@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block title %}Usage Reports - Dashboard{% endblock %}
+{% block breadcrumb %}Usage Reports{% endblock %}
+
+{% block head_extra %}
+<link rel="stylesheet" href="/static/css/usage-reports.css">
+{% endblock %}
+
+{% block topbar_actions %}
+<button class="btn btn-sm" onclick="urLoad()" title="Refresh">
+    <i data-lucide="refresh-cw" class="icon"></i>
+</button>
+{% endblock %}
+
+{% block content %}
+<div class="ur-controls">
+    <div class="ur-tabs" id="urPeriodTabs">
+        <button class="ur-tab active" data-period="daily" onclick="urChangePeriod('daily')">Taeglich</button>
+        <button class="ur-tab" data-period="weekly" onclick="urChangePeriod('weekly')">Woechentlich</button>
+        <button class="ur-tab" data-period="monthly" onclick="urChangePeriod('monthly')">Monatlich</button>
+    </div>
+    <div class="ur-presets">
+        <select id="urPreset" onchange="urChangePreset(this.value)">
+            <option value="today">Heute</option>
+            <option value="this_week">Diese Woche</option>
+            <option value="7days" selected>Letzte 7 Tage</option>
+            <option value="30days">Letzte 30 Tage</option>
+            <option value="this_month">Dieser Monat</option>
+            <option value="custom">Benutzerdefiniert</option>
+        </select>
+        <div class="ur-custom-range" id="urCustomRange" style="display:none">
+            <input type="date" id="urStartDate">
+            <span>bis</span>
+            <input type="date" id="urEndDate">
+            <button class="btn btn-sm" onclick="urApplyCustom()">Anwenden</button>
+        </div>
+    </div>
+</div>
+
+<div class="ur-summary" id="urSummary">
+    <div class="ur-kpi"><div class="ur-kpi-value" id="urKpiCost">-</div><div class="ur-kpi-label">Gesamtkosten</div></div>
+    <div class="ur-kpi"><div class="ur-kpi-value" id="urKpiTokens">-</div><div class="ur-kpi-label">Tokens (billable)</div></div>
+    <div class="ur-kpi"><div class="ur-kpi-value" id="urKpiMessages">-</div><div class="ur-kpi-label">Messages</div></div>
+    <div class="ur-kpi"><div class="ur-kpi-value" id="urKpiSessions">-</div><div class="ur-kpi-label">Sessions</div></div>
+    <div class="ur-kpi"><div class="ur-kpi-value" id="urKpiAvgCost">-</div><div class="ur-kpi-label">Kosten/Tag</div></div>
+    <div class="ur-kpi"><div class="ur-kpi-value" id="urKpiApiCalls">-</div><div class="ur-kpi-label">API Calls</div></div>
+</div>
+
+<div class="ur-charts">
+    <div class="ur-chart-card">
+        <h3>Kosten-Verlauf</h3>
+        <canvas id="urCostChart"></canvas>
+    </div>
+    <div class="ur-chart-card">
+        <h3>Token-Verteilung</h3>
+        <canvas id="urTokenChart"></canvas>
+    </div>
+    <div class="ur-chart-card">
+        <h3>Modell-Verteilung</h3>
+        <canvas id="urModelChart"></canvas>
+    </div>
+    <div class="ur-chart-card" id="urHourlyCard">
+        <h3>Aktivitaet nach Stunde</h3>
+        <canvas id="urHourlyChart"></canvas>
+    </div>
+</div>
+
+<div class="ur-table-wrap">
+    <table class="ur-table">
+        <thead>
+            <tr>
+                <th>Datum</th>
+                <th>Kosten</th>
+                <th>Input</th>
+                <th>Output</th>
+                <th>Cache Read</th>
+                <th>Cache Create</th>
+                <th>Messages</th>
+                <th>Sessions</th>
+                <th>API Calls</th>
+            </tr>
+        </thead>
+        <tbody id="urTableBody"></tbody>
+    </table>
+</div>
+
+<div class="ur-empty" id="urEmpty" style="display:none">
+    <i data-lucide="bar-chart-3" class="icon"></i>
+    <p>Keine Daten fuer diesen Zeitraum</p>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+<script src="/static/js/usage-reports.js"></script>
+{% endblock %}

@@ -1,5 +1,21 @@
 /* Usage Monitor - Terminal-Style Live Dashboard */
 
+.um-reports-link {
+    text-align: center;
+    padding: 6px 0;
+}
+.um-reports-link a {
+    color: var(--accent, #3b82f6);
+    text-decoration: none;
+    font-size: 0.8rem;
+    opacity: 0.8;
+    transition: opacity 0.2s;
+}
+.um-reports-link a:hover {
+    opacity: 1;
+    text-decoration: underline;
+}
+
 .um-header {
     display: flex;
     align-items: center;

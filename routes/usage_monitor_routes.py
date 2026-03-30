@@ -64,10 +64,6 @@ def api_usage_monitor_live():
             if otel_data.get("session_resets_at"):
                 acct["window_reset_time"] = otel_data["session_resets_at"]
 
-            # Week data
-            acct["week_used_pct"] = otel_data.get("week_used_pct")
-            acct["week_resets_at"] = otel_data.get("week_resets_at")
-
             # Token/message limits from P90 (OTel doesn't give these separately)
             acct["token_limit"] = limits["token_limit"]
             acct["message_limit"] = limits["message_limit"]
@@ -88,16 +84,6 @@ def api_usage_monitor_live():
             acct["tokens_pct"] = min(round(acct["billable_tokens"] / tok_limit * 100, 1) if tok_limit > 0 else 0, 100)
             acct["limits_method"] = limits["method"]
             acct["limits_sample_blocks"] = limits["sample_blocks"]
-
-        # Week data (always from P90/JSONL analysis)
-        acct["week_cost"] = limits.get("week_cost", 0)
-        acct["week_tokens"] = limits.get("week_tokens", 0)
-        acct["week_messages"] = limits.get("week_messages", 0)
-        # Week percentage only from OTel (Anthropic knows the real limit, we don't)
-        if otel_available and otel_data.get("week_used_pct") is not None:
-            acct["week_used_pct"] = otel_data["week_used_pct"]
-        else:
-            acct["week_used_pct"] = 0  # unknown without OTel
 
         # Predictions based on burn rate
         burn = acct["burn_rate"]

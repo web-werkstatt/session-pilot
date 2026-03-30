@@ -78,8 +78,8 @@ function umActiveCard(a) {
 
         '<hr class="um-sep-dashed">' +
 
-        // Week usage
-        (a.week_cost > 0 ? umWeekRow(a) : '') +
+        // Reports link
+        '<div class="um-reports-link"><a href="/usage-reports">Tages-/Wochen-/Monatsberichte &rarr;</a></div>' +
 
         '<hr class="um-sep-dashed">' +
 
@@ -158,23 +158,6 @@ function umProgressRow(label, pct, valText) {
         '<span class="um-row-pct">' + pctStr + '</span>' +
         '<span class="um-row-values">' + valText + '</span>' +
     '</div>';
-}
-
-function umWeekRow(a) {
-    // Use OTel percentage if available, otherwise show absolute values only
-    var pct = a.week_used_pct || 0;
-    var hasOtel = a.limits_method === 'otel' && pct > 0;
-    if (!hasOtel) {
-        // No reliable week percentage - show absolute values only
-        return '<div class="um-row">' +
-            '<span class="um-row-label">\uD83D\uDCC5 Current Week:</span>' +
-            '<span class="um-row-icon">\uD83D\uDCCA</span>' +
-            '<div class="um-row-bar"><div class="um-row-bar-fill um-bar-green" style="width:0%"></div></div>' +
-            '<span class="um-row-pct"></span>' +
-            '<span class="um-row-values">$' + a.week_cost.toFixed(0) + ' \u00B7 ' + fN(a.week_tokens) + ' tok \u00B7 ' + fN(a.week_messages) + ' msgs</span>' +
-        '</div>';
-    }
-    return umProgressRow('\uD83D\uDCC5 Current Week:', pct, '$' + a.week_cost.toFixed(0) + ' \u00B7 ' + fN(a.week_messages) + ' msgs');
 }
 
 function umModelBar(a) {
