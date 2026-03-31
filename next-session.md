@@ -1,7 +1,7 @@
 # Projekt-Dashboard - Naechste Session
 
 > **Letzte Aktualisierung:** 2026-03-31
-> **Status:** Sprint 12 fertig + Hilfe-Center aktualisiert
+> **Status:** Sprint 12 fertig + Datenbereinigung + Model Comparison Fixes
 > **Naechste Aufgabe:** Sprint 13 planen / Docker Image Workflow
 
 ---
@@ -10,7 +10,7 @@
 
 ### Sprint 12: AI Governance & Policies Light (DONE)
 
-**16 Dateien, 1712 Zeilen, 2 Commits:**
+**16 Dateien, 1712 Zeilen:**
 
 - `services/governance_service.py` - Policy-CRUD, Governance-Overview, Rework-Rates, Wirkungs-Tracking, Snippet-Generator
 - `services/rule_generator.py` - 17 Rule-Templates, Top-Fehlergrund-Analyse, Feedback-Loop
@@ -21,15 +21,41 @@
 - Sidebar-Link, Dashboard-Widget, Governance-Tab in Projekt-Detail
 - Gitea Issue #12 erstellt und via Commit geschlossen
 
-### Hilfe-Center Update (DONE)
+### Datenbereinigung (DONE)
 
-- `hilfe-center/content/governance.md` - Neues Topic mit NEW-Badge
+- DB: Projektnamen normalisiert (Bindestrich -> Unterstrich, 7 Paare)
+- DB: `gemini:hash` -> `gemini_sessions`, `~ (Home)` -> `home`
+- DB: `<synthetic>` Modell auf NULL gesetzt (8 Sessions)
+- Import: `_resolve_dir_name()` in session_import.py prueft echte Verzeichnisse
+- Import: Gemini/Codex Import normalisiert
+- Filter: `model NOT LIKE <%>` in Sprint 9/10/11 Queries nachgezogen
+- Filter: Phantom-Projekte aus Session-Filter-Dropdowns entfernt
+
+### Model Comparison Fixes (DONE)
+
+- `kpi-row` CSS-Definition ergaenzt (fehlte komplett)
+- `thead sticky` mit `top:0`, `.mc-table thead` auf `static`
+- Stack-Toggle active-Klasse CSS/JS Mismatch behoben
+- Projekt-Dropdown: nur Projekte mit echtem Verzeichnis + Sessions
+- Modelle ohne Ratings zeigen "No ratings" statt F/0.0
+
+### Hilfe-Center (DONE)
+
+- `governance.md` Topic mit NEW-Badge + API-Referenz
 - Sprint-Historie + Seitenuebersicht aktualisiert
-- Deployed auf doc.session-pilot.com via docker-vm
+- Deployed auf doc.session-pilot.com
+- `hilfe-center/app.py`: Sitemap-Route hinzugefuegt (noch uncommitted + nicht deployed)
 
 ---
 
 ## Naechste Session
+
+### Offene Bugs / Datenluecken
+
+- [ ] `hilfe-center/app.py` Sitemap committen + deployen
+- [ ] `joshko` (6 Sessions), `llm-test` (1 Session) - Projektnamen ohne Verzeichnis bereinigen
+- [ ] 80 Sessions ohne Modell (26x claude, 25x codex, 8x gemini) - Import-Logik oder Backfill
+- [ ] 0/357 Sessions haben cost_estimate - Backfill-Script schreiben
 
 ### Sprint 13 planen
 
@@ -58,7 +84,6 @@
 - [ ] Cache-Tokens (read/create) separat als Zeile oder Toggle in Tabelle
 - [ ] OTel verifizieren (source ~/.bashrc + neue Claude Session)
 - [ ] Scoring-Tuning: Score-Cap pro Kategorie
-- [ ] cost_estimate Backfill: Sessions haben noch keine Kostenschaetzung in DB
 
 ### Nicht vergessen
 
@@ -71,6 +96,7 @@
 - **MODULAR BAUEN:** Alle Sprints vollstaendig modular - eigene Dateien pro Concern
 - Materialized View `mv_model_quality` taeglich refreshen (RemoteTrigger oder Background-Thread)
 - **Hilfe-Center Deploy:** Content nach docker-vm:/opt/sessionpilot-hilfe/content/ kopieren, dann `docker restart sessionpilot-hilfe` (Volume ist read-only gemounted, Host-Pfad beschreiben)
+- **Hilfe-Center App Deploy:** `scp app.py` nach docker-vm, dann `docker cp` + `docker restart` (app.py ist NICHT als Volume gemounted)
 - **Bezahl-Module:** Heatmap (Sprint 10), Model Analytics (Sprint 11), Governance (Sprint 12) = "Starter Pack" komplett
 - **Pricing:** Indie 9-12 EUR/Monat, Team 29-39 EUR/Monat - Details in `dokumentenaustausch/SESSIONPILOT-PRICING.md`
 - **Docker Image:** `ghcr.io/web-werkstatt/session-pilot` - nur vom `open-source` Branch bauen, nie PRO-Code

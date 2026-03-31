@@ -239,5 +239,35 @@ def api_search():
     return jsonify({'results': results})
 
 
+@app.route('/sitemap.xml')
+def sitemap():
+    content = load_help_content()
+    base_url = 'https://doc.session-pilot.com'
+    today = datetime.now().strftime('%Y-%m-%d')
+
+    urls = [f'''  <url>
+    <loc>{base_url}/</loc>
+    <lastmod>{today}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>''']
+
+    for topic in content.get('all_topics', {}).values():
+        priority = '0.8' if topic.get('order', 999) <= 3 else '0.6'
+        urls.append(f'''  <url>
+    <loc>{base_url}/topic/{topic["id"]}</loc>
+    <lastmod>{today}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>{priority}</priority>
+  </url>''')
+
+    xml = f'''<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+{chr(10).join(urls)}
+</urlset>'''
+
+    return app.response_class(xml, mimetype='application/xml')
+
+
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5001)
