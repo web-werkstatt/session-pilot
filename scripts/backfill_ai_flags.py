@@ -22,7 +22,7 @@ def backfill(dry_run=False, project=None):
     """Strategie B: Berechnet AI-Flags aus gespeicherten DB-Messages."""
     ensure_ai_scope_schema()
 
-    where = "WHERE 1=1"
+    where = "WHERE (ai_tools_used = '[]'::jsonb OR ai_tools_used IS NULL)"
     params = []
     if project:
         where += " AND project_name = %s"
