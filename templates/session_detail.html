@@ -16,18 +16,20 @@
 
     <div class="export-bar" id="outcomeBar">
         <div class="export-left">
-            <a class="btn-export" href="/sessions">Session Liste</a>
+            <a class="sd-back-btn" href="/sessions"><i data-lucide="arrow-left" class="icon icon-sm"></i> Sessions</a>
             <div class="export-sep"></div>
-            <button class="btn-export" type="button" onclick="openBewertungModal()">Rating</button>
-            <span class="outcome-saved" id="outcomeSaved">Saved</span>
+            <button class="sd-rate-btn" type="button" onclick="openBewertungModal()" id="rateBtn">
+                <i data-lucide="star" class="icon icon-sm"></i> <span id="rateBtnLabel">Rate</span>
+            </button>
+            <span class="sd-saved" id="outcomeSaved">Saved</span>
         </div>
         <div class="export-center">
             <span class="export-label">Export</span>
-            <a class="btn-export" id="expJson2">JSON</a>
-            <a class="btn-export" id="expMd2">MD</a>
-            <a class="btn-export" id="expHtml2">HTML</a>
-            <a class="btn-export" id="expXlsx2">XLSX</a>
-            <a class="btn-export" id="expTxt2">TXT</a>
+            <a class="sd-export-btn" id="expJson2">JSON</a>
+            <a class="sd-export-btn" id="expMd2">MD</a>
+            <a class="sd-export-btn" id="expHtml2">HTML</a>
+            <a class="sd-export-btn" id="expXlsx2">XLSX</a>
+            <a class="sd-export-btn" id="expTxt2">TXT</a>
         </div>
         <div class="export-right width-control">
             <label>Width:</label>

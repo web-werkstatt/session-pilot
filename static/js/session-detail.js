@@ -251,6 +251,14 @@ function highlightOutcome(outcome) {
         b.className = 'outcome-btn';
         if (b.dataset.outcome === outcome) b.classList.add('active-' + outcome);
     });
+    // Update Rate-Button label
+    const rateBtn = document.getElementById('rateBtn');
+    const rateLabel = document.getElementById('rateBtnLabel');
+    if (rateBtn && rateLabel && outcome) {
+        const labels = {ok: 'OK', needs_fix: 'Needs Fix', reverted: 'Reverted', partial: 'Partial'};
+        rateLabel.textContent = labels[outcome] || 'Rate';
+        rateBtn.classList.toggle('rated', outcome === 'ok');
+    }
 }
 
 function showSaved() {
