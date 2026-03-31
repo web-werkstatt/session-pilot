@@ -1,4 +1,4 @@
-/* Session Detail Styles */
+/* Session Detail */
 .meta-bar {
     background: var(--bg-surface);
     padding: 20px 30px;
@@ -62,6 +62,13 @@
 .export-right { display: flex; align-items: center; gap: 8px; margin-left: auto; }
 .export-sep { width: 1px; height: 20px; background: var(--border-muted); margin: 0 4px; }
 .export-label { color: var(--text-faint); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+.sd-back-btn { display: inline-flex; align-items: center; gap: 4px; color: var(--text-muted); font-size: 12px; text-decoration: none; padding: 5px 10px; border-radius: 6px; border: 1px solid var(--border-subtle); }
+.sd-back-btn:hover { color: var(--text-primary); border-color: var(--border-hover); }
+.sd-rate-btn { display: inline-flex; align-items: center; gap: 4px; background: var(--accent); color: #fff; border: none; padding: 5px 14px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; }
+.sd-rate-btn:hover { opacity: 0.85; } .sd-rate-btn.rated { background: var(--status-success); }
+.sd-saved { font-size: 11px; color: var(--status-success); display: none; } .sd-saved.show { display: inline; }
+.sd-export-btn { color: var(--text-muted); font-size: 11px; text-decoration: none; padding: 4px 8px; border: 1px solid var(--border-subtle); border-radius: 4px; cursor: pointer; }
+.sd-export-btn:hover { color: var(--text-primary); border-color: var(--accent); }
 /* Conversation */
 .conversation {
     margin: 16px auto;
@@ -162,8 +169,7 @@
 }
 .msg-content th, .msg-content td { border: 1px solid var(--border-muted); padding: 6px 10px; }
 .msg-content th { background: var(--bg-elevated); color: var(--text-heading); }
-
-/* Tool Use */
+/* Tool Use, Copy, TOC */
 details {
     margin: 8px 0;
     border-radius: 6px;
@@ -202,8 +208,7 @@ details .tool-content {
     color: var(--text-muted);
     line-height: 1.5;
 }
-
-/* Copy + Line Numbers */
+/* Copy + Lines */
 .btn-copy {
     background: transparent;
     color: var(--text-ghost);
@@ -255,7 +260,6 @@ details .tool-content {
 }
 .btn-copy-code:hover { background: var(--bg-hover); color: var(--text-heading); border-color: var(--accent); }
 .btn-copy-code.copied { background: rgba(46, 125, 50, 0.2); color: var(--status-valid); border-color: rgba(46, 125, 50, 0.3); opacity: 1; }
-
 /* Layout + ToC */
 .session-layout {
     display: flex;
@@ -317,7 +321,6 @@ details .tool-content {
     border-left-color: var(--accent-light);
     background: rgba(79, 195, 247, 0.06);
 }
-/* User/Assistant TOC */
 .toc-item-user {
     margin-top: 6px;
     padding-top: 8px;
@@ -372,7 +375,6 @@ details .tool-content {
     border-radius: 3px;
     width: fit-content;
 }
-
 /* Review Modal */
 .review-modal-panel { padding: 24px 28px; border: 1px solid var(--border-hover); }
 .review-modal-head { margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--border-subtle); }
@@ -386,8 +388,6 @@ details .tool-content {
 .review-entry { border: 1px solid var(--border-subtle); transition: border-color var(--transition-base); }
 .review-entry:hover { border-color: var(--border-hover); }
 .review-entry-note { font-size: var(--text-md); }
-
-/* Responsive */
 @media (max-width: 1024px) {
     .session-toc { display: none; }
 }
