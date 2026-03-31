@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}Model Comparison{% endblock %}
+{% block breadcrumb %}Model Comparison{% endblock %}
+
+{% block head_extra %}
+<link rel="stylesheet" href="/static/css/kpi-cards.css">
+<link rel="stylesheet" href="/static/css/model-comparison.css">
+{% endblock %}
+
+{% block content %}
+    <!-- Filter Bar -->
+    <div class="mc-filters">
+        <select id="filterPeriod" onchange="setPeriod(this.value)">
+            <option value="30d">Last 30 days</option>
+            <option value="90d" selected>Last 90 days</option>
+            <option value="365d">Last 365 days</option>
+            <option value="all">All time</option>
+        </select>
+        <select id="filterProject" onchange="setProject(this.value)">
+            <option value="">All Projects</option>
+        </select>
+        <div class="stack-toggle">
+            <button class="stack-toggle__btn stack-toggle__btn--active" data-stack-filter="all" onclick="setStackFilter('all')">All</button>
+            <button class="stack-toggle__btn" data-stack-filter="backend" onclick="setStackFilter('backend')">Backend</button>
+            <button class="stack-toggle__btn" data-stack-filter="frontend" onclick="setStackFilter('frontend')">Frontend</button>
+        </div>
+    </div>
+
+    <!-- KPI Summary -->
+    <div class="kpi-row">
+        <div class="kpi-card">
+            <div class="kpi-value" id="mcModelCount">-</div>
+            <div class="kpi-label">Models</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-value" id="mcAvgScore">-</div>
+            <div class="kpi-label">Avg Quality</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-value" id="mcBestCost">-</div>
+            <div class="kpi-label">Best $/Success</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-value" id="mcRecommendation">-</div>
+            <div class="kpi-label">Recommendation</div>
+        </div>
+    </div>
+
+    <!-- Comparison Table -->
+    <div class="card" style="overflow-x:auto">
+        <table class="mc-table">
+            <thead>
+                <tr>
+                    <th>Model</th>
+                    <th>Sessions</th>
+                    <th>Rework %</th>
+                    <th>$/Success</th>
+                    <th>Quality</th>
+                    <th>Trend</th>
+                </tr>
+            </thead>
+            <tbody id="mcTableBody">
+                <tr><td colspan="6" class="text-center">Loading...</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Charts -->
+    <div class="mc-charts">
+        <div class="mc-chart-card">
+            <h3>Quality vs Cost vs Speed</h3>
+            <canvas id="radarChart"></canvas>
+        </div>
+        <div class="mc-chart-card">
+            <h3>Rework Rate by Stack</h3>
+            <canvas id="stackChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Insights -->
+    <div class="card" style="margin-top:var(--space-4);padding:var(--space-4)">
+        <h3 style="font-size:0.9rem;color:var(--text-secondary);margin:0 0 var(--space-3)">Insights</h3>
+        <ul id="mcInsights" style="margin:0;padding-left:var(--space-4);color:var(--text-secondary)">
+            <li>Loading insights...</li>
+        </ul>
+    </div>
+{% endblock %}
+
+{% block scripts_extra %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="/static/js/model-comparison.js"></script>
+{% endblock %}

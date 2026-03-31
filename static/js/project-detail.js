@@ -425,6 +425,19 @@ function exportProject(fmt) {
     window.open('/api/project/' + encodeURIComponent(PROJECT_NAME) + '/export?format=' + fmt, '_blank');
 }
 
+// === Model Recommendation Badge ===
+async function loadModelRecommendation() {
+    try {
+        const data = await api.get('/api/analytics/model-recommendation?project=' + encodeURIComponent(PROJECT_NAME));
+        const el = document.getElementById('modelRecommendationBadge');
+        if (data.recommended && el) {
+            el.className = 'model-recommendation';
+            el.textContent = 'Recommended: ' + data.recommended;
+        }
+    } catch (e) { /* ignore */ }
+}
+
 // === Init ===
 loadProjectInfo();
 initGitPanel(PROJECT_NAME);
+loadModelRecommendation();

@@ -241,6 +241,54 @@ def ensure_ai_scope_schema():
         _ai_scope_ready = True
 
 
+_model_quality_ready = False
+_model_quality_lock = threading.Lock()
+
+
+def ensure_model_quality_view():
+    """Sprint 11: Materialized View fuer Modell-Qualitaetsvergleich"""
+    global _model_quality_ready
+    if _model_quality_ready:
+        return
+    with _model_quality_lock:
+        if _model_quality_ready:
+            return
+        # Spalten sicherstellen bevor View erstellt wird
+        execute("ALTER TABLE sessions ADD COLUMN IF NOT EXISTS cost_estimate NUMERIC(10,4)")
+        execute("ALTER TABLE sessions ADD COLUMN IF NOT EXISTS duration_minutes NUMERIC(8,2)")
+        execute("""
+            CREATE MATERIALIZED VIEW IF NOT EXISTS mv_model_quality AS
+            SELECT
+                model,
+                COUNT(*) AS total_sessions,
+                COUNT(*) FILTER (WHERE outcome IS NOT NULL) AS rated_sessions,
+                COUNT(*) FILTER (WHERE outcome = 'ok') AS ok_count,
+                COUNT(*) FILTER (WHERE outcome = 'needs_fix') AS needs_fix_count,
+                COUNT(*) FILTER (WHERE outcome = 'reverted') AS reverted_count,
+                ROUND(
+                    COUNT(*) FILTER (WHERE outcome IN ('needs_fix', 'reverted'))::numeric /
+                    NULLIF(COUNT(*) FILTER (WHERE outcome IS NOT NULL), 0) * 100, 1
+                ) AS rework_rate,
+                SUM(COALESCE(total_input_tokens, 0) + COALESCE(total_output_tokens, 0)) AS total_tokens,
+                SUM(COALESCE(cost_estimate, 0)) AS total_cost,
+                AVG(duration_ms / 60000.0) FILTER (WHERE duration_ms > 0) AS avg_duration_min,
+                AVG(outcome_severity::int) FILTER (WHERE outcome_severity IS NOT NULL) AS avg_severity
+            FROM sessions
+            WHERE model IS NOT NULL AND model != ''
+            GROUP BY model
+        """)
+        execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_mv_model_quality_model ON mv_model_quality(model)")
+        _model_quality_ready = True
+
+
+def refresh_model_quality_view():
+    """Refresh der Materialized View (concurrent wenn moeglich)"""
+    try:
+        execute("REFRESH MATERIALIZED VIEW CONCURRENTLY mv_model_quality")
+    except Exception:
+        execute("REFRESH MATERIALIZED VIEW mv_model_quality")
+
+
 _file_touch_ready = False
 _file_touch_lock = threading.Lock()
 

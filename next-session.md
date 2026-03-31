@@ -1,19 +1,10 @@
 # Projekt-Dashboard - Naechste Session
 
 > **Letzte Aktualisierung:** 2026-03-31
-> **Status:** Sprint 10 abgeschlossen (Per-File AI-Heatmap + Risk Radar)
-> **Naechste Aufgabe:** Sprint 11 planen
+> **Status:** Sprint 11 abgeschlossen (Modell-Qualitaetsvergleich)
+> **Naechste Aufgabe:** Sprint 12 planen
 
 ---
-
-## Erledigt: Sprint 9 (2026-03-31)
-
-- DB-Migration: outcome_reason, outcome_severity, ai_has_writes, ai_has_tool_calls, ai_tools_used
-- Neues Modul `services/ai_scope_service.py` - Tool-Erkennung, Write-Detection
-- Neues Modul `routes/session_filter_routes.py` - Filter-API, Outcome-Reasons, Scope-Stats
-- Neues Modul `static/js/session-filters.js` + `static/css/session-filters.css`
-- Backfill: 264/344 Sessions mit Tool-Calls, 251 mit Writes
-- Gitea Issue #9 geschlossen, Commit e1ec0b2
 
 ## Erledigt: Sprint 10 (2026-03-31)
 
@@ -25,7 +16,18 @@
 - Neuer Tab "AI Heatmap" in project_detail.html mit Risk Radar, Sortierung, Filter, Trend-Chart
 - Gitea Issue #10 geschlossen
 
-## Naechste Session: Sprint 11
+## Erledigt: Sprint 11 (2026-03-31)
+
+- DB-Migration: Materialized View `mv_model_quality` + `cost_estimate`/`duration_minutes` Spalten
+- Neues Modul `services/model_recommendation.py` - Quality-Score (0-100, A-F), Stack-Erkennung, Empfehlungs-Engine, Trend-Analyse
+- Neues Modul `routes/model_comparison_routes.py` - 4 API-Endpoints: model-comparison, model-by-stack, model-trend, model-recommendation
+- Neue Seite `/model-comparison` mit Vergleichstabelle, Radar-Chart (Quality/Cost/Speed), Stack-Chart, Sparklines
+- Backend/Frontend Stack-Toggle fuer Stack-spezifische Analyse
+- Empfehlungs-Badge im Projekt-Detail Header
+- Navigation erweitert (nach AI Timesheets)
+- Gitea Issue #11
+
+## Naechste Session: Sprint 12
 
 ### Offene Punkte aus vorherigen Sessions
 
@@ -34,6 +36,7 @@
 - [ ] Cache-Tokens (read/create) separat als Zeile oder Toggle in Tabelle
 - [ ] OTel verifizieren (source ~/.bashrc + neue Claude Session)
 - [ ] Scoring-Tuning: Score-Cap pro Kategorie
+- [ ] cost_estimate Backfill: Sessions haben noch keine Kostenschaetzung in DB
 
 ### Nicht vergessen
 
@@ -44,3 +47,4 @@
 - Design-Tokens aus `static/css/design-tokens.css` verwenden, keine hardcoded Farben
 - Modals ueber base.js `openModal(id)` / `closeModal(id)`, API-Calls ueber `api.js`
 - **MODULAR BAUEN:** Alle Sprints vollstaendig modular - eigene Dateien pro Concern
+- Materialized View `mv_model_quality` taeglich refreshen (RemoteTrigger oder Background-Thread)

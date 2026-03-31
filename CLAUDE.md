@@ -45,6 +45,7 @@ Kein Build-Schritt, keine Tests, kein Linting konfiguriert. Abhaengigkeiten in `
 - `plans_routes.py` - Plans Import, Uebersicht, Detail, Status-Verwaltung (PostgreSQL)
 - `session_filter_routes.py` - Sprint 9: Filter-API, Outcome-Reasons, AI-Scope-Stats
 - `analytics_routes.py` - Sprint 10: File-Heatmap + Risk-Radar API
+- `model_comparison_routes.py` - Sprint 11: Modell-Vergleich, Stack-Metriken, Trends, Empfehlungen
 
 **Service-Schicht (`services/`):**
 - `project_scanner.py` - Scannt Projekte, verwaltet project.json, Cache-Logik
@@ -67,6 +68,7 @@ Kein Build-Schritt, keine Tests, kein Linting konfiguriert. Abhaengigkeiten in `
 - `plans_import.py` - Scannt ~/.claude/plans/, erkennt Projekte aus Inhalt, importiert in DB
 - `ai_scope_service.py` - Sprint 9: AI-Flag-Extraktion (Tool-Erkennung, Write-Detection)
 - `file_touch_service.py` - Sprint 10: Per-File Touch-Extraktion, Heatmap-Aggregation, Risk-Radar
+- `model_recommendation.py` - Sprint 11: Quality-Score, Stack-Analyse, Empfehlungs-Engine
 
 **Datenspeicher (JSON-Dateien, in .gitignore):**
 - `groups.json`, `relations.json`, `ideas.json`, `scheduled_tasks.json` - Benutzerdaten (JSON)

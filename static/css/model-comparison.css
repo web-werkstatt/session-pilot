@@ -1,0 +1,151 @@
+/* Sprint 11: Model Comparison */
+
+.mc-filters {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--space-4);
+}
+
+.mc-filters select {
+    background: var(--bg-elevated);
+    color: var(--text-primary);
+    border: 1px solid var(--border-muted);
+    border-radius: var(--radius-md);
+    padding: var(--space-1) var(--space-3);
+    font-size: 0.85rem;
+}
+
+.stack-toggle {
+    display: inline-flex;
+    border: 1px solid var(--border-muted);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    margin-left: auto;
+}
+
+.stack-toggle__btn {
+    padding: var(--space-1) var(--space-3);
+    cursor: pointer;
+    background: transparent;
+    color: var(--text-secondary);
+    border: none;
+    font-size: 0.85rem;
+    transition: background 0.15s, color 0.15s;
+}
+
+.stack-toggle__btn:hover { background: var(--bg-elevated); color: var(--text-primary); }
+.stack-toggle__btn--active { background: var(--accent); color: #fff; }
+
+/* Comparison table */
+.mc-table { width: 100%; border-collapse: collapse; }
+
+.mc-table th {
+    padding: var(--space-2) var(--space-3);
+    border-bottom: 1px solid var(--border-muted);
+    text-align: left;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+}
+
+.mc-table td {
+    padding: var(--space-2) var(--space-3);
+    border-bottom: 1px solid var(--border-subtle);
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    vertical-align: middle;
+}
+
+.mc-table tr:last-child td { border-bottom: none; }
+.mc-table tbody tr:hover td { background: var(--bg-elevated); }
+
+/* Score bar */
+.score-bar {
+    display: inline-block;
+    width: 60px;
+    height: 8px;
+    border-radius: var(--radius-full);
+    background: var(--bg-elevated);
+    overflow: hidden;
+    vertical-align: middle;
+    margin: 0 var(--space-1);
+}
+
+.score-bar__fill {
+    height: 100%;
+    border-radius: var(--radius-full);
+    transition: width 0.4s ease;
+}
+
+.score-bar__fill--A { background: var(--status-success); }
+.score-bar__fill--B { background: var(--status-success); opacity: 0.7; }
+.score-bar__fill--C { background: var(--status-warning); }
+.score-bar__fill--D { background: var(--status-error); opacity: 0.7; }
+.score-bar__fill--F { background: var(--status-error); }
+
+/* Grade badge */
+.grade-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    font-size: 0.8rem;
+}
+
+.grade-badge--A { background: rgba(76,175,80,0.2); color: var(--status-success); }
+.grade-badge--B { background: rgba(76,175,80,0.1); color: var(--status-success); }
+.grade-badge--C { background: rgba(255,193,7,0.2); color: var(--status-warning); }
+.grade-badge--D { background: rgba(244,67,54,0.1); color: var(--status-error); }
+.grade-badge--F { background: rgba(244,67,54,0.2); color: var(--status-error); }
+
+.score-value { font-size: 0.8rem; color: var(--text-secondary); }
+
+/* Sparkline */
+.sparkline { width: 80px; height: 24px; display: inline-block; vertical-align: middle; }
+.sparkline--improving { color: var(--status-success); }
+.sparkline--degrading { color: var(--status-error); }
+.sparkline--stable { color: var(--text-muted); }
+
+/* Charts */
+.mc-charts {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-4);
+    margin-top: var(--space-4);
+}
+
+.mc-chart-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: var(--space-4);
+}
+
+.mc-chart-card h3 {
+    margin: 0 0 var(--space-3);
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+
+/* Table links */
+.mc-table a { color: var(--accent-light, #4fc3f7); text-decoration: none; }
+.mc-table a:hover { text-decoration: underline; }
+
+/* Responsive */
+@media (max-width: 768px) {
+    .mc-charts { grid-template-columns: 1fr; }
+    .mc-table { display: block; overflow-x: auto; }
+}
