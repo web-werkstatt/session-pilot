@@ -6,9 +6,9 @@ function getTocPreview(msg) {
     const lines = raw.split('\n');
     for (const line of lines) {
         const clean = line.replace(/^[#*\->\s`_\[\]]+/, '').trim();
-        if (clean.length > 8) return clean.substring(0, 60);
+        if (clean.length > 8) return clean.substring(0, 40);
     }
-    return lines[0].replace(/[#*`_\[\]]/g, '').trim().substring(0, 60);
+    return lines[0].replace(/[#*`_\[\]]/g, '').trim().substring(0, 40);
 }
 
 function getToolNames(msg) {
@@ -27,46 +27,73 @@ function buildToc(messages) {
     const nav = document.getElementById('tocNav');
     if (!nav) return;
 
-    let html = '';
+    // Collect turns: group user message + following assistant messages
+    const turns = [];
     let msgIndex = 0;
-    let turnNum = 0;
+    let currentTurn = null;
 
     messages.forEach((msg) => {
         if (msg.type === 'system') return;
-
-        const preview = getTocPreview(msg);
-        const tools = getToolNames(msg);
         const isToolResult = msg.is_tool_result || (msg.type === 'user' && msg.content_json);
-
-        // Skip tool-result User messages (docker output, grep results etc.)
         if (isToolResult) { msgIndex++; return; }
-        // Skip empty messages
-        if (!preview && tools.length === 0) { msgIndex++; return; }
 
-        if (msg.type === 'user' && preview) {
-            turnNum++;
-            html += `<a class="toc-item toc-item-user" data-toc-target="msg-${msgIndex}" onclick="scrollToMsg(${msgIndex})">`;
-            html += `<span class="toc-num">${turnNum}</span>`;
-            html += `<span class="toc-text">${escapeHtml(preview)}</span>`;
-            html += `</a>`;
-        } else if (msg.type === 'assistant') {
-            if (!preview && tools.length === 0) { msgIndex++; return; }
-            html += `<a class="toc-item toc-item-assistant" data-toc-target="msg-${msgIndex}" onclick="scrollToMsg(${msgIndex})">`;
+        if (msg.type === 'user') {
+            const preview = getTocPreview(msg);
             if (preview) {
-                html += `<span class="toc-text">${escapeHtml(preview)}</span>`;
+                currentTurn = { userIdx: msgIndex, preview, assistants: [] };
+                turns.push(currentTurn);
             }
-            if (tools.length > 0) {
-                const toolStr = tools.length <= 3
-                    ? tools.join(', ')
-                    : tools.slice(0, 2).join(', ') + ' +' + (tools.length - 2);
-                html += `<span class="toc-tools">${escapeHtml(toolStr)}</span>`;
+        } else if (msg.type === 'assistant' && currentTurn) {
+            const preview = getTocPreview(msg);
+            const tools = getToolNames(msg);
+            if (preview || tools.length) {
+                currentTurn.assistants.push({ idx: msgIndex, preview, tools });
             }
-            html += `</a>`;
         }
         msgIndex++;
     });
 
+    // Render: user turns with collapsible assistant details
+    let html = '';
+    turns.forEach((turn, i) => {
+        const num = i + 1;
+        const hasDetails = turn.assistants.length > 0;
+        const toolCount = turn.assistants.reduce((s, a) => s + a.tools.length, 0);
+        const toolBadge = toolCount > 0 ? ` <span class="toc-tool-count">${toolCount}</span>` : '';
+
+        html += `<div class="toc-turn" data-turn="${num}">`;
+        html += `<a class="toc-item toc-item-user" data-toc-target="msg-${turn.userIdx}" onclick="scrollToMsg(${turn.userIdx})">`;
+        html += `<span class="toc-num">${num}</span>`;
+        html += `<span class="toc-text">${escapeHtml(turn.preview)}</span>${toolBadge}`;
+        html += `</a>`;
+
+        if (hasDetails) {
+            html += `<div class="toc-details">`;
+            turn.assistants.forEach(a => {
+                html += `<a class="toc-item toc-item-assistant" data-toc-target="msg-${a.idx}" onclick="scrollToMsg(${a.idx})">`;
+                if (a.preview) html += `<span class="toc-text">${escapeHtml(a.preview)}</span>`;
+                if (a.tools.length) {
+                    const ts = a.tools.length <= 2 ? a.tools.join(', ') : a.tools.slice(0, 2).join(', ') + ' +' + (a.tools.length - 2);
+                    html += `<span class="toc-tools">${escapeHtml(ts)}</span>`;
+                }
+                html += `</a>`;
+            });
+            html += `</div>`;
+        }
+        html += `</div>`;
+    });
+
     nav.innerHTML = html;
+
+    // Click user item toggles details
+    nav.querySelectorAll('.toc-item-user').forEach(item => {
+        item.addEventListener('dblclick', (e) => {
+            e.preventDefault();
+            const turn = item.closest('.toc-turn');
+            if (turn) turn.classList.toggle('expanded');
+        });
+    });
+
     setupTocScroll();
 }
 
