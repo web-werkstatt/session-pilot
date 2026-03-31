@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 """
 Backfill-Script: Setzt AI-Scope-Flags fuer bestehende Sessions.
-Analysiert gespeicherte Messages und aktualisiert ai_has_writes, ai_has_tool_calls, ai_tools_used.
 
 Usage:
-    python3 scripts/backfill_ai_flags.py [--dry-run]
+    python3 scripts/backfill_ai_flags.py              # Strategie B: aus DB-Messages
+    python3 scripts/backfill_ai_flags.py --full        # Strategie A: Re-Import aller JSONL
+    python3 scripts/backfill_ai_flags.py --project X   # Nur ein Projekt
+    python3 scripts/backfill_ai_flags.py --dry-run     # Nur anzeigen, nichts aendern
 """
 import json
 import sys
@@ -16,12 +18,19 @@ from services.db_service import execute, ensure_ai_scope_schema
 from services.ai_scope_service import analyze_from_db_messages
 
 
-def backfill(dry_run=False):
+def backfill(dry_run=False, project=None):
+    """Strategie B: Berechnet AI-Flags aus gespeicherten DB-Messages."""
     ensure_ai_scope_schema()
 
+    where = "WHERE 1=1"
+    params = []
+    if project:
+        where += " AND project_name = %s"
+        params.append(project)
+
     sessions = execute(
-        "SELECT id, session_uuid FROM sessions ORDER BY id",
-        fetch=True
+        f"SELECT id, session_uuid, project_name FROM sessions {where} ORDER BY id",
+        params or None, fetch=True
     )
     if not sessions:
         print("Keine Sessions gefunden.")
@@ -62,6 +71,31 @@ def backfill(dry_run=False):
     print(f"\n{mode}: {updated}/{len(sessions)} Sessions mit Tool-Calls")
 
 
+def force_reimport():
+    """Strategie A: Loescht Sync-Hashes und importiert alle Sessions neu."""
+    from config import PROJECTS_DIR
+    hash_cache = os.path.join(PROJECTS_DIR, ".sync_hashes.json")
+    if os.path.exists(hash_cache):
+        os.remove(hash_cache)
+        print(f"Sync-Cache geloescht: {hash_cache}")
+    else:
+        print("Kein Sync-Cache vorhanden.")
+
+    from services.session_import import sync_all
+    print("Starte Re-Import aller Sessions...")
+    result = sync_all()
+    print(f"Re-Import abgeschlossen: {result}")
+
+
 if __name__ == "__main__":
     dry_run = "--dry-run" in sys.argv
-    backfill(dry_run=dry_run)
+    full = "--full" in sys.argv
+    project = None
+    for i, arg in enumerate(sys.argv):
+        if arg == "--project" and i + 1 < len(sys.argv):
+            project = sys.argv[i + 1]
+
+    if full:
+        force_reimport()
+    else:
+        backfill(dry_run=dry_run, project=project)
