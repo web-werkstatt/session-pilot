@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+
+{% block title %}{{ topic.title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_prefix }}/">Startseite</a></li>
+            {% if parent_topic %}
+            <li class="breadcrumb-item"><a href="{{ url_prefix }}/topic/{{ parent_topic.id }}">{{ parent_topic.title }}</a></li>
+            {% endif %}
+            <li class="breadcrumb-item active">{{ topic.title }}</li>
+        </ol>
+    </nav>
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <i class="bi bi-{{ topic.icon|default('file-text') }} text-primary display-4 me-3"></i>
+                        <div>
+                            <h1 class="mb-1">{{ topic.title }}{% if topic.badge %} <span class="badge bg-warning text-dark" style="font-size:0.5em;vertical-align:middle">{{ topic.badge }}</span>{% endif %}</h1>
+                            <p class="text-muted mb-0">{{ topic.description }}</p>
+                        </div>
+                    </div>
+                    {% if topic.tags %}
+                    <div class="mt-3">
+                        {% for tag in topic.tags %}
+                        <span class="badge bg-secondary me-1">{{ tag }}</span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-9">
+            <div class="card">
+                <div class="card-body content-body">
+                    {{ topic.content|safe }}
+                </div>
+            </div>
+
+            {% if child_topics %}
+            <div class="card mt-4">
+                <div class="card-header bg-primary bg-opacity-10">
+                    <h5 class="mb-0"><i class="bi bi-folder2-open me-2"></i>Unterseiten</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for child in child_topics %}
+                        <div class="col-md-6 mb-3">
+                            <a href="{{ url_prefix }}/topic/{{ child.id }}" class="text-decoration-none">
+                                <div class="card h-100 hover-shadow">
+                                    <div class="card-body py-3">
+                                        <div class="d-flex align-items-center">
+                                            <i class="bi bi-{{ child.icon|default('file-text') }} text-primary me-3 fs-4"></i>
+                                            <div>
+                                                <h6 class="mb-1">{{ child.title }}</h6>
+                                                {% if child.description %}
+                                                <small class="text-muted">{{ child.description }}</small>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="col-lg-3">
+            <div class="toc-sidebar">
+                {% if topic.toc %}
+                <div class="card mb-4 toc-card">
+                    <div class="card-header">
+                        <h6 class="mb-0"><i class="bi bi-list-ul me-2"></i>Inhalt</h6>
+                    </div>
+                    <div class="card-body py-2">
+                        <nav class="toc-nav" id="toc-nav">
+                            {% for item in topic.toc %}
+                            <a href="#{{ item.id }}" class="toc-link {% if item.level == 3 %}toc-link-sub{% endif %}" data-target="{{ item.id }}">
+                                {{ item.title }}
+                            </a>
+                            {% endfor %}
+                        </nav>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if topic.tips %}
+                <div class="card">
+                    <div class="card-header bg-success bg-opacity-25">
+                        <h6 class="mb-0 text-success"><i class="bi bi-lightbulb me-2"></i>Tipps</h6>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-unstyled mb-0">
+                            {% for tip in topic.tips %}
+                            <li class="mb-2">
+                                <i class="bi bi-check-circle text-success me-1"></i>
+                                {{ tip }}
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-12">
+            <a href="{{ url_prefix }}/" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-2"></i>Zurueck zur Uebersicht
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const tocNav = document.getElementById('toc-nav');
+    if (!tocNav) return;
+    const tocLinks = tocNav.querySelectorAll('.toc-link');
+    const headingIds = Array.from(tocLinks).map(l => l.getAttribute('data-target'));
+    const headings = headingIds.map(id => document.getElementById(id)).filter(Boolean);
+    if (!headings.length) return;
+
+    function updateActive() {
+        const pos = window.scrollY + 100;
+        let idx = 0;
+        for (let i = 0; i < headings.length; i++) { if (headings[i].offsetTop <= pos) idx = i; }
+        tocLinks.forEach((l, i) => l.classList.toggle('active', i === idx));
+    }
+    let ticking = false;
+    window.addEventListener('scroll', () => { if (!ticking) { requestAnimationFrame(() => { updateActive(); ticking = false; }); ticking = true; }});
+    updateActive();
+
+    tocLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const t = document.getElementById(this.getAttribute('data-target'));
+            if (t) window.scrollTo({ top: t.offsetTop - 20, behavior: 'smooth' });
+        });
+    });
+});
+</script>
+{% endblock %}

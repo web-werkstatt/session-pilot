@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block title %}Startseite{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body text-center py-5">
+                    <h1 class="display-5 mb-3">
+                        <i class="bi bi-layout-text-sidebar-reverse text-primary me-3"></i>
+                        SessionPilot Hilfe-Center
+                    </h1>
+                    <p class="lead text-muted mb-4">
+                        Dokumentation für SessionPilot - Sessions, Analyse, Modell-Vergleich und Projekt-Verwaltung
+                    </p>
+                    <form action="{{ url_prefix }}/search" method="get" class="d-flex justify-content-center">
+                        <div class="input-group" style="max-width: 500px;">
+                            <input type="text" name="q" class="form-control form-control-lg"
+                                   placeholder="Was möchten Sie wissen?">
+                            <button class="btn btn-primary btn-lg" type="submit">
+                                <i class="bi bi-search"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <h4 class="mb-3"><i class="bi bi-lightning me-2"></i>Schnellstart</h4>
+        </div>
+        <div class="col-md-3 mb-3">
+            <a href="{{ url_prefix }}/topic/sessions" class="text-decoration-none">
+                <div class="card topic-card h-100">
+                    <div class="card-body text-center">
+                        <i class="bi bi-robot text-primary display-4 mb-3"></i>
+                        <h5>Sessions</h5>
+                        <p class="text-muted small mb-0">AI-Coding-Sessions verwalten</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-3 mb-3">
+            <a href="{{ url_prefix }}/topic/model-comparison" class="text-decoration-none">
+                <div class="card topic-card h-100">
+                    <div class="card-body text-center">
+                        <i class="bi bi-arrow-left-right text-success display-4 mb-3"></i>
+                        <h5>Modell-Vergleich</h5>
+                        <p class="text-muted small mb-0">Qualität und Kosten vergleichen</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-3 mb-3">
+            <a href="{{ url_prefix }}/topic/projekte" class="text-decoration-none">
+                <div class="card topic-card h-100">
+                    <div class="card-body text-center">
+                        <i class="bi bi-folder text-warning display-4 mb-3"></i>
+                        <h5>Projekte</h5>
+                        <p class="text-muted small mb-0">Projekt-Verwaltung und Analyse</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-3 mb-3">
+            <a href="{{ url_prefix }}/topic/architektur" class="text-decoration-none">
+                <div class="card topic-card h-100">
+                    <div class="card-body text-center">
+                        <i class="bi bi-diagram-3 text-info display-4 mb-3"></i>
+                        <h5>Architektur</h5>
+                        <p class="text-muted small mb-0">Technischer Aufbau verstehen</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    {% for section in content.sections %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <h4 class="mb-3">
+                <i class="bi bi-{{ section.icon|default('folder') }} me-2"></i>
+                {{ section.title }}
+            </h4>
+        </div>
+        {% for topic in section.topics %}
+        <div class="col-md-4 mb-3">
+            <a href="{{ url_prefix }}/topic/{{ topic.id }}" class="text-decoration-none">
+                <div class="card topic-card h-100">
+                    <div class="card-body">
+                        <div class="d-flex align-items-start">
+                            <i class="bi bi-{{ topic.icon|default('file-text') }} text-primary me-3 fs-4"></i>
+                            <div>
+                                <h6 class="mb-1">{{ topic.title }}</h6>
+                                <p class="text-muted small mb-0">{{ topic.description }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+    {% endfor %}
+
+    <div class="row mt-5">
+        <div class="col-12 text-center">
+            <hr class="border-secondary">
+            <p class="text-muted small">
+                <i class="bi bi-info-circle me-1"></i>
+                SessionPilot &bull;
+                <a href="https://cms.ir-tours.de" target="_blank" class="text-muted">cms.ir-tours.de</a>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

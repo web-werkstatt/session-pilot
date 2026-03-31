@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block title %}Suche: {{ query }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h2 class="mb-3"><i class="bi bi-search me-2"></i>Suchergebnisse</h2>
+                    <form action="{{ url_prefix }}/search" method="get">
+                        <div class="input-group" style="max-width: 600px;">
+                            <input type="text" name="q" class="form-control form-control-lg"
+                                   placeholder="Suchbegriff eingeben..." value="{{ query }}">
+                            <button class="btn btn-primary btn-lg" type="submit">
+                                <i class="bi bi-search"></i> Suchen
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            {% if query %}
+                {% if results %}
+                <p class="text-muted mb-4">
+                    {{ results|length }} Ergebnis{% if results|length != 1 %}se{% endif %} fuer "{{ query }}"
+                </p>
+                {% for result in results %}
+                <div class="card mb-3 topic-card">
+                    <div class="card-body">
+                        <a href="{{ url_prefix }}/topic/{{ result.id }}" class="text-decoration-none">
+                            <div class="d-flex align-items-start">
+                                <i class="bi bi-file-text text-primary me-3 fs-4"></i>
+                                <div>
+                                    <h5 class="mb-1">{{ result.title }}</h5>
+                                    <p class="text-muted mb-2">{{ result.description }}</p>
+                                    <span class="badge bg-secondary">{{ result.section }}</span>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
+                {% else %}
+                <div class="card">
+                    <div class="card-body text-center py-5">
+                        <i class="bi bi-search text-muted display-1 mb-3"></i>
+                        <h4>Keine Ergebnisse gefunden</h4>
+                        <p class="text-muted">Fuer "{{ query }}" wurden keine passenden Themen gefunden.</p>
+                        <a href="{{ url_prefix }}/" class="btn btn-primary"><i class="bi bi-house me-2"></i>Zur Startseite</a>
+                    </div>
+                </div>
+                {% endif %}
+            {% else %}
+            <div class="card">
+                <div class="card-body text-center py-5">
+                    <i class="bi bi-search text-muted display-1 mb-3"></i>
+                    <h4>Geben Sie einen Suchbegriff ein</h4>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

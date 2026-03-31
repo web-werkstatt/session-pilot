@@ -1,0 +1,49 @@
+# SessionPilot - Hilfe-Center Navigation
+
+sections:
+  - title: "Einstieg"
+    icon: "rocket-takeoff"
+    topics:
+      - was-ist-sessionpilot
+      - erste-schritte
+      - seitenuebersicht
+
+  - title: "Sessions & Analyse"
+    icon: "robot"
+    topics:
+      - sessions
+      - session-analyse
+      - usage-monitor
+      - usage-reports
+      - timesheets
+
+  - title: "Modell-Vergleich"
+    icon: "bar-chart"
+    topics:
+      - model-comparison
+      - quality-score
+      - empfehlungen
+
+  - title: "Projekt-Verwaltung"
+    icon: "folder"
+    topics:
+      - projekte
+      - projekt-detail
+      - heatmap
+      - code-quality
+
+  - title: "DevOps"
+    icon: "gear"
+    topics:
+      - containers
+      - dependencies
+      - scheduled-tasks
+      - plans
+
+  - title: "Architektur"
+    icon: "diagram-3"
+    topics:
+      - architektur
+      - api-referenz
+      - datenbank
+      - sprint-historie

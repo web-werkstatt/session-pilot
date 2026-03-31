@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}Nicht gefunden{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card text-center py-5">
+                <div class="card-body">
+                    <i class="bi bi-question-circle text-warning display-1 mb-4"></i>
+                    <h2>Seite nicht gefunden</h2>
+                    <p class="text-muted mb-4">
+                        {% if topic_id %}
+                        Das Hilfethema <code>{{ topic_id }}</code> existiert nicht.
+                        {% else %}
+                        Das gesuchte Hilfethema existiert leider nicht.
+                        {% endif %}
+                    </p>
+                    <div class="d-flex gap-2 justify-content-center">
+                        <a href="{{ url_prefix }}/" class="btn btn-primary"><i class="bi bi-house me-2"></i>Zur Startseite</a>
+                        <a href="{{ url_prefix }}/search" class="btn btn-outline-secondary"><i class="bi bi-search me-2"></i>Suchen</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

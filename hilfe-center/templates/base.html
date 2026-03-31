@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="de" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/svg+xml" href="{{ url_prefix }}/static/img/favicon.svg">
+    <title>{% block title %}Hilfe{% endblock %} - SessionPilot Dokumentation</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="{{ url_prefix }}/static/css/style.css" rel="stylesheet">
+    <script src="{{ url_prefix }}/static/js/theme-toggle.js"></script>
+</head>
+<body>
+    <button class="btn btn-primary mobile-toggle" onclick="document.querySelector('.sidebar').classList.toggle('show')">
+        <i class="bi bi-list"></i>
+    </button>
+
+    <nav class="sidebar">
+        <a href="{{ url_prefix }}/" class="sidebar-brand text-decoration-none text-white d-block">
+            <img src="{{ url_prefix }}/static/img/logo.png" alt="SessionPilot" style="height:32px;display:block;margin-bottom:4px">
+            <small>Hilfe &amp; Dokumentation</small>
+        </a>
+
+        <div class="search-box position-relative">
+            <form action="{{ url_prefix }}/search" method="get" id="search-form">
+                <div class="input-group">
+                    <span class="input-group-text bg-transparent border-end-0">
+                        <i class="bi bi-search text-muted"></i>
+                    </span>
+                    <input type="text" name="q" class="form-control border-start-0"
+                           id="search-input"
+                           placeholder="Suchen..." value="{{ request.args.get('q', '') }}"
+                           autocomplete="off">
+                </div>
+            </form>
+            <div id="search-results" class="search-results-dropdown d-none">
+                <div id="search-results-list"></div>
+            </div>
+        </div>
+
+        <div class="sidebar-nav">
+            <a href="{{ url_prefix }}/" class="nav-link {% if request.path == url_prefix + '/' %}active{% endif %}">
+                <i class="bi bi-house"></i>
+                <span>Startseite</span>
+            </a>
+
+            {% for section in content.sections %}
+            <div class="nav-section">{{ section.title }}</div>
+            {% for topic in section.topics %}
+            <a href="{{ url_prefix }}/topic/{{ topic.id }}" class="nav-link {% if request.path == url_prefix + '/topic/' + topic.id %}active{% endif %}">
+                <i class="bi bi-{{ topic.icon|default('file-text') }}"></i>
+                <span>{{ topic.title }}</span>
+                {% if topic.badge %}<span class="badge bg-warning text-dark ms-auto" style="font-size:0.6rem;padding:2px 5px">{{ topic.badge }}</span>{% endif %}
+            </a>
+            {% endfor %}
+            {% endfor %}
+        </div>
+    </nav>
+
+    <main class="main-content">
+        {% block content %}{% endblock %}
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const activeLink = document.querySelector('.sidebar .nav-link.active');
+        if (activeLink) activeLink.scrollIntoView({ block: 'center', behavior: 'instant' });
+    });
+    </script>
+
+    <script>
+    (function() {
+        'use strict';
+        const searchInput = document.getElementById('search-input');
+        const searchResults = document.getElementById('search-results');
+        const searchResultsList = document.getElementById('search-results-list');
+        if (!searchInput || !searchResults || !searchResultsList) return;
+
+        let searchTimeout = null, currentIndex = -1;
+
+        searchInput.addEventListener('input', function() {
+            const query = this.value.trim();
+            if (searchTimeout) clearTimeout(searchTimeout);
+            if (query.length < 2) { searchResults.classList.add('d-none'); return; }
+            searchTimeout = setTimeout(() => performSearch(query), 200);
+        });
+
+        function performSearch(query) {
+            fetch('{{ url_prefix }}/api/search?q=' + encodeURIComponent(query))
+                .then(r => r.json())
+                .then(data => displayResults(data.results, query));
+        }
+
+        function displayResults(results, query) {
+            currentIndex = -1;
+            if (results.length === 0) {
+                searchResultsList.innerHTML = '<div class="search-no-results">Keine Ergebnisse</div>';
+                searchResults.classList.remove('d-none');
+                return;
+            }
+            let html = '';
+            results.slice(0, 8).forEach((item, i) => {
+                html += '<a href="{{ url_prefix }}/topic/' + escapeHtml(item.id) + '" class="search-result-item" data-index="' + i + '">';
+                html += '<i class="bi bi-file-text me-2"></i>';
+                html += '<span class="search-result-title">' + escapeHtml(item.title) + '</span>';
+                if (item.section) html += '<small class="search-result-section">' + escapeHtml(item.section) + '</small>';
+                html += '</a>';
+            });
+            searchResultsList.innerHTML = html;
+            searchResults.classList.remove('d-none');
+        }
+
+        function escapeHtml(t) { const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
+
+        searchInput.addEventListener('keydown', function(e) {
+            const items = searchResultsList.querySelectorAll('.search-result-item');
+            if (!items.length) return;
+            if (e.key === 'ArrowDown') { e.preventDefault(); currentIndex = Math.min(currentIndex + 1, items.length - 1); updateActive(items); }
+            else if (e.key === 'ArrowUp') { e.preventDefault(); currentIndex = Math.max(currentIndex - 1, 0); updateActive(items); }
+            else if (e.key === 'Enter' && currentIndex >= 0) { e.preventDefault(); items[currentIndex].click(); }
+            else if (e.key === 'Escape') { searchResults.classList.add('d-none'); currentIndex = -1; }
+        });
+
+        function updateActive(items) { items.forEach((item, i) => item.classList.toggle('active', i === currentIndex)); }
+
+        document.addEventListener('click', function(e) {
+            if (!searchResults.contains(e.target) && e.target !== searchInput) { searchResults.classList.add('d-none'); currentIndex = -1; }
+        });
+        searchInput.addEventListener('focus', function() {
+            if (this.value.trim().length >= 2 && searchResultsList.innerHTML) searchResults.classList.remove('d-none');
+        });
+    })();
+    </script>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,8 +1,8 @@
 # Projekt-Dashboard - Naechste Session
 
 > **Letzte Aktualisierung:** 2026-03-31
-> **Status:** Sprint 11 abgeschlossen (Modell-Qualitaetsvergleich)
-> **Naechste Aufgabe:** Sprint 12 planen
+> **Status:** Sprint 11 abgeschlossen + Hilfe-Center deployed
+> **Naechste Aufgabe:** Sprint 12 (Governance Light) planen
 
 ---
 
@@ -27,7 +27,32 @@
 - Navigation erweitert (nach AI Timesheets)
 - Gitea Issue #11
 
+## Erledigt: Hilfe-Center (2026-03-31)
+
+- Hilfe-Center aus Contypio-Vorlage kopiert und fuer SessionPilot angepasst
+- 22 Doku-Seiten mit YAML-Frontmatter (Markdown + Flask + Gunicorn)
+- 13 Screenshots automatisch erstellt und eingebettet
+- SessionPilot Logo + Favicon integriert
+- PRO-Badges fuer bezahlte Module (Heatmap, Model Analytics, Empfehlungen, Quality Score)
+- Deployed als Docker-Container auf SaaS-Server (168.119.35.184)
+- Live unter https://doc.session-pilot.com (Caddy Reverse Proxy + Let's Encrypt SSL)
+- Help-Button in Dashboard GUI (Topbar + Sidebar-Footer)
+- Doku: `dokumentenaustausch/SESSIONPILOT-PAID-MODULES.md` + `SESSIONPILOT-PRICING.md`
+
 ## Naechste Session: Sprint 12
+
+### Sprint 12: Governance & Policies Light
+
+- [ ] `ai_policy` pro Projekt (sandbox/controlled/critical + allowed_models)
+- [ ] Governance-Uebersichtsseite (Policy-Level, Rework-Rate, einfache Badges)
+- [ ] Exportierbare Snippets fuer CLAUDE.md / AGENTS.md / Hooks (noch ohne Auto-Write)
+- [ ] Sprint-Plan in `sprints/sprint-12-governance-feedback-loop.md` vorhanden
+
+### Hilfe-Center Verbesserungen
+
+- [ ] **Englische Version:** content/de/ und content/en/ Verzeichnisse, Language Toggle (DE|EN), URL-Schema /de/topic/X vs /en/topic/X, 22 Topics uebersetzen
+- [ ] **Mobile Responsive:** Hilfe-Center Texte brechen auf Mobilgeraeten nicht korrekt um, Layout-Fix noetig (Sidebar, Content-Bereich, Tabellen)
+- [ ] Governance-Topics ergaenzen sobald Sprint 12 fertig
 
 ### Offene Punkte aus vorherigen Sessions
 
@@ -48,3 +73,6 @@
 - Modals ueber base.js `openModal(id)` / `closeModal(id)`, API-Calls ueber `api.js`
 - **MODULAR BAUEN:** Alle Sprints vollstaendig modular - eigene Dateien pro Concern
 - Materialized View `mv_model_quality` taeglich refreshen (RemoteTrigger oder Background-Thread)
+- **Hilfe-Center Deploy:** `rsync` Content/Templates auf SaaS-Server, dann `docker build + restart`
+- **Bezahl-Module:** Heatmap (Sprint 10), Model Analytics (Sprint 11), Governance (Sprint 12) = "Starter Pack"
+- **Pricing:** Indie 9-12€/Monat, Team 29-39€/Monat - Details in `dokumentenaustausch/SESSIONPILOT-PRICING.md`
