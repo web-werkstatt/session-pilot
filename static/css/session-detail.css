@@ -346,18 +346,43 @@ details .tool-content {
     transition: background 1.5s ease-out, border-left-color 1.5s ease-out;
 }
 /* Review Modal */
-.review-modal-panel { padding: 24px 28px; border: 1px solid var(--border-hover); }
-.review-modal-head { margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--border-subtle); }
-.review-modal-head h2 { font-size: 18px; }
-.review-status-row { gap: 8px; margin-top: 16px; padding: 14px 0; border-top: 1px solid var(--border-subtle); border-bottom: 1px solid var(--border-subtle); }
-.outcome-btn { font-size: 12px; padding: 7px 18px; font-weight: 500; }
-.review-reason-row { display: flex; gap: 8px; margin: 8px 0; }
-.review-reason-select, .review-severity-select { flex: 1; background: var(--bg-input, #141414); border: 1px solid var(--border-subtle); color: var(--text-primary); padding: 6px 10px; border-radius: 6px; font-size: 12px; }
+.review-modal-panel { padding: 0; border: 1px solid var(--border-hover); overflow: hidden; }
+.review-modal-head { padding: 20px 24px; margin-bottom: 0; background: var(--bg-elevated, var(--bg-surface)); border-bottom: 1px solid var(--border-subtle); }
+.review-modal-head h2 { font-size: 18px; margin: 0; }
+.review-modal-head p { margin: 4px 0 0; }
+.review-section { padding: 16px 24px; border-bottom: 1px solid var(--border-subtle); }
+.review-section:last-child { border-bottom: none; }
+.review-section-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-faint); margin-bottom: 10px; font-weight: 600; }
+.review-section-footer { display: flex; justify-content: flex-end; margin-top: 12px; }
+.review-status-row { gap: 8px; margin-top: 0; padding: 0; border: none; }
+.outcome-btn {
+    font-size: 13px; padding: 10px 20px; font-weight: 500;
+    background: var(--bg-surface); border: 1px solid var(--border-muted);
+    border-radius: var(--radius-md); color: var(--text-secondary);
+    cursor: pointer; transition: all var(--transition-base);
+    display: inline-flex; align-items: center; gap: 6px;
+}
+.outcome-btn .outcome-icon { font-size: 14px; }
+.outcome-btn:hover { border-color: var(--text-muted); color: var(--text-heading); background: var(--bg-hover); }
+.outcome-btn.active-ok { background: rgba(46,125,50,0.15); border-color: var(--status-valid); color: var(--status-valid); box-shadow: 0 0 0 1px rgba(46,125,50,0.3); }
+.outcome-btn.active-needs_fix { background: rgba(230,81,0,0.15); border-color: var(--status-warning); color: var(--status-warning); box-shadow: 0 0 0 1px rgba(230,81,0,0.3); }
+.outcome-btn.active-reverted { background: rgba(198,40,40,0.15); border-color: var(--status-error-bright); color: var(--status-error-bright); box-shadow: 0 0 0 1px rgba(198,40,40,0.3); }
+.outcome-btn.active-partial { background: rgba(249,168,37,0.15); border-color: var(--status-partial); color: var(--status-partial); box-shadow: 0 0 0 1px rgba(249,168,37,0.3); }
+.review-btn-save {
+    background: var(--accent); border: none; padding: 9px 22px;
+    border-radius: var(--radius-md); color: var(--text-heading);
+    cursor: pointer; font-size: 13px; font-weight: 500;
+    transition: background var(--transition-base); white-space: nowrap;
+}
+.review-btn-save:hover { background: var(--accent-hover); }
+.review-reason-row { display: flex; gap: 8px; margin-top: 10px; }
+.review-reason-select, .review-severity-select { flex: 1; background: var(--bg-input, #141414); border: 1px solid var(--border-subtle); color: var(--text-primary); padding: 8px 10px; border-radius: 6px; font-size: 13px; }
 .review-reason-select:focus, .review-severity-select:focus { border-color: var(--accent); outline: none; }
-.review-modal-note { min-height: 80px; font-size: var(--text-md); border-radius: 6px; }
+.review-modal-note { min-height: 90px; font-size: var(--text-md); border-radius: 6px; }
 .review-modal-note:focus { border-color: var(--accent); outline: none; }
-.review-modal-actions { margin-top: 10px; justify-content: flex-end; }
-.review-history { border-top: 1px solid var(--border-subtle); padding-top: 16px; }
+.review-note-footer { display: flex; gap: 10px; align-items: center; margin-top: 12px; flex-wrap: wrap; }
+.review-note-footer .review-thread-row { flex: 1; display: flex; gap: 8px; min-width: 0; }
+.review-history { margin: 0; padding: 0; border: none; }
 .review-entry { border: 1px solid var(--border-subtle); transition: border-color var(--transition-base); }
 .review-entry:hover { border-color: var(--border-hover); }
 .review-entry-note { font-size: var(--text-md); }

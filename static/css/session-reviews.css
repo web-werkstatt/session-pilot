@@ -130,15 +130,21 @@
     line-height: 1.5;
 }
 .review-close {
-    background: transparent;
+    background: var(--bg-surface);
     border: 1px solid var(--border-muted);
     color: var(--text-secondary);
-    width: 36px;
-    height: 36px;
+    width: 32px;
+    height: 32px;
     border-radius: var(--radius-full);
     cursor: pointer;
-    font-size: 20px;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-base);
+    flex-shrink: 0;
 }
+.review-close:hover { background: var(--bg-hover); border-color: var(--text-muted); color: var(--text-heading); }
 .review-thread-row,
 .review-status-row,
 .review-modal-actions {

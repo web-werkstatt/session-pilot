@@ -118,18 +118,21 @@ async function loadSessions() {
     const dateFrom = document.getElementById('filterDateFrom').value;
     const dateTo = document.getElementById('filterDateTo').value;
     const model = document.getElementById('filterModel') ? document.getElementById('filterModel').value : '';
-    const outcome = document.getElementById('filterOutcome') ? document.getElementById('filterOutcome').value : '';
     if (account) params.set('account', account);
     if (project) params.set('project', project);
     if (model) params.set('model', model);
-    if (outcome) params.set('outcome', outcome);
     if (dateFrom) params.set('date_from', dateFrom);
     if (dateTo) params.set('date_to', dateTo);
 
-    // Sprint 9: Filter-Parameter aus SessionFilters
+    // Sprint 9: Filter-Parameter aus SessionFilters (hat Vorrang)
     if (typeof SessionFilters !== 'undefined') {
         const extra = SessionFilters.getFilterParams();
         Object.entries(extra).forEach(([k, v]) => params.set(k, v));
+    }
+    // Fallback: Outcome aus Dropdown falls SessionFilters nicht aktiv
+    if (!params.has('outcome')) {
+        const outcome = document.getElementById('filterOutcome') ? document.getElementById('filterOutcome').value : '';
+        if (outcome) params.set('outcome', outcome);
     }
 
     try {
@@ -466,7 +469,11 @@ function applyUrlParams() {
 }
 
 loadStats();
-loadFilterOptions().then(() => { applyUrlParams(); loadSessions(); });
+(async () => {
+    await loadFilterOptions();
+    if (typeof SessionFilters !== 'undefined') await SessionFilters.init();
+    applyUrlParams();
+    loadSessions();
+})();
 updateSortIcons();
 if (typeof lucide !== 'undefined') lucide.createIcons();
-if (typeof SessionFilters !== 'undefined') SessionFilters.init();

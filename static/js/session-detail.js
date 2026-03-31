@@ -201,7 +201,7 @@ function renderReviewHistory(reviews) {
 function populateThreadSelect(preferredId) {
     const select = document.getElementById('reviewThreadSelect');
     if (!select) return;
-    const options = ['<option value="">Ohne Thread speichern</option>'];
+    const options = ['<option value="">No thread</option>'];
     projectThreads.forEach(thread => {
         const selected = preferredId && Number(preferredId) === Number(thread.id) ? ' selected' : '';
         options.push(`<option value="${thread.id}"${selected}>${escapeHtml(thread.title)} (${thread.session_count || 0} Sessions)</option>`);
