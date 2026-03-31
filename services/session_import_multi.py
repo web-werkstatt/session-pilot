@@ -150,6 +150,13 @@ def import_codex_session(filepath, account_name):
             project_name = cwd.split(PROJECTS_DIR + "/")[-1].split("/")[0]
         else:
             project_name = os.path.basename(cwd)
+    if project_name:
+        # Verzeichnisname auflösen (Bindestrich vs Unterstrich)
+        real_path = os.path.join(PROJECTS_DIR, project_name)
+        if not os.path.isdir(real_path):
+            alt = project_name.replace("-", "_")
+            if os.path.isdir(os.path.join(PROJECTS_DIR, alt)):
+                project_name = alt
     project_hash = f"codex:{project_name or 'unknown'}"
 
     for m in messages:
@@ -269,7 +276,7 @@ def import_gemini_session(meta, messages, account_name, project_hash):
     if not meta or not meta["session_uuid"]:
         return "skipped"
 
-    project_name = f"gemini:{project_hash[:12]}"
+    project_name = "gemini_sessions"
     existing = execute(
         "SELECT id, updated_at FROM sessions WHERE session_uuid = %s",
         (meta["session_uuid"],), fetchone=True

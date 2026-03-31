@@ -274,7 +274,7 @@ def ensure_model_quality_view():
                 AVG(duration_ms / 60000.0) FILTER (WHERE duration_ms > 0) AS avg_duration_min,
                 AVG(outcome_severity::int) FILTER (WHERE outcome_severity IS NOT NULL) AS avg_severity
             FROM sessions
-            WHERE model IS NOT NULL AND model != ''
+            WHERE model IS NOT NULL AND model != '' AND model NOT LIKE '<%>'
             GROUP BY model
         """)
         execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_mv_model_quality_model ON mv_model_quality(model)")

@@ -312,6 +312,5 @@
     .policy-toggle__btn:not(:last-child) { border-right: none; border-bottom: 1px solid var(--border-subtle); }
     .gov-rules-controls { flex-direction: column; }
     .gov-table { font-size: var(--text-xs); }
-    .kpi-row { flex-wrap: wrap; }
     .eff-stats { flex-direction: column; gap: var(--space-1); }
 }

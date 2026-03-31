@@ -91,19 +91,24 @@ function renderComparisonTable(models) {
     }
 
     var rows = models.map(function(m) {
+        var hasRatings = m.rated_sessions > 0;
         var modelLink = '<a href="/sessions?model=' + encodeURIComponent(m.model) + '">'
             + escapeHtml(m.model) + '</a>';
 
         var sessionsText = m.total_sessions + ' (' + m.rated_sessions + ' rated)';
 
-        var reworkLink = '<a href="/sessions?model=' + encodeURIComponent(m.model)
-            + '&outcome=needs_fix,reverted" title="Show sessions needing fixes">'
-            + m.rework_rate.toFixed(1) + '%</a>';
+        var reworkHtml = hasRatings
+            ? '<a href="/sessions?model=' + encodeURIComponent(m.model)
+              + '&outcome=needs_fix,reverted" title="Show sessions needing fixes">'
+              + m.rework_rate.toFixed(1) + '%</a>'
+            : '<span style="color:var(--text-muted)">-</span>';
 
         var costText = m.cost_per_success != null ? '$' + m.cost_per_success.toFixed(2) : '-';
 
-        var qualityHtml = renderGradeBadge(m.grade) + ' ' + renderScoreBar(m.quality_score, m.grade)
-            + ' <span class="score-value">' + m.quality_score.toFixed(1) + '</span>';
+        var qualityHtml = hasRatings
+            ? renderGradeBadge(m.grade) + ' ' + renderScoreBar(m.quality_score, m.grade)
+              + ' <span class="score-value">' + m.quality_score.toFixed(1) + '</span>'
+            : '<span style="color:var(--text-muted)">No ratings</span>';
 
         var trendEntry = (_trendCache[m.model] || [])[0];
         var periods = trendEntry ? trendEntry.periods || [] : [];
@@ -112,7 +117,7 @@ function renderComparisonTable(models) {
         return '<tr>'
             + '<td>' + modelLink + '</td>'
             + '<td>' + sessionsText + '</td>'
-            + '<td>' + reworkLink + '</td>'
+            + '<td>' + reworkHtml + '</td>'
             + '<td>' + costText + '</td>'
             + '<td>' + qualityHtml + '</td>'
             + '<td>' + sparkHtml + '</td>'
@@ -388,4 +393,27 @@ function setProject(project) {
 }
 
 
-document.addEventListener('DOMContentLoaded', loadModelComparison);
+async function populateProjectFilter() {
+    var sel = document.getElementById('filterProject');
+    if (!sel || sel.options.length > 1) return;
+    try {
+        var results = await Promise.all([
+            api.get('/api/sessions/filters'),
+            api.get('/api/data')
+        ]);
+        var sessionProjects = new Set(results[0].projects || []);
+        var realProjects = (results[1].projects || []).map(function(p) { return p.name; });
+        var filtered = realProjects.filter(function(n) { return sessionProjects.has(n); }).sort();
+        filtered.forEach(function(name) {
+            var opt = document.createElement('option');
+            opt.value = name;
+            opt.textContent = name;
+            sel.appendChild(opt);
+        });
+    } catch (e) { /* ignore */ }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    populateProjectFilter();
+    loadModelComparison();
+});

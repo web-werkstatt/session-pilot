@@ -87,7 +87,7 @@ def get_model_comparison(period='90d', project=None, stack=None):
     else:
         # Direct query with filters
         params = []
-        where_parts = ["s.model IS NOT NULL", "s.model != ''"]
+        where_parts = ["s.model IS NOT NULL", "s.model != ''", "s.model NOT LIKE '<%%>'"]
 
         if cutoff:
             where_parts.append("s.started_at > %s")

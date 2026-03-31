@@ -25,21 +25,40 @@ def extract_project_name(project_hash):
     if not project_hash:
         return None
     if project_hash.startswith("gemini:"):
-        return "~ Gemini Session"
+        return "gemini_sessions"
     if len(project_hash) > 40 and all(c in '0123456789abcdef' for c in project_hash):
-        return "~ Gemini Session"
+        return "gemini_sessions"
     if project_hash.startswith("codex:"):
-        name = project_hash.replace("codex:", "").replace("_", "-")
-        return "~ (Home)" if not name or name in ("joshko",) else name
+        name = project_hash.replace("codex:", "")
+        return "home" if not name or name in ("joshko",) else _resolve_dir_name(name)
     if project_hash in ("-mnt-projects", "-home-joshko"):
-        return "~ (Home)"
+        return "home"
     if project_hash.startswith("-mnt-projects-"):
         name = project_hash[len("-mnt-projects-"):]
-        return name.rstrip("/") if name else "~ (Home)"
+        return _resolve_dir_name(name.rstrip("/")) if name else "home"
     if project_hash.startswith("-home-joshko-"):
         name = project_hash[len("-home-joshko-"):]
-        return name.rstrip("/") if name else "~ (Home)"
+        return _resolve_dir_name(name.rstrip("/")) if name else "home"
     return project_hash
+
+
+def _resolve_dir_name(name):
+    """Löst Bindestrich-Namen zu echten Verzeichnisnamen auf.
+    Claude-Hashes ersetzen / durch -, daher proj_irtours -> proj-irtours im Hash.
+    Wir prüfen ob das Verzeichnis mit Unterstrichen existiert."""
+    import os
+    if not name:
+        return "home"
+    # Direkt-Match
+    path = os.path.join("/mnt/projects", name)
+    if os.path.isdir(path):
+        return name
+    # Versuche Unterstriche statt Bindestriche
+    alt = name.replace("-", "_")
+    alt_path = os.path.join("/mnt/projects", alt)
+    if os.path.isdir(alt_path):
+        return alt
+    return name
 
 
 def extract_text_content(content):

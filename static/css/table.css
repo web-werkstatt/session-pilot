@@ -3,7 +3,7 @@ table {
     width: 100%;
     border-collapse: collapse;
 }
-thead { position: sticky; z-index: 39; }
+thead { position: sticky; top: 0; z-index: 39; }
 th:first-child, td:first-child { padding-left: 24px; }
 th:last-child, td:last-child { padding-right: 24px; }
 th {

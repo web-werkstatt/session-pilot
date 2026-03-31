@@ -40,10 +40,12 @@
 }
 
 .stack-toggle__btn:hover { background: var(--bg-elevated); color: var(--text-primary); }
-.stack-toggle__btn--active { background: var(--accent); color: #fff; }
+.stack-toggle__btn--active,
+.stack-toggle__btn.active { background: var(--accent); color: #fff; }
 
 /* Comparison table */
 .mc-table { width: 100%; border-collapse: collapse; }
+.mc-table thead { position: static; }
 
 .mc-table th {
     padding: var(--space-2) var(--space-3);
@@ -55,7 +57,10 @@
     text-transform: uppercase;
     letter-spacing: 0.05em;
     white-space: nowrap;
+    background: transparent;
 }
+.mc-table th:first-child { padding-left: var(--space-3); }
+.mc-table th:last-child { padding-right: var(--space-3); }
 
 .mc-table td {
     padding: var(--space-2) var(--space-3);
@@ -64,6 +69,8 @@
     font-size: 0.875rem;
     vertical-align: middle;
 }
+.mc-table td:first-child { padding-left: var(--space-3); }
+.mc-table td:last-child { padding-right: var(--space-3); }
 
 .mc-table tr:last-child td { border-bottom: none; }
 .mc-table tbody tr:hover td { background: var(--bg-elevated); }

@@ -1,5 +1,18 @@
 /* KPI Cards - Wiederverwendbare Statistik-Karten */
 
+.kpi-row {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 16px;
+    padding: 0 var(--space-4, 16px);
+}
+.kpi-row .kpi-card { flex: 1; min-width: 0; }
+.kpi-row .kpi-label {
+    font-size: 0.75rem;
+    color: var(--text-muted, #888);
+    margin-top: 4px;
+}
+
 .kpi-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -151,8 +164,14 @@
     }
 }
 
+@media (max-width: 768px) {
+    .kpi-row { flex-wrap: wrap; }
+    .kpi-row .kpi-card { flex: 1 1 calc(50% - 6px); }
+}
+
 @media (max-width: 600px) {
     .kpi-grid {
         grid-template-columns: 1fr;
     }
+    .kpi-row .kpi-card { flex: 1 1 100%; }
 }
