@@ -135,15 +135,89 @@ async function loadSessions() {
     }
 }
 
-function outcomeBadge(outcome, reason, severity) {
-    if (!outcome) return '<span class="outcome-unrated">-</span>';
+function outcomeBadge(outcome, reason, severity, uuid) {
     const labels = {ok:'OK', needs_fix:'Needs Fix', reverted:'Reverted', partial:'Partial'};
-    let html = `<span class="outcome-badge outcome-${outcome}">${labels[outcome] || outcome}</span>`;
-    if (typeof SessionFilters !== 'undefined') {
-        html += SessionFilters.severityBadge(severity);
-        html += SessionFilters.reasonTag(reason);
+    let badge = outcome
+        ? `<span class="outcome-badge outcome-${outcome}">${labels[outcome] || outcome}</span>`
+        : '<span class="outcome-unrated">–</span>';
+    if (outcome && typeof SessionFilters !== 'undefined') {
+        badge += SessionFilters.severityBadge(severity);
+        badge += SessionFilters.reasonTag(reason);
     }
-    return html;
+    return `<span class="quick-rate" onclick="event.stopPropagation();openQuickRate('${uuid}',this)" title="Click to rate">${badge}</span>`;
+}
+
+let _qrUuid = null;
+function openQuickRate(uuid, el) {
+    closeQuickRate();
+    _qrUuid = uuid;
+    const rect = el.getBoundingClientRect();
+    const popup = document.createElement('div');
+    popup.id = 'quickRatePopup';
+    popup.className = 'qr-popup';
+    popup.innerHTML = `<div class="qr-buttons">
+        <button class="qr-btn qr-ok" onclick="quickRate('ok')">OK</button>
+        <button class="qr-btn qr-fix" onclick="quickRate('needs_fix')">Fix</button>
+        <button class="qr-btn qr-rev" onclick="quickRate('reverted')">Rev</button>
+        <button class="qr-btn qr-part" onclick="quickRate('partial')">Part</button>
+    </div>
+    <div class="qr-extra" id="qrExtra" style="display:none">
+        <select id="qrReason" class="qr-select"><option value="">Reason...</option>
+            <option value="missing_tests">Missing Tests</option><option value="logic_error">Logic Error</option>
+            <option value="wrong_approach">Wrong Approach</option><option value="incomplete">Incomplete</option>
+            <option value="broke_existing">Broke Existing</option><option value="wrong_scope">Wrong Scope</option>
+            <option value="type_error">Type Error</option><option value="syntax_error">Syntax Error</option>
+            <option value="regression">Regression</option><option value="performance_issue">Performance</option>
+        </select>
+        <select id="qrSeverity" class="qr-select"><option value="">Severity...</option>
+            <option value="critical">P0</option><option value="high">P1</option>
+            <option value="medium">P2</option><option value="low">P3</option>
+        </select>
+    </div>
+    <div class="qr-footer"><button class="qr-save" id="qrSave" onclick="saveQuickRate()" style="display:none">Save</button></div>`;
+    popup.style.top = (rect.bottom + window.scrollY + 4) + 'px';
+    popup.style.left = Math.min(rect.left, window.innerWidth - 260) + 'px';
+    document.body.appendChild(popup);
+    document.addEventListener('click', _qrOutsideClick, true);
+}
+
+function _qrOutsideClick(e) {
+    const popup = document.getElementById('quickRatePopup');
+    if (popup && !popup.contains(e.target) && !e.target.closest('.quick-rate')) closeQuickRate();
+}
+
+function closeQuickRate() {
+    const popup = document.getElementById('quickRatePopup');
+    if (popup) popup.remove();
+    document.removeEventListener('click', _qrOutsideClick, true);
+    _qrUuid = null;
+}
+
+let _qrOutcome = null;
+function quickRate(outcome) {
+    _qrOutcome = outcome;
+    document.querySelectorAll('.qr-btn').forEach(b => b.classList.remove('active'));
+    document.querySelector('.qr-' + {ok:'ok',needs_fix:'fix',reverted:'rev',partial:'part'}[outcome]).classList.add('active');
+    const extra = document.getElementById('qrExtra');
+    const save = document.getElementById('qrSave');
+    if (['needs_fix','reverted','partial'].includes(outcome)) {
+        extra.style.display = 'flex';
+    } else { extra.style.display = 'none'; }
+    save.style.display = 'inline-block';
+}
+
+async function saveQuickRate() {
+    if (!_qrUuid || !_qrOutcome) return;
+    const body = {outcome: _qrOutcome};
+    const reason = document.getElementById('qrReason');
+    const severity = document.getElementById('qrSeverity');
+    if (reason && reason.value) body.reason = reason.value;
+    if (severity && severity.value) body.severity = severity.value;
+    try {
+        await api.post(`/api/sessions/${_qrUuid}/outcome`, body);
+        closeQuickRate();
+        loadSessions();
+    } catch (e) { console.error('Quick rate error:', e); }
 }
 
 function renderSessions(sessions) {
@@ -182,7 +256,7 @@ function renderSessionRow(s, i) {
             <td style="color:#888;font-size:12px">${model}</td>
             <td class="token-cell">${s.tokens_formatted}</td>
             <td>${branch ? `<span class="branch" title="${branch}">${branch}</span>` : ''}</td>
-            <td>${outcomeBadge(s.outcome, s.outcome_reason, s.outcome_severity)}</td>
+            <td>${outcomeBadge(s.outcome, s.outcome_reason, s.outcome_severity, s.session_uuid)}</td>
             <td><div class="row-actions"><button class="row-action" onclick="event.stopPropagation();exportSession('${s.session_uuid}','json')">JSON</button><button class="row-action" onclick="event.stopPropagation();exportSession('${s.session_uuid}','md')">MD</button></div></td>
         </tr>`;
 }
