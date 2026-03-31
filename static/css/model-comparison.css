@@ -131,6 +131,12 @@
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-md);
     padding: var(--space-4);
+    position: relative;
+    height: 350px;
+}
+
+.mc-chart-card canvas {
+    max-height: 280px;
 }
 
 .mc-chart-card h3 {
