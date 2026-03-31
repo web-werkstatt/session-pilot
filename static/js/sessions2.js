@@ -89,20 +89,26 @@ async function loadStats() {
             document.getElementById('statMsgSub').textContent = `${(d.total_user_messages||0).toLocaleString('en-US')} messages`;
         }
 
-        const sel = document.getElementById('filterProject');
-        if (d.top_projects && sel.options.length <= 1) {
-            d.top_projects.forEach(p => {
-                const opt = document.createElement('option');
-                opt.value = p.name;
-                opt.textContent = `${p.name} (${p.count})`;
-                sel.appendChild(opt);
-            });
-        }
     } catch(e) {
         console.error('Stats Error:', e);
         if (!loadStats._retries) loadStats._retries = 0;
         if (++loadStats._retries < 3) setTimeout(loadStats, 2000);
     }
+}
+
+async function loadFilterOptions() {
+    try {
+        const d = await api.get('/api/sessions/filters');
+        _populateSelect('filterAccount', d.accounts || []);
+        _populateSelect('filterModel', d.models || []);
+        _populateSelect('filterProject', d.projects || []);
+    } catch(e) { console.error('Filter load error:', e); }
+}
+
+function _populateSelect(id, values) {
+    const sel = document.getElementById(id);
+    if (!sel || sel.options.length > 1) return;
+    values.forEach(v => { const o = document.createElement('option'); o.value = v; o.textContent = v; sel.appendChild(o); });
 }
 
 async function loadSessions() {
@@ -111,8 +117,12 @@ async function loadSessions() {
     const project = document.getElementById('filterProject').value;
     const dateFrom = document.getElementById('filterDateFrom').value;
     const dateTo = document.getElementById('filterDateTo').value;
+    const model = document.getElementById('filterModel') ? document.getElementById('filterModel').value : '';
+    const outcome = document.getElementById('filterOutcome') ? document.getElementById('filterOutcome').value : '';
     if (account) params.set('account', account);
     if (project) params.set('project', project);
+    if (model) params.set('model', model);
+    if (outcome) params.set('outcome', outcome);
     if (dateFrom) params.set('date_from', dateFrom);
     if (dateTo) params.set('date_to', dateTo);
 
@@ -445,8 +455,18 @@ function hideFulltextResults() {
     if (el) el.style.display = 'none';
 }
 
+function applyUrlParams() {
+    const p = new URLSearchParams(window.location.search);
+    if (p.get('account')) document.getElementById('filterAccount').value = p.get('account');
+    if (p.get('model') && document.getElementById('filterModel')) document.getElementById('filterModel').value = p.get('model');
+    if (p.get('project')) document.getElementById('filterProject').value = p.get('project');
+    if (p.get('outcome') && document.getElementById('filterOutcome')) document.getElementById('filterOutcome').value = p.get('outcome');
+    if (p.get('date_from')) document.getElementById('filterDateFrom').value = p.get('date_from');
+    if (p.get('date_to')) document.getElementById('filterDateTo').value = p.get('date_to');
+}
+
 loadStats();
+loadFilterOptions().then(() => { applyUrlParams(); loadSessions(); });
 updateSortIcons();
 if (typeof lucide !== 'undefined') lucide.createIcons();
 if (typeof SessionFilters !== 'undefined') SessionFilters.init();
-loadSessions();

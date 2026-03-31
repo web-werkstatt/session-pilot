@@ -76,6 +76,10 @@ def _api_sessions_inner():
     if project:
         conditions.append("(project_name = %s OR project_name = %s OR cwd LIKE %s)")
         params.extend([project, project.replace('_', '-'), f"%/{project}"])
+    model = request.args.get("model")
+    if model:
+        conditions.append("model = %s")
+        params.append(model)
     if search:
         conditions.append("(project_name ILIKE %s OR slug ILIKE %s OR cwd ILIKE %s)")
         params.extend([f"%{search}%"] * 3)
@@ -93,6 +97,11 @@ def _api_sessions_inner():
     elif outcome_filter:
         conditions.append("outcome = %s")
         params.append(outcome_filter)
+
+    outcome_reason = request.args.get("outcome_reason")
+    if outcome_reason:
+        conditions.append("outcome_reason = %s")
+        params.append(outcome_reason)
 
     scope_filter = request.args.get("scope")
     if scope_filter == "writes":

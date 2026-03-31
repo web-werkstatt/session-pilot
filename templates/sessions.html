@@ -42,12 +42,20 @@
     <div class="filter-bar">
         <select id="filterAccount" onchange="resetAndLoad()">
             <option value="">All Accounts</option>
-            <option value="claude">claude</option>
-            <option value="claude1">claude1</option>
-            <option value="minimax">minimax</option>
+        </select>
+        <select id="filterModel" onchange="resetAndLoad()">
+            <option value="">All Models</option>
         </select>
         <select id="filterProject" onchange="resetAndLoad()">
             <option value="">All Projects</option>
+        </select>
+        <select id="filterOutcome" onchange="resetAndLoad()">
+            <option value="">All Outcomes</option>
+            <option value="ok">OK</option>
+            <option value="needs_fix">Needs Fix</option>
+            <option value="reverted">Reverted</option>
+            <option value="partial">Partial</option>
+            <option value="unrated">Unrated</option>
         </select>
         <input type="date" id="filterDateFrom" onchange="resetAndLoad()" title="From">
         <input type="date" id="filterDateTo" onchange="resetAndLoad()" title="To">
