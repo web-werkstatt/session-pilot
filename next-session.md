@@ -1,8 +1,8 @@
 # Projekt-Dashboard - Naechste Session
 
 > **Letzte Aktualisierung:** 2026-03-31
-> **Status:** Sprint 9 abgeschlossen (Fehler-Kategorien + AI-Scope-Filter)
-> **Naechste Aufgabe:** Sprint 10 implementieren (Per-File AI-Heatmap + File Analysis)
+> **Status:** Sprint 10 abgeschlossen (Per-File AI-Heatmap + Risk Radar)
+> **Naechste Aufgabe:** Sprint 11 planen
 
 ---
 
@@ -15,26 +15,17 @@
 - Backfill: 264/344 Sessions mit Tool-Calls, 251 mit Writes
 - Gitea Issue #9 geschlossen, Commit e1ec0b2
 
-## Naechste Session: Sprint 10 - Per-File AI-Heatmap
+## Erledigt: Sprint 10 (2026-03-31)
 
-### Reihenfolge (Abhaengigkeiten beachten)
+- DB-Migration: `ai_file_touches` Tabelle (file_path, touch_type, tool_name, session_id, timestamp)
+- Neues Modul `services/file_touch_service.py` - Touch-Extraktion aus tool_use, Heatmap-Aggregation, Risk-Radar
+- Neues Modul `routes/analytics_routes.py` - `/api/analytics/file-heatmap/<project>` + `/api/analytics/risk-radar/<project>`
+- Neues Modul `static/js/file-heatmap.js` + `static/css/file-heatmap.css` - Heatmap-Tab in Projekt-Detail
+- Neues Script `scripts/backfill_file_touches.py` - 29.238 Touches aus 267/351 Sessions extrahiert
+- Neuer Tab "AI Heatmap" in project_detail.html mit Risk Radar, Sortierung, Filter, Trend-Chart
+- Gitea Issue #10 geschlossen
 
-1. **DB-Schema:** Neue `ai_file_touches` Tabelle (file_path, touch_type, ai_written, ai_touched, session_id)
-2. **Data Extraction:** Write/Edit Tool-Calls aus JSONL parsen, Datei-Pfade extrahieren
-3. **Backfill:** Bestehende Sessions re-analysieren (--with-file-touches)
-4. **API:** `/api/analytics/file-heatmap/<project>` + `/api/analytics/risk-radar/<project>`
-5. **Heatmap UI:** Treemap/Table in Projekt-Detail-Tab, farbcodiert nach Rework-Rate
-6. **Risk Radar:** Top-3-Hotspots, Top-3-Fehlerkategorien, Trend-Visualisierung
-
-### Sprint 10 - Modularer Aufbau (WICHTIG!)
-
-Alle neuen Dateien separat erstellen:
-- `services/file_touch_service.py` - Datei-Touch-Extraktion und Analyse
-- `routes/analytics_routes.py` - Heatmap + Risk-Radar API
-- `static/js/file-heatmap.js` - Heatmap UI-Logik
-- `static/css/file-heatmap.css` - Heatmap Styles
-- `scripts/backfill_file_touches.py` - Backfill-Script
-- `db_service.py` - nur `ensure_file_touch_schema()` hinzufuegen
+## Naechste Session: Sprint 11
 
 ### Offene Punkte aus vorherigen Sessions
 

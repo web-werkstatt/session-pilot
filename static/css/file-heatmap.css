@@ -1,0 +1,215 @@
+/* Sprint 10: File Heatmap + Risk Radar */
+
+.heatmap-container {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+}
+
+/* Risk Radar Cards */
+.risk-radar {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: var(--space-4);
+    margin-bottom: var(--space-4);
+}
+
+.radar-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    padding: var(--space-4);
+}
+
+.radar-card h4 {
+    font-size: var(--text-md);
+    color: var(--text-heading);
+    margin: 0 0 var(--space-3) 0;
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.radar-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.radar-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-2) 0;
+    border-bottom: 1px solid var(--border);
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+}
+
+.radar-list li:last-child {
+    border-bottom: none;
+}
+
+.radar-file {
+    font-family: var(--font-mono);
+    color: var(--text-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 200px;
+}
+
+.radar-badge {
+    font-size: var(--text-xs);
+    padding: 2px 6px;
+    border-radius: var(--radius-full);
+    font-weight: 600;
+}
+
+.radar-badge.hot {
+    background: var(--error-bg);
+    color: var(--status-error-text);
+}
+
+.radar-badge.warm {
+    background: var(--warning-bg);
+    color: var(--status-warning-text);
+}
+
+.radar-badge.cool {
+    background: var(--accent-bg);
+    color: var(--accent-light);
+}
+
+/* Heatmap Table */
+.heatmap-table-wrap {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+}
+
+.heatmap-toolbar {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-elevated);
+}
+
+.heatmap-toolbar input {
+    flex: 1;
+    background: var(--bg-input);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: var(--space-2) var(--space-3);
+    color: var(--text-primary);
+    font-size: var(--text-sm);
+}
+
+.heatmap-toolbar select {
+    background: var(--bg-input);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: var(--space-2) var(--space-3);
+    color: var(--text-primary);
+    font-size: var(--text-sm);
+}
+
+.heatmap-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--text-sm);
+}
+
+.heatmap-table th {
+    text-align: left;
+    padding: var(--space-2) var(--space-3);
+    color: var(--text-muted);
+    font-weight: 600;
+    font-size: var(--text-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid var(--border-subtle);
+    cursor: pointer;
+    user-select: none;
+}
+
+.heatmap-table th:hover {
+    color: var(--text-primary);
+}
+
+.heatmap-table th.sorted-asc::after { content: " \u25B2"; }
+.heatmap-table th.sorted-desc::after { content: " \u25BC"; }
+
+.heatmap-table td {
+    padding: var(--space-2) var(--space-3);
+    border-bottom: 1px solid var(--border);
+    color: var(--text-secondary);
+}
+
+.heatmap-table tr:hover td {
+    background: var(--bg-hover);
+}
+
+.heatmap-table .file-path {
+    font-family: var(--font-mono);
+    color: var(--text-primary);
+    max-width: 400px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Heat-Intensitaets-Balken */
+.heat-bar {
+    display: inline-block;
+    height: 6px;
+    border-radius: 3px;
+    min-width: 4px;
+    max-width: 120px;
+}
+
+.heat-bar.write { background: var(--status-error); }
+.heat-bar.edit { background: var(--status-warning); }
+.heat-bar.read { background: var(--accent-light); }
+
+.heat-cell {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.heat-cell .count {
+    min-width: 24px;
+    text-align: right;
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+}
+
+/* Trend Chart Container */
+.trend-chart-wrap {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    padding: var(--space-4);
+}
+
+.trend-chart-wrap h4 {
+    font-size: var(--text-md);
+    color: var(--text-heading);
+    margin: 0 0 var(--space-3) 0;
+}
+
+/* Empty State */
+.heatmap-empty {
+    text-align: center;
+    padding: var(--space-8);
+    color: var(--text-muted);
+    font-size: var(--text-md);
+}
+
+.heatmap-empty p {
+    margin: var(--space-2) 0;
+}

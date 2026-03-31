@@ -239,3 +239,32 @@ def ensure_ai_scope_schema():
         execute("ALTER TABLE sessions ADD COLUMN IF NOT EXISTS ai_has_tool_calls BOOLEAN DEFAULT FALSE")
         execute("ALTER TABLE sessions ADD COLUMN IF NOT EXISTS ai_tools_used JSONB DEFAULT '[]'::jsonb")
         _ai_scope_ready = True
+
+
+_file_touch_ready = False
+_file_touch_lock = threading.Lock()
+
+
+def ensure_file_touch_schema():
+    """Sprint 10: Per-File AI-Heatmap Tabelle"""
+    global _file_touch_ready
+    if _file_touch_ready:
+        return
+    with _file_touch_lock:
+        if _file_touch_ready:
+            return
+        execute("""
+            CREATE TABLE IF NOT EXISTS ai_file_touches (
+                id SERIAL PRIMARY KEY,
+                session_id INTEGER REFERENCES sessions(id) ON DELETE CASCADE,
+                file_path VARCHAR(1000) NOT NULL,
+                touch_type VARCHAR(20) NOT NULL,
+                tool_name VARCHAR(50),
+                timestamp TIMESTAMPTZ,
+                created_at TIMESTAMPTZ DEFAULT NOW()
+            )
+        """)
+        execute("CREATE INDEX IF NOT EXISTS idx_file_touches_session ON ai_file_touches(session_id)")
+        execute("CREATE INDEX IF NOT EXISTS idx_file_touches_path ON ai_file_touches(file_path)")
+        execute("CREATE INDEX IF NOT EXISTS idx_file_touches_type ON ai_file_touches(touch_type)")
+        _file_touch_ready = True

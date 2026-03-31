@@ -19,6 +19,7 @@ function switchProjectTab(tab) {
     if (tab === 'sessions' && !sessionsExtracted) extractSessions();
     if (tab === 'documents') loadDocuments();
     if (tab === 'quality' && !qualityLoaded) loadQualityTab();
+    if (tab === 'heatmap') loadFileHeatmap();
 }
 
 // === Overview ===

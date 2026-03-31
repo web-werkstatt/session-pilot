@@ -17,6 +17,7 @@
 <link rel="stylesheet" href="/static/css/documents-extras.css">
 <link rel="stylesheet" href="/static/css/project-detail.css">
 <link rel="stylesheet" href="/static/css/sessions-list.css">
+<link rel="stylesheet" href="/static/css/file-heatmap.css">
 {% endblock %}
 
 {% block content %}
@@ -45,6 +46,9 @@
         <button class="project-tab" onclick="switchProjectTab('quality')">
             <i data-lucide="shield-check" class="icon icon-sm"></i> Quality
             <span class="tab-count" id="qualityScore"></span>
+        </button>
+        <button class="project-tab" onclick="switchProjectTab('heatmap')">
+            <i data-lucide="flame" class="icon icon-sm"></i> AI Heatmap
         </button>
     </div>
 
@@ -181,6 +185,13 @@
                 <div class="loading"><div class="spinner"></div> Loading quality report...</div>
             </div>
         </div>
+
+        <!-- Tab: AI Heatmap -->
+        <div class="project-tab-content" id="ptab_heatmap">
+            <div id="heatmapBody">
+                <div class="loading"><div class="spinner"></div> Loading file heatmap...</div>
+            </div>
+        </div>
     </div>
 {% endblock %}
 
@@ -193,5 +204,6 @@
 
 <script>const PROJECT_NAME = "{{ project_name }}";</script>
 <script src="/static/js/project-detail.js"></script>
+<script src="/static/js/file-heatmap.js"></script>
 
 {% endblock %}

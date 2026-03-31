@@ -4,6 +4,41 @@
 
 ---
 
+## Session 2026-03-31 - Sprint 10: Per-File AI-Heatmap + Risk Radar
+
+### Was wurde erledigt
+
+**Sprint 10 komplett modular implementiert:**
+- DB-Migration: `ai_file_touches` Tabelle (file_path, touch_type, tool_name, session_id, timestamp)
+- `services/file_touch_service.py` - Touch-Extraktion aus tool_use Bloecken, Pfad-Normalisierung, Heatmap-Aggregation, Risk-Radar-Berechnung
+- `routes/analytics_routes.py` - `/api/analytics/file-heatmap/<project>` + `/api/analytics/risk-radar/<project>`
+- `static/js/file-heatmap.js` - Heatmap-Tab UI mit Risk Radar Cards, sortierbare Tabelle, Filter, Trend-Chart
+- `static/css/file-heatmap.css` - Styles mit Design-Tokens
+- `scripts/backfill_file_touches.py` - Backfill: 29.238 Touches aus 267/351 Sessions extrahiert
+- Neuer Tab "AI Heatmap" in project_detail.html
+- `db_service.py` erweitert: `ensure_file_touch_schema()`
+- Blueprint in `routes/__init__.py` registriert
+
+### Sprint 10 - Urspruenglicher Plan
+
+**Reihenfolge (Abhaengigkeiten beachten):**
+1. DB-Schema: Neue `ai_file_touches` Tabelle (file_path, touch_type, ai_written, ai_touched, session_id)
+2. Data Extraction: Write/Edit Tool-Calls aus JSONL parsen, Datei-Pfade extrahieren
+3. Backfill: Bestehende Sessions re-analysieren (--with-file-touches)
+4. API: `/api/analytics/file-heatmap/<project>` + `/api/analytics/risk-radar/<project>`
+5. Heatmap UI: Treemap/Table in Projekt-Detail-Tab, farbcodiert nach Rework-Rate
+6. Risk Radar: Top-3-Hotspots, Top-3-Fehlerkategorien, Trend-Visualisierung
+
+**Modularer Aufbau (WICHTIG!):**
+- `services/file_touch_service.py` - Datei-Touch-Extraktion und Analyse
+- `routes/analytics_routes.py` - Heatmap + Risk-Radar API
+- `static/js/file-heatmap.js` - Heatmap UI-Logik
+- `static/css/file-heatmap.css` - Heatmap Styles
+- `scripts/backfill_file_touches.py` - Backfill-Script
+- `db_service.py` - nur `ensure_file_touch_schema()` hinzufuegen
+
+---
+
 ## Session 2026-03-31 - AI Governance Roadmap (Sprint 9-15)
 
 ### Was wurde erledigt
