@@ -108,6 +108,30 @@ RULE_TEMPLATES = {
         "claude_md": "Implementierung muss vollstaendig sein. Kein manueller Fix noetig.",
         "category": "completeness",
     },
+    "wrong_api": {
+        "rule": "HTTP-Status-Codes und API-Konventionen des Projekts einhalten.",
+        "enforcement": "Review-Checklist: API-Response-Format pruefen",
+        "claude_md": "API-Endpoints muessen bestehende Response-Patterns verwenden.",
+        "category": "correctness",
+    },
+    "security": {
+        "rule": "OWASP Top 10 beachten, keine User-Eingaben unvalidiert verwenden.",
+        "enforcement": "Hook: Security-Scan (semgrep) vor Commit",
+        "claude_md": "Alle User-Eingaben validieren und escapen. Kein eval(), kein innerHTML.",
+        "category": "security",
+    },
+    "style_drift": {
+        "rule": "Bestehende Code-Konventionen und Patterns einhalten.",
+        "enforcement": "Linter + bestehende CLAUDE.md Regeln",
+        "claude_md": "Bestehende Patterns studieren bevor neuer Code geschrieben wird.",
+        "category": "style",
+    },
+    "hallucination": {
+        "rule": "Nur existierende APIs/Funktionen verwenden, vor Nutzung pruefen.",
+        "enforcement": "AI-Policy: Symbol-Suche nutzen vor Verwendung",
+        "claude_md": "VOR Verwendung einer Funktion: pruefen ob sie existiert (grep/find).",
+        "category": "correctness",
+    },
 }
 
 

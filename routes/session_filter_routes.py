@@ -13,6 +13,7 @@ OUTCOME_REASONS = {
     "needs_fix": [
         "syntax_error", "wrong_file", "incomplete", "wrong_approach",
         "missing_import", "test_failure", "type_error", "logic_error",
+        "wrong_api", "security", "style_drift", "hallucination",
     ],
     "reverted": [
         "broke_existing", "wrong_scope", "not_requested", "regression",
@@ -20,7 +21,7 @@ OUTCOME_REASONS = {
     ],
     "partial": [
         "needs_followup", "incomplete_refactor", "manual_fix_needed",
-        "missing_tests",
+        "missing_tests", "other",
     ],
 }
 

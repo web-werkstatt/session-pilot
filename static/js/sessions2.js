@@ -168,6 +168,9 @@ function openQuickRate(uuid, el) {
             <option value="broke_existing">Broke Existing</option><option value="wrong_scope">Wrong Scope</option>
             <option value="type_error">Type Error</option><option value="syntax_error">Syntax Error</option>
             <option value="regression">Regression</option><option value="performance_issue">Performance</option>
+            <option value="wrong_api">Wrong API</option><option value="security">Security</option>
+            <option value="style_drift">Style Drift</option><option value="hallucination">Hallucination</option>
+            <option value="other">Other</option>
         </select>
         <select id="qrSeverity" class="qr-select"><option value="">Severity...</option>
             <option value="critical">P0</option><option value="high">P1</option>
