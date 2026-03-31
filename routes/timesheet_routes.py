@@ -419,6 +419,36 @@ def api_timesheets_rework():
             reason_by_model[m] = {}
         reason_by_model[m][r["outcome_reason"]] = r["cnt"]
 
+    # Reason by Project (Sprint 9.3)
+    rbp_rows = execute(f"""
+        SELECT project_name, outcome_reason, COUNT(*) as cnt
+        FROM sessions {where} AND outcome_reason IS NOT NULL AND project_name IS NOT NULL
+        GROUP BY project_name, outcome_reason
+        ORDER BY project_name, cnt DESC
+    """, params, fetch=True)
+
+    reason_by_project = {}
+    for r in (rbp_rows or []):
+        p = r["project_name"]
+        if p not in reason_by_project:
+            reason_by_project[p] = {}
+        reason_by_project[p][r["outcome_reason"]] = r["cnt"]
+
+    # Reason Trend (Sprint 9.3) - woechentlich pro Reason
+    rt_rows = execute(f"""
+        SELECT DATE_TRUNC('week', started_at)::date as week, outcome_reason, COUNT(*) as cnt
+        FROM sessions {where} AND outcome_reason IS NOT NULL
+        GROUP BY week, outcome_reason
+        ORDER BY week
+    """, params, fetch=True)
+
+    reason_trend = {}
+    for r in (rt_rows or []):
+        w = r["week"].isoformat()
+        if w not in reason_trend:
+            reason_trend[w] = {}
+        reason_trend[w][r["outcome_reason"]] = r["cnt"]
+
     return jsonify({
         "total_sessions": total,
         "rated_sessions": rated,
@@ -426,6 +456,8 @@ def api_timesheets_rework():
         "rework_rate": rework_rate,
         "reason_distribution": reason_distribution,
         "reason_by_model": reason_by_model,
+        "reason_by_project": reason_by_project,
+        "reason_trend": reason_trend,
         "top_3_reasons": [r["reason"] for r in reason_distribution[:3]],
         "costs": {
             "wasted": wasted,
