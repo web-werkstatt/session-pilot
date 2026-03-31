@@ -1,19 +1,44 @@
 # Projekt-Dashboard - Naechste Session
 
 > **Letzte Aktualisierung:** 2026-03-31
-> **Status:** Sprint 11 + Hilfe-Center + Docker Image + Mobile Fixes
-> **Naechste Aufgabe:** Sprint 12 (Governance Light) planen
+> **Status:** Sprint 12 fertig + Hilfe-Center aktualisiert
+> **Naechste Aufgabe:** Sprint 13 planen / Docker Image Workflow
 
 ---
 
-## Naechste Session: Sprint 12
+## Was wurde in dieser Session gemacht
 
-### Sprint 12: Governance & Policies Light
+### Sprint 12: AI Governance & Policies Light (DONE)
 
-- [ ] `ai_policy` pro Projekt (sandbox/controlled/critical + allowed_models)
-- [ ] Governance-Uebersichtsseite (Policy-Level, Rework-Rate, einfache Badges)
-- [ ] Exportierbare Snippets fuer CLAUDE.md / AGENTS.md / Hooks (noch ohne Auto-Write)
-- [ ] Sprint-Plan in `sprints/sprint-12-governance-feedback-loop.md` vorhanden
+**16 Dateien, 1712 Zeilen, 2 Commits:**
+
+- `services/governance_service.py` - Policy-CRUD, Governance-Overview, Rework-Rates, Wirkungs-Tracking, Snippet-Generator
+- `services/rule_generator.py` - 17 Rule-Templates, Top-Fehlergrund-Analyse, Feedback-Loop
+- `routes/governance_routes.py` - 8 API-Endpoints (Overview, Policy GET/PUT, Rules, Apply, Effectiveness, Feedback-Loop, Snippets)
+- `templates/governance.html` - Governance-Seite mit 4 Tabs (Overview, Rules, Feedback, Snippets)
+- `static/css/governance.css` - Policy-Badges, Rule-Cards, Snippet-Boxes, responsive
+- `static/js/governance.js` - Alle Interaktionen, Modals, Copy-to-Clipboard
+- Sidebar-Link, Dashboard-Widget, Governance-Tab in Projekt-Detail
+- Gitea Issue #12 erstellt und via Commit geschlossen
+
+### Hilfe-Center Update (DONE)
+
+- `hilfe-center/content/governance.md` - Neues Topic mit NEW-Badge
+- Sprint-Historie + Seitenuebersicht aktualisiert
+- Deployed auf doc.session-pilot.com via docker-vm
+
+---
+
+## Naechste Session
+
+### Sprint 13 planen
+
+- Sprint-Plan erstellen in `sprints/sprint-13-*.md`
+- Moegliche Themen:
+  - Team-Dashboard / Multi-User
+  - Compliance-Report Export
+  - Cross-Projekt Fehler-Analyse
+  - LLM-basierte Regel-Generierung statt Templates
 
 ### Docker Image Workflow
 
@@ -23,8 +48,8 @@
 
 ### Hilfe-Center Verbesserungen
 
-- [ ] Englische Version: content/de/ und content/en/, Language Toggle, 22 Topics uebersetzen
-- [ ] Governance-Topics ergaenzen sobald Sprint 12 fertig
+- [x] Governance-Topic ergaenzt (Sprint 12 fertig)
+- [ ] Englische Version: content/de/ und content/en/, Language Toggle, 25 Topics uebersetzen
 
 ### Offene Punkte aus vorherigen Sessions
 
@@ -45,8 +70,8 @@
 - Modals ueber base.js `openModal(id)` / `closeModal(id)`, API-Calls ueber `api.js`
 - **MODULAR BAUEN:** Alle Sprints vollstaendig modular - eigene Dateien pro Concern
 - Materialized View `mv_model_quality` taeglich refreshen (RemoteTrigger oder Background-Thread)
-- **Hilfe-Center Deploy:** `scp` CSS/Templates auf docker-vm, dann `docker cp` + `docker restart sessionpilot-hilfe`
-- **Bezahl-Module:** Heatmap (Sprint 10), Model Analytics (Sprint 11), Governance (Sprint 12) = "Starter Pack"
+- **Hilfe-Center Deploy:** Content nach docker-vm:/opt/sessionpilot-hilfe/content/ kopieren, dann `docker restart sessionpilot-hilfe` (Volume ist read-only gemounted, Host-Pfad beschreiben)
+- **Bezahl-Module:** Heatmap (Sprint 10), Model Analytics (Sprint 11), Governance (Sprint 12) = "Starter Pack" komplett
 - **Pricing:** Indie 9-12 EUR/Monat, Team 29-39 EUR/Monat - Details in `dokumentenaustausch/SESSIONPILOT-PRICING.md`
 - **Docker Image:** `ghcr.io/web-werkstatt/session-pilot` - nur vom `open-source` Branch bauen, nie PRO-Code
 - **Git Push Safety:** Nur auf Gitea pushen, GitHub nur nach Rueckfrage
