@@ -1,5 +1,5 @@
 /* Session Detail */
-.sd-sticky-header { position: sticky; top: 0; z-index: 40; }
+.sd-sticky-header { position: sticky; top: 45px; z-index: 40; }
 .meta-bar {
     background: var(--bg-surface);
     padding: 10px 30px;
@@ -280,8 +280,8 @@ details .tool-content {
     border-left: 1px solid var(--border-subtle);
     background: var(--bg-surface);
     position: sticky;
-    top: 0;
-    height: calc(100vh - 48px);
+    top: 145px;
+    height: calc(100vh - 145px);
     overflow-y: auto;
     overflow-x: hidden;
 }
