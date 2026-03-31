@@ -12,9 +12,9 @@
 {% block topbar_actions %}{% endblock %}
 
 {% block content %}
-    <div class="meta-bar" id="metaBar"></div>
-
-    <div class="export-bar" id="outcomeBar">
+    <div class="sd-sticky-header">
+        <div class="meta-bar" id="metaBar"></div>
+        <div class="export-bar" id="outcomeBar">
         <div class="export-left">
             <a class="sd-back-btn" href="/sessions"><i data-lucide="arrow-left" class="icon icon-sm"></i> Sessions</a>
             <div class="export-sep"></div>
@@ -36,6 +36,7 @@
             <input type="range" id="widthSlider" min="600" max="2400" step="100" oninput="setWidth(this.value)">
             <span id="widthLabel"></span>
         </div>
+    </div>
     </div>
 
     <div class="session-layout">
