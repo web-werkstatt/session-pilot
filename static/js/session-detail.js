@@ -362,7 +362,9 @@ function renderMessages(messages) {
     let msgIndex = 0;
     messages.forEach((msg, index) => {
         if (msg.type === 'system') {
-            html += `<div class="msg-system">${escapeHtml(msg.content || '')}</div>`;
+            if (msg.content && msg.content.trim()) {
+                html += `<div class="msg-system">${escapeHtml(msg.content)}</div>`;
+            }
             return;
         }
 
