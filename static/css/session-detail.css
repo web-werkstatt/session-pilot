@@ -263,27 +263,24 @@ details .tool-content {
 .btn-copy-code.copied { background: rgba(46, 125, 50, 0.2); color: var(--status-valid); border-color: rgba(46, 125, 50, 0.3); opacity: 1; }
 /* Layout + ToC */
 .session-layout {
-    display: flex;
-    gap: 0;
-    position: relative;
+    margin-right: 240px;
 }
 .session-layout .conversation {
-    flex: 1;
-    min-width: 0;
     margin: 16px auto;
     padding: 0 20px;
     transition: max-width var(--transition-base);
 }
 .session-toc {
     width: 240px;
-    flex-shrink: 0;
+    position: fixed;
+    right: 0;
+    top: 45px;
+    height: calc(100vh - 45px);
     border-left: 1px solid var(--border-subtle);
     background: var(--bg-surface);
-    position: sticky;
-    top: 145px;
-    height: calc(100vh - 145px);
     overflow-y: auto;
     overflow-x: hidden;
+    z-index: 38;
 }
 .toc-header {
     padding: 14px 14px 10px;
@@ -353,6 +350,7 @@ details .tool-content {
 .review-entry-note { font-size: var(--text-md); }
 @media (max-width: 1024px) {
     .session-toc { display: none; }
+    .session-layout { margin-right: 0; }
 }
 @media (max-width: 768px) {
     .meta-bar { padding: 14px 16px; } .meta-stats { gap: 14px; }
