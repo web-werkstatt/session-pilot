@@ -28,12 +28,46 @@ OUTCOME_REASONS = {
 SEVERITY_LEVELS = ["low", "medium", "high", "critical"]
 
 
+REASON_LABELS = {
+    "missing_tests": ("Missing Tests", "code_quality"),
+    "wrong_api": ("Wrong API Design", "correctness"),
+    "type_error": ("Type Error", "code_quality"),
+    "logic_error": ("Logic Error", "correctness"),
+    "security": ("Security Issue", "security"),
+    "style_drift": ("Style Drift", "process"),
+    "incomplete": ("Incomplete", "process"),
+    "hallucination": ("Hallucination", "correctness"),
+    "syntax_error": ("Syntax Error", "code_quality"),
+    "wrong_file": ("Wrong File", "process"),
+    "wrong_approach": ("Wrong Approach", "correctness"),
+    "missing_import": ("Missing Import", "code_quality"),
+    "test_failure": ("Test Failure", "code_quality"),
+    "broke_existing": ("Broke Existing", "correctness"),
+    "wrong_scope": ("Wrong Scope", "process"),
+    "not_requested": ("Not Requested", "process"),
+    "regression": ("Regression", "correctness"),
+    "performance_issue": ("Performance Issue", "code_quality"),
+    "needs_followup": ("Needs Followup", "process"),
+    "incomplete_refactor": ("Incomplete Refactor", "process"),
+    "manual_fix_needed": ("Manual Fix Needed", "process"),
+    "other": ("Other", "other"),
+}
+
+
 @session_filter_bp.route("/api/sessions/outcome-reasons")
 @api_route
 def api_outcome_reasons():
-    """Gibt vordefinierte Outcome-Reasons und Severity-Levels zurueck"""
+    """Gibt vordefinierte Outcome-Reasons mit Labels und Severity-Levels zurueck"""
+    reasons_detailed = {}
+    for outcome, keys in OUTCOME_REASONS.items():
+        reasons_detailed[outcome] = [
+            {"key": k, "label": REASON_LABELS.get(k, (k, "other"))[0],
+             "category": REASON_LABELS.get(k, (k, "other"))[1]}
+            for k in keys
+        ]
     return jsonify({
         "reasons": OUTCOME_REASONS,
+        "reasons_detailed": reasons_detailed,
         "severities": SEVERITY_LEVELS,
     })
 

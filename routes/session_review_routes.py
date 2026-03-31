@@ -119,6 +119,19 @@ def api_session_outcome(uuid):
     severity = data.get("severity")
     ensure_ai_scope_schema()
 
+    # Validierung gegen erlaubte Werte
+    if reason:
+        from routes.session_filter_routes import OUTCOME_REASONS
+        all_reasons = set()
+        for reasons_list in OUTCOME_REASONS.values():
+            all_reasons.update(reasons_list)
+        if reason not in all_reasons:
+            return jsonify({"error": f"Ungueltiger Reason: {reason}"}), 400
+    if severity:
+        from routes.session_filter_routes import SEVERITY_LEVELS
+        if severity not in SEVERITY_LEVELS:
+            return jsonify({"error": f"Ungueltige Severity: {severity}"}), 400
+
     execute("""
         UPDATE sessions SET outcome = %s, outcome_note = %s, outcome_at = NOW(),
             outcome_reason = COALESCE(%s, outcome_reason),
