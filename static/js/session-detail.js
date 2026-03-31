@@ -271,6 +271,17 @@ function openBewertungModal(prefillText) {
         noteEl.value = reviewPrefill;
         reviewPrefill = '';
     }
+    // Pre-fill reason/severity from session data
+    const reasonRow = document.getElementById('reviewReasonRow');
+    const reasonSel = document.getElementById('reviewReason');
+    const sevSel = document.getElementById('reviewSeverity');
+    if (sessionData && ['needs_fix', 'reverted', 'partial'].includes(sessionData.outcome)) {
+        if (reasonRow) reasonRow.style.display = 'flex';
+        if (reasonSel) reasonSel.value = sessionData.outcome_reason || '';
+        if (sevSel) sevSel.value = sessionData.outcome_severity || '';
+    } else {
+        if (reasonRow) reasonRow.style.display = 'none';
+    }
     populateThreadSelect(getLinkedThreadIds()[0]);
     openModal('reviewModal');
 }
@@ -287,19 +298,31 @@ async function ensureThreadSelection() {
 }
 
 async function setOutcome(outcome) {
+    // Show/hide reason+severity row for needs_fix/reverted/partial
+    const reasonRow = document.getElementById('reviewReasonRow');
+    if (reasonRow) {
+        reasonRow.style.display = ['needs_fix', 'reverted', 'partial'].includes(outcome) ? 'flex' : 'none';
+    }
+    currentOutcome = outcome;
+    highlightOutcome(outcome);
+
     const note = document.getElementById('outcomeNote') ? document.getElementById('outcomeNote').value.trim() : '';
+    const reason = document.getElementById('reviewReason') ? document.getElementById('reviewReason').value : '';
+    const severity = document.getElementById('reviewSeverity') ? document.getElementById('reviewSeverity').value : '';
     try {
         const threadPayload = await ensureThreadSelection();
-        await api.post(`/api/sessions/${SESSION_UUID}/outcome`, {outcome, note, ...threadPayload});
-        {
-            highlightOutcome(outcome);
-            if (sessionData) {
-                sessionData.outcome = outcome;
-                sessionData.outcome_note = note || sessionData.outcome_note;
-            }
-            showSaved();
-            await reloadReviewData();
+        const body = {outcome, note, ...threadPayload};
+        if (reason) body.reason = reason;
+        if (severity) body.severity = severity;
+        await api.post(`/api/sessions/${SESSION_UUID}/outcome`, body);
+        if (sessionData) {
+            sessionData.outcome = outcome;
+            sessionData.outcome_note = note || sessionData.outcome_note;
+            sessionData.outcome_reason = reason || sessionData.outcome_reason;
+            sessionData.outcome_severity = severity || sessionData.outcome_severity;
         }
+        showSaved();
+        await reloadReviewData();
     } catch (e) { console.error(e); }
 }
 

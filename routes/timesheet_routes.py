@@ -388,11 +388,45 @@ def api_timesheets_rework():
     fixcost = costs.get("needs_fix", 0)
     effective = costs.get("ok", 0) + costs.get("partial", 0)
 
+    # Reason-Distribution (Sprint 9)
+    reason_rows = execute(f"""
+        SELECT outcome_reason, COUNT(*) as cnt
+        FROM sessions {where} AND outcome_reason IS NOT NULL
+        GROUP BY outcome_reason
+        ORDER BY cnt DESC
+    """, params, fetch=True)
+
+    reason_total = sum(r["cnt"] for r in (reason_rows or []))
+    reason_distribution = [
+        {"reason": r["outcome_reason"], "count": r["cnt"],
+         "pct": round(r["cnt"] / reason_total * 100, 1) if reason_total else 0}
+        for r in (reason_rows or [])
+    ]
+
+    # Reason by Model (Sprint 9)
+    rbm_rows = execute(f"""
+        SELECT model, outcome_reason, COUNT(*) as cnt
+        FROM sessions {where} AND outcome_reason IS NOT NULL
+            AND model IS NOT NULL AND model NOT LIKE '<%%>'
+        GROUP BY model, outcome_reason
+        ORDER BY model, cnt DESC
+    """, params, fetch=True)
+
+    reason_by_model = {}
+    for r in (rbm_rows or []):
+        m = r["model"]
+        if m not in reason_by_model:
+            reason_by_model[m] = {}
+        reason_by_model[m][r["outcome_reason"]] = r["cnt"]
+
     return jsonify({
         "total_sessions": total,
         "rated_sessions": rated,
         "distribution": distribution,
         "rework_rate": rework_rate,
+        "reason_distribution": reason_distribution,
+        "reason_by_model": reason_by_model,
+        "top_3_reasons": [r["reason"] for r in reason_distribution[:3]],
         "costs": {
             "wasted": wasted,
             "wasted_formatted": format_cost(wasted),

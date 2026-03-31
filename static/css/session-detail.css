@@ -379,6 +379,9 @@ details .tool-content {
 .review-modal-head h2 { font-size: 18px; }
 .review-status-row { gap: 8px; margin-top: 16px; padding: 14px 0; border-top: 1px solid var(--border-subtle); border-bottom: 1px solid var(--border-subtle); }
 .outcome-btn { font-size: 12px; padding: 7px 18px; font-weight: 500; }
+.review-reason-row { display: flex; gap: 8px; margin: 8px 0; }
+.review-reason-select, .review-severity-select { flex: 1; background: var(--bg-input, #141414); border: 1px solid var(--border-subtle); color: var(--text-primary); padding: 6px 10px; border-radius: 6px; font-size: 12px; }
+.review-reason-select:focus, .review-severity-select:focus { border-color: var(--accent); outline: none; }
 .review-modal-note { min-height: 80px; font-size: var(--text-md); border-radius: 6px; }
 .review-modal-note:focus { border-color: var(--accent); outline: none; }
 .review-modal-actions { margin-top: 10px; justify-content: flex-end; }
@@ -392,8 +395,6 @@ details .tool-content {
     .session-toc { display: none; }
 }
 @media (max-width: 768px) {
-    .meta-bar { padding: 14px 16px; }
-    .meta-stats { gap: 14px; }
-    .export-bar { padding: 8px 16px; }
-    .msg { padding: 12px 14px; }
+    .meta-bar { padding: 14px 16px; } .meta-stats { gap: 14px; }
+    .export-bar { padding: 8px 16px; } .msg { padding: 12px 14px; }
 }

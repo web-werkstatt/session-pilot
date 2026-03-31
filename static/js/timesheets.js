@@ -392,6 +392,34 @@ async function loadRework() {
                 }
             }
         });
+        // Rework by Project table with drill-down links
+        const projBody = document.getElementById('reworkProjectBody');
+        if (projBody && d.by_project && d.by_project.length) {
+            projBody.innerHTML = d.by_project.filter(p => p.rework > 0).map(p =>
+                `<tr>
+                    <td><a href="/project/${encodeURIComponent(p.project)}" style="color:var(--accent-link)">${escapeHtml(p.project)}</a></td>
+                    <td>${p.rated}</td>
+                    <td>${p.rework}</td>
+                    <td style="color:${p.rate >= 20 ? 'var(--status-error)' : p.rate >= 10 ? 'var(--status-warning)' : 'var(--status-success)'}">${p.rate}%</td>
+                    <td><a href="/sessions?project=${encodeURIComponent(p.project)}&outcome=needs_fix,reverted" style="color:var(--accent-link);font-size:11px" title="Show rework sessions">→</a></td>
+                </tr>`
+            ).join('') || '<tr><td colspan="5" style="text-align:center;color:var(--text-muted)">No rework</td></tr>';
+        }
+
+        // Top Reasons with drill-down links
+        const reasonsBody = document.getElementById('reworkReasonsBody');
+        if (reasonsBody && d.reason_distribution) {
+            if (!d.reason_distribution.length) {
+                reasonsBody.innerHTML = '<span style="color:var(--text-muted)">No outcome reasons set yet.</span>';
+            } else {
+                reasonsBody.innerHTML = d.reason_distribution.map(r => {
+                    const label = escapeHtml(r.reason.replace(/_/g, ' '));
+                    const link = `/sessions?outcome_reason=${encodeURIComponent(r.reason)}&outcome=needs_fix,reverted`;
+                    return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><span style="min-width:130px">${label}</span><div style="flex:1;height:6px;background:var(--bg-elevated);border-radius:3px;overflow:hidden"><div style="height:100%;width:${r.pct}%;background:var(--accent);border-radius:3px"></div></div><span style="min-width:50px;text-align:right;font-size:11px;color:var(--text-muted)">${r.count}x (${r.pct}%)</span><a href="${link}" style="color:var(--accent-link);font-size:11px" title="Show sessions">→</a></div>`;
+                }).join('');
+            }
+        }
+
     } catch(e) { console.error('Rework error:', e); }
 }
 

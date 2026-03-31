@@ -62,6 +62,35 @@
             <button class="outcome-btn" data-outcome="partial" onclick="setOutcome('partial')">Partial</button>
             <button class="btn-export" type="button" onclick="saveOutcomeOnly()">Save status</button>
         </div>
+        <div class="review-reason-row" id="reviewReasonRow" style="display:none">
+            <select id="reviewReason" class="review-reason-select">
+                <option value="">-- Reason --</option>
+                <option value="missing_tests">Missing Tests</option>
+                <option value="wrong_approach">Wrong Approach</option>
+                <option value="logic_error">Logic Error</option>
+                <option value="type_error">Type Error</option>
+                <option value="syntax_error">Syntax Error</option>
+                <option value="incomplete">Incomplete</option>
+                <option value="broke_existing">Broke Existing</option>
+                <option value="wrong_scope">Wrong Scope</option>
+                <option value="wrong_file">Wrong File</option>
+                <option value="missing_import">Missing Import</option>
+                <option value="test_failure">Test Failure</option>
+                <option value="regression">Regression</option>
+                <option value="performance_issue">Performance Issue</option>
+                <option value="not_requested">Not Requested</option>
+                <option value="needs_followup">Needs Followup</option>
+                <option value="incomplete_refactor">Incomplete Refactor</option>
+                <option value="manual_fix_needed">Manual Fix Needed</option>
+            </select>
+            <select id="reviewSeverity" class="review-severity-select">
+                <option value="">-- Severity --</option>
+                <option value="critical">P0 - Critical</option>
+                <option value="high">P1 - High</option>
+                <option value="medium">P2 - Medium</option>
+                <option value="low">P3 - Low</option>
+            </select>
+        </div>
         <textarea id="reviewModalNote" class="review-modal-note" placeholder="Write a note..."></textarea>
         <div class="review-modal-actions">
             <div class="review-thread-row">

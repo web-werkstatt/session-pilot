@@ -70,12 +70,25 @@ def api_session_filters():
         FROM sessions
     """, fetchone=True)
 
+    # Default-Scope pro Policy-Level (Sprint 9.7)
+    from services.governance_service import get_project_policy
+    project_defaults = {}
+    for r in projects:
+        name = r["project_name"]
+        policy = get_project_policy(name)
+        level = policy.get("level", 1)
+        if level == 3:
+            project_defaults[name] = {"scope": "needs_fix", "ai_only": True}
+        elif level == 2:
+            project_defaults[name] = {"scope": "all", "ai_only": True}
+
     return jsonify({
         "accounts": [r["account"] for r in accounts],
         "projects": [r["project_name"] for r in projects],
         "models": [r["model"] for r in models],
         "outcomes": {r["outcome"] or "unrated": r["cnt"] for r in outcomes},
         "scope": dict(scope_stats) if scope_stats else {},
+        "project_defaults": project_defaults,
     })
 
 

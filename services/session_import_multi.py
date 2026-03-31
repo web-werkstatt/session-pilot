@@ -8,6 +8,7 @@ import os
 from config import PROJECTS_DIR
 from services.db_service import execute, execute_many
 from services.session_import_utils import parse_ts as _parse_ts, create_session_meta, update_time_range
+from services.ai_scope_service import extract_ai_flags
 
 
 def find_sessions_codex(config_dir):
@@ -163,6 +164,9 @@ def import_codex_session(filepath, account_name):
         if m.get("content"):
             m["content"] = m["content"].replace("\x00", "")
 
+    # AI-Scope-Flags extrahieren
+    ai_flags = extract_ai_flags(messages)
+
     if session_id:
         execute("""
             UPDATE sessions SET
@@ -170,20 +174,26 @@ def import_codex_session(filepath, account_name):
                 model=%s, claude_version=%s, slug=%s, started_at=%s, ended_at=%s,
                 duration_ms=%s, user_message_count=%s, assistant_message_count=%s,
                 total_input_tokens=%s, total_output_tokens=%s,
+                ai_has_writes=%s, ai_has_tool_calls=%s, ai_tools_used=%s,
                 jsonl_size=%s, jsonl_mtime=%s, updated_at=NOW()
             WHERE id=%s
         """, (account_name, project_hash, project_name, meta["cwd"], meta["git_branch"],
               meta["model"], meta["claude_version"], meta["slug"], meta["started_at"],
               meta["ended_at"], meta["duration_ms"], meta["user_message_count"],
               meta["assistant_message_count"], meta["total_input_tokens"],
-              meta["total_output_tokens"], file_size, file_mtime, session_id))
+              meta["total_output_tokens"],
+              ai_flags["ai_has_writes"], ai_flags["ai_has_tool_calls"],
+              json.dumps(ai_flags["ai_tools_used"]),
+              file_size, file_mtime, session_id))
     else:
         row = execute("""
             INSERT INTO sessions (session_uuid, account, project_hash, project_name,
                 cwd, git_branch, model, claude_version, slug, started_at, ended_at,
                 duration_ms, user_message_count, assistant_message_count,
-                total_input_tokens, total_output_tokens, jsonl_path, jsonl_size, jsonl_mtime)
-            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                total_input_tokens, total_output_tokens,
+                ai_has_writes, ai_has_tool_calls, ai_tools_used,
+                jsonl_path, jsonl_size, jsonl_mtime)
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
             ON CONFLICT (session_uuid) DO UPDATE SET
                 jsonl_size=EXCLUDED.jsonl_size, jsonl_mtime=EXCLUDED.jsonl_mtime, updated_at=NOW()
             RETURNING id
@@ -192,6 +202,8 @@ def import_codex_session(filepath, account_name):
               meta["slug"], meta["started_at"], meta["ended_at"], meta["duration_ms"],
               meta["user_message_count"], meta["assistant_message_count"],
               meta["total_input_tokens"], meta["total_output_tokens"],
+              ai_flags["ai_has_writes"], ai_flags["ai_has_tool_calls"],
+              json.dumps(ai_flags["ai_tools_used"]),
               filepath, file_size, file_mtime), fetchone=True)
         session_id = row["id"]
 
@@ -286,19 +298,27 @@ def import_gemini_session(meta, messages, account_name, project_hash):
         if m.get("content"):
             m["content"] = m["content"].replace("\x00", "")
 
+    # AI-Scope-Flags extrahieren
+    ai_flags = extract_ai_flags(messages)
+
     if existing:
         execute("""
             UPDATE sessions SET account=%s, project_hash=%s, project_name=%s,
                 cwd=%s, git_branch=%s, model=%s, claude_version=%s, slug=%s,
                 started_at=%s, ended_at=%s, duration_ms=%s,
                 user_message_count=%s, assistant_message_count=%s,
-                total_input_tokens=%s, total_output_tokens=%s, updated_at=NOW()
+                total_input_tokens=%s, total_output_tokens=%s,
+                ai_has_writes=%s, ai_has_tool_calls=%s, ai_tools_used=%s,
+                updated_at=NOW()
             WHERE id=%s
         """, (account_name, project_hash, project_name, meta["cwd"], meta["git_branch"],
               meta["model"], meta["claude_version"], meta["slug"], meta["started_at"],
               meta["ended_at"], meta["duration_ms"], meta["user_message_count"],
               meta["assistant_message_count"], meta["total_input_tokens"],
-              meta["total_output_tokens"], existing["id"]))
+              meta["total_output_tokens"],
+              ai_flags["ai_has_writes"], ai_flags["ai_has_tool_calls"],
+              json.dumps(ai_flags["ai_tools_used"]),
+              existing["id"]))
         execute("DELETE FROM messages WHERE session_id = %s", (existing["id"],))
         session_id = existing["id"]
         status = "updated"
@@ -307,8 +327,10 @@ def import_gemini_session(meta, messages, account_name, project_hash):
             INSERT INTO sessions (session_uuid, account, project_hash, project_name,
                 cwd, git_branch, model, claude_version, slug, started_at, ended_at,
                 duration_ms, user_message_count, assistant_message_count,
-                total_input_tokens, total_output_tokens, jsonl_path, jsonl_size, jsonl_mtime)
-            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                total_input_tokens, total_output_tokens,
+                ai_has_writes, ai_has_tool_calls, ai_tools_used,
+                jsonl_path, jsonl_size, jsonl_mtime)
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
             ON CONFLICT (session_uuid) DO UPDATE SET
                 account=EXCLUDED.account,
                 project_hash=EXCLUDED.project_hash,
@@ -325,6 +347,9 @@ def import_gemini_session(meta, messages, account_name, project_hash):
                 assistant_message_count=EXCLUDED.assistant_message_count,
                 total_input_tokens=EXCLUDED.total_input_tokens,
                 total_output_tokens=EXCLUDED.total_output_tokens,
+                ai_has_writes=EXCLUDED.ai_has_writes,
+                ai_has_tool_calls=EXCLUDED.ai_has_tool_calls,
+                ai_tools_used=EXCLUDED.ai_tools_used,
                 jsonl_path=EXCLUDED.jsonl_path,
                 jsonl_size=EXCLUDED.jsonl_size,
                 jsonl_mtime=EXCLUDED.jsonl_mtime,
@@ -334,7 +359,10 @@ def import_gemini_session(meta, messages, account_name, project_hash):
               meta["cwd"], meta["git_branch"], meta["model"], meta["claude_version"],
               meta["slug"], meta["started_at"], meta["ended_at"], meta["duration_ms"],
               meta["user_message_count"], meta["assistant_message_count"],
-              meta["total_input_tokens"], meta["total_output_tokens"], None, 0, 0),
+              meta["total_input_tokens"], meta["total_output_tokens"],
+              ai_flags["ai_has_writes"], ai_flags["ai_has_tool_calls"],
+              json.dumps(ai_flags["ai_tools_used"]),
+              None, 0, 0),
             fetchone=True)
         session_id = row["id"]
         status = "imported"
