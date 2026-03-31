@@ -332,6 +332,19 @@ details .tool-content {
 .toc-item-assistant .toc-text { color: var(--text-faint); font-size: 10px; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .toc-item-assistant.active .toc-text { color: var(--accent-light); }
 .toc-tools { font-size: 9px; font-family: var(--font-mono); color: var(--text-ghost); padding: 1px 5px; background: var(--bg-hover); border-radius: 3px; width: fit-content; }
+/* Turn number badge - hidden, not selectable */
+.turn-badge { display: none; }
+/* Edding marker highlight on TOC click */
+.msg.msg-highlight {
+    background: rgba(255, 167, 38, 0.2) !important;
+    border-left: 3px solid rgba(255, 167, 38, 0.8);
+    transition: background 0.3s ease, border-left-color 0.3s ease;
+}
+.msg.msg-highlight.fading {
+    background: transparent !important;
+    border-left-color: transparent;
+    transition: background 1.5s ease-out, border-left-color 1.5s ease-out;
+}
 /* Review Modal */
 .review-modal-panel { padding: 24px 28px; border: 1px solid var(--border-hover); }
 .review-modal-head { margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--border-subtle); }

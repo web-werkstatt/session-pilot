@@ -97,10 +97,37 @@ function buildToc(messages) {
     setupTocScroll();
 }
 
+let _tocClickActive = false;
+
 function scrollToMsg(idx) {
     const el = document.getElementById('msg-' + idx);
     if (!el) return;
-    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const main = document.querySelector('.main-content');
+    if (!main) return;
+    // Use getBoundingClientRect for reliable position calculation
+    const elRect = el.getBoundingClientRect();
+    const mainRect = main.getBoundingClientRect();
+    const stickyHeader = document.querySelector('.sd-sticky-header');
+    const headerHeight = stickyHeader
+        ? stickyHeader.getBoundingClientRect().bottom - mainRect.top
+        : 60;
+    const targetScroll = main.scrollTop + (elRect.top - mainRect.top) - headerHeight;
+    main.scrollTo({ top: targetScroll, behavior: 'smooth' });
+
+    // Set TOC active state immediately, suppress scroll handler during animation
+    _tocClickActive = true;
+    const tocId = 'msg-' + idx;
+    document.querySelectorAll('.toc-item').forEach(item => {
+        item.classList.toggle('active', item.dataset.tocTarget === tocId);
+    });
+    setTimeout(() => { _tocClickActive = false; }, 1000);
+
+    // Edding marker highlight - show then fade out
+    document.querySelectorAll('.msg-highlight').forEach(m => m.classList.remove('msg-highlight', 'fading'));
+    el.classList.add('msg-highlight');
+    el.classList.remove('fading');
+    setTimeout(() => el.classList.add('fading'), 2500);
+    setTimeout(() => el.classList.remove('msg-highlight', 'fading'), 5000);
 }
 
 function setupTocScroll() {
@@ -114,6 +141,7 @@ function setupTocScroll() {
         if (ticking) return;
         ticking = true;
         requestAnimationFrame(() => {
+            if (_tocClickActive) { ticking = false; return; }
             const msgs = document.querySelectorAll('.msg[id]');
             let activeId = null;
             const scrollTop = mainContent.scrollTop;
