@@ -9,6 +9,7 @@ from services.db_service import execute, execute_many
 from services.account_discovery import discover_all_accounts
 from services.session_import_utils import parse_ts, sanitize_content_json, create_session_meta, update_time_range
 from services.ai_scope_service import extract_ai_flags
+from services.file_touch_service import extract_file_touches, extract_file_touches_git, save_file_touches
 from services.session_import_multi import (
     find_sessions_codex, import_codex_session,
     find_sessions_gemini, parse_gemini_json, import_gemini_session,
@@ -295,6 +296,14 @@ def import_session(filepath, account_name, project_hash):
                 model, input_tokens, output_tokens, duration_ms, timestamp, is_tool_result)
             VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
         """, msg_params)
+
+    # Sprint 10: File-Touches extrahieren und speichern
+    touches = extract_file_touches(messages, cwd=meta.get("cwd"))
+    if not touches:
+        # Fallback: Git-Diff fuer Sessions ohne Tool-Call-Daten
+        touches = extract_file_touches_git(meta.get("cwd"), meta.get("started_at"), meta.get("ended_at"))
+    if touches:
+        save_file_touches(session_id, touches, project=project_name or "", model=meta.get("model"))
 
     return "updated" if existing else "imported"
 

@@ -32,6 +32,7 @@ def _run_check():
         _check_new_projects()
         if _check_count % PLANS_SYNC_EVERY == 0:
             _sync_plans()
+            _check_ai_hotspots()
     except Exception:
         pass  # Checker darf niemals den Server crashen
 
@@ -137,6 +138,62 @@ def _check_new_projects():
 
     state['known_projects'] = list(current_projects)
     save_state(state)
+
+
+def _check_ai_hotspots():
+    """Sprint 10.6: Warnt bei Dateien mit hoher AI-Aktivitaet oder Rework-Rate"""
+    try:
+        from services.db_service import execute, ensure_file_touch_schema
+        ensure_file_touch_schema()
+
+        # Dateien mit > 10 AI-Touches in 7 Tagen
+        high_touch = execute("""
+            SELECT ft.project, ft.file_path, COUNT(*) AS touches
+            FROM ai_file_touches ft
+            WHERE ft.ai_written = TRUE
+                AND ft.timestamp > NOW() - INTERVAL '7 days'
+            GROUP BY ft.project, ft.file_path
+            HAVING COUNT(*) > 10
+            ORDER BY touches DESC
+            LIMIT 10
+        """, fetch=True)
+
+        for r in (high_touch or []):
+            add_notification(
+                'ai_hotspot', 'warning',
+                f'AI Hotspot: {r["file_path"]}',
+                f'{r["file_path"]} was modified {r["touches"]} times by AI in the last 7 days',
+                project=r["project"]
+            )
+
+        # Dateien mit Rework-Rate > 25% (min 4 Touches)
+        high_rework = execute("""
+            SELECT ft.project, ft.file_path,
+                COUNT(*) AS touches,
+                COUNT(*) FILTER (WHERE s.outcome IN ('needs_fix', 'reverted')) AS rework,
+                ROUND(COUNT(*) FILTER (WHERE s.outcome IN ('needs_fix', 'reverted'))
+                    * 100.0 / COUNT(*), 1) AS rework_pct
+            FROM ai_file_touches ft
+            JOIN sessions s ON s.id = ft.session_id
+            WHERE ft.ai_written = TRUE
+                AND ft.timestamp > NOW() - INTERVAL '30 days'
+            GROUP BY ft.project, ft.file_path
+            HAVING COUNT(*) >= 4
+                AND COUNT(*) FILTER (WHERE s.outcome IN ('needs_fix', 'reverted'))
+                    * 100.0 / COUNT(*) > 25
+            ORDER BY rework_pct DESC
+            LIMIT 10
+        """, fetch=True)
+
+        for r in (high_rework or []):
+            add_notification(
+                'ai_hotspot', 'warning',
+                f'High rework: {r["file_path"]}',
+                f'{r["file_path"]} has {r["rework_pct"]}% rework rate ({r["rework"]}/{r["touches"]} sessions)',
+                project=r["project"]
+            )
+    except Exception:
+        pass  # Hotspot-Check darf niemals den Server crashen
 
 
 def _sync_plans():

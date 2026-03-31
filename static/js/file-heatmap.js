@@ -1,11 +1,30 @@
 /**
  * File Heatmap + Risk Radar (Sprint 10)
  * Erwartet globale Variable: PROJECT_NAME (gesetzt im Template)
- * Nutzt api.js fuer HTTP-Calls, base.js fuer formatTimeAgo()
+ * Nutzt api.js fuer HTTP-Calls, base.js fuer formatTimeAgo(), escapeHtml()
  */
 let heatmapLoaded = false;
-let heatmapData = [];
-let heatmapSort = { col: 'total', dir: 'desc' };
+let heatmapTree = [];
+let heatmapFlat = [];
+let heatmapSort = { col: 'touches', dir: 'desc' };
+let heatmapPeriod = '30d';
+let heatmapModel = '';
+let heatmapCategory = '';
+
+async function loadRiskRadarPanel() {
+    const panel = document.getElementById('riskRadarPanel');
+    if (!panel) return;
+    try {
+        const radar = await api.get(`/api/analytics/risk-radar/${encodeURIComponent(PROJECT_NAME)}`);
+        if (!radar.hotspot_files?.length && !radar.top_categories?.length) return;
+        window._radarCategories = radar.top_categories || [];
+        panel.innerHTML = renderRiskRadar(radar);
+        panel.style.display = '';
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    } catch (e) {
+        console.warn('Risk radar not available:', e);
+    }
+}
 
 async function loadFileHeatmap() {
     if (heatmapLoaded) return;
@@ -15,38 +34,40 @@ async function loadFileHeatmap() {
     if (!container) return;
 
     try {
+        let heatUrl = `/api/analytics/file-heatmap/${encodeURIComponent(PROJECT_NAME)}?period=${heatmapPeriod}`;
+        if (heatmapModel) heatUrl += `&model=${encodeURIComponent(heatmapModel)}`;
+        if (heatmapCategory) heatUrl += `&category=${encodeURIComponent(heatmapCategory)}`;
         const [heatmap, radar] = await Promise.all([
-            api.get('/api/analytics/file-heatmap/' + encodeURIComponent(PROJECT_NAME)),
-            api.get('/api/analytics/risk-radar/' + encodeURIComponent(PROJECT_NAME)),
+            api.get(heatUrl),
+            api.get(`/api/analytics/risk-radar/${encodeURIComponent(PROJECT_NAME)}`),
         ]);
 
-        heatmapData = heatmap.files || [];
+        window._radarCategories = radar.top_categories || [];
+        heatmapTree = heatmap.tree || [];
+        // Flatten: Dirs + Children fuer Tabelle
+        heatmapFlat = [];
+        heatmapTree.forEach(dir => {
+            heatmapFlat.push({ ...dir, _isDir: true });
+            (dir.children || []).forEach(f => heatmapFlat.push({ ...f, _isDir: false }));
+        });
 
-        if (!heatmapData.length && !radar.hotspots?.length) {
+        if (!heatmapFlat.length && !radar.hotspot_files?.length) {
             container.innerHTML = '<div class="heatmap-empty"><p>No file touch data available yet.</p><p style="font-size:12px;color:var(--text-faint)">Run the backfill script or wait for new sessions to be imported.</p></div>';
             return;
         }
 
         let html = '';
-
-        // Risk Radar
         html += renderRiskRadar(radar);
-
-        // Trend Chart
         if (radar.weekly_trend?.length > 1) {
             html += '<div class="trend-chart-wrap"><h4>Weekly Activity Trend</h4><canvas id="trendChart" height="200"></canvas></div>';
         }
-
-        // Heatmap Table
-        html += renderHeatmapTable(heatmapData);
-
+        html += renderHeatmapToolbar();
+        html += renderHeatmapTable(heatmapFlat);
         container.innerHTML = html;
 
-        // Trend Chart rendern (Chart.js ist via CDN in base.html)
         if (radar.weekly_trend?.length > 1 && typeof Chart !== 'undefined') {
             renderTrendChart(radar.weekly_trend);
         }
-
         if (typeof lucide !== 'undefined') lucide.createIcons();
     } catch (e) {
         container.innerHTML = '<div class="heatmap-empty"><p>Error loading heatmap data.</p></div>';
@@ -54,17 +75,30 @@ async function loadFileHeatmap() {
     }
 }
 
+async function reloadHeatmap() {
+    heatmapLoaded = false;
+    const container = document.getElementById('heatmapBody');
+    if (container) container.innerHTML = '<p style="padding:16px;color:var(--text-muted)">Loading...</p>';
+    await loadFileHeatmap();
+}
+
 function renderRiskRadar(radar) {
     let html = '<div class="risk-radar">';
 
-    // Hotspots Card
+    // Top Hotspots
     html += '<div class="radar-card"><h4><i data-lucide="flame" class="icon icon-sm"></i> Top Hotspots</h4>';
-    if (radar.hotspots?.length) {
+    if (radar.hotspot_files?.length) {
         html += '<ul class="radar-list">';
-        radar.hotspots.forEach(h => {
-            const badge = h.changes > 20 ? 'hot' : h.changes > 10 ? 'warm' : 'cool';
-            html += `<li><span class="radar-file" title="${escapeHtml(h.file_path)}">${escapeHtml(shortPath(h.file_path))}</span>`;
-            html += `<span class="radar-badge ${badge}">${h.changes} changes</span></li>`;
+        radar.hotspot_files.forEach(h => {
+            const badge = h.touches_30d > 20 ? 'hot' : h.touches_30d > 10 ? 'warm' : 'cool';
+            const drillDown = h.drill_down ? ` onclick="window.location='${escapeHtml(h.drill_down)}'"` : '';
+            html += `<li${drillDown} style="cursor:pointer" title="This file was modified ${h.touches_30d} times by AI in the last 30 days">`;
+            html += `<span class="radar-file">${escapeHtml(shortPath(h.path))}</span>`;
+            html += `<span class="ai-hotspot-badge">AI Hotspot</span>`;
+            html += `<span class="radar-badge ${badge}">${h.touches_30d} Touches${h.avg_severity != null ? ', Sev ' + h.avg_severity : ''}</span>`;
+            if (h.top_reason) html += `<span class="radar-reason">${escapeHtml(h.top_reason)}</span>`;
+            html += '<span class="drill-arrow">→</span>';
+            html += '</li>';
         });
         html += '</ul>';
     } else {
@@ -72,32 +106,29 @@ function renderRiskRadar(radar) {
     }
     html += '</div>';
 
-    // Error Files Card
-    html += '<div class="radar-card"><h4><i data-lucide="alert-triangle" class="icon icon-sm"></i> Rework Files</h4>';
-    if (radar.error_files?.length) {
+    // Top Error Categories
+    html += '<div class="radar-card"><h4><i data-lucide="alert-triangle" class="icon icon-sm"></i> Top Error Categories</h4>';
+    if (radar.top_categories?.length) {
         html += '<ul class="radar-list">';
-        radar.error_files.forEach(f => {
-            html += `<li><span class="radar-file" title="${escapeHtml(f.file_path)}">${escapeHtml(shortPath(f.file_path))}</span>`;
-            html += `<span class="radar-badge hot">${f.error_sessions} issues</span></li>`;
+        radar.top_categories.forEach(c => {
+            html += `<li><span>${escapeHtml(c.reason)}</span><span class="radar-badge warm">${c.pct}% (${c.count}x)</span></li>`;
         });
         html += '</ul>';
     } else {
-        html += '<p style="color:var(--text-muted);font-size:12px">No rework patterns detected</p>';
+        html += '<p style="color:var(--text-muted);font-size:12px">No error categories</p>';
     }
     html += '</div>';
 
-    // Summary Card
-    if (heatmapData.length) {
-        const totalFiles = heatmapData.length;
-        const totalTouches = heatmapData.reduce((s, f) => s + f.total, 0);
-        const totalWrites = heatmapData.reduce((s, f) => s + f.writes, 0);
-        const totalEdits = heatmapData.reduce((s, f) => s + f.edits, 0);
-        html += '<div class="radar-card"><h4><i data-lucide="bar-chart-3" class="icon icon-sm"></i> Summary</h4>';
+    // Trend-Card
+    if (radar.trend) {
+        const t = radar.trend;
+        const arrow = t.direction === 'improving' ? 'trend-arrow--down' : t.direction === 'worsening' ? 'trend-arrow--up' : '';
+        const arrowIcon = t.direction === 'improving' ? '↓' : t.direction === 'worsening' ? '↑' : '→';
+        html += '<div class="radar-card"><h4><i data-lucide="trending-up" class="icon icon-sm"></i> Rework-Trend</h4>';
         html += '<ul class="radar-list">';
-        html += `<li><span>Files touched</span><span style="color:var(--text-primary)">${totalFiles}</span></li>`;
-        html += `<li><span>Total touches</span><span style="color:var(--text-primary)">${totalTouches}</span></li>`;
-        html += `<li><span>Writes</span><span style="color:var(--status-error-text)">${totalWrites}</span></li>`;
-        html += `<li><span>Edits</span><span style="color:var(--status-warning-text)">${totalEdits}</span></li>`;
+        html += `<li><span>Rework-Rate 7d</span><span>${t.rework_rate_7d}%</span></li>`;
+        html += `<li><span>Rework-Rate 30d</span><span>${t.rework_rate_30d}%</span></li>`;
+        html += `<li><span>Delta</span><span class="${arrow}">${arrowIcon} ${t.delta_pp > 0 ? '+' : ''}${t.delta_pp}pp</span></li>`;
         html += '</ul></div>';
     }
 
@@ -105,26 +136,55 @@ function renderRiskRadar(radar) {
     return html;
 }
 
-function renderHeatmapTable(files) {
+function renderHeatmapToolbar() {
     let html = '<div class="heatmap-table-wrap">';
     html += '<div class="heatmap-toolbar">';
     html += '<input type="text" id="heatmapSearch" placeholder="Filter files..." oninput="filterHeatmap()">';
-    html += '<select id="heatmapTypeFilter" onchange="filterHeatmap()">';
-    html += '<option value="">All types</option>';
-    html += '<option value="write">Writes only</option>';
-    html += '<option value="edit">Edits only</option>';
-    html += '<option value="read">Reads only</option>';
-    html += '</select>';
-    html += '</div>';
 
-    html += '<table class="heatmap-table"><thead><tr>';
-    html += '<th onclick="sortHeatmap(\'file_path\')" data-col="file_path">File</th>';
-    html += '<th onclick="sortHeatmap(\'total\')" data-col="total" class="sorted-desc">Total</th>';
-    html += '<th onclick="sortHeatmap(\'writes\')" data-col="writes">Writes</th>';
-    html += '<th onclick="sortHeatmap(\'edits\')" data-col="edits">Edits</th>';
-    html += '<th onclick="sortHeatmap(\'reads\')" data-col="reads">Reads</th>';
+    // Period Filter
+    html += '<select id="heatmapPeriod" onchange="changePeriod(this.value)">';
+    ['30d', '90d', '365d', 'all'].forEach(p => {
+        const label = p === 'all' ? 'All' : p;
+        html += `<option value="${p}" ${p === heatmapPeriod ? 'selected' : ''}>${label}</option>`;
+    });
+    html += '</select>';
+
+    // Model Filter
+    html += '<select id="heatmapModel" onchange="changeModelFilter(this.value)">';
+    html += '<option value="">All models</option>';
+    // Modelle aus den Daten extrahieren
+    const models = new Set();
+    heatmapFlat.forEach(f => {
+        if (f.models) Object.keys(f.models).forEach(m => models.add(m));
+    });
+    models.forEach(m => {
+        html += `<option value="${escapeHtml(m)}" ${m === heatmapModel ? 'selected' : ''}>${escapeHtml(m)}</option>`;
+    });
+    html += '</select>';
+
+    // Category Filter (befuellt aus top_categories des Risk-Radars)
+    html += '<select id="heatmapCategory" onchange="changeCategoryFilter(this.value)">';
+    html += '<option value="">All categories</option>';
+    if (window._radarCategories) {
+        window._radarCategories.forEach(c => {
+            html += `<option value="${escapeHtml(c.reason)}" ${c.reason === heatmapCategory ? 'selected' : ''}>${escapeHtml(c.reason)} (${c.count})</option>`;
+        });
+    }
+    html += '</select>';
+
+    html += '</div>';
+    return html;
+}
+
+function renderHeatmapTable(files) {
+    let html = '<table class="heatmap-table"><thead><tr>';
+    html += '<th onclick="sortHeatmap(\'path\')" data-col="path">Path</th>';
+    html += '<th onclick="sortHeatmap(\'touches\')" data-col="touches" class="sorted-desc">Touches</th>';
+    html += '<th onclick="sortHeatmap(\'rework_rate\')" data-col="rework_rate">Rework</th>';
+    html += '<th>Distribution</th>';
     html += '<th onclick="sortHeatmap(\'sessions\')" data-col="sessions">Sessions</th>';
-    html += '<th onclick="sortHeatmap(\'last_touched\')" data-col="last_touched">Last Touch</th>';
+    html += '<th>Category</th>';
+    html += '<th></th>';
     html += '</tr></thead>';
     html += '<tbody id="heatmapTableBody">';
     html += renderHeatmapRows(files);
@@ -135,20 +195,35 @@ function renderHeatmapTable(files) {
 function renderHeatmapRows(files) {
     if (!files.length) return '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:16px">No files match filter</td></tr>';
 
-    const maxTotal = Math.max(...files.map(f => f.total), 1);
+    const maxTouches = Math.max(...files.map(f => f.touches), 1);
     let html = '';
     files.forEach(f => {
-        const barW = Math.max(4, (f.writes / maxTotal) * 120);
-        const barE = Math.max(4, (f.edits / maxTotal) * 120);
-        const barR = Math.max(4, (f.reads / maxTotal) * 120);
-        html += '<tr>';
-        html += `<td class="file-path" title="${escapeHtml(f.file_path)}">${escapeHtml(shortPath(f.file_path))}</td>`;
-        html += `<td>${f.total}</td>`;
-        html += `<td><div class="heat-cell"><span class="count">${f.writes}</span><span class="heat-bar write" style="width:${barW}px"></span></div></td>`;
-        html += `<td><div class="heat-cell"><span class="count">${f.edits}</span><span class="heat-bar edit" style="width:${barE}px"></span></div></td>`;
-        html += `<td><div class="heat-cell"><span class="count">${f.reads}</span><span class="heat-bar read" style="width:${barR}px"></span></div></td>`;
-        html += `<td>${f.sessions}</td>`;
-        html += `<td>${f.last_touched ? formatTimeAgo(f.last_touched) : '-'}</td>`;
+        const isDir = f._isDir;
+        const barWidth = Math.max(4, (f.touches / maxTouches) * 140);
+        const rework = f.rework_rate || 0;
+        const reworkClass = rework >= 15 ? 'heatmap-bar--red' : rework >= 5 ? 'heatmap-bar--yellow' : 'heatmap-bar--green';
+        const pathDisplay = isDir ? `<strong>${escapeHtml(f.path)}</strong>` :
+            `<span class="heatmap-indent"></span>${escapeHtml(shortPath(f.path))}`;
+
+        // Haeufigste Kategorie aus outcome_stats oder top_reason
+        const topCategory = f.top_reason || '';
+        const stats = f.outcome_stats || {};
+        const nf = stats.needs_fix || 0;
+        const rv = stats.reverted || 0;
+
+        // Drill-down URLs
+        const fileParam = isDir ? `file_prefix=${encodeURIComponent(f.path)}` : `file=${encodeURIComponent(f.path)}`;
+        const drillBase = `/sessions?project=${encodeURIComponent(PROJECT_NAME)}&${fileParam}`;
+        const drillRework = `${drillBase}&outcome=needs_fix,reverted`;
+
+        html += `<tr class="${isDir ? 'heatmap-dir-row' : ''}">`;
+        html += `<td class="file-path" title="${escapeHtml(f.path)}"><a href="${drillBase}" class="drill-link">${pathDisplay}</a></td>`;
+        html += `<td>${f.touches} <span class="heatmap-pct">(${f.pct || 0}%)</span></td>`;
+        html += `<td><a href="${drillRework}" class="drill-link"><span class="rework-badge ${reworkClass}">${rework}%</span></a></td>`;
+        html += `<td><div class="heat-cell"><span class="heat-bar ${reworkClass}" style="width:${barWidth}px"></span></div></td>`;
+        html += `<td>${f.sessions || '-'}</td>`;
+        html += `<td>${topCategory ? `<span class="category-tag">${escapeHtml(topCategory)}</span>` : nf + rv > 0 ? `<span class="category-tag muted">${nf} fix, ${rv} rev</span>` : '-'}</td>`;
+        html += `<td><a href="${drillBase}" class="drill-arrow" title="Show sessions">→</a></td>`;
         html += '</tr>';
     });
     return html;
@@ -163,17 +238,10 @@ function shortPath(p) {
 
 function filterHeatmap() {
     const search = (document.getElementById('heatmapSearch')?.value || '').toLowerCase();
-    const typeFilter = document.getElementById('heatmapTypeFilter')?.value || '';
-
-    let filtered = heatmapData;
+    let filtered = heatmapFlat;
     if (search) {
-        filtered = filtered.filter(f => f.file_path.toLowerCase().includes(search));
+        filtered = filtered.filter(f => f.path.toLowerCase().includes(search));
     }
-    if (typeFilter) {
-        const key = typeFilter + 's';
-        filtered = filtered.filter(f => f[key] > 0);
-    }
-
     const sorted = sortFiles(filtered);
     const tbody = document.getElementById('heatmapTableBody');
     if (tbody) tbody.innerHTML = renderHeatmapRows(sorted);
@@ -185,15 +253,10 @@ function sortHeatmap(col) {
     } else {
         heatmapSort = { col, dir: 'desc' };
     }
-
-    // Update header classes
     document.querySelectorAll('.heatmap-table th').forEach(th => {
         th.classList.remove('sorted-asc', 'sorted-desc');
-        if (th.dataset.col === col) {
-            th.classList.add('sorted-' + heatmapSort.dir);
-        }
+        if (th.dataset.col === col) th.classList.add('sorted-' + heatmapSort.dir);
     });
-
     filterHeatmap();
 }
 
@@ -201,11 +264,24 @@ function sortFiles(files) {
     const { col, dir } = heatmapSort;
     return [...files].sort((a, b) => {
         let va = a[col], vb = b[col];
-        if (typeof va === 'string') {
-            return dir === 'asc' ? va.localeCompare(vb) : vb.localeCompare(va);
-        }
+        if (typeof va === 'string') return dir === 'asc' ? va.localeCompare(vb) : vb.localeCompare(va);
         return dir === 'asc' ? (va || 0) - (vb || 0) : (vb || 0) - (va || 0);
     });
+}
+
+function changePeriod(val) {
+    heatmapPeriod = val;
+    reloadHeatmap();
+}
+
+function changeModelFilter(val) {
+    heatmapModel = val;
+    reloadHeatmap();
+}
+
+function changeCategoryFilter(val) {
+    heatmapCategory = val;
+    reloadHeatmap();
 }
 
 function renderTrendChart(trend) {
@@ -214,7 +290,7 @@ function renderTrendChart(trend) {
 
     const labels = trend.map(t => {
         const d = new Date(t.week);
-        return d.toLocaleDateString('en', { month: 'short', day: 'numeric' });
+        return d.toLocaleDateString('de', { month: 'short', day: 'numeric' });
     });
 
     new Chart(ctx, {

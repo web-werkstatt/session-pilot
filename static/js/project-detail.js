@@ -494,3 +494,4 @@ async function loadGovernanceTab() {
 loadProjectInfo();
 initGitPanel(PROJECT_NAME);
 loadModelRecommendation();
+loadRiskRadarPanel();

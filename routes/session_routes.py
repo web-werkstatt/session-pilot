@@ -116,10 +116,23 @@ def _api_sessions_inner():
     elif scope_filter == "readonly":
         conditions.append("(ai_has_tool_calls = FALSE OR ai_has_tool_calls IS NULL)")
 
+    # Sprint 10.8: File / File-Prefix Filter (Join mit ai_file_touches)
+    file_filter = request.args.get("file")
+    file_prefix = request.args.get("file_prefix")
+    file_join = ""
+    if file_filter:
+        file_join = "JOIN ai_file_touches ft ON ft.session_id = sessions.id"
+        conditions.append("ft.file_path = %s")
+        params.append(file_filter)
+    elif file_prefix:
+        file_join = "JOIN ai_file_touches ft ON ft.session_id = sessions.id"
+        conditions.append("ft.file_path LIKE %s")
+        params.append(file_prefix + "%")
+
     where = f"WHERE {' AND '.join(conditions)}" if conditions else ""
 
     # Total count
-    total = execute(f"SELECT COUNT(*) as cnt FROM sessions {where}", params, fetchone=True)
+    total = execute(f"SELECT COUNT(DISTINCT sessions.id) as cnt FROM sessions {file_join} {where}", params, fetchone=True)
     total_count = total["cnt"] if total else 0
 
     # Sessions laden
@@ -130,7 +143,8 @@ def _api_sessions_inner():
                    total_input_tokens, total_output_tokens, outcome,
                    outcome_reason, outcome_severity,
                    ai_has_writes, ai_has_tool_calls, ai_tools_used
-            FROM sessions {where}
+            FROM sessions {file_join} {where}
+            GROUP BY sessions.id
             ORDER BY {sort} {order}
             LIMIT %s OFFSET %s""",
         params + [limit, offset], fetch=True

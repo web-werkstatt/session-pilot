@@ -25,7 +25,7 @@ def backfill(dry_run=False, project_filter=None):
         params.append(project_filter)
 
     sessions = execute(
-        f"SELECT id, session_uuid, project_name, cwd FROM sessions {where} ORDER BY id",
+        f"SELECT id, session_uuid, project_name, cwd, model FROM sessions {where} ORDER BY id",
         params or None, fetch=True
     )
     if not sessions:
@@ -53,7 +53,9 @@ def backfill(dry_run=False, project_filter=None):
             print(f"  [{sess['session_uuid'][:12]}] {sess.get('project_name', '?')}: "
                   f"{len(touches)} touches ({len(set(t['file_path'] for t in touches))} unique files)")
         else:
-            save_file_touches(sid, touches)
+            save_file_touches(sid, touches,
+                              project=sess.get("project_name", ""),
+                              model=sess.get("model"))
 
         total_touches += len(touches)
         sessions_with_touches += 1

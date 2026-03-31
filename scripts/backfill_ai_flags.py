@@ -14,13 +14,16 @@ import os
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
-from services.db_service import execute, ensure_ai_scope_schema
+from services.db_service import execute, ensure_ai_scope_schema, ensure_file_touch_schema
 from services.ai_scope_service import analyze_from_db_messages
+from services.file_touch_service import extract_file_touches, save_file_touches
 
 
-def backfill(dry_run=False, project=None):
+def backfill(dry_run=False, project=None, with_file_touches=False):
     """Strategie B: Berechnet AI-Flags aus gespeicherten DB-Messages."""
     ensure_ai_scope_schema()
+    if with_file_touches:
+        ensure_file_touch_schema()
 
     where = "WHERE (ai_tools_used = '[]'::jsonb OR ai_tools_used IS NULL)"
     params = []
@@ -29,7 +32,7 @@ def backfill(dry_run=False, project=None):
         params.append(project)
 
     sessions = execute(
-        f"SELECT id, session_uuid, project_name FROM sessions {where} ORDER BY id",
+        f"SELECT id, session_uuid, project_name, cwd, model FROM sessions {where} ORDER BY id",
         params or None, fetch=True
     )
     if not sessions:
@@ -38,11 +41,12 @@ def backfill(dry_run=False, project=None):
 
     print(f"{len(sessions)} Sessions gefunden, analysiere...")
     updated = 0
+    touch_total = 0
 
     for sess in sessions:
         sid = sess["id"]
         messages = execute(
-            "SELECT type, content_json FROM messages WHERE session_id = %s AND type = 'assistant'",
+            "SELECT type, content_json, timestamp FROM messages WHERE session_id = %s AND type = 'assistant'",
             (sid,), fetch=True
         )
         if not messages:
@@ -64,11 +68,26 @@ def backfill(dry_run=False, project=None):
                 WHERE id = %s
             """, (flags["ai_has_writes"], flags["ai_has_tool_calls"], tools_json, sid))
 
+        # Sprint 10: File-Touches mit-extrahieren
+        if with_file_touches:
+            touches = extract_file_touches(messages, cwd=sess.get("cwd"))
+            if touches:
+                if dry_run:
+                    print(f"    -> {len(touches)} file touches "
+                          f"({len(set(t['file_path'] for t in touches))} unique files)")
+                else:
+                    save_file_touches(sid, touches,
+                                      project=sess.get("project_name", ""),
+                                      model=sess.get("model"))
+                touch_total += len(touches)
+
         if flags["ai_has_tool_calls"]:
             updated += 1
 
     mode = "DRY-RUN" if dry_run else "UPDATED"
     print(f"\n{mode}: {updated}/{len(sessions)} Sessions mit Tool-Calls")
+    if with_file_touches:
+        print(f"{mode}: {touch_total} File-Touches extrahiert")
 
 
 def force_reimport():
@@ -95,7 +114,9 @@ if __name__ == "__main__":
         if arg == "--project" and i + 1 < len(sys.argv):
             project = sys.argv[i + 1]
 
+    with_file_touches = "--with-file-touches" in sys.argv
+
     if full:
         force_reimport()
     else:
-        backfill(dry_run=dry_run, project=project)
+        backfill(dry_run=dry_run, project=project, with_file_touches=with_file_touches)

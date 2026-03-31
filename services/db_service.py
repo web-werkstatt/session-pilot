@@ -305,9 +305,14 @@ def ensure_file_touch_schema():
             CREATE TABLE IF NOT EXISTS ai_file_touches (
                 id SERIAL PRIMARY KEY,
                 session_id INTEGER REFERENCES sessions(id) ON DELETE CASCADE,
-                file_path VARCHAR(1000) NOT NULL,
+                file_path TEXT NOT NULL,
+                project VARCHAR(200) NOT NULL DEFAULT '',
                 touch_type VARCHAR(20) NOT NULL,
+                ai_written BOOLEAN DEFAULT FALSE,
+                ai_touched BOOLEAN DEFAULT TRUE,
                 tool_name VARCHAR(50),
+                model VARCHAR(100),
+                issue_category VARCHAR(30),
                 timestamp TIMESTAMPTZ,
                 created_at TIMESTAMPTZ DEFAULT NOW()
             )
@@ -315,4 +320,34 @@ def ensure_file_touch_schema():
         execute("CREATE INDEX IF NOT EXISTS idx_file_touches_session ON ai_file_touches(session_id)")
         execute("CREATE INDEX IF NOT EXISTS idx_file_touches_path ON ai_file_touches(file_path)")
         execute("CREATE INDEX IF NOT EXISTS idx_file_touches_type ON ai_file_touches(touch_type)")
+        execute("CREATE INDEX IF NOT EXISTS idx_file_touches_project ON ai_file_touches(project)")
+        execute("CREATE INDEX IF NOT EXISTS idx_file_touches_date ON ai_file_touches(timestamp)")
+        # Spec-Spalten nachrüsten falls Tabelle schon existiert
+        for col, definition in [
+            ("project", "VARCHAR(200) NOT NULL DEFAULT ''"),
+            ("ai_written", "BOOLEAN DEFAULT FALSE"),
+            ("ai_touched", "BOOLEAN DEFAULT TRUE"),
+            ("model", "VARCHAR(100)"),
+            ("issue_category", "VARCHAR(30)"),
+        ]:
+            execute(f"""
+                DO $$ BEGIN
+                    ALTER TABLE ai_file_touches ADD COLUMN {col} {definition};
+                EXCEPTION WHEN duplicate_column THEN NULL;
+                END $$
+            """)
+        # Partial index for written files
+        execute("""
+            CREATE INDEX IF NOT EXISTS idx_file_touches_written
+            ON ai_file_touches(ai_written) WHERE ai_written = TRUE
+        """)
+        # Unique constraint (session_id statt session_uuid, da FK auf id)
+        execute("""
+            DO $$ BEGIN
+                ALTER TABLE ai_file_touches
+                    ADD CONSTRAINT uq_file_touch_session_path_type
+                    UNIQUE(session_id, file_path, touch_type);
+            EXCEPTION WHEN duplicate_table THEN NULL;
+            END $$
+        """)
         _file_touch_ready = True

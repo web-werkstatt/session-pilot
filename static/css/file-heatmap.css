@@ -202,6 +202,106 @@
     margin: 0 0 var(--space-3) 0;
 }
 
+/* Rework-Rate Color Coding (Spec 10.4) */
+.rework-badge {
+    font-size: var(--text-xs);
+    padding: 2px 6px;
+    border-radius: var(--radius-full);
+    font-weight: 600;
+    font-family: var(--font-mono);
+}
+
+.heatmap-bar--green, .rework-badge.heatmap-bar--green {
+    background: var(--status-success);
+    color: var(--status-success-text, #fff);
+}
+
+.heatmap-bar--yellow, .rework-badge.heatmap-bar--yellow {
+    background: var(--status-warning);
+    color: var(--status-warning-text, #fff);
+}
+
+.heatmap-bar--red, .rework-badge.heatmap-bar--red {
+    background: var(--status-error);
+    color: var(--status-error-text, #fff);
+}
+
+/* Heatmap Pct */
+.heatmap-pct {
+    color: var(--text-muted);
+    font-size: var(--text-xs);
+}
+
+/* Directory rows */
+.heatmap-dir-row td {
+    background: var(--bg-elevated);
+}
+
+.heatmap-indent {
+    display: inline-block;
+    width: 20px;
+}
+
+/* Category Tag */
+.category-tag {
+    font-size: var(--text-xs);
+    padding: 1px 5px;
+    border-radius: var(--radius-sm);
+    background: var(--accent-bg);
+    color: var(--accent-light);
+}
+
+.category-tag.muted {
+    background: var(--bg-elevated);
+    color: var(--text-muted);
+}
+
+/* Radar Reason */
+.radar-reason {
+    font-size: var(--text-xs);
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+/* AI Hotspot Badge */
+.ai-hotspot-badge {
+    font-size: var(--text-xs);
+    padding: 1px 5px;
+    border-radius: var(--radius-full);
+    background: var(--error-bg);
+    color: var(--status-error-text);
+    font-weight: 600;
+    letter-spacing: 0.02em;
+}
+
+.drill-arrow {
+    color: var(--text-muted);
+    font-size: var(--text-sm);
+}
+
+/* Trend Arrow */
+.trend-arrow--down { color: var(--status-success); }
+.trend-arrow--up { color: var(--status-error); }
+
+/* Risiko-Radar Panel (vor den Tabs) */
+.risk-radar-panel {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    padding: var(--space-4);
+    margin-bottom: var(--space-4);
+}
+
+.risk-radar-panel .trend-arrow--up { color: var(--status-error); }
+.risk-radar-panel .trend-arrow--down { color: var(--status-success); }
+
+/* Responsive: Heatmap scrollbar auf Mobile */
+@media (max-width: 768px) {
+    .heatmap-table-wrap { overflow-x: auto; }
+    .heatmap-table { min-width: 600px; }
+    .risk-radar { grid-template-columns: 1fr; }
+}
+
 /* Empty State */
 .heatmap-empty {
     text-align: center;

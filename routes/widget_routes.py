@@ -3,10 +3,10 @@ Dashboard-Widget API: Aggregierte Statistiken und Aktivitaetsdaten
 """
 from datetime import datetime, timedelta
 from collections import Counter
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, request
 
 from services import scan_projects, get_docker_containers
-from services.db_service import execute
+from services.db_service import execute, ensure_file_touch_schema
 
 widget_bp = Blueprint('widgets', __name__)
 
@@ -152,3 +152,49 @@ def widget_overview():
             'with_gitea': sum(1 for p in projects.values() if p.get('has_gitea')),
         },
     })
+
+
+@widget_bp.route('/api/widgets/ai-hotspots')
+def widget_ai_hotspots():
+    """Sprint 10.7: Top 10 AI-Hotspot-Dateien ueber alle Projekte (30 Tage)"""
+    ensure_file_touch_schema()
+    project = request.args.get("project")
+    where = "ft.ai_written = TRUE AND ft.timestamp > NOW() - INTERVAL '30 days'"
+    params = []
+    if project:
+        where += " AND ft.project = %s"
+        params.append(project)
+    params.append(10)
+    rows = execute(f"""
+        SELECT
+            ft.project,
+            ft.file_path,
+            COUNT(*) AS touches,
+            COUNT(DISTINCT ft.session_id) AS sessions,
+            COUNT(*) FILTER (WHERE s.outcome IN ('needs_fix', 'reverted')) AS rework_count,
+            COUNT(*) FILTER (WHERE s.outcome = 'ok') AS ok_count
+        FROM ai_file_touches ft
+        JOIN sessions s ON s.id = ft.session_id
+        WHERE {where}
+        GROUP BY ft.project, ft.file_path
+        ORDER BY touches DESC
+        LIMIT %s
+    """, params, fetch=True)
+
+    hotspots = []
+    for r in (rows or []):
+        total = r["touches"]
+        rework = r["rework_count"] or 0
+        hotspots.append({
+            "project": r["project"],
+            "file_path": r["file_path"],
+            "touches": total,
+            "sessions": r["sessions"],
+            "rework_rate": round(rework / total * 100, 1) if total else 0,
+            "outcome_stats": {
+                "ok": r["ok_count"] or 0,
+                "needs_fix": rework,
+            },
+        })
+
+    return jsonify({"hotspots": hotspots, "total": len(hotspots)})

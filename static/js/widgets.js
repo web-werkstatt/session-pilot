@@ -33,6 +33,7 @@ async function loadWidgets() {
         renderTechChart(overview.technologies);
         renderSessionChart(overview.sessions);
         renderTopActive(overview.top_active);
+        renderAiHotspots();
         renderGovernanceWidget();
     } catch (e) {
         console.error('Widget error:', e);
@@ -217,6 +218,35 @@ function renderTopActive(projects) {
         html += '</div>';
     });
     el.innerHTML = html;
+}
+
+// === AI Hotspots Widget (Sprint 10.7) ===
+async function renderAiHotspots() {
+    var el = document.getElementById('wAiHotspots');
+    if (!el) return;
+    try {
+        var data = await api.get('/api/widgets/ai-hotspots');
+        var hotspots = data.hotspots || [];
+        if (!hotspots.length) {
+            el.innerHTML = '<div style="color:var(--text-muted);font-size:12px;padding:8px">No AI hotspots in the last 30 days</div>';
+            return;
+        }
+        var html = '';
+        hotspots.forEach(function(h) {
+            var reworkClass = h.rework_rate >= 15 ? 'color:var(--status-error)' :
+                h.rework_rate >= 5 ? 'color:var(--status-warning)' : 'color:var(--status-success)';
+            html += '<div class="widget-list-item">';
+            html += '<a href="/project/' + encodeURIComponent(h.project) + '" class="widget-list-name" title="' + escapeHtml(h.file_path) + '">';
+            html += '<span style="color:var(--text-muted);font-size:11px">' + escapeHtml(h.project) + '/</span> ';
+            html += escapeHtml(h.file_path) + '</a>';
+            html += '<span style="font-size:12px">' + h.touches + ' touches';
+            html += ' <span style="' + reworkClass + '">' + h.rework_rate + '% rework</span>';
+            html += '</span></div>';
+        });
+        el.innerHTML = html;
+    } catch (e) {
+        el.innerHTML = '<div style="color:var(--text-muted);font-size:12px">-</div>';
+    }
 }
 
 // === Governance Widget ===
