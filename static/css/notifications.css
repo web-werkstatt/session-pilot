@@ -1,3 +1,11 @@
+/* ===== TOPBAR HELP BUTTON ===== */
+.topbar-help {
+    display: flex; align-items: center; padding: 4px 8px;
+    border-radius: 6px; transition: background 0.15s;
+    color: var(--text-secondary); text-decoration: none;
+}
+.topbar-help:hover { background: var(--bg-interactive); color: var(--accent-light, #4fc3f7); }
+
 /* ===== NOTIFICATION BELL + PANEL ===== */
 .notification-bell {
     position: relative; cursor: pointer; padding: 4px 8px;
