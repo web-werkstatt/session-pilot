@@ -1,4 +1,5 @@
 /* Plans Page - KPI-Cards in kpi-cards.css */
+.kpi-grid { position: sticky; top: 56px; z-index: 41; background: var(--bg-base); padding-bottom: 4px; }
 
 /* === Grid Layout === */
 .plans-grid {

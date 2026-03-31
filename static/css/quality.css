@@ -78,7 +78,8 @@
 .count-zero { color: #555; }
 
 /* Table */
-.quality-table-container { overflow-x: auto; }
+.quality-table-container { }
+#qualityTable th { z-index: 41; background: var(--bg-base); }
 .project-link { color: var(--accent, #4fc3f7); text-decoration: none; }
 .project-link:hover { text-decoration: underline; }
 .actions-cell { white-space: nowrap; }
@@ -178,6 +179,10 @@
     display: flex;
     gap: 12px;
     padding: 12px 0;
+    position: sticky;
+    top: 56px;
+    z-index: 42;
+    background: var(--bg-base);
 }
 .quality-stats .stat { text-align: center; }
 .quality-stats .stat-value { font-size: 18px; font-weight: 700; }

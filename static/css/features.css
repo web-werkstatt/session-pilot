@@ -182,7 +182,7 @@
     flex-wrap: wrap;
     align-items: center;
     position: sticky;
-    top: 0;
+    top: 56px;
     z-index: 40;
 }
 .filter-btn {

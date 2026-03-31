@@ -132,7 +132,6 @@
     background: var(--bg-card, #1a1a2e);
     border: 1px solid var(--border-subtle, #2a2a3e);
     border-radius: 8px;
-    overflow-x: auto;
 }
 
 .ur-table {

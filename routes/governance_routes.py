@@ -6,6 +6,7 @@ from routes.api_utils import api_route
 from services.governance_service import (
     get_project_policy,
     update_project_policy,
+    update_project_workflow,
     get_governance_overview,
     get_unreviewed_critical_count,
     apply_rule_to_project,
@@ -57,6 +58,15 @@ def api_update_policy(name):
         max_ai_write_scope=max_ai_write_scope,
         preferred_workflow=preferred_workflow,
     )
+    return jsonify(policy)
+
+
+@governance_bp.route("/api/projects/<name>/workflow", methods=["PATCH"])
+@api_route
+def api_update_workflow(name):
+    """Workflow-Einstellungen eines Projekts aktualisieren."""
+    body = request.get_json(force=True)
+    policy = update_project_workflow(name, body)
     return jsonify(policy)
 
 

@@ -45,8 +45,6 @@
 
 /* Comparison table */
 .mc-table { width: 100%; border-collapse: collapse; }
-.mc-table thead { position: static; }
-
 .mc-table th {
     padding: var(--space-2) var(--space-3);
     border-bottom: 1px solid var(--border-muted);

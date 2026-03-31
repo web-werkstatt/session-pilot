@@ -3,10 +3,13 @@ table {
     width: 100%;
     border-collapse: collapse;
 }
-thead { position: sticky; top: 0; z-index: 39; }
 th:first-child, td:first-child { padding-left: 24px; }
 th:last-child, td:last-child { padding-right: 24px; }
 th {
+    position: sticky;
+    top: 56px;
+    z-index: 39;
+    box-shadow: inset 0 -1px 0 var(--border-subtle);
     background: var(--bg-card);
     padding: 10px 14px;
     text-align: left;
@@ -15,7 +18,6 @@ th {
     color: var(--text-faint);
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    border-bottom: 1px solid var(--border-subtle);
     white-space: nowrap;
 }
 th.sortable { cursor: pointer; user-select: none; }

@@ -367,3 +367,33 @@ function formatTimeAgo(isoStr) {
         if (typeof lucide !== 'undefined') lucide.createIcons();
     } catch(e) { /* silent */ }
 })();
+
+// Dynamic sticky stacking: compute top for all sticky elements in order
+(function() {
+    var STICKY_SELECTORS = '.topbar, .news-ticker-bar, .tab-bar, .kpi-row, .kpi-grid, .quality-stats, .gov-tabs, .filter-bar';
+
+    function updateStickyStack() {
+        var main = document.querySelector('.main-content');
+        if (!main) return;
+        var cumTop = 0;
+        // Stack all sticky elements: each one's top = sum of heights above it
+        main.querySelectorAll(STICKY_SELECTORS).forEach(function(el) {
+            if (getComputedStyle(el).position === 'sticky') {
+                el.style.setProperty('top', cumTop + 'px', 'important');
+                cumTop += el.offsetHeight;
+            }
+        });
+        // Table headers sit below all sticky elements
+        main.querySelectorAll('table th').forEach(function(th) {
+            th.style.setProperty('top', cumTop + 'px', 'important');
+        });
+    }
+    // Run after all CSS is loaded and applied
+    function scheduleUpdate() { setTimeout(updateStickyStack, 200); }
+    if (document.readyState === 'complete') {
+        scheduleUpdate();
+    } else {
+        window.addEventListener('load', scheduleUpdate);
+    }
+    window.addEventListener('resize', function() { setTimeout(updateStickyStack, 50); });
+})();

@@ -121,6 +121,40 @@ def update_project_policy(project_name, level, notes=None, allowed_models=None,
     return policy
 
 
+def update_project_workflow(project_name, workflow_updates):
+    """Aktualisiert nur preferred_workflow in der bestehenden Policy."""
+    project_path = os.path.join(PROJECTS_DIR, project_name)
+    json_path = os.path.join(project_path, "project.json")
+    if not os.path.exists(json_path):
+        raise FileNotFoundError(f"project.json nicht gefunden: {project_name}")
+
+    with open(json_path, "r", encoding="utf-8") as f:
+        data = json.load(f)
+
+    policy = data.get("ai_policy")
+    if not policy:
+        policy = _default_policy()
+
+    level = policy.get("level", 1)
+    lvl = POLICY_LEVELS.get(level, POLICY_LEVELS[1])
+    current_workflow = policy.get("preferred_workflow", lvl["default_workflow"])
+
+    valid_keys = {"uses_sprints", "require_session_review", "session_end_mode",
+                  "governance_mode", "primary_models"}
+    for key, value in workflow_updates.items():
+        if key in valid_keys:
+            current_workflow[key] = value
+
+    policy["preferred_workflow"] = current_workflow
+    policy["updated_at"] = datetime.now(timezone.utc).isoformat()
+    data["ai_policy"] = policy
+
+    with open(json_path, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2, ensure_ascii=False)
+
+    return policy
+
+
 def get_governance_overview():
     """Uebersicht aller Projekte mit Policy-Level und Rework-Rate."""
     projects = []
