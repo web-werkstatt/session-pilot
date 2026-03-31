@@ -1,77 +1,36 @@
 # Projekt-Dashboard - Naechste Session
 
 > **Letzte Aktualisierung:** 2026-03-31
-> **Status:** Sprint 12 done, Sprint 9 Nacharbeiten groesstentils done, UI-Fixes
-> **Naechste Aufgabe:** Sprint 9 restliche Punkte (9.6-9.8) pruefen, dann Sprint 10
+> **Status:** Sprint 9 done, Sprint 10 done, Sprint 11 pruefen
+> **Naechste Aufgabe:** Sprint 11 Spec gegen Code pruefen
 
 ---
 
 ## Was wurde in dieser Session gemacht
 
-### Sprint 12: AI Governance & Policies Light (DONE)
-- Komplettes Governance-System: Policy-CRUD, Rule-Generator, Feedback-Loop
-- Governance-Seite, Dashboard-Widget, Projekt-Detail-Tab, Sidebar-Link
-- Hilfe-Center Topic + Sprint-Historie + Seitenuebersicht aktualisiert
-- Deployed auf doc.session-pilot.com inkl. Sitemap-Route
+### Sprint 9: Akzeptanzkriterien geprueft (15/15 DONE)
+- Alle 15 Kriterien gegen Implementierung verifiziert
+- Uncommitted Changes committed: Multi-Value Outcome Filter, Project Policy Defaults, Deeplink-Support
 
-### Datenbereinigung (DONE)
-- DB: Projektnamen normalisiert (7 Paare Bindestrich->Unterstrich)
-- DB: gemini:hash, ~ (Home), <synthetic> bereinigt
-- Import: _resolve_dir_name() prueft echte Verzeichnisse
-- Filter: model NOT LIKE <%> in allen Sprint 9-11 Queries nachgezogen
-- Phantom-Projekte aus allen Dropdowns gefiltert
-
-### Sprint 9 Nacharbeiten (DONE)
-- Codex/Gemini Import: AI-Flags (ai_has_writes, ai_has_tool_calls, ai_tools_used)
-- Outcome-Dialog: Reason-Dropdown (22 Kategorien) + Severity in Detail + Quick-Rate
-- Rework-API: reason_distribution, reason_by_model, reason_by_project, reason_trend
-- Default-Filter: project_defaults in /api/sessions/filters per Policy-Level
-- Drill-down: Rework by Project + Top Reasons mit Session-Links in Timesheets
-- Fehlende Outcome-Reasons ergaenzt: wrong_api, security, style_drift, hallucination, other
-- Reason-Labels mit key/label/category in outcome-reasons API
-- Validierung: ungueltige reason/severity werden mit 400 abgelehnt
-- Backfill-Script: --full und --project Flags, nur unbearbeitete Sessions
-- Sessions-Filter: hardcoded Dropdowns -> dynamisch via /api/sessions/filters
-- Model-Filter + outcome_reason Filter im Backend
-- AI-Scope: Checkbox "AI-relevant only" + Scope-Dropdown statt Buttons
-- Quick-Rate Popup direkt in Sessions-Liste (kein Navigieren zur Detail-Seite)
-
-### Session-Detail UI-Fixes (DONE)
-- Buttons gestyled: Back, Rate, Export (waren vorher unsichtbar/ungestyled)
-- Rate-Button zeigt aktuellen Outcome-Status
-- TOC: Texte gekuerzt (40 statt 60 Zeichen), klappbare Turns
-- TOC: position fixed rechts, scrollt nicht mehr mit
-- Meta-Bar + Export-Bar: sticky unter Topbar
-- Leere System-Messages werden nicht mehr gerendert
-
-### Model Comparison Fixes (DONE)
-- kpi-row CSS ergaenzt, thead sticky fix, Stack-Toggle CSS/JS Mismatch
-- Projekt-Dropdown: nur echte Projekte mit Sessions
-- Modelle ohne Ratings zeigen "No ratings" statt F/0.0
-- <synthetic> aus Materialized View und allen Queries gefiltert
-
-### Sprint 15 Plan erstellt
-- sprints/sprint-15-turn-level-rating.md - Abschnitt-Bewertung innerhalb Sessions
+### Sprint 10: Per-File AI-Heatmap komplett ueberarbeitet (13/13 DONE)
+- **10.1 Schema:** 5 fehlende Spalten nachgeruestet (project, ai_written, ai_touched, model, issue_category), UNIQUE Constraint, Partial Index, ALTER TABLE fuer bestehende DB
+- **10.2 Extraktion:** Import-Integration in session_import.py (fehlte komplett), Git-Diff-Fallback fuer Sessions ohne Tool-Calls, ON CONFLICT statt DELETE+INSERT, --with-file-touches in backfill_ai_flags.py
+- **10.3 Heatmap-API:** Spec-Parameter (period/depth/model/category/only_written), SQL-seitige Verzeichnis-Aggregation via split_part, outcome_stats mit reverted getrennt, models pro Datei via Subquery, top_reason via MODE()
+- **10.4 Heatmap-UI:** Period/Model/Category Filter-Dropdowns (fehlten alle), Rework-Rate Spalte mit Farbcodierung gruen/gelb/rot, Category-Spalte mit top_reason, Verzeichnisbaum (Dir fett, Children eingerueckt)
+- **10.5 Risk-Radar:** Panel VOR den Tabs (war nur im Heatmap-Tab), laedt beim Seitenstart, drill_down URL pro Hotspot, LIMIT 3, outcome Filter in SQL
+- **10.6 Hotspot-Warnungen:** _check_ai_hotspots() im Notification-Checker, >10 Touches/7d und >25% Rework-Rate, AI Hotspot Badge + Tooltip
+- **10.7 Dashboard-Widget:** /api/widgets/ai-hotspots Endpoint, renderAiHotspots() in widgets.js, Widget in index.html, optionaler ?project= Filter
+- **10.8 Drill-down:** Arrow-Links in jeder Heatmap-Zeile, file/file_prefix Filter in Session-API via Join mit ai_file_touches
+- **10.9 UI:** risk-radar-panel CSS, Responsive Media Query, Dashboard-Widget HTML
 
 ---
 
 ## Naechste Session
 
-### Sprint 9 restliche Punkte pruefen
-
-- [ ] 9.6: Filter "Sessions mit Revert/Needs Fix" - Outcome-Dropdown vorhanden, aber outcome_reason als URL-Param testen
-- [ ] 9.7: Default-Filter pro Policy-Level - API liefert project_defaults, Frontend setzt sie beim Laden?
-- [ ] 9.8: Drill-down Quicklinks - in Rework-Tabelle vorhanden, auch in anderen Tabellen?
-- [ ] Alle 14 Akzeptanzkriterien nochmal durchgehen
-
-### Sprint 10 pruefen (File Heatmap)
-
-- Sprint-Plan: sprints/sprint-10-file-heatmap.md
-- Gleiche Methodik: Spec Punkt fuer Punkt gegen Code pruefen
-
 ### Sprint 11 pruefen (Model Comparison)
 
 - Sprint-Plan: sprints/sprint-11-model-quality-comparison.md
+- Gleiche Methodik: Spec Punkt fuer Punkt gegen Code pruefen
 
 ### Offene Bugs / Datenluecken
 
