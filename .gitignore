@@ -91,3 +91,4 @@ project.json
 .aider*
 .sync_hashes.json
 .otel_metrics.json
+session-pilot-landing/

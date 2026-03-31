@@ -11,9 +11,17 @@
     <script src="{{ url_prefix }}/static/js/theme-toggle.js"></script>
 </head>
 <body>
-    <button class="btn btn-primary mobile-toggle" onclick="document.querySelector('.sidebar').classList.toggle('show')">
-        <i class="bi bi-list"></i>
-    </button>
+    <header class="mobile-header">
+        <button class="btn mobile-toggle-btn" onclick="document.querySelector('.sidebar').classList.toggle('show')">
+            <i class="bi bi-list"></i>
+        </button>
+        <a href="{{ url_prefix }}/" class="mobile-header-brand">
+            <img src="{{ url_prefix }}/static/img/logo.png" alt="SessionPilot" class="mobile-header-logo">
+        </a>
+        <a href="https://session-pilot.com" class="mobile-header-back" title="Zurück zur Webseite">
+            <i class="bi bi-box-arrow-up-left"></i>
+        </a>
+    </header>
 
     <nav class="sidebar">
         <a href="{{ url_prefix }}/" class="sidebar-brand text-decoration-none text-white d-block">
@@ -54,6 +62,12 @@
             </a>
             {% endfor %}
             {% endfor %}
+            <div class="sidebar-footer">
+                <a href="https://session-pilot.com" class="nav-link">
+                    <i class="bi bi-box-arrow-up-left"></i>
+                    <span>session-pilot.com</span>
+                </a>
+            </div>
         </div>
     </nav>
 
@@ -63,10 +77,47 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
+    <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
+
+    <!-- Lightbox -->
+    <div class="img-lightbox" id="img-lightbox">
+        <img src="" alt="" id="lightbox-img">
+    </div>
+
     <script>
     document.addEventListener('DOMContentLoaded', function() {
         const activeLink = document.querySelector('.sidebar .nav-link.active');
         if (activeLink) activeLink.scrollIntoView({ block: 'center', behavior: 'instant' });
+
+        // Close sidebar on backdrop click (mobile)
+        var backdrop = document.getElementById('sidebar-backdrop');
+        var sidebar = document.querySelector('.sidebar');
+        if (backdrop && sidebar) {
+            backdrop.addEventListener('click', function() {
+                sidebar.classList.remove('show');
+                backdrop.classList.remove('show');
+            });
+        }
+
+        // Show/hide backdrop when sidebar toggles
+        var toggleBtn = document.querySelector('.mobile-toggle-btn');
+        if (toggleBtn) {
+            toggleBtn.addEventListener('click', function() {
+                setTimeout(function() {
+                    backdrop.classList.toggle('show', sidebar.classList.contains('show'));
+                }, 10);
+            });
+        }
+
+        // Close sidebar when a nav link is clicked (mobile)
+        sidebar.querySelectorAll('.nav-link').forEach(function(link) {
+            link.addEventListener('click', function() {
+                if (window.innerWidth <= 991) {
+                    sidebar.classList.remove('show');
+                    backdrop.classList.remove('show');
+                }
+            });
+        });
     });
     </script>
 
@@ -130,6 +181,36 @@
         });
         searchInput.addEventListener('focus', function() {
             if (this.value.trim().length >= 2 && searchResultsList.innerHTML) searchResults.classList.remove('d-none');
+        });
+    })();
+    </script>
+
+    <script>
+    // Image lightbox
+    (function() {
+        var lb = document.getElementById('img-lightbox');
+        var lbImg = document.getElementById('lightbox-img');
+        if (!lb || !lbImg) return;
+
+        document.querySelectorAll('.content-body img').forEach(function(img) {
+            img.style.cursor = 'zoom-in';
+            img.addEventListener('click', function() {
+                lbImg.src = this.src;
+                lbImg.alt = this.alt;
+                lb.classList.add('open');
+            });
+        });
+
+        lb.addEventListener('click', function() {
+            lb.classList.remove('open');
+            lbImg.src = '';
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && lb.classList.contains('open')) {
+                lb.classList.remove('open');
+                lbImg.src = '';
+            }
         });
     })();
     </script>

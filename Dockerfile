@@ -1,5 +1,9 @@
 FROM python:3.11-slim
 
+LABEL org.opencontainers.image.source=https://github.com/web-werkstatt/session-pilot
+LABEL org.opencontainers.image.description="Self-hosted dashboard for Claude Code, Codex CLI & Gemini CLI sessions"
+LABEL org.opencontainers.image.licenses=MIT
+
 RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     docker.io \

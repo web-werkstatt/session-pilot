@@ -4,6 +4,65 @@
 
 ---
 
+## Session 2026-03-31 (Abend) - Mobile Fixes + Hilfe-Center Responsive + Docker Image
+
+### Was wurde erledigt
+
+**Landingpage Mobile Fixes:**
+- Problem-Panel ("Before SessionPilot") auf mobil sichtbar gemacht (war `display: none`)
+- Solution-Section: Bild unter Headline verschoben auf mobil (HTML in 3 Grid-Kinder aufgeteilt)
+- Abstände angeglichen, "No more guessing" margin reduziert
+- Datenschutz + Impressum: Sprach-Bug gefixt (beide Sprachen wurden gleichzeitig angezeigt wegen Inline-Style Override)
+- Datenschutz: h1 "Datenschutzerklärung" bricht jetzt auf mobil um
+- Back-Button von Datenschutz + Impressum entfernt
+- "Docs" Link in Desktop-Nav + Mobile-Menu hinzugefuegt (-> doc.session-pilot.com)
+
+**Hilfe-Center komplett mobil-ready:**
+- Fixer Mobile-Header mit Burger + Logo + Webseite-Link
+- Sidebar: Brand-Bereich auf mobil ausgeblendet (redundant zum Header)
+- Sidebar: Suche bleibt oben fixiert, Nav scrollt unabhaengig
+- Sidebar: Backdrop-Overlay bei offenem Menue, Klick ausserhalb schliesst
+- Sidebar: Nav-Link-Klick schliesst automatisch
+- Bilder responsive (max-width: 100%)
+- Tabellen horizontal scrollbar
+- Lightbox fuer Bilder (Klick oeffnet gross, Escape/Klick schliesst)
+- Farben von Blau auf Tuerkis (#00c8f0) umgestellt (passend zum Logo)
+- Bootstrap text-primary/bg-primary/btn-primary ueberschrieben
+- Breadcrumb-Links tuerkis
+- Footer: cms.ir-tours.de -> session-pilot.com, Info-Icon entfernt
+- session-pilot.com Link am Ende der Sidebar-Navigation
+
+**Docker Image:**
+- `ghcr.io/web-werkstatt/session-pilot:latest` + `:1.0.0` gepusht
+- Gebaut vom sauberen `open-source` Branch (GitHub main) - KEIN PRO-Code
+- OCI-Labels fuer GitHub-Repo-Verknuepfung
+- Package auf GitHub public gesetzt
+- Landingpage aktualisiert: "1 command. 30 seconds." statt "3 commands. 2 minutes."
+
+**Sprint-Plaene:**
+- Sprint 13: Neuer Abschnitt 13.1b "Plattform-Incident-Erkennung aus eigenen Metriken"
+- Roadmap: Neue Feature-Zeile "Plattform-Incident-Erkennung"
+
+**Dokumentation:**
+- Hilfecenter-Vorlage in /mnt/projects/dokumentenaustausch/Hilfecenter-Vorlage/ kopiert
+- FARBEN-ANPASSEN.md erstellt (CSS-Variablen Referenz + Schnell-Anleitung)
+
+### Betroffene Dateien
+| Datei | Aenderung |
+|-------|-----------|
+| session-pilot-landing/index.html | Mobile fixes, Docker install, Docs link |
+| session-pilot-landing/assets/css/style.css | Problem-panel, solution-grid mobile |
+| session-pilot-landing/datenschutz.html | Sprach-Bug, h1 Umbruch, Back entfernt |
+| session-pilot-landing/impressum.html | Sprach-Bug, Back entfernt |
+| hilfe-center/static/css/style.css | Komplett mobile-ready, Tuerkis-Farben |
+| hilfe-center/templates/base.html | Mobile-Header, Backdrop, Lightbox, Sidebar-Footer |
+| hilfe-center/templates/index.html | Footer cms.ir-tours -> session-pilot.com |
+| Dockerfile | OCI-Labels fuer GHCR |
+| sprints/sprint-13-bidirectional-llm-control.md | 13.1b Incident-Erkennung |
+| sprints/10-roadmap-ai-governance.md | Neue Feature-Zeile |
+
+---
+
 ## Session 2026-03-31 - Sprint 10: Per-File AI-Heatmap + Risk Radar
 
 ### Was wurde erledigt
