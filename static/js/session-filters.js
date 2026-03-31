@@ -72,35 +72,45 @@ const SessionFilters = (function() {
         const bar = document.querySelector('.filter-bar');
         if (!bar || document.getElementById('scopeFilter')) return;
 
-        const wrap = document.createElement('div');
-        wrap.id = 'scopeFilter';
-        wrap.className = 'scope-filter';
-
-        const btns = [
-            {value: 'all', label: 'All', count: scope.total || 0},
-            {value: 'writes', label: 'Writes', count: scope.with_writes || 0},
-            {value: 'tools', label: 'Tools', count: scope.with_tools || 0},
-            {value: 'readonly', label: 'Read-only', count: scope.read_only || 0},
-        ];
-        btns.forEach(b => {
-            const btn = document.createElement('button');
-            btn.className = 'scope-btn' + (b.value === currentScope ? ' active' : '');
-            btn.textContent = `${b.label} (${b.count})`;
-            btn.dataset.scope = b.value;
-            btn.onclick = function() {
-                wrap.querySelectorAll('.scope-btn').forEach(s => s.classList.remove('active'));
-                this.classList.add('active');
-                currentScope = b.value;
-                _pushFilterState();
-                resetAndLoad();
-            };
-            wrap.appendChild(btn);
-        });
-
-        // Nach dem Outcome-Dropdown oder am Ende
+        // Checkbox: "Only AI-relevant"
+        const cbWrap = document.createElement('label');
+        cbWrap.className = 'scope-checkbox';
+        cbWrap.innerHTML = `<input type="checkbox" id="scopeAiOnly" onchange="SessionFilters.toggleAiOnly(this.checked)"> <span>AI-relevant only</span>`;
         const pills = bar.querySelector('.filter-pills');
-        if (pills) bar.insertBefore(wrap, pills);
-        else bar.appendChild(wrap);
+        if (pills) bar.insertBefore(cbWrap, pills);
+        else bar.appendChild(cbWrap);
+
+        // Scope-Dropdown
+        const sel = document.createElement('select');
+        sel.id = 'scopeFilter';
+        sel.className = 'filter-outcome';
+        sel.onchange = function() {
+            currentScope = this.value;
+            _pushFilterState();
+            resetAndLoad();
+        };
+        const opts = [
+            {value: 'all', label: 'All Sessions'},
+            {value: 'writes', label: `Write Sessions (${scope.with_writes || 0})`},
+            {value: 'tools', label: `Tool Calls (${scope.with_tools || 0})`},
+            {value: 'readonly', label: `Read-only (${scope.read_only || 0})`},
+        ];
+        opts.forEach(o => {
+            const opt = document.createElement('option');
+            opt.value = o.value;
+            opt.textContent = o.label;
+            sel.appendChild(opt);
+        });
+        if (pills) bar.insertBefore(sel, pills);
+        else bar.appendChild(sel);
+    }
+
+    function toggleAiOnly(checked) {
+        currentScope = checked ? 'tools' : 'all';
+        const sel = document.getElementById('scopeFilter');
+        if (sel) sel.value = currentScope;
+        _pushFilterState();
+        resetAndLoad();
     }
 
     /**
@@ -170,12 +180,10 @@ const SessionFilters = (function() {
         }
         if (params.has('scope')) {
             currentScope = params.get('scope');
-            const wrap = document.getElementById('scopeFilter');
-            if (wrap) {
-                wrap.querySelectorAll('.scope-btn').forEach(b => {
-                    b.classList.toggle('active', b.dataset.scope === currentScope);
-                });
-            }
+            const sel = document.getElementById('scopeFilter');
+            if (sel) sel.value = currentScope;
+            const cb = document.getElementById('scopeAiOnly');
+            if (cb) cb.checked = (currentScope === 'tools');
         }
         if (params.has('account')) {
             const sel = document.getElementById('filterAccount');
@@ -233,5 +241,6 @@ const SessionFilters = (function() {
         setOutcomeDetail,
         applyUrlParams,
         drilldownUrl,
+        toggleAiOnly,
     };
 })();

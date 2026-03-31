@@ -26,6 +26,8 @@
 .scope-btn:hover { color: var(--text-secondary); }
 .scope-btn.active { background: var(--accent); color: var(--text-heading); }
 .scope-btn:focus-visible { outline: var(--ring-width) solid var(--ring-color); outline-offset: var(--ring-offset); }
+.scope-checkbox { display: flex; align-items: center; gap: 4px; font-size: 11px; color: var(--text-muted); cursor: pointer; white-space: nowrap; }
+.scope-checkbox input { accent-color: var(--accent); cursor: pointer; }
 
 /* Outcome Filter Dropdown */
 .filter-bar select.filter-outcome {
