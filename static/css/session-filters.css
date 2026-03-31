@@ -1,0 +1,116 @@
+/* ===== SESSION FILTERS (Sprint 9) ===== */
+
+/* Scope Toggle */
+.scope-filter {
+    display: flex;
+    gap: 4px;
+    margin-left: 8px;
+    border: 1px solid var(--border-muted);
+    border-radius: var(--radius-md);
+    padding: 2px;
+    background: var(--bg-elevated);
+}
+.scope-btn {
+    padding: 4px 12px;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    background: transparent;
+    color: var(--text-muted);
+    font-family: var(--font-sans);
+    transition: all var(--transition-base);
+    white-space: nowrap;
+}
+.scope-btn:hover { color: var(--text-secondary); }
+.scope-btn.active { background: var(--accent); color: var(--text-heading); }
+.scope-btn:focus-visible { outline: var(--ring-width) solid var(--ring-color); outline-offset: var(--ring-offset); }
+
+/* Outcome Filter Dropdown */
+.filter-bar select.filter-outcome {
+    min-width: 120px;
+}
+
+/* Severity Badges */
+.severity-badge {
+    display: inline-block;
+    padding: 1px 8px;
+    border-radius: var(--radius-sm);
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.severity-low { background: rgba(46,125,50,0.15); color: var(--status-valid); }
+.severity-medium { background: rgba(249,168,37,0.15); color: var(--status-partial); }
+.severity-high { background: rgba(230,81,0,0.2); color: var(--status-warning); }
+.severity-critical { background: rgba(198,40,40,0.25); color: var(--status-error-bright); }
+
+/* Outcome Reason Tag */
+.outcome-reason {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: var(--radius-sm);
+    font-size: 10px;
+    color: var(--text-faint);
+    border: 1px solid var(--border-muted);
+    margin-left: 4px;
+}
+
+/* Scope Icon in Table */
+.scope-icon {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    vertical-align: middle;
+    margin-right: 2px;
+    opacity: 0.6;
+}
+.scope-icon.has-writes { color: var(--status-warning); opacity: 1; }
+.scope-icon.read-only { color: var(--text-disabled); }
+
+/* Outcome Detail in Modal */
+.outcome-detail-fields {
+    display: flex;
+    gap: 12px;
+    margin-top: 12px;
+}
+.outcome-detail-fields select {
+    flex: 1;
+    background: var(--bg-elevated);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-muted);
+    padding: 6px 10px;
+    border-radius: var(--radius-md);
+    font-size: var(--text-sm);
+    font-family: var(--font-sans);
+}
+.outcome-detail-fields select:focus {
+    border-color: var(--border-focus);
+    outline: none;
+}
+
+/* Filter Active Indicator */
+.filter-active {
+    position: relative;
+}
+.filter-active::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+}
+
+/* Drill-down link */
+.drill-link {
+    color: var(--accent-light);
+    cursor: pointer;
+    text-decoration: none;
+    font-size: 11px;
+}
+.drill-link:hover { text-decoration: underline; }

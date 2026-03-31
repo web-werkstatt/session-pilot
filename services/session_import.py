@@ -8,6 +8,7 @@ import os
 from services.db_service import execute, execute_many
 from services.account_discovery import discover_all_accounts
 from services.session_import_utils import parse_ts, sanitize_content_json, create_session_meta, update_time_range
+from services.ai_scope_service import extract_ai_flags
 from services.session_import_multi import (
     find_sessions_codex, import_codex_session,
     find_sessions_gemini, parse_gemini_json, import_gemini_session,
@@ -183,11 +184,19 @@ def import_session(filepath, account_name, project_hash):
 
     project_name = extract_project_name(project_hash)
 
+    # Sprint 9: AI-Flags aus Messages extrahieren
+    ai_flags = extract_ai_flags(messages)
+    meta["ai_has_writes"] = ai_flags["ai_has_writes"]
+    meta["ai_has_tool_calls"] = ai_flags["ai_has_tool_calls"]
+    meta["ai_tools_used"] = ai_flags["ai_tools_used"]
+
     for m in messages:
         if m.get("content"):
             m["content"] = m["content"].replace("\x00", "")
         if m.get("content_json"):
             m["content_json"] = _sanitize_content_json(m["content_json"])
+
+    ai_tools_json = json.dumps(meta["ai_tools_used"])
 
     if session_id:
         execute("""
@@ -197,6 +206,7 @@ def import_session(filepath, account_name, project_hash):
                 duration_ms=%s, user_message_count=%s, assistant_message_count=%s,
                 total_input_tokens=%s, total_output_tokens=%s,
                 cache_read_tokens=%s, cache_creation_tokens=%s,
+                ai_has_writes=%s, ai_has_tool_calls=%s, ai_tools_used=%s,
                 jsonl_size=%s, jsonl_mtime=%s, updated_at=NOW()
             WHERE id=%s
         """, (account_name, project_hash, project_name, meta["cwd"], meta["git_branch"],
@@ -205,6 +215,7 @@ def import_session(filepath, account_name, project_hash):
               meta["user_message_count"], meta["assistant_message_count"],
               meta["total_input_tokens"], meta["total_output_tokens"],
               meta.get("cache_read_tokens", 0), meta.get("cache_creation_tokens", 0),
+              meta["ai_has_writes"], meta["ai_has_tool_calls"], ai_tools_json,
               file_size, file_mtime, session_id))
     else:
         row = execute("""
@@ -212,8 +223,9 @@ def import_session(filepath, account_name, project_hash):
                 cwd, git_branch, model, claude_version, slug, started_at, ended_at,
                 duration_ms, user_message_count, assistant_message_count,
                 total_input_tokens, total_output_tokens, cache_read_tokens, cache_creation_tokens,
+                ai_has_writes, ai_has_tool_calls, ai_tools_used,
                 jsonl_path, jsonl_size, jsonl_mtime)
-            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
             ON CONFLICT (session_uuid) DO UPDATE SET
                 account=EXCLUDED.account,
                 project_hash=EXCLUDED.project_hash,
@@ -232,6 +244,9 @@ def import_session(filepath, account_name, project_hash):
                 total_output_tokens=EXCLUDED.total_output_tokens,
                 cache_read_tokens=EXCLUDED.cache_read_tokens,
                 cache_creation_tokens=EXCLUDED.cache_creation_tokens,
+                ai_has_writes=EXCLUDED.ai_has_writes,
+                ai_has_tool_calls=EXCLUDED.ai_has_tool_calls,
+                ai_tools_used=EXCLUDED.ai_tools_used,
                 jsonl_path=EXCLUDED.jsonl_path,
                 jsonl_size=EXCLUDED.jsonl_size,
                 jsonl_mtime=EXCLUDED.jsonl_mtime,
@@ -243,6 +258,7 @@ def import_session(filepath, account_name, project_hash):
               meta["user_message_count"], meta["assistant_message_count"],
               meta["total_input_tokens"], meta["total_output_tokens"],
               meta.get("cache_read_tokens", 0), meta.get("cache_creation_tokens", 0),
+              meta["ai_has_writes"], meta["ai_has_tool_calls"], ai_tools_json,
               filepath, file_size, file_mtime), fetchone=True)
         if not row:
             return "skipped"

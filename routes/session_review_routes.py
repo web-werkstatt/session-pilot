@@ -3,7 +3,7 @@ Flask-Routes fuer Session-Reviews und Review-Threads
 Extrahiert aus session_routes.py (Dateigroessen-Limit)
 """
 from flask import Blueprint, jsonify, request
-from services.db_service import execute, ensure_session_review_schema
+from services.db_service import execute, ensure_session_review_schema, ensure_ai_scope_schema
 from services.session_export import format_duration
 from routes.api_utils import api_route
 
@@ -114,10 +114,17 @@ def api_session_outcome(uuid):
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
 
+    # Sprint 9: reason + severity optional mitschicken
+    reason = data.get("reason")
+    severity = data.get("severity")
+    ensure_ai_scope_schema()
+
     execute("""
-        UPDATE sessions SET outcome = %s, outcome_note = %s, outcome_at = NOW()
+        UPDATE sessions SET outcome = %s, outcome_note = %s, outcome_at = NOW(),
+            outcome_reason = COALESCE(%s, outcome_reason),
+            outcome_severity = COALESCE(%s, outcome_severity)
         WHERE session_uuid = %s
-    """, (outcome, note or None, uuid))
+    """, (outcome, note or None, reason, severity, uuid))
 
     if note:
         execute("""

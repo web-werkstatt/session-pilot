@@ -28,6 +28,10 @@ def create_session_meta(include_cache_tokens=False):
     if include_cache_tokens:
         meta["cache_read_tokens"] = 0
         meta["cache_creation_tokens"] = 0
+    # Sprint 9: AI-Scope-Flags (werden nach dem Parsen via ai_scope_service gesetzt)
+    meta["ai_has_writes"] = False
+    meta["ai_has_tool_calls"] = False
+    meta["ai_tools_used"] = []
     return meta
 
 

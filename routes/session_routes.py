@@ -59,7 +59,8 @@ def _api_sessions_inner():
     allowed_sorts = {
         "started_at", "ended_at", "duration_ms", "project_name",
         "account", "user_message_count", "assistant_message_count",
-        "total_input_tokens", "total_output_tokens", "model", "git_branch", "outcome"
+        "total_input_tokens", "total_output_tokens", "model", "git_branch", "outcome",
+        "outcome_severity", "ai_has_writes", "ai_has_tool_calls"
     }
     if sort not in allowed_sorts:
         sort = "started_at"
@@ -85,6 +86,22 @@ def _api_sessions_inner():
         conditions.append("started_at < %s::date + 1")
         params.append(date_to)
 
+    # Sprint 9: Outcome + Scope Filter
+    outcome_filter = request.args.get("outcome")
+    if outcome_filter == "unrated":
+        conditions.append("outcome IS NULL")
+    elif outcome_filter:
+        conditions.append("outcome = %s")
+        params.append(outcome_filter)
+
+    scope_filter = request.args.get("scope")
+    if scope_filter == "writes":
+        conditions.append("ai_has_writes = TRUE")
+    elif scope_filter == "tools":
+        conditions.append("ai_has_tool_calls = TRUE")
+    elif scope_filter == "readonly":
+        conditions.append("(ai_has_tool_calls = FALSE OR ai_has_tool_calls IS NULL)")
+
     where = f"WHERE {' AND '.join(conditions)}" if conditions else ""
 
     # Total count
@@ -96,7 +113,9 @@ def _api_sessions_inner():
         f"""SELECT session_uuid, account, project_name, project_hash, cwd, git_branch,
                    model, claude_version, slug, started_at, ended_at, duration_ms,
                    user_message_count, assistant_message_count,
-                   total_input_tokens, total_output_tokens, outcome
+                   total_input_tokens, total_output_tokens, outcome,
+                   outcome_reason, outcome_severity,
+                   ai_has_writes, ai_has_tool_calls, ai_tools_used
             FROM sessions {where}
             ORDER BY {sort} {order}
             LIMIT %s OFFSET %s""",

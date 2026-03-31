@@ -116,6 +116,12 @@ async function loadSessions() {
     if (dateFrom) params.set('date_from', dateFrom);
     if (dateTo) params.set('date_to', dateTo);
 
+    // Sprint 9: Filter-Parameter aus SessionFilters
+    if (typeof SessionFilters !== 'undefined') {
+        const extra = SessionFilters.getFilterParams();
+        Object.entries(extra).forEach(([k, v]) => params.set(k, v));
+    }
+
     try {
         const d = await api.get('/api/sessions?' + params);
         totalCount = d.total;
@@ -129,10 +135,15 @@ async function loadSessions() {
     }
 }
 
-function outcomeBadge(outcome) {
+function outcomeBadge(outcome, reason, severity) {
     if (!outcome) return '<span class="outcome-unrated">-</span>';
     const labels = {ok:'OK', needs_fix:'Needs Fix', reverted:'Reverted', partial:'Partial'};
-    return `<span class="outcome-badge outcome-${outcome}">${labels[outcome] || outcome}</span>`;
+    let html = `<span class="outcome-badge outcome-${outcome}">${labels[outcome] || outcome}</span>`;
+    if (typeof SessionFilters !== 'undefined') {
+        html += SessionFilters.severityBadge(severity);
+        html += SessionFilters.reasonTag(reason);
+    }
+    return html;
 }
 
 function renderSessions(sessions) {
@@ -171,7 +182,7 @@ function renderSessionRow(s, i) {
             <td style="color:#888;font-size:12px">${model}</td>
             <td class="token-cell">${s.tokens_formatted}</td>
             <td>${branch ? `<span class="branch" title="${branch}">${branch}</span>` : ''}</td>
-            <td>${outcomeBadge(s.outcome)}</td>
+            <td>${outcomeBadge(s.outcome, s.outcome_reason, s.outcome_severity)}</td>
             <td><div class="row-actions"><button class="row-action" onclick="event.stopPropagation();exportSession('${s.session_uuid}','json')">JSON</button><button class="row-action" onclick="event.stopPropagation();exportSession('${s.session_uuid}','md')">MD</button></div></td>
         </tr>`;
 }
@@ -360,4 +371,5 @@ function hideFulltextResults() {
 loadStats();
 updateSortIcons();
 if (typeof lucide !== 'undefined') lucide.createIcons();
+if (typeof SessionFilters !== 'undefined') SessionFilters.init();
 loadSessions();

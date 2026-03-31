@@ -11,6 +11,7 @@
 
 {% block head_extra %}
 <link rel="stylesheet" href="/static/css/sessions2.css?v={{ cache_bust }}">
+<link rel="stylesheet" href="/static/css/session-filters.css?v={{ cache_bust }}">
 {% endblock %}
 
 {% block content %}
@@ -94,5 +95,6 @@
 {% endblock %}
 
 {% block scripts %}
+<script src="/static/js/session-filters.js?v={{ cache_bust }}"></script>
 <script src="/static/js/sessions2.js?v={{ cache_bust }}"></script>
 {% endblock %}

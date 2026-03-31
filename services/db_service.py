@@ -219,3 +219,23 @@ def ensure_plans_schema():
         execute("CREATE INDEX IF NOT EXISTS idx_plans_status ON project_plans(status)")
         execute("CREATE INDEX IF NOT EXISTS idx_plans_created ON project_plans(created_at DESC)")
         _plans_schema_ready = True
+
+
+_ai_scope_ready = False
+_ai_scope_lock = threading.Lock()
+
+
+def ensure_ai_scope_schema():
+    """Sprint 9: Fehler-Kategorien + AI-Scope-Spalten"""
+    global _ai_scope_ready
+    if _ai_scope_ready:
+        return
+    with _ai_scope_lock:
+        if _ai_scope_ready:
+            return
+        execute("ALTER TABLE sessions ADD COLUMN IF NOT EXISTS outcome_reason VARCHAR(50)")
+        execute("ALTER TABLE sessions ADD COLUMN IF NOT EXISTS outcome_severity VARCHAR(20)")
+        execute("ALTER TABLE sessions ADD COLUMN IF NOT EXISTS ai_has_writes BOOLEAN DEFAULT FALSE")
+        execute("ALTER TABLE sessions ADD COLUMN IF NOT EXISTS ai_has_tool_calls BOOLEAN DEFAULT FALSE")
+        execute("ALTER TABLE sessions ADD COLUMN IF NOT EXISTS ai_tools_used JSONB DEFAULT '[]'::jsonb")
+        _ai_scope_ready = True
