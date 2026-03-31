@@ -274,8 +274,8 @@ details .tool-content {
     width: 240px;
     position: fixed;
     right: 0;
-    top: 145px;
-    height: calc(100vh - 145px);
+    top: 150px;
+    height: calc(100vh - 150px);
     border-left: 1px solid var(--border-subtle);
     background: var(--bg-surface);
     overflow-y: auto;
