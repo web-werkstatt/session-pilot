@@ -7,6 +7,7 @@ let easyMDE = null;
 let plansLoaded = false;
 let sessionsExtracted = false;
 let qualityLoaded = false;
+let governanceTabLoaded = false;
 
 // === Tab Switching ===
 function switchProjectTab(tab) {
@@ -20,6 +21,7 @@ function switchProjectTab(tab) {
     if (tab === 'documents') loadDocuments();
     if (tab === 'quality' && !qualityLoaded) loadQualityTab();
     if (tab === 'heatmap') loadFileHeatmap();
+    if (tab === 'governance' && !governanceTabLoaded) loadGovernanceTab();
 }
 
 // === Overview ===
@@ -435,6 +437,57 @@ async function loadModelRecommendation() {
             el.textContent = 'Recommended: ' + data.recommended;
         }
     } catch (e) { /* ignore */ }
+}
+
+// === Governance Tab ===
+async function loadGovernanceTab() {
+    governanceTabLoaded = true;
+    const container = document.getElementById('governanceBody');
+    try {
+        const policy = await api.get(`/api/projects/${encodeURIComponent(PROJECT_NAME)}/policy`);
+        const levelName = policy.level_name || 'sandbox';
+        const restrictions = policy.restrictions || {};
+        const rules = policy.rules_applied || [];
+        const workflow = policy.preferred_workflow || {};
+
+        let html = `
+        <div style="display:grid;gap:var(--space-4);grid-template-columns:1fr 1fr">
+            <div class="info-block">
+                <h3>Policy Level</h3>
+                <div style="margin:var(--space-3) 0">
+                    <span class="policy-badge policy-badge--${levelName}" style="font-size:0.85rem;padding:4px 12px">${levelName.toUpperCase()}</span>
+                </div>
+                <div style="font-size:var(--text-sm);color:var(--text-secondary)">
+                    <p>Write: ${restrictions.allow_write ? '✓ Allowed' : '✗ Restricted'}</p>
+                    <p>Review: ${restrictions.require_review ? '✓ Required' : '○ Optional'}</p>
+                    <p>Deploy: ${restrictions.allow_deploy ? '✓ Allowed' : '✗ Restricted'}</p>
+                </div>
+                ${policy.notes ? `<p style="margin-top:var(--space-2);font-size:var(--text-xs);color:var(--text-muted)">${escapeHtml(policy.notes)}</p>` : ''}
+                <button class="btn btn-sm btn-secondary" style="margin-top:var(--space-3)" onclick="window.location.href='/governance'">Manage in Governance</button>
+            </div>
+            <div class="info-block">
+                <h3>Workflow</h3>
+                <div style="font-size:var(--text-sm);color:var(--text-secondary)">
+                    <p>Sprints: ${workflow.uses_sprints ? '✓ Enabled' : '○ Disabled'}</p>
+                    <p>Session Review: ${workflow.require_session_review || 'none'}</p>
+                    <p>Governance Mode: ${workflow.governance_mode || 'relaxed'}</p>
+                </div>
+            </div>
+        </div>`;
+
+        if (rules.length > 0) {
+            html += '<div class="info-block" style="margin-top:var(--space-4)"><h3>Applied Rules</h3>';
+            html += rules.map(r => `<div style="padding:var(--space-2) 0;border-bottom:1px solid var(--border-subtle);font-size:var(--text-sm)">
+                <span style="color:var(--text-primary)">${escapeHtml(r.rule_text)}</span>
+                <span style="color:var(--text-muted);font-size:var(--text-xs);margin-left:var(--space-2)">${r.reason} | ${formatTimeAgo(r.applied_at)}</span>
+            </div>`).join('');
+            html += '</div>';
+        }
+
+        container.innerHTML = html;
+    } catch (e) {
+        container.innerHTML = `<p class="text-muted">Error loading governance data: ${escapeHtml(e.message)}</p>`;
+    }
 }
 
 // === Init ===

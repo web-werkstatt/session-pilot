@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+{% block title %}AI Governance{% endblock %}
+{% block breadcrumb %}AI Governance{% endblock %}
+
+{% block head_extra %}
+<link rel="stylesheet" href="/static/css/kpi-cards.css">
+<link rel="stylesheet" href="/static/css/governance.css?v={{ cache_bust }}">
+{% endblock %}
+
+{% block content %}
+    <!-- KPI Summary -->
+    <div class="kpi-row">
+        <div class="kpi-card">
+            <div class="kpi-value" id="govTotalProjects">-</div>
+            <div class="kpi-label">Projects</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-value" id="govSandbox">-</div>
+            <div class="kpi-label">Sandbox</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-value" id="govControlled">-</div>
+            <div class="kpi-label">Controlled</div>
+        </div>
+        <div class="kpi-card kpi-card--alert">
+            <div class="kpi-value" id="govCritical">-</div>
+            <div class="kpi-label">Critical</div>
+        </div>
+        <div class="kpi-card kpi-card--alert">
+            <div class="kpi-value" id="govUnreviewed">-</div>
+            <div class="kpi-label">Unreviewed (Critical)</div>
+        </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="gov-tabs">
+        <button class="gov-tab active" onclick="showGovTab('overview')" data-tab="overview">Overview</button>
+        <button class="gov-tab" onclick="showGovTab('rules')" data-tab="rules">Rule Suggestions</button>
+        <button class="gov-tab" onclick="showGovTab('feedback')" data-tab="feedback">Feedback Loop</button>
+        <button class="gov-tab" onclick="showGovTab('snippets')" data-tab="snippets">Export Snippets</button>
+    </div>
+
+    <!-- Tab: Overview -->
+    <div id="tab-overview" class="gov-tab-content active">
+        <div class="card" style="overflow-x:auto">
+            <table class="gov-table">
+                <thead>
+                    <tr>
+                        <th>Project</th>
+                        <th>Policy Level</th>
+                        <th>Rework %</th>
+                        <th>Rules</th>
+                        <th>Last Updated</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="govTableBody">
+                    <tr><td colspan="6" class="text-center">Loading...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Tab: Rule Suggestions -->
+    <div id="tab-rules" class="gov-tab-content">
+        <div class="gov-rules-controls">
+            <select id="ruleProjectSelect" onchange="loadRuleSuggestions(this.value)">
+                <option value="">Select Project...</option>
+            </select>
+            <select id="rulePeriodSelect" onchange="loadRuleSuggestions(document.getElementById('ruleProjectSelect').value)">
+                <option value="30d">Last 30 days</option>
+                <option value="90d" selected>Last 90 days</option>
+                <option value="180d">Last 180 days</option>
+            </select>
+        </div>
+        <div id="rulesList" class="gov-rules-list">
+            <p class="text-muted">Select a project to see rule suggestions.</p>
+        </div>
+    </div>
+
+    <!-- Tab: Feedback Loop -->
+    <div id="tab-feedback" class="gov-tab-content">
+        <div id="feedbackContent" class="gov-feedback">
+            <p class="text-muted">Loading feedback analysis...</p>
+        </div>
+    </div>
+
+    <!-- Tab: Export Snippets -->
+    <div id="tab-snippets" class="gov-tab-content">
+        <div class="gov-rules-controls">
+            <select id="snippetProjectSelect" onchange="loadSnippets(this.value)">
+                <option value="">Select Project...</option>
+            </select>
+        </div>
+        <div id="snippetsContent">
+            <p class="text-muted">Select a project to generate export snippets.</p>
+        </div>
+    </div>
+
+    <!-- Policy Edit Modal -->
+    <div class="modal-overlay" id="policyModal">
+        <div class="modal" style="max-width:480px">
+            <div class="modal-header">
+                <h3>Edit Policy: <span id="policyModalProject"></span></h3>
+                <button class="modal-close" onclick="closeModal('policyModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <label class="form-label">Policy Level</label>
+                <div class="policy-toggle" id="policyToggle">
+                    <button class="policy-toggle__btn policy-toggle__btn--sandbox" data-level="1" onclick="selectPolicyLevel(1)">Sandbox</button>
+                    <button class="policy-toggle__btn policy-toggle__btn--controlled" data-level="2" onclick="selectPolicyLevel(2)">Controlled</button>
+                    <button class="policy-toggle__btn policy-toggle__btn--critical" data-level="3" onclick="selectPolicyLevel(3)">Critical</button>
+                </div>
+                <div class="policy-details" id="policyDetails"></div>
+                <label class="form-label" style="margin-top:var(--space-3)">Notes</label>
+                <textarea id="policyNotes" class="form-input" rows="3" placeholder="Optional notes..."></textarea>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('policyModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="savePolicy()">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Effectiveness Modal -->
+    <div class="modal-overlay" id="effectivenessModal">
+        <div class="modal" style="max-width:600px">
+            <div class="modal-header">
+                <h3>Rule Effectiveness: <span id="effectivenessProject"></span></h3>
+                <button class="modal-close" onclick="closeModal('effectivenessModal')">&times;</button>
+            </div>
+            <div class="modal-body" id="effectivenessContent">
+                <p class="text-muted">Loading...</p>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/governance.js?v={{ cache_bust }}"></script>
+{% endblock %}

@@ -18,6 +18,7 @@
 <link rel="stylesheet" href="/static/css/project-detail.css">
 <link rel="stylesheet" href="/static/css/sessions-list.css">
 <link rel="stylesheet" href="/static/css/file-heatmap.css">
+<link rel="stylesheet" href="/static/css/governance.css">
 {% endblock %}
 
 {% block content %}
@@ -49,6 +50,9 @@
         </button>
         <button class="project-tab" onclick="switchProjectTab('heatmap')">
             <i data-lucide="flame" class="icon icon-sm"></i> AI Heatmap
+        </button>
+        <button class="project-tab" onclick="switchProjectTab('governance')">
+            <i data-lucide="shield" class="icon icon-sm"></i> Governance
         </button>
     </div>
 
@@ -190,6 +194,13 @@
         <div class="project-tab-content" id="ptab_heatmap">
             <div id="heatmapBody">
                 <div class="loading"><div class="spinner"></div> Loading file heatmap...</div>
+            </div>
+        </div>
+
+        <!-- Tab: Governance -->
+        <div class="project-tab-content" id="ptab_governance">
+            <div id="governanceBody">
+                <div class="loading"><div class="spinner"></div> Loading governance data...</div>
             </div>
         </div>
     </div>

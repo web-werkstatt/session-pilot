@@ -33,6 +33,7 @@ async function loadWidgets() {
         renderTechChart(overview.technologies);
         renderSessionChart(overview.sessions);
         renderTopActive(overview.top_active);
+        renderGovernanceWidget();
     } catch (e) {
         console.error('Widget error:', e);
     }
@@ -216,4 +217,31 @@ function renderTopActive(projects) {
         html += '</div>';
     });
     el.innerHTML = html;
+}
+
+// === Governance Widget ===
+async function renderGovernanceWidget() {
+    var el = document.getElementById('wGovernanceBody');
+    if (!el) return;
+    try {
+        var data = await api.get('/api/governance/overview');
+        var s = data.summary || {};
+        var total = (s.sandbox || 0) + (s.controlled || 0) + (s.critical || 0);
+        var unreviewed = data.unreviewed_critical || 0;
+        var html = '<div style="display:flex;gap:12px;margin-bottom:8px;flex-wrap:wrap">';
+        html += '<div><span style="font-size:1.3rem;font-weight:700;color:var(--text-primary)">' + total + '</span> <span style="color:var(--text-muted)">Projects</span></div>';
+        html += '</div>';
+        html += '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">';
+        html += '<span style="color:#43a047;font-size:0.75rem;padding:2px 6px;border-radius:999px;background:rgba(67,160,71,0.15)">' + (s.sandbox || 0) + ' Sandbox</span>';
+        html += '<span style="color:#ff9800;font-size:0.75rem;padding:2px 6px;border-radius:999px;background:rgba(255,152,0,0.15)">' + (s.controlled || 0) + ' Controlled</span>';
+        html += '<span style="color:#f44336;font-size:0.75rem;padding:2px 6px;border-radius:999px;background:rgba(244,67,54,0.15)">' + (s.critical || 0) + ' Critical</span>';
+        html += '</div>';
+        if (unreviewed > 0) {
+            html += '<div style="color:#f44336;font-size:0.75rem;margin-top:4px">' + unreviewed + ' unreviewed sessions in critical projects</div>';
+        }
+        html += '<a href="/governance" style="font-size:0.75rem;color:var(--accent-link);margin-top:6px;display:inline-block">View Governance →</a>';
+        el.innerHTML = html;
+    } catch (e) {
+        el.innerHTML = '<span style="color:var(--text-muted)">-</span>';
+    }
 }

@@ -27,6 +27,7 @@ from routes.usage_reports_routes import usage_reports_bp
 from routes.session_filter_routes import session_filter_bp
 from routes.analytics_routes import analytics_bp
 from routes.model_comparison_routes import model_comparison_bp
+from routes.governance_routes import governance_bp
 
 
 def register_blueprints(app):
@@ -58,3 +59,4 @@ def register_blueprints(app):
     app.register_blueprint(session_filter_bp)
     app.register_blueprint(analytics_bp)
     app.register_blueprint(model_comparison_bp)
+    app.register_blueprint(governance_bp)
