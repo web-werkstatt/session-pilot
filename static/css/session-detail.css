@@ -1,10 +1,11 @@
 /* Session Detail */
+.sd-sticky-header { position: sticky; top: 0; z-index: 40; }
 .meta-bar {
     background: var(--bg-surface);
-    padding: 20px 30px;
+    padding: 10px 30px;
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 6px;
     border-bottom: 1px solid var(--border-subtle);
 }
 .meta-header {
@@ -50,7 +51,7 @@
 /* Export Bar */
 .export-bar {
     background: var(--bg-elevated);
-    padding: 8px 30px;
+    padding: 6px 30px;
     display: flex;
     align-items: center;
     gap: 12px;
