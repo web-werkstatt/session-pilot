@@ -8,6 +8,8 @@ const SessionFilters = (function() {
     let severityLevels = [];
     let currentScope = 'all';
     let currentOutcome = '';
+    let currentOutcomeReason = '';
+    let projectDefaults = {};
 
     /**
      * Laedt Filter-Optionen vom Server und baut Dropdowns auf
@@ -20,9 +22,12 @@ const SessionFilters = (function() {
             ]);
             outcomeReasons = reasons.reasons || {};
             severityLevels = reasons.severities || [];
+            projectDefaults = filters.project_defaults || {};
             _buildOutcomeDropdown(filters.outcomes || {});
             _buildScopeButtons(filters.scope || {});
+            _hookProjectChange();
             applyUrlParams();
+            _applyProjectDefaults();
         } catch(e) {
             console.error('SessionFilters init error:', e);
         }
@@ -121,6 +126,9 @@ const SessionFilters = (function() {
         if (currentOutcome) {
             params.outcome = currentOutcome;
         }
+        if (currentOutcomeReason) {
+            params.outcome_reason = currentOutcomeReason;
+        }
         if (currentScope && currentScope !== 'all') {
             params.scope = currentScope;
         }
@@ -165,6 +173,54 @@ const SessionFilters = (function() {
         return api.post(`/api/sessions/${uuid}/outcome-detail`, {reason, severity});
     }
 
+    // --- Project Policy Defaults (9.7) ---
+
+    /**
+     * Wendet Default-Filter an wenn ein Projekt gewaehlt ist und keine URL-Parameter gesetzt sind
+     */
+    function _applyProjectDefaults() {
+        // URL-Parameter haben Vorrang - wenn scope oder outcome in URL, keine Defaults
+        const params = new URLSearchParams(window.location.search);
+        if (params.has('scope') || params.has('outcome')) return;
+
+        const project = document.getElementById('filterProject')?.value;
+        if (!project || !projectDefaults[project]) return;
+
+        const defaults = projectDefaults[project];
+        if (defaults.scope && defaults.scope !== 'all') {
+            currentScope = defaults.scope;
+            const sel = document.getElementById('scopeFilter');
+            if (sel) sel.value = currentScope;
+        }
+        if (defaults.ai_only) {
+            const cb = document.getElementById('scopeAiOnly');
+            if (cb) cb.checked = true;
+            if (!currentScope || currentScope === 'all') currentScope = 'tools';
+            const sel = document.getElementById('scopeFilter');
+            if (sel) sel.value = currentScope;
+        }
+    }
+
+    /**
+     * Reagiert auf Projekt-Dropdown-Wechsel: Defaults neu anwenden
+     */
+    function _hookProjectChange() {
+        const sel = document.getElementById('filterProject');
+        if (!sel) return;
+        sel.addEventListener('change', () => {
+            // Reset scope to defaults of new project
+            currentScope = 'all';
+            currentOutcome = '';
+            const scopeSel = document.getElementById('scopeFilter');
+            if (scopeSel) scopeSel.value = 'all';
+            const outcomeSel = document.getElementById('filterOutcome');
+            if (outcomeSel) outcomeSel.value = '';
+            const cb = document.getElementById('scopeAiOnly');
+            if (cb) cb.checked = false;
+            _applyProjectDefaults();
+        });
+    }
+
     // --- Drill-down / URL State ---
 
     /**
@@ -177,6 +233,9 @@ const SessionFilters = (function() {
             currentOutcome = params.get('outcome');
             const sel = document.getElementById('filterOutcome');
             if (sel) sel.value = currentOutcome;
+        }
+        if (params.has('outcome_reason')) {
+            currentOutcomeReason = params.get('outcome_reason');
         }
         if (params.has('scope')) {
             currentScope = params.get('scope');
@@ -207,6 +266,7 @@ const SessionFilters = (function() {
     function _pushFilterState() {
         const params = new URLSearchParams();
         if (currentOutcome) params.set('outcome', currentOutcome);
+        if (currentOutcomeReason) params.set('outcome_reason', currentOutcomeReason);
         if (currentScope && currentScope !== 'all') params.set('scope', currentScope);
 
         const account = document.getElementById('filterAccount')?.value;

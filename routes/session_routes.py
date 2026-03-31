@@ -94,6 +94,11 @@ def _api_sessions_inner():
     outcome_filter = request.args.get("outcome")
     if outcome_filter == "unrated":
         conditions.append("outcome IS NULL")
+    elif outcome_filter and "," in outcome_filter:
+        values = [v.strip() for v in outcome_filter.split(",") if v.strip()]
+        placeholders = ",".join(["%s"] * len(values))
+        conditions.append(f"outcome IN ({placeholders})")
+        params.extend(values)
     elif outcome_filter:
         conditions.append("outcome = %s")
         params.append(outcome_filter)
