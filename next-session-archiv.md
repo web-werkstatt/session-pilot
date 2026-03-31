@@ -4,6 +4,66 @@
 
 ---
 
+## Session 2026-03-31 - AI Governance Roadmap (Sprint 9-15)
+
+### Was wurde erledigt
+
+**Komplette AI Governance Roadmap erstellt (7 Sprints, ~2700 Zeilen):**
+- Sprint 9: Fehler-Kategorien + AI-Scope-Filter (outcome_reason, severity, ai_has_writes)
+- Sprint 10: Per-File AI-Heatmap + Risiko-Radar (ai_file_touches, Hotspot-Warnungen)
+- Sprint 11: Modell-Qualitaetsvergleich (mv_model_quality, Stack-Analyse, Empfehlungs-Engine)
+- Sprint 12: Governance + Feedback-Loop (3-Stufen Policy, Regel-Generator, Wirkungs-Tracking)
+- Sprint 13: Bidirektionaler LLM-Control (Recommendations, Tool-Control, Safe-Mode, Audit-Trail)
+- Sprint 14: Sprint/Flow-Tracking + Soll/Ist (Sprint-Tasks, planned_value JSONB, Controlling)
+- Sprint 15: Mehrsprachigkeit DE/EN (JSON+JS Ansatz, nach Governance-Sprints)
+
+**Architektur-Analyse durchgefuehrt:**
+- Bestehende Features auf Vollstaendigkeit geprueft (Quality Scoring 100%, Usage 95%, etc.)
+- Bidirektionale Kommunikation analysiert (Ergebnis: Dashboard ist passiver Beobachter)
+- Kompatibilitaet neue/bestehende Projekte geprueft (Backfill-Script noetig)
+- Codex-Import bereits implementiert in session_import_multi.py
+
+**UI/UX-Implementierungsdetails ergaenzt:**
+- Alle 6 Sprints mit konkreten Template/CSS/JS Dateien
+- 5 neue Templates, 5 neue CSS, 5 neue JS Dateien geplant
+- 4 neue Sidebar-Eintraege (Sprints, Model Comparison, AI Governance, Recommendations)
+- Design-Token-Konsistenz sichergestellt (CSS Custom Properties)
+
+**Zusaetzliche Features eingearbeitet (aus Feedback-Schleifen):**
+- Default-Filter pro Policy-Level
+- Drill-down-Quicklinks in allen Tabellen
+- Risiko-Radar Panel im Projekt-Detail
+- Trend-Analyse (Sparklines)
+- Wirkungs-Tracking fuer angewandte Regeln
+- Recommendation-Objects mit Lebenszyklus
+- Safe-Mode pro Policy (sandbox/controlled/critical)
+- Sprint-Tasks mit planned_value JSONB + Task-Session-Verknuepfung
+- Soll/Ist-Vergleich mit Ampel (gruen/gelb/rot)
+- "Aktion ableiten"-Block bei roten Metriken
+- sprint_task_notes fuer Plan-Aenderungshistorie
+- Markdown-Backup-Strategie (DB + .md bleiben parallel)
+- Optionale Erweiterungen: CI/CD-Gate, Issue-Sync, Webhooks, Prompt-Snippets
+
+### Erstellte Dateien
+
+| Datei | Zeilen |
+|-------|--------|
+| `sprints/10-roadmap-ai-governance.md` | 75 |
+| `sprints/sprint-9-error-categories-ai-filter.md` | 324 |
+| `sprints/sprint-10-file-heatmap.md` | 302 |
+| `sprints/sprint-11-model-quality-comparison.md` | 289 |
+| `sprints/sprint-12-governance-feedback-loop.md` | 388 |
+| `sprints/sprint-13-bidirectional-llm-control.md` | 675 |
+| `sprints/sprint-14-sprint-flow-tracking.md` | 720 |
+
+### Architektur-Kette
+
+```
+Messen (9-10) → Bewerten (11) → Steuern (12-13) → Kontrollieren (14) → i18n (15)
+```
+
+---
+
 ## Session 2026-03-30 - Live Usage Monitor Rewrite + Usage Reports
 
 ### Was wurde erledigt
