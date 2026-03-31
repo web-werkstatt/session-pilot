@@ -45,6 +45,7 @@ tips:
 | Scheduled Tasks | `/scheduled-tasks` | Verwaltung geplanter Aufgaben. Unterstützt Claude Code RemoteTrigger mit Cron-Ausdrücken für automatisierte Checks. |
 | Plans | `/plans` | Import und Verwaltung von Claude Plans aus `~/.claude/plans/`. Zeigt Plan-Inhalt, verknüpfte Projekte und Status. |
 | Quality | `/quality` | Projektübergreifende Code-Qualitäts-Analyse via Semgrep. Zeigt Findings nach Schweregrad, Kategorie und Projekt. |
+| AI Governance | `/governance` | Projekt-Policies (Sandbox/Controlled/Critical), automatische Regel-Vorschläge, Feedback-Loop-Analyse und Export-Snippets. |
 
 ### Content & Einstellungen
 

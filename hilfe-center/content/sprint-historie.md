@@ -30,6 +30,7 @@ SessionPilot wird in Sprints entwickelt. Jeder Sprint fokussiert sich auf ein Th
 | 9 | Fehler-Kategorien | outcome_reason, AI-Scope-Filter, Tool-Erkennung - detaillierte Klassifizierung von Session-Ergebnissen |
 | 10 | File Heatmap | Per-File AI-Touches, Risk Radar - zeigt welche Dateien am häufigsten von der AI bearbeitet werden |
 | 11 | Modell-Vergleich | Quality Score, Stack-Analyse, Empfehlungs-Engine - welches AI-Modell für welchen Einsatzzweck am besten geeignet ist |
+| 12 | AI Governance | 3-Stufen Policy-System, Regel-Generator, Feedback-Loop, Export-Snippets - Projekt-Policies für AI-Assistenten verwalten |
 
 ## Sprint-Details
 
@@ -48,3 +49,7 @@ Frontend-Vereinheitlichung mit Design Tokens und dem Modal-System. Die auto_code
 ### Sprint 9-11: Intelligence
 
 Die jüngsten Sprints bringen tiefere Analyse-Fähigkeiten: Fehler-Kategorien mit outcome_reason, File-Heatmaps die zeigen wo die AI am meisten arbeitet, und der Modell-Vergleich mit Empfehlungs-Engine.
+
+### Sprint 12: Governance
+
+Projekt-Policies mit drei Stufen (Sandbox, Controlled, Critical) ermöglichen es, pro Projekt festzulegen wie frei AI-Assistenten arbeiten dürfen. Der Regel-Generator erstellt automatisch Vorschläge aus den häufigsten Fehlerursachen, und der Feedback-Loop zeigt ob angewandte Regeln tatsächlich wirken.

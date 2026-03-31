@@ -31,6 +31,7 @@ sections:
       - projekt-detail
       - heatmap
       - code-quality
+      - governance
 
   - title: "DevOps"
     icon: "gear"
