@@ -108,6 +108,20 @@ def _api_sessions_inner():
         conditions.append("outcome_reason = %s")
         params.append(outcome_reason)
 
+    # Sprint 11: Stack filter via ai_file_touches
+    stack_filter = request.args.get("stack")
+    if stack_filter:
+        stack_ext_map = {
+            'python': ['.py'], 'typescript': ['.ts', '.tsx'],
+            'javascript': ['.js', '.jsx'], 'css': ['.css', '.scss'],
+            'markup': ['.html', '.astro'],
+        }
+        exts = stack_ext_map.get(stack_filter, [])
+        if exts:
+            ext_conditions = " OR ".join("ft.file_path LIKE %s" for _ in exts)
+            conditions.append(f"id IN (SELECT session_id FROM ai_file_touches ft WHERE {ext_conditions})")
+            params.extend(f'%{ext}' for ext in exts)
+
     scope_filter = request.args.get("scope")
     if scope_filter == "writes":
         conditions.append("ai_has_writes = TRUE")

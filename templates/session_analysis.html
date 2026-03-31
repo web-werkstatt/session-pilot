@@ -133,7 +133,8 @@
                 <div class="model-cost">$${m.cost_usd.toFixed(2)}</div>
             </div>`;
         }).join('');
-        document.getElementById('modelList').innerHTML = modelHtml || '<div class="cost-sub">No data</div>';
+        document.getElementById('modelList').innerHTML = (modelHtml || '<div class="cost-sub">No data</div>')
+            + '<a href="/model-comparison" style="display:block;margin-top:var(--space-2);font-size:0.8rem;color:var(--accent-light,#4fc3f7);text-decoration:none">Model Comparison &rarr;</a>';
 
         // Weekdays with heatmap effect
         const maxWdSessions = Math.max(...data.weekdays.map(d => d.sessions), 1);

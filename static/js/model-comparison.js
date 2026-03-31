@@ -16,6 +16,7 @@ let _project = '';
 let _stackFilter = 'all';
 let _radarChart = null;
 let _stackChart = null;
+let _scatterChart = null;
 let _trendCache = {};
 
 
@@ -45,6 +46,7 @@ async function loadModelComparison() {
         renderComparisonTable(models);
         renderKPIs(models, compData.recommendation);
         renderRadarChart(models);
+        renderScatterChart(models);
         renderStackChart(stackData.matrix || []);
         renderInsights(stackData.insights || []);
     } catch (err) {
@@ -92,10 +94,20 @@ function renderComparisonTable(models) {
 
     var rows = models.map(function(m) {
         var hasRatings = m.rated_sessions > 0;
+        var providerTag = m.provider && m.provider !== 'Unknown'
+            ? ' <span class="provider-tag">' + escapeHtml(m.provider) + '</span>'
+            : '';
         var modelLink = '<a href="/sessions?model=' + encodeURIComponent(m.model) + '">'
-            + escapeHtml(m.model) + '</a>';
+            + escapeHtml(m.model) + '</a>' + providerTag;
 
         var sessionsText = m.total_sessions + ' (' + m.rated_sessions + ' rated)';
+
+        var reasonsHtml = '';
+        if (m.top_reasons && m.top_reasons.length) {
+            reasonsHtml = '<div class="top-reasons">' + m.top_reasons.map(function(r) {
+                return '<span class="reason-tag" title="' + r.count + 'x">' + escapeHtml(r.reason) + '</span>';
+            }).join(' ') + '</div>';
+        }
 
         var reworkHtml = hasRatings
             ? '<a href="/sessions?model=' + encodeURIComponent(m.model)
@@ -117,7 +129,7 @@ function renderComparisonTable(models) {
         return '<tr>'
             + '<td>' + modelLink + '</td>'
             + '<td>' + sessionsText + '</td>'
-            + '<td>' + reworkHtml + '</td>'
+            + '<td>' + reworkHtml + reasonsHtml + '</td>'
             + '<td>' + costText + '</td>'
             + '<td>' + qualityHtml + '</td>'
             + '<td>' + sparkHtml + '</td>'
@@ -166,157 +178,19 @@ function renderSparkline(trendData) {
     else if (last > first + 1) trend = 'degrading';
     else trend = 'stable';
 
-    return '<svg class="sparkline sparkline--' + trend + '" width="' + width + '" height="' + height + '" viewBox="0 0 ' + width + ' ' + height + '">'
+    var delta = (last - first).toFixed(1);
+    var arrow = last < first ? '↓' : last > first ? '↑' : '→';
+    var tooltip = 'Rework: ' + first.toFixed(1) + '% ' + arrow + ' ' + last.toFixed(1) + '% over ' + values.length + ' periods (' + (delta > 0 ? '+' : '') + delta + '%)';
+
+    return '<svg class="sparkline sparkline--' + trend + '" width="' + width + '" height="' + height + '" viewBox="0 0 ' + width + ' ' + height + '"'
+        + ' title="' + tooltip + '">'
+        + '<title>' + tooltip + '</title>'
         + '<polyline fill="none" stroke="currentColor" stroke-width="1.5" points="' + points.join(' ') + '"/>'
         + '</svg>';
 }
 
 
-function renderRadarChart(models) {
-    var canvas = document.getElementById('radarChart');
-    if (!canvas) return;
-
-    if (_radarChart) {
-        _radarChart.destroy();
-        _radarChart = null;
-    }
-
-    var subset = models.slice(0, 5);
-    if (!subset.length) return;
-
-    var datasets = subset.map(function(m, i) {
-        var quality = m.quality_score || 0;
-        var costEff = Math.max(0, Math.min(100, 100 - (m.cost_per_success || 0) * 10));
-        var speed = Math.max(0, Math.min(100, 100 - (m.avg_duration_min || 0) * 2));
-
-        return {
-            label: m.model,
-            data: [quality, costEff, speed],
-            borderColor: MODEL_COLORS[i % MODEL_COLORS.length],
-            backgroundColor: MODEL_COLORS[i % MODEL_COLORS.length] + '33',
-            pointBackgroundColor: MODEL_COLORS[i % MODEL_COLORS.length],
-            borderWidth: 2,
-            pointRadius: 3
-        };
-    });
-
-    _radarChart = new Chart(canvas, {
-        type: 'radar',
-        data: {
-            labels: ['Quality', 'Cost Efficiency', 'Speed'],
-            datasets: datasets
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                r: {
-                    beginAtZero: true,
-                    max: 100,
-                    ticks: { stepSize: 20, display: false },
-                    grid: { color: 'rgba(255,255,255,0.1)' },
-                    angleLines: { color: 'rgba(255,255,255,0.1)' },
-                    pointLabels: { color: '#ccc', font: { size: 12 } }
-                }
-            },
-            plugins: {
-                legend: {
-                    position: 'bottom',
-                    labels: { color: '#ccc', boxWidth: 12, padding: 15 }
-                }
-            }
-        }
-    });
-}
-
-
-function renderStackChart(matrix) {
-    var canvas = document.getElementById('stackChart');
-    if (!canvas) return;
-
-    if (_stackChart) {
-        _stackChart.destroy();
-        _stackChart = null;
-    }
-
-    if (!matrix || !matrix.length) return;
-
-    var filtered = filterMatrixByStack(matrix);
-    if (!filtered.length) return;
-
-    // Collect unique stacks and models
-    var stackSet = {};
-    var modelSet = {};
-    filtered.forEach(function(entry) {
-        stackSet[entry.stack] = true;
-        modelSet[entry.model] = true;
-    });
-    var stacks = Object.keys(stackSet).sort();
-    var models = Object.keys(modelSet).sort();
-
-    // Build lookup: model+stack -> rework_rate
-    var lookup = {};
-    filtered.forEach(function(entry) {
-        lookup[entry.model + '|' + entry.stack] = entry.rework_rate;
-    });
-
-    var datasets = models.map(function(model, i) {
-        return {
-            label: model,
-            data: stacks.map(function(stack) { return lookup[model + '|' + stack] || 0; }),
-            backgroundColor: MODEL_COLORS[i % MODEL_COLORS.length],
-            borderColor: MODEL_COLORS[i % MODEL_COLORS.length],
-            borderWidth: 1
-        };
-    });
-
-    _stackChart = new Chart(canvas, {
-        type: 'bar',
-        data: {
-            labels: stacks,
-            datasets: datasets
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                x: {
-                    ticks: { color: '#ccc' },
-                    grid: { color: 'rgba(255,255,255,0.05)' }
-                },
-                y: {
-                    beginAtZero: true,
-                    ticks: { color: '#ccc', callback: function(v) { return v + '%'; } },
-                    grid: { color: 'rgba(255,255,255,0.05)' },
-                    title: { display: true, text: 'Rework Rate %', color: '#ccc' }
-                }
-            },
-            plugins: {
-                legend: {
-                    position: 'bottom',
-                    labels: { color: '#ccc', boxWidth: 12, padding: 15 }
-                },
-                tooltip: {
-                    callbacks: {
-                        label: function(ctx) {
-                            return ctx.dataset.label + ': ' + ctx.parsed.y.toFixed(1) + '%';
-                        }
-                    }
-                }
-            }
-        }
-    });
-}
-
-
-function filterMatrixByStack(matrix) {
-    if (_stackFilter === 'all') return matrix;
-
-    var allowed = _stackFilter === 'backend' ? BACKEND_STACKS : FRONTEND_STACKS;
-    return matrix.filter(function(entry) {
-        return allowed.indexOf(entry.stack) !== -1;
-    });
-}
+// Charts in model-comparison-charts.js (renderRadarChart, renderScatterChart, renderStackChart, flattenMatrix, filterMatrixByStack)
 
 
 function renderKPIs(models, recommendation) {

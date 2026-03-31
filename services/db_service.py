@@ -272,7 +272,7 @@ def ensure_model_quality_view():
                 SUM(COALESCE(total_input_tokens, 0) + COALESCE(total_output_tokens, 0)) AS total_tokens,
                 SUM(COALESCE(cost_estimate, 0)) AS total_cost,
                 AVG(duration_ms / 60000.0) FILTER (WHERE duration_ms > 0) AS avg_duration_min,
-                AVG(outcome_severity::int) FILTER (WHERE outcome_severity IS NOT NULL) AS avg_severity
+                AVG(CASE outcome_severity WHEN 'critical' THEN 4 WHEN 'high' THEN 3 WHEN 'medium' THEN 2 WHEN 'low' THEN 1 END) FILTER (WHERE outcome_severity IS NOT NULL) AS avg_severity
             FROM sessions
             WHERE model IS NOT NULL AND model != '' AND model NOT LIKE '<%>'
             GROUP BY model

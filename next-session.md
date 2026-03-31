@@ -1,36 +1,53 @@
 # Projekt-Dashboard - Naechste Session
 
 > **Letzte Aktualisierung:** 2026-03-31
-> **Status:** Sprint 9 done, Sprint 10 done, Sprint 11 pruefen
-> **Naechste Aufgabe:** Sprint 11 Spec gegen Code pruefen
+> **Status:** Sprint 9 done, Sprint 10 done, Sprint 11 done
+> **Naechste Aufgabe:** Sprint 12 planen oder offene Bugs/Datenluecken angehen
 
 ---
 
 ## Was wurde in dieser Session gemacht
 
-### Sprint 9: Akzeptanzkriterien geprueft (15/15 DONE)
-- Alle 15 Kriterien gegen Implementierung verifiziert
-- Uncommitted Changes committed: Multi-Value Outcome Filter, Project Policy Defaults, Deeplink-Support
+### Sprint 11: Model Quality Comparison - Spec-Abgleich + Nachruesten
 
-### Sprint 10: Per-File AI-Heatmap komplett ueberarbeitet (13/13 DONE)
-- **10.1 Schema:** 5 fehlende Spalten nachgeruestet (project, ai_written, ai_touched, model, issue_category), UNIQUE Constraint, Partial Index, ALTER TABLE fuer bestehende DB
-- **10.2 Extraktion:** Import-Integration in session_import.py (fehlte komplett), Git-Diff-Fallback fuer Sessions ohne Tool-Calls, ON CONFLICT statt DELETE+INSERT, --with-file-touches in backfill_ai_flags.py
-- **10.3 Heatmap-API:** Spec-Parameter (period/depth/model/category/only_written), SQL-seitige Verzeichnis-Aggregation via split_part, outcome_stats mit reverted getrennt, models pro Datei via Subquery, top_reason via MODE()
-- **10.4 Heatmap-UI:** Period/Model/Category Filter-Dropdowns (fehlten alle), Rework-Rate Spalte mit Farbcodierung gruen/gelb/rot, Category-Spalte mit top_reason, Verzeichnisbaum (Dir fett, Children eingerueckt)
-- **10.5 Risk-Radar:** Panel VOR den Tabs (war nur im Heatmap-Tab), laedt beim Seitenstart, drill_down URL pro Hotspot, LIMIT 3, outcome Filter in SQL
-- **10.6 Hotspot-Warnungen:** _check_ai_hotspots() im Notification-Checker, >10 Touches/7d und >25% Rework-Rate, AI Hotspot Badge + Tooltip
-- **10.7 Dashboard-Widget:** /api/widgets/ai-hotspots Endpoint, renderAiHotspots() in widgets.js, Widget in index.html, optionaler ?project= Filter
-- **10.8 Drill-down:** Arrow-Links in jeder Heatmap-Zeile, file/file_prefix Filter in Session-API via Join mit ai_file_touches
-- **10.9 UI:** risk-radar-panel CSS, Responsive Media Query, Dashboard-Widget HTML
+**11.1 Backend: Modell-Qualitaets-Aggregation**
+- `provider`-Feld nachgeruestet: dynamisch aus `model_pricing`-DB-Tabelle (kein Hardcoding)
+- `top_reasons` pro Modell nachgeruestet: `_fetch_top_reasons()` mit Security-Count-Extraktion
+- `outcome_severity::int` Cast-Bug gefixt (Spalte enthaelt Strings wie 'high', nicht Zahlen) - betrifft MV und direkten Query
+
+**11.2 Stack-spezifische Fehlerraten**
+- `cost_per_success` pro Model/Stack nachgeruestet
+- Dominanter-Stack-Logik (>50% Touches) statt Mehrfachzaehlung pro File-Touch
+- Cross-Stack-Insight ("2x hoehere Rework-Rate bei TS vs Python")
+- Response-Format auf verschachtelte Struktur umgestellt (gruppiert nach Stack)
+
+**11.3 Quality-Score**
+- Security-Malus (-10 bei >3 Security-Issues) nachgeruestet
+- Security-Count aus outcome_reasons extrahiert (unabhaengig vom Top-3-Limit)
+
+**11.4 UI: Modell-Vergleichsseite**
+- Scatter-Plot (Bubble-Chart: $/Success vs Rework-Rate, Bubble=Sessions) nachgeruestet
+- Provider-Tags und Reason-Tags im CSS ergaenzt
+
+**11.5 Empfehlungs-Engine**
+- Alternative-Begruendung mit Kostenverhaeltnis ("8x more expensive") nachgeruestet
+- Badge im Projekt-Detail war bereits implementiert
+
+**11.6 Trend-Analyse**
+- Sparkline-Tooltip ("Rework: X% -> Y% over N periods") nachgeruestet
+- Period-Format auf ISO-Wochen (2026-W09) umgestellt
+
+**11.7 Drill-down-Quicklinks**
+- Stack-Filter in Sessions-Endpoint nachgeruestet (`?stack=python`)
+- Stack-Chart onClick-Handler: Klick auf Bar navigiert zu `/sessions?model=X&stack=Y`
+
+**11.8 UI-Implementierung**
+- "Model Comparison →" Link in Session-Analysis nachgeruestet
+- Sidebar-Navigation, Template, CSS, JS waren bereits vollstaendig
 
 ---
 
 ## Naechste Session
-
-### Sprint 11 pruefen (Model Comparison)
-
-- Sprint-Plan: sprints/sprint-11-model-quality-comparison.md
-- Gleiche Methodik: Spec Punkt fuer Punkt gegen Code pruefen
 
 ### Offene Bugs / Datenluecken
 

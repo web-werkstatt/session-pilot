@@ -18,6 +18,43 @@ STACK_MAP = {
     '.html': 'markup', '.astro': 'markup',
 }
 
+_provider_cache = None
+_provider_cache_ts = 0
+
+
+def _load_provider_map():
+    """Load provider mapping from model_pricing DB table. Cached 60s."""
+    import time
+    global _provider_cache, _provider_cache_ts
+    now = time.time()
+    if _provider_cache is not None and (now - _provider_cache_ts) < 60:
+        return _provider_cache
+    try:
+        rows = execute(
+            "SELECT model_pattern, provider FROM model_pricing WHERE provider IS NOT NULL",
+            fetch=True
+        )
+        mapping = [(r['model_pattern'].lower(), r['provider']) for r in (rows or [])]
+        _provider_cache = mapping
+        _provider_cache_ts = now
+        return mapping
+    except Exception:
+        return _provider_cache or []
+
+
+def _detect_provider(model_name):
+    """Detect provider from model_pricing DB table (fuzzy-match like cost_service)."""
+    if not model_name:
+        return None
+    lower = model_name.lower()
+    display_names = {'openai': 'OpenAI', 'deepseek': 'DeepSeek'}
+    for pattern, provider in _load_provider_map():
+        if pattern in lower or lower.startswith(pattern):
+            if not provider:
+                return None
+            return display_names.get(provider.lower(), provider.capitalize())
+    return None
+
 
 def _parse_period(period):
     """Parse period string to cutoff datetime. Returns None for 'all'."""
@@ -29,10 +66,12 @@ def _parse_period(period):
 
 # --- Quality Score ---
 
-def calculate_quality_score(ok_count, needs_fix, reverted, rated, avg_severity=None):
+def calculate_quality_score(ok_count, needs_fix, reverted, rated,
+                            avg_severity=None, security_issues=0):
     """Quality score 0-100.
     Formula: 100 - (rework_rate * 0.5) - (reverted_rate * 1.5) - (incomplete_rate * 0.3)
     Bonus: +5 if rated > 20 sessions.
+    Malus: -10 if > 3 security issues.
     """
     if rated == 0:
         return 0.0
@@ -49,6 +88,9 @@ def calculate_quality_score(ok_count, needs_fix, reverted, rated, avg_severity=N
     if rated > 20:
         score += 5.0
 
+    if security_issues > 3:
+        score -= 10.0
+
     return max(0.0, min(100.0, round(score, 1)))
 
 
@@ -63,6 +105,54 @@ def score_to_grade(score):
     if score >= 40:
         return 'D'
     return 'F'
+
+
+# --- Top Reasons ---
+
+def _fetch_top_reasons(cutoff=None, project=None, stack=None, limit=3):
+    """Fetch top outcome_reasons per model (max `limit` per model)."""
+    params = []
+    where_parts = [
+        "s.model IS NOT NULL", "s.model != ''", "s.model NOT LIKE '<%%>'",
+        "s.outcome_reason IS NOT NULL", "s.outcome_reason != ''",
+    ]
+    if cutoff:
+        where_parts.append("s.started_at > %s")
+        params.append(cutoff)
+    if project:
+        where_parts.append("s.project_name = %s")
+        params.append(project)
+
+    join_clause = ""
+    if stack:
+        join_clause = " JOIN ai_file_touches ft ON ft.session_id = s.id"
+        exts = [ext for ext, s_name in STACK_MAP.items() if s_name == stack]
+        if exts:
+            where_parts.append(f"({' OR '.join('ft.file_path LIKE %s' for _ in exts)})")
+            params.extend(f'%{ext}' for ext in exts)
+
+    where_sql = " AND ".join(where_parts)
+    rows = execute(f"""
+        SELECT model, outcome_reason, COUNT(*) AS cnt
+        FROM sessions s {join_clause}
+        WHERE {where_sql}
+        GROUP BY model, outcome_reason
+        ORDER BY model, cnt DESC
+    """, params, fetch=True)
+
+    top = {}        # model -> [{reason, count}, ...] (max limit)
+    sec_counts = {} # model -> total security-related issue count
+    for r in (rows or []):
+        m = r['model']
+        cnt = int(r['cnt'])
+        reason = r['outcome_reason']
+        if m not in top:
+            top[m] = []
+        if len(top[m]) < limit:
+            top[m].append({'reason': reason, 'count': cnt})
+        if 'security' in reason.lower():
+            sec_counts[m] = sec_counts.get(m, 0) + cnt
+    return top, sec_counts
 
 
 # --- Model Comparison ---
@@ -117,13 +207,16 @@ def get_model_comparison(period='90d', project=None, stack=None):
                 SUM(COALESCE(s.total_input_tokens, 0) + COALESCE(s.total_output_tokens, 0)) AS total_tokens,
                 SUM(COALESCE(s.cost_estimate, 0)) AS total_cost,
                 AVG(s.duration_ms / 60000.0) FILTER (WHERE s.duration_ms > 0) AS avg_duration_min,
-                AVG(s.outcome_severity::int) FILTER (WHERE s.outcome_severity IS NOT NULL) AS avg_severity
+                AVG(CASE s.outcome_severity WHEN 'critical' THEN 4 WHEN 'high' THEN 3 WHEN 'medium' THEN 2 WHEN 'low' THEN 1 END) FILTER (WHERE s.outcome_severity IS NOT NULL) AS avg_severity
             FROM sessions s
             {join_clause}
             WHERE {where_sql}
             GROUP BY s.model
             ORDER BY COUNT(DISTINCT s.id) FILTER (WHERE s.outcome IS NOT NULL) DESC
         """, params, fetch=True)
+
+    # Fetch top outcome_reasons + security counts per model
+    top_reasons_map, security_counts = _fetch_top_reasons(cutoff, project, stack)
 
     models = []
     for r in (rows or []):
@@ -134,13 +227,15 @@ def get_model_comparison(period='90d', project=None, stack=None):
         avg_sev = float(r['avg_severity']) if r.get('avg_severity') else None
         total_cost = float(r.get('total_cost') or 0)
 
-        score = calculate_quality_score(ok, nf, rev, rated, avg_sev)
+        sec_count = security_counts.get(r['model'], 0)
+        score = calculate_quality_score(ok, nf, rev, rated, avg_sev, sec_count)
         rework_rate = round((nf + rev) / rated * 100, 1) if rated > 0 else 0.0
         cost_per_session = round(total_cost / rated, 4) if rated > 0 and total_cost > 0 else None
         cost_per_success = round(total_cost / ok, 4) if ok > 0 and total_cost > 0 else None
 
         models.append({
             'model': r['model'],
+            'provider': _detect_provider(r['model']),
             'total_sessions': int(r.get('total_sessions') or 0),
             'rated_sessions': rated,
             'ok': ok,
@@ -154,6 +249,7 @@ def get_model_comparison(period='90d', project=None, stack=None):
             'cost_per_session': cost_per_session,
             'cost_per_success': cost_per_success,
             'avg_duration_min': round(float(r['avg_duration_min']), 1) if r.get('avg_duration_min') else None,
+            'top_reasons': top_reasons_map.get(r['model'], []),
         })
 
     # Sort by quality score descending
@@ -187,48 +283,83 @@ def get_model_by_stack(period='90d', project=None):
 
     rows = execute(f"""
         SELECT
+            s.id AS session_id,
             s.model,
-            ft.file_path,
-            s.outcome
+            s.outcome,
+            COALESCE(s.cost_estimate, 0) AS cost_estimate,
+            ft.file_path
         FROM sessions s
         JOIN ai_file_touches ft ON ft.session_id = s.id
         WHERE {where_sql}
     """, params, fetch=True)
 
-    # Aggregate by model + stack
-    matrix_data = {}  # (model, stack) -> {ok, needs_fix, reverted, total}
+    # Step 1: Determine dominant stack per session (>50% of touches)
+    session_stacks = {}  # session_id -> {stack: count}
+    session_meta = {}    # session_id -> {model, outcome, cost}
     for r in (rows or []):
+        sid = r['session_id']
         ext = _ext_from_path(r['file_path'])
-        stack = STACK_MAP.get(ext)
-        if not stack:
+        s = STACK_MAP.get(ext)
+        if not s:
             continue
-        key = (r['model'], stack)
+        if sid not in session_stacks:
+            session_stacks[sid] = {}
+            session_meta[sid] = {
+                'model': r['model'],
+                'outcome': r.get('outcome'),
+                'cost': float(r['cost_estimate']),
+            }
+        session_stacks[sid][s] = session_stacks[sid].get(s, 0) + 1
+
+    # Step 2: Aggregate by model + dominant stack
+    matrix_data = {}  # (model, stack) -> {ok, needs_fix, reverted, total, cost}
+    for sid, stack_counts in session_stacks.items():
+        total_touches = sum(stack_counts.values())
+        dominant = max(stack_counts, key=stack_counts.get)
+        if stack_counts[dominant] / total_touches < 0.5:
+            continue  # no clear dominant stack
+        meta = session_meta[sid]
+        key = (meta['model'], dominant)
         if key not in matrix_data:
-            matrix_data[key] = {'ok': 0, 'needs_fix': 0, 'reverted': 0, 'total': 0}
+            matrix_data[key] = {'ok': 0, 'needs_fix': 0, 'reverted': 0, 'total': 0, 'cost': 0.0}
         matrix_data[key]['total'] += 1
-        outcome = r.get('outcome')
+        matrix_data[key]['cost'] += meta['cost']
+        outcome = meta['outcome']
         if outcome in ('ok', 'needs_fix', 'reverted'):
             matrix_data[key][outcome] += 1
 
-    # Build matrix list
-    matrix = []
+    # Build nested matrix: grouped by stack, models nested inside
+    stack_groups = {}  # stack -> {model -> metrics}
     for (model, stack), counts in sorted(matrix_data.items()):
         rated = counts['ok'] + counts['needs_fix'] + counts['reverted']
         rework = counts['needs_fix'] + counts['reverted']
         rework_rate = round(rework / rated * 100, 1) if rated > 0 else 0.0
-        score = calculate_quality_score(counts['ok'], counts['needs_fix'], counts['reverted'], rated)
-        matrix.append({
-            'model': model,
-            'stack': stack,
+        ok = counts['ok']
+        cost = counts['cost']
+        score = calculate_quality_score(ok, counts['needs_fix'], counts['reverted'], rated)
+
+        if stack not in stack_groups:
+            stack_groups[stack] = {}
+        stack_groups[stack][model] = {
             'sessions': counts['total'],
             'rated': rated,
             'rework_rate': rework_rate,
+            'cost_per_success': round(cost / ok, 4) if ok > 0 and cost > 0 else None,
             'quality_score': score,
             'grade': score_to_grade(score),
-        })
+        }
 
-    # Generate insights
-    insights = _generate_stack_insights(matrix)
+    matrix = [
+        {'stack': stack, 'models': models}
+        for stack, models in sorted(stack_groups.items())
+    ]
+
+    # Generate insights (needs flat list internally)
+    flat = []
+    for entry in matrix:
+        for model, metrics in entry['models'].items():
+            flat.append({'model': model, 'stack': entry['stack'], **metrics})
+    insights = _generate_stack_insights(flat)
 
     return {
         'matrix': matrix,
@@ -267,10 +398,32 @@ def _generate_stack_insights(matrix):
             f"with a {best_stack['grade']} grade ({best_stack['rework_rate']}% rework rate)."
         )
 
+    # Cross-stack comparison: find models with large rework-rate differences across stacks
+    model_entries = {}
+    for entry in matrix:
+        if entry['rated'] < 3:
+            continue
+        m = entry['model']
+        if m not in model_entries:
+            model_entries[m] = []
+        model_entries[m].append(entry)
+
+    for m, entries in model_entries.items():
+        if len(entries) < 2:
+            continue
+        best = min(entries, key=lambda e: e['rework_rate'])
+        worst = max(entries, key=lambda e: e['rework_rate'])
+        if best['rework_rate'] > 0 and worst['rework_rate'] / best['rework_rate'] >= 2:
+            insights.append(
+                f"{m} has {worst['rework_rate'] / best['rework_rate']:.1f}x higher rework rate "
+                f"on {worst['stack']} ({worst['rework_rate']}%) vs {best['stack']} ({best['rework_rate']}%)."
+            )
+            break  # max one cross-stack insight
+
     # Find worst rework rate across stacks
-    worst = [e for e in matrix if e['rated'] >= 3]
-    if worst:
-        worst_entry = max(worst, key=lambda e: e['rework_rate'])
+    worst_all = [e for e in matrix if e['rated'] >= 3]
+    if worst_all:
+        worst_entry = max(worst_all, key=lambda e: e['rework_rate'])
         if worst_entry['rework_rate'] > 20:
             insights.append(
                 f"High rework rate for {worst_entry['model']} on {worst_entry['stack']}: "
@@ -280,164 +433,5 @@ def _generate_stack_insights(matrix):
     return insights
 
 
-# --- Trend Analysis ---
-
-def get_model_trend(model=None, project=None, granularity='weekly'):
-    """Returns weekly/daily rework rate trends per model."""
-    params = []
-    where_parts = ["s.model IS NOT NULL", "s.model != ''", "s.model NOT LIKE '<%%>'", "s.outcome IS NOT NULL"]
-
-    if model:
-        where_parts.append("s.model = %s")
-        params.append(model)
-    if project:
-        where_parts.append("s.project_name = %s")
-        params.append(project)
-
-    # Only look at last 6 months max
-    cutoff = datetime.now(timezone.utc) - timedelta(days=180)
-    where_parts.append("s.started_at > %s")
-    params.append(cutoff)
-
-    trunc = 'week' if granularity == 'weekly' else 'day'
-    where_sql = " AND ".join(where_parts)
-
-    rows = execute(f"""
-        SELECT
-            s.model,
-            date_trunc('{trunc}', s.started_at) AS period,
-            COUNT(*) AS total,
-            COUNT(*) FILTER (WHERE s.outcome = 'ok') AS ok,
-            COUNT(*) FILTER (WHERE s.outcome = 'needs_fix') AS needs_fix,
-            COUNT(*) FILTER (WHERE s.outcome = 'reverted') AS reverted
-        FROM sessions s
-        WHERE {where_sql}
-        GROUP BY s.model, date_trunc('{trunc}', s.started_at)
-        ORDER BY s.model, period
-    """, params, fetch=True)
-
-    # Group by model
-    model_periods = {}
-    for r in (rows or []):
-        m = r['model']
-        if m not in model_periods:
-            model_periods[m] = []
-        total = int(r['total'])
-        nf = int(r['needs_fix'])
-        rev = int(r['reverted'])
-        rated = int(r['ok']) + nf + rev
-        rework_rate = round((nf + rev) / rated * 100, 1) if rated > 0 else 0.0
-        model_periods[m].append({
-            'period': r['period'].isoformat() if r['period'] else None,
-            'total': total,
-            'rated': rated,
-            'rework_rate': rework_rate,
-        })
-
-    trends = []
-    for m, periods in model_periods.items():
-        # Calculate direction and 4-week delta
-        direction = 'stable'
-        delta_4w = 0.0
-        if len(periods) >= 2:
-            recent = periods[-1]['rework_rate']
-            older = periods[-min(4, len(periods))]['rework_rate']
-            delta_4w = round(recent - older, 1)
-            if delta_4w > 5:
-                direction = 'worsening'
-            elif delta_4w < -5:
-                direction = 'improving'
-
-        trends.append({
-            'model': m,
-            'periods': periods,
-            'direction': direction,
-            'delta_4w': delta_4w,
-        })
-
-    return {'trends': trends}
-
-
-# --- Recommendation ---
-
-def recommend_model(project=None, stack=None):
-    """Simple recommendation: filter models with >5 sessions for stack,
-    sort by quality_score DESC then cost_per_success ASC."""
-    cutoff = _parse_period('90d')
-    params = []
-    where_parts = ["s.model IS NOT NULL", "s.model != ''", "s.model NOT LIKE '<%%>'", "s.outcome IS NOT NULL"]
-
-    where_parts.append("s.started_at > %s")
-    params.append(cutoff)
-
-    if project:
-        where_parts.append("s.project_name = %s")
-        params.append(project)
-
-    join_clause = ""
-    if stack:
-        join_clause = " JOIN ai_file_touches ft ON ft.session_id = s.id"
-        exts = [ext for ext, s_name in STACK_MAP.items() if s_name == stack]
-        if exts:
-            where_parts.append(f"({' OR '.join('ft.file_path LIKE %s' for _ in exts)})")
-            params.extend(f'%{ext}' for ext in exts)
-
-    where_sql = " AND ".join(where_parts)
-
-    rows = execute(f"""
-        SELECT
-            s.model,
-            COUNT(DISTINCT s.id) AS rated,
-            COUNT(DISTINCT s.id) FILTER (WHERE s.outcome = 'ok') AS ok,
-            COUNT(DISTINCT s.id) FILTER (WHERE s.outcome = 'needs_fix') AS needs_fix,
-            COUNT(DISTINCT s.id) FILTER (WHERE s.outcome = 'reverted') AS reverted,
-            SUM(COALESCE(s.cost_estimate, 0)) AS total_cost,
-            AVG(s.outcome_severity::int) FILTER (WHERE s.outcome_severity IS NOT NULL) AS avg_severity
-        FROM sessions s
-        {join_clause}
-        WHERE {where_sql}
-        GROUP BY s.model
-        HAVING COUNT(DISTINCT s.id) > 5
-        ORDER BY COUNT(DISTINCT s.id) DESC
-    """, params, fetch=True)
-
-    if not rows:
-        return {'recommended': None, 'reason': 'Not enough data', 'alternative': None}
-
-    candidates = []
-    for r in rows:
-        rated = int(r['rated'])
-        ok = int(r['ok'])
-        nf = int(r['needs_fix'])
-        rev = int(r['reverted'])
-        avg_sev = float(r['avg_severity']) if r.get('avg_severity') else None
-        total_cost = float(r.get('total_cost') or 0)
-        score = calculate_quality_score(ok, nf, rev, rated, avg_sev)
-        cost_per_success = round(total_cost / ok, 4) if ok > 0 and total_cost > 0 else 999.0
-
-        candidates.append({
-            'model': r['model'],
-            'quality_score': score,
-            'cost_per_success': cost_per_success,
-            'rated': rated,
-            'rework_rate': round((nf + rev) / rated * 100, 1) if rated > 0 else 0.0,
-        })
-
-    # Sort: quality_score DESC, then cost_per_success ASC
-    candidates.sort(key=lambda c: (-c['quality_score'], c['cost_per_success']))
-
-    best = candidates[0]
-    alt = candidates[1] if len(candidates) > 1 else None
-
-    stack_hint = f" for {stack}" if stack else ""
-    reason = (
-        f"Highest quality score ({best['quality_score']}) with "
-        f"{best['rework_rate']}% rework rate{stack_hint} "
-        f"across {best['rated']} sessions."
-    )
-
-    return {
-        'recommended': best['model'],
-        'reason': reason,
-        'alternative': alt['model'] if alt else None,
-    }
+# Trend + Recommendation live in model_trend_service.py (Split wg. Zeilenlimit)
+from services.model_trend_service import get_model_trend, recommend_model  # noqa: F401, E402
