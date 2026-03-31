@@ -49,11 +49,11 @@ def api_session_filters():
         fetch=True
     )
     projects = execute(
-        "SELECT DISTINCT project_name FROM sessions WHERE project_name IS NOT NULL ORDER BY project_name",
+        "SELECT DISTINCT project_name FROM sessions WHERE project_name IS NOT NULL AND project_name != 'home' AND project_name != 'gemini_sessions' ORDER BY project_name",
         fetch=True
     )
     models = execute(
-        "SELECT DISTINCT model FROM sessions WHERE model IS NOT NULL ORDER BY model",
+        "SELECT DISTINCT model FROM sessions WHERE model IS NOT NULL AND model != '' AND model NOT LIKE '<%>' ORDER BY model",
         fetch=True
     )
     outcomes = execute(

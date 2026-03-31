@@ -174,7 +174,7 @@ def get_model_by_stack(period='90d', project=None):
     """Returns stack-specific metrics matrix."""
     cutoff = _parse_period(period)
     params = []
-    where_parts = ["s.model IS NOT NULL", "s.model != ''", "ft.file_path IS NOT NULL"]
+    where_parts = ["s.model IS NOT NULL", "s.model != ''", "s.model NOT LIKE '<%%>'", "ft.file_path IS NOT NULL"]
 
     if cutoff:
         where_parts.append("s.started_at > %s")
@@ -285,7 +285,7 @@ def _generate_stack_insights(matrix):
 def get_model_trend(model=None, project=None, granularity='weekly'):
     """Returns weekly/daily rework rate trends per model."""
     params = []
-    where_parts = ["s.model IS NOT NULL", "s.model != ''", "s.outcome IS NOT NULL"]
+    where_parts = ["s.model IS NOT NULL", "s.model != ''", "s.model NOT LIKE '<%%>'", "s.outcome IS NOT NULL"]
 
     if model:
         where_parts.append("s.model = %s")
@@ -365,7 +365,7 @@ def recommend_model(project=None, stack=None):
     sort by quality_score DESC then cost_per_success ASC."""
     cutoff = _parse_period('90d')
     params = []
-    where_parts = ["s.model IS NOT NULL", "s.model != ''", "s.outcome IS NOT NULL"]
+    where_parts = ["s.model IS NOT NULL", "s.model != ''", "s.model NOT LIKE '<%%>'", "s.outcome IS NOT NULL"]
 
     where_parts.append("s.started_at > %s")
     params.append(cutoff)
