@@ -1,10 +1,12 @@
 """
-SPEC-AUDIT-ANALYZER-LLM-001 + GATING-001: LLM-basierter Audit-Analyzer via Perplexity.
-Opt-in via AUDIT_LLM_ANALYZER_ENABLED=1. Gating via AUDIT_LLM_DEFAULT_MODE,
-AUDIT_LLM_ALLOWED_PRIORITIES, AUDIT_LLM_ALLOWED_RISK_LEVELS und per-Requirement llm_mode.
+SPEC-AUDIT-ANALYZER-LLM-001 + GATING-001 + PERSISTENCE-LLM-001:
+LLM-basierter Audit-Analyzer via Perplexity mit Gating und stabiler Evidence-Shape.
 Aendert niemals AuditResult.status, ergaenzt nur evidence["llm_review"].
 """
 import json
+from datetime import datetime, timezone
+
+_ANALYZER_VERSION = "0.1.0"
 
 from config import (
     AUDIT_LLM_ANALYZER_ENABLED,
@@ -113,15 +115,30 @@ def _analyze_single_requirement(spec_id, req, result, changed_files):
         response = query_perplexity(messages, temperature=0.0)
         parsed = _parse_llm_response(response.get("content", ""))
 
-        if parsed:
-            evidence["llm_review"] = parsed
-        else:
-            evidence["llm_review"] = {"opinion": "unknown", "comment": "LLM-Antwort nicht parsbar"}
+        review = parsed if parsed else {"opinion": "unknown", "comment": "LLM-Antwort nicht parsbar"}
+        review["model"] = response.get("model", "unknown")
+        review["created_at"] = datetime.now(timezone.utc).isoformat()
+        review["analyzer_version"] = _ANALYZER_VERSION
+        evidence["llm_review"] = review
+        evidence.pop("llm_review_error", None)
 
-    except (PerplexityConfigError, PerplexityRequestError, PerplexityAPIError) as e:
-        evidence["llm_review_error"] = str(e)
+    except PerplexityAPIError as e:
+        evidence["llm_review_error"] = {
+            "code": "connector_error",
+            "message": str(e),
+            "status_code": e.status_code,
+        }
+    except (PerplexityConfigError, PerplexityRequestError) as e:
+        code = "timeout" if "timeout" in str(e).lower() else "connector_error"
+        evidence["llm_review_error"] = {
+            "code": code,
+            "message": str(e),
+        }
     except Exception as e:
-        evidence["llm_review_error"] = f"Unerwarteter Fehler: {e}"
+        evidence["llm_review_error"] = {
+            "code": "connector_error",
+            "message": f"Unerwarteter Fehler: {e}",
+        }
 
     return result.model_copy(update={"evidence": evidence})
 

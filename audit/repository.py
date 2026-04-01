@@ -4,7 +4,7 @@ Lokales Pattern nur fuer das Audit-Modul, kein projektweiter Umbau.
 DB-Zugriffe ueber bestehenden db_service.
 """
 from services.db_service import execute, ensure_audit_schema
-from audit.models import Spec, Requirement
+from audit.models import AuditResponse, AuditResult, RequirementStatus, OverallStatus, Spec, Requirement
 
 
 class SpecNotFoundError(Exception):
@@ -119,6 +119,77 @@ def save_spec(spec: Spec) -> Spec:
         )
 
     return get_spec(spec.spec_id)
+
+
+def save_audit_response(response: AuditResponse) -> int:
+    """Speichert einen Audit-Lauf mit Einzelergebnissen in der DB.
+
+    Returns:
+        run_id des gespeicherten Laufs.
+    """
+    ensure_audit_schema()
+
+    row = execute(
+        """INSERT INTO audit_runs (spec_id, started_at, finished_at,
+                                    overall_status, input_facts)
+           VALUES (%s, %s, %s, %s, %s::jsonb)
+           RETURNING id""",
+        (response.spec_id, response.started_at, response.finished_at,
+         response.overall_status.value, _to_json(response.input_facts)),
+        fetchone=True,
+    )
+    run_id = row["id"]
+
+    for result in response.results:
+        execute(
+            """INSERT INTO audit_results (run_id, requirement_key, status,
+                                          notes, evidence)
+               VALUES (%s, %s, %s, %s, %s::jsonb)""",
+            (run_id, result.requirement_key, result.status.value,
+             result.notes, _to_json(result.evidence) if result.evidence else None),
+        )
+
+    return run_id
+
+
+def load_audit_results(run_id: int) -> list[AuditResult]:
+    """Laedt Audit-Ergebnisse fuer einen Run aus der DB.
+
+    Returns:
+        Liste von AuditResult-Objekten mit evidence aus JSONB.
+    """
+    ensure_audit_schema()
+
+    rows = execute(
+        """SELECT requirement_key, status, notes, evidence
+           FROM audit_results
+           WHERE run_id = %s
+           ORDER BY id""",
+        (run_id,),
+        fetch=True,
+    ) or []
+
+    return [
+        AuditResult(
+            requirement_key=r["requirement_key"],
+            status=RequirementStatus(r["status"]),
+            notes=r.get("notes"),
+            evidence=r.get("evidence"),
+        )
+        for r in rows
+    ]
+
+
+def load_audit_run(run_id: int) -> dict:
+    """Laedt einen Audit-Run (Metadaten ohne Results)."""
+    ensure_audit_schema()
+
+    row = execute(
+        "SELECT * FROM audit_runs WHERE id = %s",
+        (run_id,),
+        fetchone=True,
+    )
+    return dict(row) if row else None
 
 
 def _to_json(value) -> str:

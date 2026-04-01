@@ -252,7 +252,8 @@ class TestFlagOnError:
         # Results muessen zurueckkommen, ggf. mit error-evidence
         for r in out:
             if r.evidence and "llm_review_error" in r.evidence:
-                assert "Timeout" in r.evidence["llm_review_error"]
+                assert r.evidence["llm_review_error"]["code"] == "timeout"
+                assert "Timeout" in r.evidence["llm_review_error"]["message"]
 
     @patch("audit.analyzers.AUDIT_LLM_ANALYZER_ENABLED", True)
     @patch("audit.analyzers.AUDIT_LLM_MAX_REQUIREMENTS", 10)
