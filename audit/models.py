@@ -38,6 +38,7 @@ class Requirement(BaseModel):
     acceptance_criteria: list[str] = Field(default_factory=list)
     affected_areas: list[str] = Field(default_factory=list)
     sort_order: int = 0
+    llm_mode: str = "inherit"
 
 
 class Spec(BaseModel):
