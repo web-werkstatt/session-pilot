@@ -351,3 +351,116 @@ def ensure_file_touch_schema():
             END $$
         """)
         _file_touch_ready = True
+
+
+_project_identity_ready = False
+_project_identity_lock = threading.Lock()
+
+
+def ensure_project_identity_schema():
+    """SPEC-PROJECT-MEMORY-001: Projekt-Identity-Tabelle"""
+    global _project_identity_ready
+    if _project_identity_ready:
+        return
+    with _project_identity_lock:
+        if _project_identity_ready:
+            return
+        execute("""
+            CREATE TABLE IF NOT EXISTS projects (
+                id SERIAL PRIMARY KEY,
+                name VARCHAR(255) NOT NULL UNIQUE,
+                path TEXT NOT NULL,
+                category VARCHAR(100),
+                topic VARCHAR(100),
+                tags JSONB NOT NULL DEFAULT '[]'::jsonb,
+                status VARCHAR(50),
+                priority VARCHAR(50),
+                project_type VARCHAR(100),
+                ai_policy_level VARCHAR(50),
+                source_updated_at TIMESTAMPTZ,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            )
+        """)
+        execute("CREATE INDEX IF NOT EXISTS idx_projects_path ON projects(path)")
+        _project_identity_ready = True
+
+
+_audit_schema_ready = False
+_audit_schema_lock = threading.Lock()
+
+
+def ensure_audit_schema():
+    """SPEC-AUDIT-001: Tabellen fuer Spec-Audit-System"""
+    global _audit_schema_ready
+    if _audit_schema_ready:
+        return
+    with _audit_schema_lock:
+        if _audit_schema_ready:
+            return
+
+        # Specs: Hauptdatensatz einer Spezifikation
+        execute("""
+            CREATE TABLE IF NOT EXISTS specs (
+                id SERIAL PRIMARY KEY,
+                spec_id VARCHAR(64) UNIQUE NOT NULL,
+                title VARCHAR(500) NOT NULL,
+                summary TEXT,
+                project_mode VARCHAR(50),
+                lifecycle_stage VARCHAR(50),
+                risk_level VARCHAR(20),
+                status VARCHAR(20) DEFAULT 'draft',
+                created_at TIMESTAMPTZ DEFAULT NOW(),
+                updated_at TIMESTAMPTZ DEFAULT NOW()
+            )
+        """)
+        execute("CREATE INDEX IF NOT EXISTS idx_specs_spec_id ON specs(spec_id)")
+        execute("CREATE INDEX IF NOT EXISTS idx_specs_status ON specs(status)")
+
+        # Spec-Requirements: atomare Anforderungen pro Spec
+        execute("""
+            CREATE TABLE IF NOT EXISTS spec_requirements (
+                id SERIAL PRIMARY KEY,
+                spec_pk INTEGER NOT NULL REFERENCES specs(id) ON DELETE CASCADE,
+                key VARCHAR(20) NOT NULL,
+                title VARCHAR(500) NOT NULL,
+                description TEXT,
+                priority VARCHAR(10) NOT NULL DEFAULT 'must',
+                source VARCHAR(100),
+                acceptance_criteria JSONB DEFAULT '[]'::jsonb,
+                affected_areas JSONB DEFAULT '[]'::jsonb,
+                sort_order INTEGER DEFAULT 0,
+                UNIQUE(spec_pk, key)
+            )
+        """)
+        execute("CREATE INDEX IF NOT EXISTS idx_spec_req_spec_pk ON spec_requirements(spec_pk)")
+
+        # Audit-Runs: vorbereitet fuer v0.2, in v0.1 nicht persistent beschrieben
+        execute("""
+            CREATE TABLE IF NOT EXISTS audit_runs (
+                id SERIAL PRIMARY KEY,
+                spec_id VARCHAR(64) NOT NULL,
+                started_at TIMESTAMPTZ DEFAULT NOW(),
+                finished_at TIMESTAMPTZ,
+                overall_status VARCHAR(20),
+                input_facts JSONB DEFAULT '{}'::jsonb,
+                created_at TIMESTAMPTZ DEFAULT NOW()
+            )
+        """)
+        execute("CREATE INDEX IF NOT EXISTS idx_audit_runs_spec_id ON audit_runs(spec_id)")
+
+        # Audit-Results: Einzelergebnisse pro Requirement pro Run
+        execute("""
+            CREATE TABLE IF NOT EXISTS audit_results (
+                id SERIAL PRIMARY KEY,
+                run_id INTEGER NOT NULL REFERENCES audit_runs(id) ON DELETE CASCADE,
+                requirement_key VARCHAR(20) NOT NULL,
+                status VARCHAR(30) NOT NULL,
+                notes TEXT,
+                evidence JSONB,
+                created_at TIMESTAMPTZ DEFAULT NOW()
+            )
+        """)
+        execute("CREATE INDEX IF NOT EXISTS idx_audit_results_run_id ON audit_results(run_id)")
+
+        _audit_schema_ready = True
