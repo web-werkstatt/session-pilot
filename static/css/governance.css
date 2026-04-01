@@ -87,6 +87,34 @@
     background: rgba(244, 67, 54, 0.15);
 }
 
+/* Collapsible Governance Sections (project detail) */
+.gov-section { border: 1px solid var(--border-subtle); border-radius: var(--radius); margin-top: var(--space-4); }
+.gov-section-header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: var(--space-3) var(--space-4); cursor: pointer; user-select: none;
+}
+.gov-section-header:hover { background: var(--bg-elevated); }
+.gov-section-header h3 { margin: 0; font-size: var(--text-sm); }
+.gov-section-body { padding: var(--space-3) var(--space-4); }
+.gov-section.collapsed .gov-section-body { display: none; }
+.gov-section-chevron { transition: transform 0.15s; }
+.gov-section.collapsed .gov-section-chevron { transform: rotate(-90deg); }
+
+/* Recommendations */
+.gov-recommendation {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.65rem;
+    color: var(--status-warning);
+    margin-top: 4px;
+    cursor: help;
+}
+.gov-recommendation .icon { width: 12px; height: 12px; }
+.gov-recommendation--mild {
+    color: var(--text-muted);
+}
+
 /* Table */
 .gov-table {
     width: 100%;

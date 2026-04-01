@@ -158,6 +158,21 @@ function renderProject(proj, isNew) {
         portWarnBadge = `<span class="badge" style="background:#4a1a1a;color:#ff5252;font-size:9px;margin-left:5px" title="Port conflict with: ${proj.port_conflict.join(', ')}">PORT!</span>`;
     }
 
+    // Policy-Badge (Sprint 12)
+    let policyBadge = '';
+    if (proj.policy_level != null) {
+        const policyColors = {1: '#2d5a2d', 2: '#ff9800', 3: '#f44336'};
+        const policyLabels = {1: 'SBX', 2: 'CTRL', 3: 'CRIT'};
+        const policyNames = {1: 'Sandbox', 2: 'Controlled', 3: 'Critical'};
+        const policyRestrictions = {
+            1: 'Write: Yes | Review: No | Deploy: Yes',
+            2: 'Write: Yes | Review: Required | Deploy: No',
+            3: 'Write: No | Review: Required | Deploy: No'
+        };
+        const lvl = proj.policy_level;
+        policyBadge = `<span class="badge" style="background:${policyColors[lvl]};font-size:9px;margin-left:5px" title="Policy: ${policyNames[lvl]}\n${policyRestrictions[lvl]}">${policyLabels[lvl]}</span>`;
+    }
+
     // GitHub-Badge (Sprint 3)
     let githubBadge = '';
     if (proj.github) {
@@ -226,7 +241,7 @@ function renderProject(proj, isNew) {
     </div>`;
 
     tr.innerHTML = `
-        <td class="project-name"><span class="pn-icons">${favBtn}</span><span class="pn-text">${activityDot}${namePrefix}${isNew ? '<span class="badge badge-new">NEU</span> ' : ''}${displayName}${typeBadge}${versionBadge}${branchBadge}${portWarnBadge}${githubBadge}${ciBadge}${healthBadge}${relationBadges}</span></td>
+        <td class="project-name"><span class="pn-icons">${favBtn}</span><span class="pn-text">${activityDot}${namePrefix}${isNew ? '<span class="badge badge-new">NEU</span> ' : ''}${displayName}${typeBadge}${versionBadge}${policyBadge}${branchBadge}${portWarnBadge}${githubBadge}${ciBadge}${healthBadge}${relationBadges}</span></td>
         <td class="project-function">${proj.function || '-'}${metaInfo}</td>
         <td>${getGroupBadge(proj.group)}</td>
         <td>${getPriorityBadge(proj.priority)}</td>

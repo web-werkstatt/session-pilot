@@ -35,9 +35,7 @@
     <!-- Tabs -->
     <div class="gov-tabs">
         <button class="gov-tab active" onclick="showGovTab('overview')" data-tab="overview">Overview</button>
-        <button class="gov-tab" onclick="showGovTab('rules')" data-tab="rules">Rule Suggestions</button>
         <button class="gov-tab" onclick="showGovTab('feedback')" data-tab="feedback">Feedback Loop</button>
-        <button class="gov-tab" onclick="showGovTab('snippets')" data-tab="snippets">Export Snippets</button>
     </div>
 
     <!-- Tab: Overview -->
@@ -50,7 +48,7 @@
                         <th>Policy Level</th>
                         <th>Rework %</th>
                         <th>Rules</th>
-                        <th>Last Updated</th>
+                        <th>Last AI-Touch</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -59,41 +57,13 @@
                 </tbody>
             </table>
         </div>
-    </div>
-
-    <!-- Tab: Rule Suggestions -->
-    <div id="tab-rules" class="gov-tab-content">
-        <div class="gov-rules-controls">
-            <select id="ruleProjectSelect" onchange="loadRuleSuggestions(this.value)">
-                <option value="">Select Project...</option>
-            </select>
-            <select id="rulePeriodSelect" onchange="loadRuleSuggestions(document.getElementById('ruleProjectSelect').value)">
-                <option value="30d">Last 30 days</option>
-                <option value="90d" selected>Last 90 days</option>
-                <option value="180d">Last 180 days</option>
-            </select>
-        </div>
-        <div id="rulesList" class="gov-rules-list">
-            <p class="text-muted">Select a project to see rule suggestions.</p>
-        </div>
+        <p style="font-size:var(--text-xs);color:var(--text-muted);margin-top:var(--space-3)">Rule Suggestions, Effectiveness und Export Snippets sind im Governance-Tab der jeweiligen Projekt-Detail-Seite verfuegbar.</p>
     </div>
 
     <!-- Tab: Feedback Loop -->
     <div id="tab-feedback" class="gov-tab-content">
         <div id="feedbackContent" class="gov-feedback">
             <p class="text-muted">Loading feedback analysis...</p>
-        </div>
-    </div>
-
-    <!-- Tab: Export Snippets -->
-    <div id="tab-snippets" class="gov-tab-content">
-        <div class="gov-rules-controls">
-            <select id="snippetProjectSelect" onchange="loadSnippets(this.value)">
-                <option value="">Select Project...</option>
-            </select>
-        </div>
-        <div id="snippetsContent">
-            <p class="text-muted">Select a project to generate export snippets.</p>
         </div>
     </div>
 
@@ -122,18 +92,6 @@
         </div>
     </div>
 
-    <!-- Effectiveness Modal -->
-    <div class="modal-overlay" id="effectivenessModal">
-        <div class="modal" style="max-width:600px">
-            <div class="modal-header">
-                <h3>Rule Effectiveness: <span id="effectivenessProject"></span></h3>
-                <button class="modal-close" onclick="closeModal('effectivenessModal')">&times;</button>
-            </div>
-            <div class="modal-body" id="effectivenessContent">
-                <p class="text-muted">Loading...</p>
-            </div>
-        </div>
-    </div>
 {% endblock %}
 
 {% block scripts %}

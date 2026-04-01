@@ -108,7 +108,7 @@ def update_project_policy(project_name, level, notes=None, allowed_models=None,
         "restrictions": lvl["restrictions"],
         "allowed_models": allowed_models,
         "max_ai_write_scope": max_ai_write_scope,
-        "preferred_workflow": preferred_workflow or lvl["default_workflow"],
+        "preferred_workflow": preferred_workflow or existing_policy.get("preferred_workflow") or lvl["default_workflow"],
         "rules_applied": existing_policy.get("rules_applied", []),
         "notes": notes or existing_policy.get("notes", ""),
         "updated_at": datetime.now(timezone.utc).isoformat(),
@@ -161,6 +161,7 @@ def get_governance_overview():
     summary = {"sandbox": 0, "controlled": 0, "critical": 0}
 
     rework_map = _get_rework_rates()
+    ai_touch_map = _get_last_ai_touch()
 
     if not os.path.isdir(PROJECTS_DIR):
         return {"summary": summary, "projects": []}
@@ -191,11 +192,29 @@ def get_governance_overview():
             "notes": policy.get("notes", ""),
             "allowed_models": policy.get("allowed_models"),
             "rules_applied_count": len(policy.get("rules_applied", [])),
-            "updated_at": policy.get("updated_at"),
+            "last_ai_touch": ai_touch_map.get(entry),
         })
 
     projects.sort(key=lambda p: (-p["level"], p["name"]))
     return {"summary": summary, "projects": projects}
+
+
+def _get_last_ai_touch():
+    """Letzte Session-Startzeit pro Projekt aus Sessions-DB."""
+    try:
+        rows = execute("""
+            SELECT project_name, MAX(started_at) AS last_touch
+            FROM sessions
+            WHERE project_name IS NOT NULL
+            GROUP BY project_name
+        """, fetch=True)
+        result = {}
+        for r in rows or []:
+            if r["last_touch"]:
+                result[r["project_name"]] = r["last_touch"].isoformat()
+        return result
+    except Exception:
+        return {}
 
 
 def _get_rework_rates():

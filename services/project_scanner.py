@@ -220,6 +220,10 @@ def _scan_single_project(item, cache, auto_generate):
         project["milestones"] = project_meta.get("milestones", [])
         project["container_patterns"] = project_meta.get("container_patterns", [])
         project["archived"] = project_meta.get("archived", False)
+        # AI-Policy fuer Dashboard-Badge (Default: Sandbox)
+        ai_pol = project_meta.get("ai_policy", {})
+        project["policy_level"] = ai_pol.get("level", 1)
+        project["policy_level_name"] = ai_pol.get("level_name", "sandbox")
         if project_meta.get("port"):
             project["port"] = project_meta["port"]
         project["project_type"] = detect_project_type(item_path, item)
@@ -317,6 +321,9 @@ def _scan_single_project(item, cache, auto_generate):
                     sub_project["group"] = sub_meta["group"]
                 if sub_meta.get("priority"):
                     sub_project["priority"] = sub_meta["priority"]
+            # Sub-Projekte erben Policy-Level vom Elternprojekt
+            sub_project["policy_level"] = project.get("policy_level", 1)
+            sub_project["policy_level_name"] = project.get("policy_level_name", "sandbox")
             sub_projects[sub_name] = sub_project
 
     return item, project, sub_projects, cache_updated

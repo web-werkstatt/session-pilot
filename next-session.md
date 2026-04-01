@@ -49,6 +49,15 @@
 
 ## Naechste Session
 
+## Audit-Core (SPEC-AUDIT-001)
+
+- **Meilenstein: T0–T8 komplett** (2026-04-01)
+- 32 Tests gruen, alle REQ-IDs (REQ-001 bis REQ-007) adressiert
+- Dateien: audit/{models,repository,rules,service}.py, audit/analyzers/, fixtures/spec_audit_001.py, tests/test_audit_core.py, db_service.py (ensure_audit_schema)
+- audit_runs Tabelle angelegt, in v0.1 nicht persistent (Response-Objekt only)
+- Bekannte Einschraenkung v0.1: save_spec() nicht transaktional (fuer v0.2 vorgemerkt)
+- Naechste Schritte: API-Route, UI, oder LLM-Analyzer nach Bedarf
+
 ### Offene Bugs / Datenluecken
 
 - [ ] joshko (6 Sessions), llm-test (1 Session) - Projektnamen ohne Verzeichnis

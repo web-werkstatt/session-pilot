@@ -1,4 +1,4 @@
-/* Sprint 12: AI Governance */
+/* Sprint 12: AI Governance - Overview Page */
 
 let _govData = null;
 let _editProject = null;
@@ -23,7 +23,6 @@ async function loadGovernanceOverview() {
         _govData = data;
         renderKPIs(data);
         renderTable(data.projects);
-        populateProjectSelects(data.projects);
     } catch (e) {
         console.error('Governance load error:', e);
     }
@@ -47,31 +46,33 @@ function renderTable(projects) {
     }
     tbody.innerHTML = projects.map(p => {
         const reworkClass = p.rework_rate >= 20 ? 'rework-high' : p.rework_rate >= 10 ? 'rework-medium' : 'rework-low';
-        const updated = p.updated_at ? formatTimeAgo(p.updated_at) : '-';
+        const lastTouch = p.last_ai_touch ? formatTimeAgo(p.last_ai_touch) : '-';
+
+        // Empfehlung bei hoher Rework-Rate und niedrigem Level
+        let recommendation = '';
+        if (p.rework_rate >= 20 && p.level < 3) {
+            const nextLevel = p.level + 1;
+            const nextName = {2: 'Controlled', 3: 'Critical'}[nextLevel];
+            recommendation = `<div class="gov-recommendation" title="Rework-Rate ist hoch – strengeres Policy-Level empfohlen"><i data-lucide="alert-triangle" class="icon icon-sm"></i> Level auf '${nextName}' erhoehen?</div>`;
+        } else if (p.rework_rate >= 15 && p.level === 1) {
+            recommendation = `<div class="gov-recommendation gov-recommendation--mild" title="Rework-Rate ueber 15% – Policy-Level pruefen"><i data-lucide="info" class="icon icon-sm"></i> Level pruefen</div>`;
+        }
+
         return `<tr>
             <td><a href="/project/${encodeURIComponent(p.name)}" style="color:var(--accent-link)">${escapeHtml(p.name)}</a></td>
-            <td><span class="policy-badge policy-badge--${p.level_name}">${p.level_name}</span></td>
+            <td><span class="policy-badge policy-badge--${p.level_name}">${p.level_name}</span>${recommendation}</td>
             <td class="${reworkClass}">${p.rework_rate.toFixed(1)}%</td>
             <td>${p.rules_applied_count || 0}</td>
-            <td>${updated}</td>
+            <td>${lastTouch}</td>
             <td>
                 <button class="btn btn-sm btn-secondary" onclick="openPolicyModal('${escapeHtml(p.name)}', ${p.level})">Edit</button>
-                <button class="btn btn-sm btn-ghost" onclick="showEffectiveness('${escapeHtml(p.name)}')" title="Rule Effectiveness">
-                    <i data-lucide="bar-chart-2" class="icon icon-sm"></i>
-                </button>
+                <a href="/project/${encodeURIComponent(p.name)}" class="btn btn-sm btn-ghost" title="Details &amp; Rule Effectiveness">
+                    <i data-lucide="external-link" class="icon icon-sm"></i>
+                </a>
             </td>
         </tr>`;
     }).join('');
     if (typeof lucide !== 'undefined') lucide.createIcons();
-}
-
-function populateProjectSelects(projects) {
-    const selects = ['ruleProjectSelect', 'snippetProjectSelect'];
-    const opts = projects.map(p => `<option value="${escapeHtml(p.name)}">${escapeHtml(p.name)}</option>`).join('');
-    selects.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.innerHTML = '<option value="">Select Project...</option>' + opts;
-    });
 }
 
 // --- Policy Modal ---
@@ -108,56 +109,6 @@ async function savePolicy() {
         loadGovernanceOverview();
     } catch (e) {
         alert('Error saving policy: ' + e.message);
-    }
-}
-
-// --- Rule Suggestions ---
-async function loadRuleSuggestions(project) {
-    const container = document.getElementById('rulesList');
-    if (!project) {
-        container.innerHTML = '<p class="text-muted">Select a project to see rule suggestions.</p>';
-        return;
-    }
-    container.innerHTML = '<p class="text-muted">Loading...</p>';
-    try {
-        const period = document.getElementById('rulePeriodSelect').value;
-        const data = await api.get(`/api/governance/rules/${encodeURIComponent(project)}?period=${period}`);
-        if (!data.rules || !data.rules.length) {
-            container.innerHTML = '<p class="text-muted">No rule suggestions. Either too few sessions or no recurring issues found.</p>';
-            return;
-        }
-        container.innerHTML = data.rules.map(r => `
-            <div class="rule-card">
-                <div class="rule-card__header">
-                    <div>
-                        <span class="rule-card__reason">${escapeHtml(r.reason.replace(/_/g, ' '))}</span>
-                        <span class="rule-card__count">${r.count} occurrences</span>
-                    </div>
-                    <span class="rule-card__confidence confidence--${r.confidence}">${r.confidence}</span>
-                </div>
-                <div class="rule-card__body">${escapeHtml(r.rule)}</div>
-                <div class="rule-card__diff">+ ${escapeHtml(r.claude_md)}</div>
-                <div class="rule-card__actions">
-                    <button class="btn btn-sm btn-primary" onclick="applyRule('${escapeHtml(project)}', '${escapeHtml(r.reason)}', '${escapeHtml(r.claude_md)}')">Apply to project.json</button>
-                    <button class="btn btn-sm btn-secondary" onclick="copySnippet('${escapeHtml(r.claude_md)}')">Copy</button>
-                </div>
-            </div>
-        `).join('');
-    } catch (e) {
-        container.innerHTML = `<p class="text-muted">Error: ${escapeHtml(e.message)}</p>`;
-    }
-}
-
-async function applyRule(project, reason, ruleText) {
-    try {
-        await api.post(`/api/governance/rules/${encodeURIComponent(project)}/apply`, {
-            reason: reason,
-            rule_text: ruleText,
-        });
-        loadRuleSuggestions(project);
-        loadGovernanceOverview();
-    } catch (e) {
-        alert('Error applying rule: ' + e.message);
     }
 }
 
@@ -208,81 +159,4 @@ function renderFeedbackLoop(data) {
         html += '</div>';
     }
     container.innerHTML = html || '<p class="text-muted">No data available.</p>';
-}
-
-// --- Snippets ---
-async function loadSnippets(project) {
-    const container = document.getElementById('snippetsContent');
-    if (!project) {
-        container.innerHTML = '<p class="text-muted">Select a project to generate export snippets.</p>';
-        return;
-    }
-    try {
-        const data = await api.get(`/api/governance/snippets/${encodeURIComponent(project)}`);
-        let html = '';
-        if (data.claude_md) {
-            html += renderSnippetBox('CLAUDE.md', data.claude_md);
-        }
-        if (data.agents_md) {
-            html += renderSnippetBox('AGENTS.md', data.agents_md);
-        }
-        if (data.pre_commit) {
-            html += renderSnippetBox('pre-commit Hook', data.pre_commit);
-        }
-        container.innerHTML = html || '<p class="text-muted">No snippets generated for this policy level.</p>';
-    } catch (e) {
-        container.innerHTML = `<p class="text-muted">Error: ${escapeHtml(e.message)}</p>`;
-    }
-}
-
-function renderSnippetBox(label, content) {
-    const id = 'snippet_' + label.replace(/[^a-z]/gi, '');
-    return `<div class="snippet-box">
-        <div class="snippet-box__label">${escapeHtml(label)}</div>
-        <button class="snippet-box__copy" onclick="copySnippet(document.getElementById('${id}').textContent)">Copy</button>
-        <pre class="snippet-box__content" id="${id}">${escapeHtml(content)}</pre>
-    </div>`;
-}
-
-// --- Effectiveness ---
-async function showEffectiveness(project) {
-    document.getElementById('effectivenessProject').textContent = project;
-    const container = document.getElementById('effectivenessContent');
-    container.innerHTML = '<p class="text-muted">Loading...</p>';
-    openModal('effectivenessModal');
-
-    try {
-        const data = await api.get(`/api/governance/effectiveness/${encodeURIComponent(project)}`);
-        const items = data.effectiveness || [];
-        if (!items.length) {
-            container.innerHTML = '<p class="text-muted">No applied rules found for this project.</p>';
-            return;
-        }
-        container.innerHTML = items.map(e => `
-            <div class="eff-row">
-                <div class="eff-label">
-                    ${escapeHtml(e.rule_text)}
-                    <span class="eff-verdict eff-verdict--${e.verdict}">${e.verdict}</span>
-                </div>
-                <div class="eff-stats">
-                    <span>Before: ${e.before_pct}% (${e.before_total} sessions)</span>
-                    <span>After: ${e.after_pct}% (${e.after_total} sessions)</span>
-                    <span>Change: ${e.diff_pp > 0 ? '+' : ''}${e.diff_pp}pp</span>
-                </div>
-            </div>
-        `).join('');
-    } catch (e) {
-        container.innerHTML = `<p class="text-muted">Error: ${escapeHtml(e.message)}</p>`;
-    }
-}
-
-// --- Helpers ---
-function copySnippet(text) {
-    navigator.clipboard.writeText(text).then(() => {
-        // Brief visual feedback
-        const btn = event.target.closest('.snippet-box__copy') || event.target;
-        const orig = btn.textContent;
-        btn.textContent = 'Copied!';
-        setTimeout(() => btn.textContent = orig, 1500);
-    });
 }
