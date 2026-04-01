@@ -4,6 +4,19 @@
 
 ---
 
+## Session 2026-03-31 - Sprint 11 Model Quality Comparison
+
+### Was wurde erledigt
+- Sprint 11: Model Quality Comparison komplett (Provider aus DB, top_reasons, Security-Malus, Scatter-Chart, Stack-Drilldown)
+- Audit-Core (SPEC-AUDIT-001): T0-T8 komplett, 32 Tests gruen
+
+### Offene Punkte (uebernommen)
+- joshko/llm-test Projektnamen ohne Verzeichnis
+- 80 Sessions ohne Modell, 0/357 mit cost_estimate
+- Docker Image Workflow, Hilfe-Center EN
+
+---
+
 ## Session 2026-03-31 (Abend) - Mobile Fixes + Hilfe-Center Responsive + Docker Image
 
 ### Was wurde erledigt

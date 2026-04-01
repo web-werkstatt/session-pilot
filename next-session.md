@@ -1,99 +1,91 @@
 # Projekt-Dashboard - Naechste Session
 
-> **Letzte Aktualisierung:** 2026-03-31
-> **Status:** Sprint 9 done, Sprint 10 done, Sprint 11 done
-> **Naechste Aufgabe:** Sprint 12 planen oder offene Bugs/Datenluecken angehen
+> **Letzte Aktualisierung:** 2026-04-01
+> **Status:** SPEC-basierte Architektur: Repo-Assessment, Project Memory, Perplexity Connector, Audit LLM Analyzer + Gating + Persistence
+> **Naechste Aufgabe:** PERPLEXITY_API_KEY in .env setzen + Live-Test, dann Sprint 13 planen
 
 ---
 
-## Was wurde in dieser Session gemacht
+## Session 2026-04-01 - Control-Plane & RAG Foundation (6 SPECs)
 
-### Sprint 11: Model Quality Comparison - Spec-Abgleich + Nachruesten
+### Was wurde erledigt
 
-**11.1 Backend: Modell-Qualitaets-Aggregation**
-- `provider`-Feld nachgeruestet: dynamisch aus `model_pricing`-DB-Tabelle (kein Hardcoding)
-- `top_reasons` pro Modell nachgeruestet: `_fetch_top_reasons()` mit Security-Count-Extraktion
-- `outcome_severity::int` Cast-Bug gefixt (Spalte enthaelt Strings wie 'high', nicht Zahlen) - betrifft MV und direkten Query
+**SPEC-REPO-ASSESS-001: Repository Assessment**
+- Vollstaendiger Befund des Repos in docs/repo-assessment-control-plane-rag.md
+- 10 DB-Tabellen dokumentiert, alle Services/Routes/Patterns katalogisiert
+- Top-3 Integrationspunkte und 3 Folgesprints vorgeschlagen
 
-**11.2 Stack-spezifische Fehlerraten**
-- `cost_per_success` pro Model/Stack nachgeruestet
-- Dominanter-Stack-Logik (>50% Touches) statt Mehrfachzaehlung pro File-Touch
-- Cross-Stack-Insight ("2x hoehere Rework-Rate bei TS vs Python")
-- Response-Format auf verschachtelte Struktur umgestellt (gruppiert nach Stack)
+**SPEC-PROJECT-MEMORY-001: Project Identity + Memory Foundation**
+- Neue `projects`-Tabelle via `ensure_project_identity_schema()` (additiv)
+- `services/project_memory_service.py`: aggregiert Sessions, Plans, Governance, File-Touches
+- `GET /api/projects/<name>/memory` Endpoint (200 + 404)
+- 9 Tests
 
-**11.3 Quality-Score**
-- Security-Malus (-10 bei >3 Security-Issues) nachgeruestet
-- Security-Count aus outcome_reasons extrahiert (unabhaengig vom Top-3-Limit)
+**SPEC-PERPLEXITY-CONNECTOR-001: Isolierter Perplexity Connector**
+- `services/perplexity_service.py`: `query_perplexity()` via urllib (analog gitea_service.py)
+- 3 eigene Exceptions: PerplexityConfigError, PerplexityRequestError, PerplexityAPIError
+- Config: PERPLEXITY_API_KEY, _BASE_URL, _MODEL, _TIMEOUT in config.py
+- 19 Tests
 
-**11.4 UI: Modell-Vergleichsseite**
-- Scatter-Plot (Bubble-Chart: $/Success vs Rework-Rate, Bubble=Sessions) nachgeruestet
-- Provider-Tags und Reason-Tags im CSS ergaenzt
+**SPEC-AUDIT-ANALYZER-LLM-001: LLM-basierter Audit-Analyzer**
+- `audit/analyzers/__init__.py`: `run_analyzers()` als Hook in audit/service.py
+- Opt-in via AUDIT_LLM_ANALYZER_ENABLED Feature-Flag
+- Ergaenzt nur evidence["llm_review"], aendert niemals status/overall_status
+- 16 Tests
 
-**11.5 Empfehlungs-Engine**
-- Alternative-Begruendung mit Kostenverhaeltnis ("8x more expensive") nachgeruestet
-- Badge im Projekt-Detail war bereits implementiert
+**SPEC-AUDIT-ANALYZER-GATING-001: Gating Rules**
+- AUDIT_LLM_DEFAULT_MODE (auto/off/on), AUDIT_LLM_ALLOWED_PRIORITIES, _RISK_LEVELS
+- Per-Requirement `llm_mode` Override (inherit/off/on) im Pydantic-Model
+- `_should_run_llm()` Evaluation-Order wie in Spec definiert
+- 24 Tests
 
-**11.6 Trend-Analyse**
-- Sparkline-Tooltip ("Rework: X% -> Y% over N periods") nachgeruestet
-- Period-Format auf ISO-Wochen (2026-W09) umgestellt
+**SPEC-AUDIT-PERSISTENCE-LLM-001: Evidence Persistence**
+- Evidence-Shape angereichert: llm_review +model/created_at/analyzer_version
+- llm_review_error als strukturiertes Objekt {code, message, status_code}
+- `save_audit_response()` + `load_audit_results()` in audit/repository.py
+- 13 Tests
 
-**11.7 Drill-down-Quicklinks**
-- Stack-Filter in Sessions-Endpoint nachgeruestet (`?stack=python`)
-- Stack-Chart onClick-Handler: Klick auf Bar navigiert zu `/sessions?model=X&stack=Y`
+### Git Commits
+```
+340a03e feat: SPEC-AUDIT-PERSISTENCE-LLM-001
+684e2eb feat: SPEC-AUDIT-ANALYZER-GATING-001
+52476b0 feat: SPEC-AUDIT-ANALYZER-LLM-001
+7416c14 feat: SPEC-PERPLEXITY-CONNECTOR-001
+bc66152 feat: SPEC-AUDIT-001 - Audit-Core
+1f38ea7 feat: Sprint 12 - Governance JS-Refactoring
+1ea60ce feat: SPEC-PROJECT-MEMORY-001
+```
 
-**11.8 UI-Implementierung**
-- "Model Comparison →" Link in Session-Analysis nachgeruestet
-- Sidebar-Navigation, Template, CSS, JS waren bereits vollstaendig
+### Test-Status
+- **113 Tests gruen** (9 Project Memory + 19 Perplexity + 32 Audit Core + 16 LLM Analyzer + 24 Gating + 13 Persistence)
 
 ---
 
 ## Naechste Session
 
-## Audit-Core (SPEC-AUDIT-001)
+### Prioritaet 1: Live-Test Perplexity
+- [ ] PERPLEXITY_API_KEY in .env setzen
+- [ ] Manueller Test: `query_perplexity([{"role":"user","content":"test"}])`
+- [ ] AUDIT_LLM_ANALYZER_ENABLED=1 setzen und Audit mit LLM-Evidence testen
 
-- **Meilenstein: T0–T8 komplett** (2026-04-01)
-- 32 Tests gruen, alle REQ-IDs (REQ-001 bis REQ-007) adressiert
-- Dateien: audit/{models,repository,rules,service}.py, audit/analyzers/, fixtures/spec_audit_001.py, tests/test_audit_core.py, db_service.py (ensure_audit_schema)
-- audit_runs Tabelle angelegt, in v0.1 nicht persistent (Response-Objekt only)
-- Bekannte Einschraenkung v0.1: save_spec() nicht transaktional (fuer v0.2 vorgemerkt)
-- Naechste Schritte: API-Route, UI, oder LLM-Analyzer nach Bedarf
+### Prioritaet 2: Sprint 13 planen
+- [ ] Audit-API-Route (POST /api/audit/run, GET /api/audit/results/<run_id>)
+- [ ] Audit-UI Seite mit Ergebnis-Darstellung
+- [ ] Project Memory in Projekt-Detail-Seite einbinden
 
 ### Offene Bugs / Datenluecken
-
 - [ ] joshko (6 Sessions), llm-test (1 Session) - Projektnamen ohne Verzeichnis
 - [ ] 80 Sessions ohne Modell (26x claude, 25x codex, 8x gemini)
 - [ ] 0/357 Sessions haben cost_estimate - Backfill-Script
 - [ ] TOC top: 188px ist hardcoded - sollte dynamisch berechnet werden
 
 ### Docker Image Workflow
-
 - [ ] GitHub Actions Pipeline fuer automatischen Build bei Release/Tag
-- [ ] README auf GitHub mit Docker-Pull-Anleitung aktualisieren
-- [ ] open-source Branch pflegen
-
-### Hilfe-Center
-
-- [ ] Englische Version: content/de/ und content/en/, Language Toggle, 25 Topics
-
-### Offene Punkte aus vorherigen Sessions
-
-- [ ] Woechentlich/Monatlich-Views in Usage Reports testen
-- [ ] Custom Date Range testen
-- [ ] Cache-Tokens separat in Tabelle
-- [ ] OTel verifizieren
-- [ ] Scoring-Tuning: Score-Cap pro Kategorie
 
 ### Nicht vergessen
-
-- Codex-Import unterstuetzt ~/.codex/sessions/YYYY/MM/DD/*.jsonl
-- Bestehende projects-Tabelle existiert NICHT in DB - Projekte = Verzeichnisse + project.json
-- UI komplett Englisch, Mehrsprachigkeit erst Sprint 15
-- Design-Tokens aus static/css/design-tokens.css verwenden
-- Modals ueber base.js openModal(id)/closeModal(id), API-Calls ueber api.js
-- **MODULAR BAUEN:** Eigene Dateien pro Concern
-- **Hilfe-Center Deploy:** Content nach docker-vm:/opt/sessionpilot-hilfe/content/, dann docker restart
-- **Hilfe-Center App Deploy:** scp app.py nach docker-vm, docker cp + docker restart
-- **Bezahl-Module:** Heatmap + Model Analytics + Governance = Starter Pack komplett
-- **Docker Image:** ghcr.io/web-werkstatt/session-pilot - nur vom open-source Branch
+- `projects`-Tabelle existiert jetzt in DB (lazy bootstrap via Project Memory API)
+- Perplexity Connector: nur urllib, kein requests/httpx
+- Audit LLM Analyzer: Feature-Flag AUDIT_LLM_ANALYZER_ENABLED=1 zum Aktivieren
+- Gating: AUDIT_LLM_ALLOWED_PRIORITIES="must,should" zum Filtern
 - **Git Push Safety:** Nur auf Gitea pushen, GitHub nur nach Rueckfrage
-- **VERIFY BEFORE SHIPPING:** Spec Punkt fuer Punkt gegen Code pruefen, echte Daten testen, CSS-Klassen verifizieren
+- **MODULAR BAUEN:** Eigene Dateien pro Concern
