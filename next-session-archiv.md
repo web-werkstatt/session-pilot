@@ -4,6 +4,73 @@
 
 ---
 
+## Session 2026-04-01 - Control-Plane & RAG Foundation + Sprints A-E + Copilot
+
+### Was wurde erledigt
+
+**Erste Haelfte: 6 SPECs (Control-Plane Foundation)**
+- SPEC-REPO-ASSESS-001: Repository Assessment (docs/repo-assessment-control-plane-rag.md)
+- SPEC-PROJECT-MEMORY-001: Project Identity + Memory Foundation (9 Tests)
+- SPEC-PERPLEXITY-CONNECTOR-001: Perplexity Connector via urllib (19 Tests)
+- SPEC-AUDIT-ANALYZER-LLM-001: LLM Audit-Analyzer (16 Tests)
+- SPEC-AUDIT-ANALYZER-GATING-001: Gating Rules (24 Tests)
+- SPEC-AUDIT-PERSISTENCE-LLM-001: Evidence Persistence (13 Tests)
+
+**Zweite Haelfte: Sprints A-E + Copilot (Masterplan-Ausfuehrung)**
+
+Sprint A — Quality Scanner Spec:
+- SPEC-QUALITY-SCANNER-MVP-001 erstellt (sprints/)
+
+Sprint B — Quality Scanner MVP:
+- Scanner validiert, Pfadaufloesung gefixt, History-Felder spec-konform, 20 Tests
+
+Sprint C — Governance Light:
+- GET /api/governance/gate/<project> (green/yellow/red + Reasons)
+- Health-Ampel in Governance-Tabelle, 11 Tests
+
+Sprint D — LLM Command Hub:
+- 3 Markdown-Commands (audit-summary, risk-files, governance-recommendation)
+- POST /api/llm/commands/run, Perplexity-Connector, Persistenz, UI, 15 Tests
+
+Copilot Chat:
+- POST /api/copilot/chat mit Thread-Historie und Plan-Bindung
+- Chat-UI mit Markdown-Rendering, 12 Tests
+
+Sprint E — Plan-Workflow Micro-Ebene:
+- 14 Workflow-Spalten auf project_plans (ALTER TABLE)
+- GET/PUT /api/plans/<id>/workflow mit Ist/Soll/Next
+- Signal-Integration (Quality/Audit/Governance live), 16 Tests
+
+### Git Commits
+```
+7040d27 feat: Session 2026-04-01 — Sprints A-E + Copilot Chat
+91ffa58 docs: Session 2026-04-01 dokumentiert - 6 SPECs implementiert
+340a03e feat: SPEC-AUDIT-PERSISTENCE-LLM-001
+684e2eb feat: SPEC-AUDIT-ANALYZER-GATING-001
+52476b0 feat: SPEC-AUDIT-ANALYZER-LLM-001
+7416c14 feat: SPEC-PERPLEXITY-CONNECTOR-001
+bc66152 feat: SPEC-AUDIT-001 - Audit-Core
+1f38ea7 feat: Sprint 12 - Governance JS-Refactoring
+1ea60ce feat: SPEC-PROJECT-MEMORY-001
+```
+
+### Test-Status
+- **197 Tests gruen** (113 vorherige + 84 neue: 10 Audit-Integration + 20 Quality + 11 Governance + 15 LLM Commands + 12 Copilot + 16 Plan-Workflow)
+
+### Architektur-Kette komplett
+```
+Messen → Auditieren → Bewerten → Steuern → Copilot
+(1-4)    (Audit v1)   (B+C)      (D)       (Chat+E)
+```
+
+### Wichtige Entscheidungen
+- Perplexity als strategischer Copilot (plant, reviewt, generiert Prompts)
+- Claude Code als reiner Executor (fuehrt .md-Prompts aus)
+- Joseph: Produkt, Architektur, Abnahme
+- LLM-agnostischer Connector geplant (Perplexity nur ein Provider)
+
+---
+
 ## Session 2026-03-31 - Sprint 11 Model Quality Comparison
 
 ### Was wurde erledigt
