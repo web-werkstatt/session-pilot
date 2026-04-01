@@ -170,10 +170,10 @@ def save_report(project_path: str, report: QualityReport) -> str:
     os.makedirs(quality_dir, exist_ok=True)
 
     report.history.append({
-        "date": report.scanned_at,
+        "scanned_at": report.scanned_at,
         "score": report.score,
         "score_numeric": report.score_numeric,
-        "issues_count": len([i for i in report.issues if i.status == "open"]),
+        "total_issues": len([i for i in report.issues if i.status == "open"]),
     })
     if len(report.history) > MAX_HISTORY_ENTRIES:
         report.history = report.history[-MAX_HISTORY_ENTRIES:]

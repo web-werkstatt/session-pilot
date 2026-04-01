@@ -324,3 +324,53 @@
         align-items: flex-start;
     }
 }
+
+/* === Sprint E: Workflow Micro-Ebene === */
+
+/* Card Micro-Info */
+.plan-card-micro {
+    margin: 0.4rem 0;
+    padding: 0.4rem 0.5rem;
+    background: rgba(99, 102, 241, 0.06);
+    border-radius: 4px;
+    font-size: 0.75rem;
+    line-height: 1.4;
+}
+.micro-row { margin-bottom: 0.15rem; }
+.micro-label { font-weight: 700; color: var(--text-secondary, #aaa); }
+.micro-next { color: #60a5fa; }
+
+/* Workflow Stage Badges */
+.badge-wf { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; }
+.badge-wf-idea { background: rgba(148,163,184,0.2); color: #94a3b8; }
+.badge-wf-spec_ready { background: rgba(99,102,241,0.2); color: #818cf8; }
+.badge-wf-prompt_ready { background: rgba(168,85,247,0.2); color: #c084fc; }
+.badge-wf-executing { background: rgba(234,179,8,0.2); color: #facc15; }
+.badge-wf-review_pending { background: rgba(249,115,22,0.2); color: #fb923c; }
+.badge-wf-fixed { background: rgba(59,130,246,0.2); color: #60a5fa; }
+.badge-wf-done { background: rgba(34,197,94,0.2); color: #4ade80; }
+.badge-wf-blocked { background: rgba(220,38,38,0.2); color: #f87171; }
+
+/* Executor/Review Badges */
+.badge-exec, .badge-review { font-size: 0.6rem; }
+.badge-exec-done, .badge-review-pass { background: rgba(34,197,94,0.15); color: #4ade80; }
+.badge-exec-failed, .badge-review-fail { background: rgba(220,38,38,0.15); color: #f87171; }
+.badge-exec-running, .badge-exec-pending, .badge-review-pending { background: rgba(234,179,8,0.15); color: #facc15; }
+.badge-review-partial { background: rgba(249,115,22,0.15); color: #fb923c; }
+
+/* Workflow Panel im Modal */
+.plan-workflow-panel {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border-color, #333);
+    font-size: 0.8rem;
+}
+.wf-grid { display: flex; flex-direction: column; gap: 0.5rem; }
+.wf-section { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; }
+.wf-field { flex: 1; min-width: 200px; }
+.wf-label { font-weight: 700; color: var(--text-secondary, #aaa); margin-right: 0.3rem; }
+.wf-next { color: #60a5fa; }
+.wf-signals { font-size: 0.75rem; }
+.wf-signal { padding: 0.1rem 0.4rem; border-radius: 3px; background: rgba(148,163,184,0.1); }
+.wf-gov-green { color: #4ade80; }
+.wf-gov-yellow { color: #facc15; }
+.wf-gov-red { color: #f87171; }

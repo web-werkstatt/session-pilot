@@ -51,6 +51,11 @@ class ProjectQualityScanner:
 
     def scan(self, project_path: str) -> QualityReport:
         """Scannt ein Projekt und erzeugt Quality Report."""
+        # Projektnamen gegen PROJECTS_ROOT aufloesen
+        if not os.path.isabs(project_path):
+            candidate = os.path.join(PROJECTS_ROOT, project_path)
+            if os.path.isdir(candidate):
+                project_path = candidate
         project_path = os.path.abspath(project_path)
         project_name = os.path.basename(project_path)
         total = len(self.checks)

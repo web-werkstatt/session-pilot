@@ -5,6 +5,7 @@ from flask import Blueprint, jsonify, request, render_template
 from routes.api_utils import api_route
 from services.governance_service import (
     get_project_policy,
+    get_governance_gate,
     update_project_policy,
     update_project_workflow,
     get_governance_overview,
@@ -108,6 +109,14 @@ def api_feedback_loop():
     period = request.args.get("period", "90d")
     data = get_feedback_loop_analysis(period=period)
     return jsonify(data)
+
+
+@governance_bp.route("/api/governance/gate/<project>")
+@api_route
+def api_governance_gate(project):
+    """Health-Status (green/yellow/red) fuer ein Projekt aus Quality + Audit."""
+    gate = get_governance_gate(project)
+    return jsonify(gate)
 
 
 @governance_bp.route("/api/governance/snippets/<project>")

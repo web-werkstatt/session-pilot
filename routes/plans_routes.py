@@ -3,8 +3,13 @@ Plans Routes - Uebersicht und Verwaltung von Claude Code Plans
 """
 import markdown
 from flask import Blueprint, jsonify, request, render_template
-from services.db_service import execute, ensure_plans_schema
+from services.db_service import execute, ensure_plans_schema, ensure_plan_workflow_schema
 from services.plans_import import sync_plans
+from services.plan_workflow_service import (
+    get_plan_workflow,
+    update_plan_workflow,
+    get_project_plan_workflows,
+)
 
 plans_bp = Blueprint('plans', __name__)
 
@@ -17,7 +22,7 @@ def plans_page():
 @plans_bp.route('/api/plans')
 def get_plans():
     """Alle Plans aus der DB laden."""
-    ensure_plans_schema()
+    ensure_plan_workflow_schema()
     project = request.args.get('project')
     status = request.args.get('status')
     category = request.args.get('category')
@@ -25,6 +30,8 @@ def get_plans():
     query = """
         SELECT p.id, p.filename, p.title, p.project_name, p.context_summary,
                p.category, p.status, p.session_uuid, p.created_at, p.updated_at,
+               p.workflow_stage, p.current_state, p.target_state, p.next_action,
+               p.latest_executor_status, p.latest_review_status, p.open_items_count,
                s.slug as session_slug
         FROM project_plans p
         LEFT JOIN sessions s ON s.session_uuid = p.session_uuid
@@ -61,6 +68,13 @@ def get_plans():
             'created_at': row['created_at'].isoformat() if row['created_at'] else None,
             'updated_at': row['updated_at'].isoformat() if row['updated_at'] else None,
             'session_slug': row['session_slug'],
+            'workflow_stage': row.get('workflow_stage') or 'idea',
+            'current_state': row.get('current_state'),
+            'target_state': row.get('target_state'),
+            'next_action': row.get('next_action'),
+            'latest_executor_status': row.get('latest_executor_status'),
+            'latest_review_status': row.get('latest_review_status'),
+            'open_items_count': row.get('open_items_count') or 0,
         })
 
     return jsonify({'plans': plans})
@@ -237,3 +251,39 @@ def get_plan_projects():
         projects.append({'name': None, 'count': unassigned['cnt'], 'latest': None})
 
     return jsonify({'projects': projects})
+
+
+# --- Sprint E: Plan-Workflow Micro-Ebene ---
+
+@plans_bp.route('/api/plans/<int:plan_id>/workflow')
+def api_get_plan_workflow(plan_id):
+    """Workflow-/Micro-Daten fuer eine Plan-Card (M2)."""
+    data = get_plan_workflow(plan_id)
+    if not data:
+        return jsonify({'error': 'Plan not found'}), 404
+    return jsonify(data)
+
+
+@plans_bp.route('/api/plans/<int:plan_id>/workflow', methods=['PUT'])
+def api_update_plan_workflow(plan_id):
+    """Workflow-Felder aktualisieren (M2)."""
+    body = request.get_json(silent=True)
+    if not body:
+        return jsonify({'error': 'Request-Body muss JSON sein'}), 400
+    try:
+        result = update_plan_workflow(plan_id, body)
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 400
+    if not result:
+        return jsonify({'error': 'Plan not found'}), 404
+    return jsonify(result)
+
+
+@plans_bp.route('/api/plans/workflow')
+def api_get_project_workflows():
+    """Aggregierte Workflow-Daten fuer ein Projekt (M2 optional)."""
+    project_id = request.args.get('project_id')
+    if not project_id:
+        return jsonify({'error': 'project_id ist erforderlich'}), 400
+    workflows = get_project_plan_workflows(project_id)
+    return jsonify({'workflows': workflows})

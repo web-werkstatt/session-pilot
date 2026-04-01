@@ -118,6 +118,24 @@ function renderPlans() {
             ? `<a href="/sessions/${plan.session_slug}" class="session-link" onclick="event.stopPropagation()"><i data-lucide="bot" class="icon icon-xs"></i> Session</a>`
             : '';
 
+        // Workflow-Badges
+        const wfStage = plan.workflow_stage || 'idea';
+        const wfBadge = `<span class="badge badge-wf badge-wf-${wfStage}">${wfStage.replace('_', ' ')}</span>`;
+        const execBadge = plan.latest_executor_status
+            ? `<span class="badge badge-exec badge-exec-${plan.latest_executor_status}">exec: ${plan.latest_executor_status}</span>` : '';
+        const reviewBadge = plan.latest_review_status
+            ? `<span class="badge badge-review badge-review-${plan.latest_review_status}">review: ${plan.latest_review_status}</span>` : '';
+
+        // Ist/Soll/Next Micro-Info
+        let microInfo = '';
+        if (plan.current_state || plan.target_state || plan.next_action) {
+            microInfo = '<div class="plan-card-micro">';
+            if (plan.current_state) microInfo += `<div class="micro-row"><span class="micro-label">Ist:</span> ${escapeHtml(plan.current_state.substring(0, 80))}</div>`;
+            if (plan.target_state) microInfo += `<div class="micro-row"><span class="micro-label">Soll:</span> ${escapeHtml(plan.target_state.substring(0, 80))}</div>`;
+            if (plan.next_action) microInfo += `<div class="micro-row micro-next"><span class="micro-label">Next:</span> ${escapeHtml(plan.next_action.substring(0, 80))}</div>`;
+            microInfo += '</div>';
+        }
+
         html += `
         <div class="plan-card status-${statusClass}" onclick="showPlan(${plan.id})">
             <div class="plan-card-top">
@@ -126,9 +144,12 @@ function renderPlans() {
             </div>
             <h3 class="plan-card-title">${escapeHtml(plan.title)}</h3>
             ${plan.context_summary ? `<p class="plan-card-context">${escapeHtml(plan.context_summary.substring(0, 120))}${plan.context_summary.length > 120 ? '...' : ''}</p>` : ''}
+            ${microInfo}
             <div class="plan-card-footer">
+                ${wfBadge}
                 <span class="badge badge-cat"><i data-lucide="${catIcon}" class="icon icon-xs"></i> ${plan.category || 'plan'}</span>
                 <span class="badge badge-status badge-${statusClass}">${statusLabel(plan.status)}</span>
+                ${execBadge}${reviewBadge}
                 ${sessionLink}
             </div>
         </div>`;
@@ -196,6 +217,10 @@ function showPlan(id) {
             `;
 
             document.getElementById('modalContent').innerHTML = plan.content_html || '<em>No content</em>';
+
+            // Workflow-Daten laden (Sprint E)
+            _loadPlanWorkflow(id, plan.project_name);
+
             openModal('planModal');
             if (typeof lucide !== 'undefined') lucide.createIcons();
         })
@@ -227,6 +252,51 @@ function syncPlans() {
             btn.disabled = false;
             btn.innerHTML = '<i data-lucide="download" class="icon icon-sm"></i> Import';
             if (typeof lucide !== 'undefined') lucide.createIcons();
+        });
+}
+
+// === Sprint E: Workflow Panel ===
+function _loadPlanWorkflow(planId, projectName) {
+    var panel = document.getElementById('workflowPanel');
+    if (!panel) return;
+    panel.innerHTML = '<span class="text-muted">Workflow laden...</span>';
+
+    api.get('/api/plans/' + planId + '/workflow')
+        .then(function(wf) {
+            var html = '<div class="wf-grid">';
+
+            // Ist / Soll / Next (M6)
+            html += '<div class="wf-section">';
+            html += '<div class="wf-field"><span class="wf-label">Ist:</span> ' + escapeHtml(wf.current_state || '—') + '</div>';
+            html += '<div class="wf-field"><span class="wf-label">Soll:</span> ' + escapeHtml(wf.target_state || '—') + '</div>';
+            html += '<div class="wf-field wf-next"><span class="wf-label">Next:</span> ' + escapeHtml(wf.next_action || '—') + '</div>';
+            html += '</div>';
+
+            // Status-Badges
+            html += '<div class="wf-section">';
+            html += '<span class="badge badge-wf badge-wf-' + (wf.workflow_stage || 'idea') + '">' + (wf.workflow_stage || 'idea').replace('_', ' ') + '</span> ';
+            if (wf.latest_executor_status) html += '<span class="badge badge-exec badge-exec-' + wf.latest_executor_status + '">exec: ' + wf.latest_executor_status + '</span> ';
+            if (wf.latest_review_status) html += '<span class="badge badge-review badge-review-' + wf.latest_review_status + '">review: ' + wf.latest_review_status + '</span> ';
+            html += '</div>';
+
+            // Signale (M7)
+            html += '<div class="wf-section wf-signals">';
+            if (wf.latest_quality_score != null) html += '<span class="wf-signal">Quality: ' + wf.latest_quality_score + '</span> ';
+            if (wf.governance_status) html += '<span class="wf-signal wf-gov-' + wf.governance_status + '">Gov: ' + wf.governance_status + '</span> ';
+            if (wf.latest_audit_status) html += '<span class="wf-signal">Audit: ' + wf.latest_audit_status + '</span> ';
+            if (wf.spec_ref) html += '<span class="wf-signal">Spec: ' + escapeHtml(wf.spec_ref) + '</span> ';
+            html += '</div>';
+
+            // Copilot-Link (M5)
+            if (projectName) {
+                html += '<div class="wf-section"><a href="/copilot?project=' + encodeURIComponent(projectName) + '&plan_id=' + planId + '" class="btn btn-sm btn-secondary">Copilot fuer diesen Plan</a></div>';
+            }
+
+            html += '</div>';
+            panel.innerHTML = html;
+        })
+        .catch(function() {
+            panel.innerHTML = '<span class="text-muted">Workflow nicht verfuegbar</span>';
         });
 }
 

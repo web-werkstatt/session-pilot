@@ -1,0 +1,150 @@
+/* Sprint D: LLM Command Hub Styles */
+
+.llm-run-card {
+    max-width: 700px;
+}
+
+.llm-run-form .form-row {
+    margin-bottom: 0.75rem;
+}
+
+.llm-run-form label {
+    display: block;
+    margin-bottom: 0.25rem;
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: var(--text-secondary, #aaa);
+}
+
+.llm-run-form select,
+.llm-run-form input[type="text"],
+.llm-run-form textarea {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    background: var(--bg-secondary, #1e1e2e);
+    border: 1px solid var(--border-color, #333);
+    border-radius: 6px;
+    color: var(--text-primary, #e0e0e0);
+    font-family: monospace;
+    font-size: 0.85rem;
+    box-sizing: border-box;
+}
+
+.cmd-purpose {
+    padding: 0.5rem 0.75rem;
+    background: rgba(99, 102, 241, 0.1);
+    border-radius: 6px;
+    font-size: 0.8rem;
+    color: var(--text-secondary, #aaa);
+    margin-bottom: 0.75rem;
+}
+
+.form-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.cmd-error {
+    margin-top: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    background: rgba(220, 38, 38, 0.15);
+    border: 1px solid rgba(220, 38, 38, 0.4);
+    border-radius: 6px;
+    color: #f87171;
+    font-size: 0.85rem;
+}
+
+.cmd-loading {
+    margin-top: 0.75rem;
+    color: var(--text-secondary, #aaa);
+    font-size: 0.85rem;
+}
+
+/* Result */
+.cmd-result-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+}
+
+.cmd-result-header h3 { margin: 0; }
+
+.cmd-result-meta {
+    font-size: 0.75rem;
+    color: var(--text-secondary, #aaa);
+    font-family: monospace;
+}
+
+.cmd-result-body {
+    font-size: 0.85rem;
+    line-height: 1.6;
+}
+
+.cmd-result-body pre {
+    background: var(--bg-secondary, #1e1e2e);
+    padding: 0.75rem;
+    border-radius: 6px;
+    overflow-x: auto;
+}
+
+.cmd-result-body table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 0.5rem 0;
+}
+
+.cmd-result-body th,
+.cmd-result-body td {
+    border: 1px solid var(--border-color, #333);
+    padding: 0.4rem 0.6rem;
+    text-align: left;
+    font-size: 0.8rem;
+}
+
+.cmd-error-result {
+    color: #f87171;
+    padding: 0.75rem;
+    background: rgba(220, 38, 38, 0.1);
+    border-radius: 6px;
+}
+
+/* Recent Runs */
+.runs-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.8rem;
+}
+
+.runs-table th {
+    text-align: left;
+    padding: 0.4rem 0.6rem;
+    border-bottom: 1px solid var(--border-color, #333);
+    color: var(--text-secondary, #aaa);
+    font-size: 0.75rem;
+}
+
+.runs-table td {
+    padding: 0.4rem 0.6rem;
+    border-bottom: 1px solid var(--border-color, #222);
+}
+
+.run-row {
+    cursor: pointer;
+}
+
+.run-row:hover {
+    background: var(--bg-secondary, #1e1e2e);
+}
+
+.run-success { color: #4ade80; font-weight: 600; }
+.run-failure { color: #f87171; font-weight: 600; }
+
+.run-output {
+    padding: 0.75rem;
+    font-size: 0.8rem;
+    line-height: 1.5;
+    max-height: 300px;
+    overflow-y: auto;
+}

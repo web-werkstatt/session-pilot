@@ -29,6 +29,9 @@ from routes.analytics_routes import analytics_bp
 from routes.model_comparison_routes import model_comparison_bp
 from routes.governance_routes import governance_bp
 from routes.project_memory_routes import project_memory_bp
+from routes.audit_routes import audit_bp
+from routes.llm_command_routes import llm_commands_bp
+from routes.copilot_routes import copilot_bp
 
 
 def register_blueprints(app):
@@ -62,3 +65,6 @@ def register_blueprints(app):
     app.register_blueprint(model_comparison_bp)
     app.register_blueprint(governance_bp)
     app.register_blueprint(project_memory_bp)
+    app.register_blueprint(audit_bp)
+    app.register_blueprint(llm_commands_bp)
+    app.register_blueprint(copilot_bp)

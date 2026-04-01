@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Copilot{% endblock %}
+{% block breadcrumb %}Perplexity Copilot{% endblock %}
+
+{% block head_extra %}
+<link rel="stylesheet" href="/static/css/copilot.css?v={{ cache_bust }}">
+{% endblock %}
+
+{% block content %}
+    <div class="copilot-layout">
+        <!-- Sidebar: Projekt + Thread -->
+        <div class="copilot-sidebar">
+            <div class="form-row">
+                <label for="copilotProject">Projekt</label>
+                <input type="text" id="copilotProject" placeholder="z.B. project_dashboard" autocomplete="off">
+            </div>
+            <div class="form-row">
+                <label for="copilotThread">Thread</label>
+                <div class="thread-row">
+                    <input type="text" id="copilotThread" placeholder="Auto-generiert" readonly>
+                    <button class="btn btn-sm btn-secondary" onclick="newThread()" title="Neuer Thread">+</button>
+                </div>
+            </div>
+            <button class="btn btn-secondary btn-block" onclick="loadHistory()">Verlauf laden</button>
+        </div>
+
+        <!-- Chat -->
+        <div class="copilot-chat">
+            <div id="chatMessages" class="chat-messages"></div>
+
+            <div class="chat-input-area">
+                <div id="chatError" class="chat-error" style="display:none"></div>
+                <div class="chat-input-row">
+                    <textarea id="chatInput" rows="2" placeholder="Nachricht an den Copilot..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMessage()}"></textarea>
+                    <button id="btnSend" class="btn btn-primary" onclick="sendMessage()">Senden</button>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/marked.min.js"></script>
+<script src="/static/js/copilot.js?v={{ cache_bust }}"></script>
+{% endblock %}

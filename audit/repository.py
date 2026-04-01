@@ -181,12 +181,36 @@ def load_audit_results(run_id: int) -> list[AuditResult]:
 
 
 def load_audit_run(run_id: int) -> dict:
-    """Laedt einen Audit-Run (Metadaten ohne Results)."""
+    """Laedt einen Audit-Run (Metadaten ohne Results), inkl. spec_title."""
     ensure_audit_schema()
 
     row = execute(
-        "SELECT * FROM audit_runs WHERE id = %s",
+        """SELECT ar.*, s.title AS spec_title
+           FROM audit_runs ar
+           LEFT JOIN specs s ON s.spec_id = ar.spec_id
+           WHERE ar.id = %s""",
         (run_id,),
+        fetchone=True,
+    )
+    return dict(row) if row else None
+
+
+def load_latest_run_for_spec(spec_id: str) -> dict | None:
+    """Laedt den neuesten Audit-Run fuer eine spec_id, inkl. spec_title.
+
+    Returns:
+        Dict mit Run-Metadaten oder None wenn kein Run existiert.
+    """
+    ensure_audit_schema()
+
+    row = execute(
+        """SELECT ar.*, s.title AS spec_title
+           FROM audit_runs ar
+           LEFT JOIN specs s ON s.spec_id = ar.spec_id
+           WHERE ar.spec_id = %s
+           ORDER BY ar.started_at DESC
+           LIMIT 1""",
+        (spec_id,),
         fetchone=True,
     )
     return dict(row) if row else None

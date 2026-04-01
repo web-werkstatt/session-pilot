@@ -41,7 +41,7 @@ function renderKPIs(data) {
 function renderTable(projects) {
     const tbody = document.getElementById('govTableBody');
     if (!projects || !projects.length) {
-        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No projects with policy data.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No projects with policy data.</td></tr>';
         return;
     }
     tbody.innerHTML = projects.map(p => {
@@ -60,6 +60,7 @@ function renderTable(projects) {
 
         return `<tr>
             <td><a href="/project/${encodeURIComponent(p.name)}" style="color:var(--accent-link)">${escapeHtml(p.name)}</a></td>
+            <td><span class="gov-health-badge" id="health-${CSS.escape(p.name)}" title="Loading...">...</span></td>
             <td><span class="policy-badge policy-badge--${p.level_name}">${p.level_name}</span>${recommendation}</td>
             <td class="${reworkClass}">${p.rework_rate.toFixed(1)}%</td>
             <td>${p.rules_applied_count || 0}</td>
@@ -73,6 +74,31 @@ function renderTable(projects) {
         </tr>`;
     }).join('');
     if (typeof lucide !== 'undefined') lucide.createIcons();
+
+    // Health-Ampeln asynchron laden (nicht blockierend)
+    _loadHealthBadges(projects);
+}
+
+async function _loadHealthBadges(projects) {
+    const statusIcons = { green: '\u25CF', yellow: '\u25CF', red: '\u25CF' };
+    for (const p of projects) {
+        try {
+            const gate = await api.get('/api/governance/gate/' + encodeURIComponent(p.name));
+            const el = document.getElementById('health-' + CSS.escape(p.name));
+            if (el) {
+                el.className = 'gov-health-badge gov-health--' + gate.status;
+                el.textContent = statusIcons[gate.status] || '?';
+                el.title = gate.reasons.join('; ') || gate.status;
+            }
+        } catch (e) {
+            const el = document.getElementById('health-' + CSS.escape(p.name));
+            if (el) {
+                el.className = 'gov-health-badge gov-health--unknown';
+                el.textContent = '?';
+                el.title = 'Gate nicht verfuegbar';
+            }
+        }
+    }
 }
 
 // --- Policy Modal ---

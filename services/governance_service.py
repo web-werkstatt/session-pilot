@@ -57,6 +57,123 @@ POLICY_LEVELS = {
 }
 
 
+# --- Governance Gate: Health-Status aus Quality + Audit ---
+
+# Konfigurierbare Schwellenwerte
+GATE_THRESHOLDS = {
+    "quality_red": 40,       # Score unter 40 → rot
+    "quality_yellow": 60,    # Score unter 60 → gelb
+    "audit_stale_days": 30,  # Audit aelter als 30 Tage → gelb-Signal
+}
+
+
+def get_governance_gate(project_name):
+    """Leitet Governance-Health-Status (green/yellow/red) aus Quality + Audit ab.
+
+    Deterministische Regeln, kein ML, kein Blocking.
+    Returns dict mit: project, status, reasons[], policy_level,
+                      quality_summary, audit_summary.
+    """
+    reasons = []
+    signals = []  # "red" oder "yellow" Signale sammeln
+
+    # 1. Policy laden
+    policy = get_project_policy(project_name)
+    policy_level = policy.get("level_name", "sandbox")
+
+    # 2. Quality-Report laden
+    quality_summary = _load_quality_summary(project_name)
+    if quality_summary is None:
+        reasons.append("Kein Quality-Report vorhanden")
+        signals.append("yellow")
+    else:
+        score = quality_summary.get("score_numeric", 0)
+        if score < GATE_THRESHOLDS["quality_red"]:
+            reasons.append(f"Quality Score {score} unter {GATE_THRESHOLDS['quality_red']}")
+            signals.append("red")
+        elif score < GATE_THRESHOLDS["quality_yellow"]:
+            reasons.append(f"Quality Score {score} unter {GATE_THRESHOLDS['quality_yellow']}")
+            signals.append("yellow")
+
+    # 3. Letzten Audit-Run laden
+    audit_summary = _load_audit_summary(project_name)
+    if audit_summary is None:
+        reasons.append("Kein Audit-Run vorhanden")
+        signals.append("yellow")
+    else:
+        overall = audit_summary.get("overall_status")
+        if overall == "FAIL":
+            reasons.append("Letzter Audit FAIL")
+            signals.append("red")
+        elif overall in ("PARTIAL", "UNSICHER"):
+            reasons.append(f"Letzter Audit {overall}")
+            signals.append("yellow")
+
+    # 4. Status ableiten: haertestes Signal gewinnt
+    if "red" in signals:
+        status = "red"
+    elif "yellow" in signals:
+        status = "yellow"
+    else:
+        status = "green"
+        if not reasons:
+            reasons.append("Alle Checks bestanden")
+
+    return {
+        "project": project_name,
+        "status": status,
+        "reasons": reasons,
+        "policy_level": policy_level,
+        "quality_summary": quality_summary,
+        "audit_summary": audit_summary,
+    }
+
+
+def _load_quality_summary(project_name):
+    """Laedt Quality-Report-Summary vom Dateisystem. Returns None wenn nicht vorhanden."""
+    report_path = os.path.join(PROJECTS_DIR, project_name, ".quality", "report.json")
+    if not os.path.exists(report_path):
+        return None
+    try:
+        with open(report_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        return {
+            "score": data.get("score", "?"),
+            "score_numeric": data.get("score_numeric", 0),
+            "total_issues": data.get("summary", {}).get("total_issues", 0),
+            "errors": data.get("summary", {}).get("errors", 0),
+            "warnings": data.get("summary", {}).get("warnings", 0),
+            "scanned_at": data.get("scanned_at"),
+        }
+    except (json.JSONDecodeError, OSError):
+        return None
+
+
+def _load_audit_summary(project_name):
+    """Laedt den neuesten Audit-Run fuer ein Projekt. Returns None wenn keiner existiert."""
+    try:
+        # Suche nach Audit-Runs die zum Projekt passen
+        rows = execute(
+            """SELECT ar.id, ar.spec_id, ar.overall_status, ar.started_at, ar.finished_at
+               FROM audit_runs ar
+               WHERE ar.spec_id ILIKE %s
+               ORDER BY ar.started_at DESC
+               LIMIT 1""",
+            (f"%{project_name}%",),
+            fetchone=True,
+        )
+        if not rows:
+            return None
+        return {
+            "run_id": rows["id"],
+            "spec_id": rows["spec_id"],
+            "overall_status": rows["overall_status"],
+            "started_at": rows["started_at"].isoformat() if rows.get("started_at") else None,
+        }
+    except Exception:
+        return None
+
+
 def get_project_policy(project_name):
     """Liefert ai_policy fuer ein Projekt. Fallback auf Sandbox-Default."""
     project_path = os.path.join(PROJECTS_DIR, project_name)

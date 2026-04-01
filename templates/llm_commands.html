@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}LLM Command Hub{% endblock %}
+{% block breadcrumb %}LLM Command Hub{% endblock %}
+
+{% block head_extra %}
+<link rel="stylesheet" href="/static/css/llm-commands.css?v={{ cache_bust }}">
+{% endblock %}
+
+{% block content %}
+    <!-- Command Runner -->
+    <div class="card llm-run-card">
+        <h3>Command ausfuehren</h3>
+        <div class="llm-run-form">
+            <div class="form-row">
+                <label for="cmdSelect">Command</label>
+                <select id="cmdSelect" onchange="onCommandSelect()">
+                    <option value="">-- Command waehlen --</option>
+                </select>
+            </div>
+            <div id="cmdPurpose" class="cmd-purpose" style="display:none"></div>
+            <div id="cmdParams"></div>
+            <div class="form-row" id="userTextRow" style="display:none">
+                <label for="cmdUserText">Zusaetzlicher Kontext (optional)</label>
+                <textarea id="cmdUserText" rows="2" placeholder="Optionaler Freitext..."></textarea>
+            </div>
+            <div class="form-actions">
+                <button id="btnRunCmd" class="btn btn-primary" onclick="runCommand()" disabled>Run Command</button>
+            </div>
+            <div id="cmdError" class="cmd-error" style="display:none"></div>
+            <div id="cmdLoading" class="cmd-loading" style="display:none">Command wird ausgefuehrt...</div>
+        </div>
+    </div>
+
+    <!-- Result -->
+    <div id="cmdResult" class="card" style="display:none">
+        <div class="cmd-result-header">
+            <h3>Ergebnis</h3>
+            <span id="cmdResultMeta" class="cmd-result-meta"></span>
+        </div>
+        <div id="cmdResultBody" class="cmd-result-body"></div>
+    </div>
+
+    <!-- Recent Runs -->
+    <div class="card">
+        <h3>Letzte Runs</h3>
+        <div id="recentRuns" class="recent-runs">Laden...</div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/marked.min.js"></script>
+<script src="/static/js/llm-commands.js?v={{ cache_bust }}"></script>
+{% endblock %}
