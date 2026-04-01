@@ -13,6 +13,7 @@ from audit.models import (
 )
 from audit.repository import get_spec, SpecNotFoundError
 from audit.rules import evaluate_requirement
+from audit.analyzers import run_analyzers as _run_analyzers
 
 
 def run_audit(spec_id: str, input_facts: dict) -> AuditResponse:
@@ -127,14 +128,3 @@ def _compute_overall_status(
         return OverallStatus.PARTIAL
 
     return OverallStatus.PASS
-
-
-def _run_analyzers(
-    spec: Spec,
-    results: list[AuditResult],
-    input_facts: dict,
-) -> list[AuditResult]:
-    """Hook fuer spaetere Analyzer (z.B. LLM-basiert).
-    In v0.1: gibt results unveraendert zurueck.
-    """
-    return results

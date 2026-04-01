@@ -26,6 +26,10 @@ DB_CONFIG = {
     "password": os.environ.get("DB_PASSWORD", ""),
 }
 
+# Audit LLM Analyzer
+AUDIT_LLM_ANALYZER_ENABLED = os.environ.get("AUDIT_LLM_ANALYZER_ENABLED", "0") == "1"
+AUDIT_LLM_MAX_REQUIREMENTS = int(os.environ.get("AUDIT_LLM_MAX_REQUIREMENTS", "10"))
+
 # Perplexity API
 PERPLEXITY_API_KEY = os.environ.get("PERPLEXITY_API_KEY", "")
 PERPLEXITY_BASE_URL = os.environ.get("PERPLEXITY_BASE_URL", "https://api.perplexity.ai/chat/completions")
