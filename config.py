@@ -26,6 +26,12 @@ DB_CONFIG = {
     "password": os.environ.get("DB_PASSWORD", ""),
 }
 
+# Perplexity API
+PERPLEXITY_API_KEY = os.environ.get("PERPLEXITY_API_KEY", "")
+PERPLEXITY_BASE_URL = os.environ.get("PERPLEXITY_BASE_URL", "https://api.perplexity.ai/chat/completions")
+PERPLEXITY_MODEL = os.environ.get("PERPLEXITY_MODEL", "sonar")
+PERPLEXITY_TIMEOUT = int(os.environ.get("PERPLEXITY_TIMEOUT_SECONDS", "30"))
+
 # Claude Code Accounts
 CLAUDE_ACCOUNTS = [
     {"name": "claude", "config_dir": os.path.expanduser("~/.claude")},
