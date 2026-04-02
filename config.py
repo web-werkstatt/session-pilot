@@ -3,6 +3,9 @@ Konfiguration für das Projekt-Dashboard
 Sensible Werte werden aus Umgebungsvariablen geladen.
 """
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Pfade
 PROJECTS_DIR = os.environ.get("DASHBOARD_PROJECTS_DIR", "/mnt/projects")
