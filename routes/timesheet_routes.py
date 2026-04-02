@@ -188,7 +188,7 @@ def api_timesheets_projects():
             COALESCE(SUM(total_output_tokens), 0) as tokens_out,
             COALESCE(SUM(user_message_count), 0) as messages,
             COALESCE(SUM(assistant_message_count), 0) as responses,
-            array_agg(DISTINCT model) FILTER (WHERE model IS NOT NULL AND model != '' AND model NOT LIKE '<%>') as models,
+            array_agg(DISTINCT model) FILTER (WHERE model IS NOT NULL AND model != '' AND model NOT LIKE '<%%>') as models,
             array_agg(DISTINCT account) as accounts
         FROM sessions {where}
         GROUP BY project_name
