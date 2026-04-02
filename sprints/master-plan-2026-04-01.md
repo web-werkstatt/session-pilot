@@ -206,6 +206,28 @@ aber nicht verschachteltes `.kilo/node_modules/`.
 
 **Hinweis:** Server-Restart erforderlich für Template-Aktualisierung.
 
+### Sprint O — Release v1.2.0 + Test-Suite Komplett — DONE (2026-04-02)
+**Ziel:** Release-Prozess etablieren, Test-Abdeckung von 20% auf 75%+ bringen, Produktions-Bugs fixen.
+
+**Release v1.2.0:**
+- CHANGELOG.md erstellt (68 Commits: 27 feat, 22 fix, 19 docs)
+- Git-Tag v1.2.0 + Docker-Image sessionpilot:v1.2.0
+- Release-Skill `sessionpilot-release` als wiederverwendbarer 7-Schritt-Prozess
+
+**Test-Infrastruktur (3 Stufen):**
+- Stufe 1: `tests/conftest.py` — Shared Fixtures (client, 4 Mock-Fixtures fuer externe Services)
+- Stufe 2: `tests/test_routes_smoke.py` — 110 Smoke-Tests (20 Seiten, 66 APIs, 13 Struktur-Checks)
+- Stufe 3: 5 neue Unit-Test-Dateien — cost_service, notification_service, session_import, session_import_utils, project_detector (82 Tests)
+- **Vorher:** 258 Tests, 37 failed, 54 errors → **Nachher:** 451 Tests, 0 failed, 0 errors
+
+**Bugs gefixt:**
+1. `config.py` — load_dotenv() fehlte (91 Test-Failures behoben)
+2. `routes/timesheet_routes.py` — SQL `'<%>'` psycopg2 Format-Bug (Produktion kaputt)
+3. `services/db_service.py` — ai_file_touches Schema-Reihenfolge (Widget kaputt)
+4. `tests/test_copilot.py` — Template-IDs an Sprint N angepasst
+
+**Commits:** e42ed29, ab65270, 5c752de, 3142cc2, 83e5774, 94d2e18, d430d51
+
 ---
 
 ## Open / Next Sprints
