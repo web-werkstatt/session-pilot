@@ -1,12 +1,21 @@
 # Projekt-Dashboard - Naechste Session
 
 > **Letzte Aktualisierung:** 2026-04-02
-> **Status:** Handoff-Service sauber umgebaut (eine handoff.md pro Projekt), Copilot-Landing-Seite neu. 258/259 Tests gruen.
+> **Status:** Test-Cleanup abgeschlossen, Handoff-Service sauber, Copilot-Landing-Seite neu. 258/259 Tests gruen.
 > **Naechste Aufgabe:** Quality-Scanner Re-Scan, dann Copilot-Board visuell testen
 
 ---
 
 ## Was in dieser Session fertig wurde (2026-04-02)
+
+### Sprint M: Test-Cleanup fuer Plan-Tests
+- pytest-Fixtures in `test_plan_workflow.py` und `test_plan_sections.py` auf `yield` + `DELETE` umgebaut
+- Alle Test-Plans tragen jetzt `[TEST]`-Prefix im Titel (eindeutig als Testdaten erkennbar)
+- Kaskadierender Teardown: copilot_messages → copilot_threads → plan_sections → project_plans
+- Inline-Plan in `test_handoff_missing_signals` mit `try/finally` gesichert
+- `test_project_handoff.py`: [TEST]-Prefix fuer Konsistenz, Assertion angepasst
+- **68 Tests gruen, 0 Test-Plans verbleiben in der DB nach pytest-Lauf**
+- Geaenderte Dateien: `tests/test_plan_workflow.py`, `tests/test_plan_sections.py`, `tests/test_project_handoff.py`
 
 ### Sprint K: Copilot-Landing-Seite
 - `/copilot` ohne `plan_id` zeigt jetzt eigene Landing-Seite statt Redirect auf `/plans`
@@ -79,9 +88,9 @@
 - [ ] services/governance_service.py: 519 Zeilen (Limit 500) — Gate-Logik auslagern
 - [ ] static/css/governance.css: 413 Zeilen (Limit 400) — Health-Badges auslagern
 
-### Prioritaet 6: Test-Cleanup automatisieren
-- [ ] pytest-Fixtures bereinigen: Test-Plans muessen nach Test-Lauf geloescht werden (yield + DELETE in fixture teardown)
-- [ ] Aktuell erzeugen Tests hunderte "Test Workflow Plan" / "Test Section Plan" Eintraege die manuell bereinigt werden muessen
+### ~~Prioritaet 6: Test-Cleanup automatisieren~~ — DONE (Sprint M)
+- [x] pytest-Fixtures bereinigen: yield + DELETE in allen Plan-Test-Fixtures
+- [x] [TEST]-Prefix, kaskadierender Teardown, 0 DB-Leichen nach pytest
 
 ### Offene Bugs / Datenluecken
 - [ ] joshko (6 Sessions), llm-test (1 Session) - Projektnamen ohne Verzeichnis

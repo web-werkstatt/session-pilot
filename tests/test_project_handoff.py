@@ -29,7 +29,7 @@ def test_plan():
     row = execute(
         """INSERT INTO project_plans (filename, title, project_name, status, category)
            VALUES (%s, %s, %s, %s, %s) RETURNING id""",
-        (f"test-ho-{unique}.md", "Handoff Test Plan", "project_dashboard", "active", "feature"),
+        (f"test-ho-{unique}.md", "[TEST] Handoff Plan", "project_dashboard", "active", "feature"),
         fetchone=True,
     )
     plan_id = row["id"]
@@ -53,7 +53,7 @@ class TestBuildHandoffMarkdown:
         md = build_handoff_markdown("project_dashboard")
         assert md is not None
         assert "project_dashboard" in md
-        assert "Handoff Test Plan" in md
+        assert "[TEST] Handoff Plan" in md
         assert "handoff:" in md
         assert "## Aktueller Stand (IST)" in md
 

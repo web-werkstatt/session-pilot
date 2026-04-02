@@ -29,17 +29,22 @@ def client():
 
 @pytest.fixture
 def test_plan():
-    """Erstellt einen Test-Plan in der DB mit einzigartigem Filename."""
+    """Erstellt einen Test-Plan in der DB, rauemt nach dem Test auf."""
     ensure_plan_workflow_schema()
     unique = str(uuid.uuid4())[:8]
     row = execute(
         """INSERT INTO project_plans (filename, title, project_name, status, category)
            VALUES (%s, %s, %s, %s, %s)
            RETURNING id""",
-        (f"test-wf-{unique}.md", "Test Workflow Plan", "project_dashboard", "active", "feature"),
+        (f"test-wf-{unique}.md", "[TEST] Workflow Plan", "project_dashboard", "active", "feature"),
         fetchone=True,
     )
-    return row["id"]
+    plan_id = row["id"]
+    yield plan_id
+    # Cleanup: Copilot-Daten und Plan entfernen
+    execute("DELETE FROM copilot_messages WHERE thread_id IN (SELECT id FROM copilot_threads WHERE plan_id = %s)", (plan_id,))
+    execute("DELETE FROM copilot_threads WHERE plan_id = %s", (plan_id,))
+    execute("DELETE FROM project_plans WHERE id = %s", (plan_id,))
 
 
 # --- M1: DB-Persistenz ---
@@ -351,19 +356,22 @@ class TestPlanHandoff:
             """INSERT INTO project_plans (filename, title, project_name, status, category)
                VALUES (%s, %s, NULL, %s, %s)
                RETURNING id""",
-            (f"test-handoff-{unique}.md", "Handoff No-Project", "draft", "plan"),
+            (f"test-handoff-{unique}.md", "[TEST] Handoff No-Project", "draft", "plan"),
             fetchone=True,
         )
         plan_id = row["id"]
 
-        md = build_plan_handoff_markdown(plan_id)
-        assert md is not None
+        try:
+            md = build_plan_handoff_markdown(plan_id)
+            assert md is not None
 
-        # Fallbacks fuer fehlende Signale (kein Projekt → keine Live-Daten)
-        assert "(kein Quality-Report vorhanden)" in md
-        assert "(kein Audit gelaufen)" in md
-        assert "(kein Governance-Gate konfiguriert)" in md
-        assert "(noch kein Run)" in md
+            # Fallbacks fuer fehlende Signale (kein Projekt → keine Live-Daten)
+            assert "(kein Quality-Report vorhanden)" in md
+            assert "(kein Audit gelaufen)" in md
+            assert "(kein Governance-Gate konfiguriert)" in md
+            assert "(noch kein Run)" in md
+        finally:
+            execute("DELETE FROM project_plans WHERE id = %s", (plan_id,))
 
     def test_handoff_nonexistent_plan(self):
         """N1: Nicht-existierender Plan gibt None."""
