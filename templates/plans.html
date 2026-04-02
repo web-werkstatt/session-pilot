@@ -15,6 +15,7 @@
 {% endblock %}
 
 {% block content %}
+    <div class="kpi-wrapper">
     <div class="kpi-grid">
         <div class="kpi-card kpi-progress">
             <div class="kpi-header">
@@ -88,6 +89,10 @@
     </div>
 
     <div class="filter-bar">
+        <span class="filter-label">View:</span>
+        <button class="filter-btn active" id="viewGrid" onclick="setView('grid')"><i data-lucide="grid" class="icon icon-xs"></i> Grid</button>
+        <button class="filter-btn" id="viewBoard" onclick="setView('board')"><i data-lucide="columns" class="icon icon-xs"></i> Board</button>
+        <span class="filter-divider"></span>
         <span class="filter-label">Status:</span>
         <button class="filter-btn active" data-filter="status" onclick="setFilter('status','')">All</button>
         <button class="filter-btn" data-filter="status" onclick="setFilter('status','draft')">Draft</button>
@@ -100,6 +105,7 @@
             <option value="">All projects</option>
         </select>
     </div>
+    </div>
 
     <div class="plans-container">
         <div id="loading" class="loading">
@@ -108,6 +114,8 @@
         </div>
 
         <div id="plansGrid" class="plans-grid" style="display:none;"></div>
+
+        <div id="plansBoard" class="plans-board" style="display:none;"></div>
 
         <div id="emptyState" class="empty-state" style="display:none;">
             <div class="empty-icon"><i data-lucide="file-text" style="width:48px;height:48px;opacity:0.3"></i></div>
@@ -121,18 +129,49 @@
 
     <!-- Detail Modal -->
     <div class="modal-overlay" id="planModal">
-        <div class="modal-content modal-wide">
-            <div class="modal-header">
-                <div class="modal-header-left">
-                    <h2 id="modalTitle">Plan</h2>
-                    <div class="modal-meta" id="modalMeta"></div>
+        <div class="plan-modal">
+            <div class="plan-modal-header">
+                <div class="plan-modal-head">
+                    <span class="plan-modal-cat" id="modalCat"></span>
+                    <h2 class="plan-modal-title" id="modalTitle">Plan</h2>
                 </div>
-                <button class="modal-close" onclick="closePlanModal()">&times;</button>
+                <div class="plan-modal-meta" id="modalMeta"></div>
             </div>
-            <div class="modal-toolbar" id="modalToolbar"></div>
-            <div id="workflowPanel" class="plan-workflow-panel"></div>
-            <div class="modal-body">
-                <div class="plan-content" id="modalContent"></div>
+            <div class="plan-modal-body">
+                <div class="plan-modal-main">
+                    <div id="planOverview" class="plan-section">
+                        <h3 class="plan-section-title"><i data-lucide="target" class="icon"></i> Überblick</h3>
+                        <div class="plan-ist-soll">
+                            <div class="plan-ist"><span class="plan-state-label">IST</span><span id="modalIst"></span></div>
+                            <div class="plan-soll"><span class="plan-state-label">SOLL</span><span id="modalSoll"></span></div>
+                        </div>
+                    </div>
+                    <div id="planContent" class="plan-section plan-section-content">
+                        <h3 class="plan-section-title"><i data-lucide="file-text" class="icon"></i> Details</h3>
+                        <div class="plan-content" id="modalContent"></div>
+                    </div>
+                </div>
+                <div class="plan-modal-sidebar">
+                    <div class="plan-sidebar-section">
+                        <span class="plan-sidebar-label">Status</span>
+                        <div class="plan-status-row" id="modalStatus"></div>
+                    </div>
+                    <div class="plan-sidebar-section">
+                        <span class="plan-sidebar-label">Workflow</span>
+                        <div class="plan-wf-row" id="modalWorkflow"></div>
+                    </div>
+                    <div class="plan-sidebar-section">
+                        <span class="plan-sidebar-label">Metadaten</span>
+                        <div class="plan-meta-list" id="modalMetaSidebar"></div>
+                    </div>
+                    <div class="plan-sidebar-actions">
+                        <a href="#" id="modalCopilotBtn" class="btn btn-sm btn-primary" target="_blank"><i data-lucide="message-square" class="icon icon-xs"></i> Copilot</a>
+                        <button class="btn btn-sm btn-secondary" onclick="showHandoff(currentPlanId)"><i data-lucide="file-output" class="icon icon-xs"></i> Handoff</button>
+                    </div>
+                </div>
+            </div>
+            <div class="plan-modal-footer">
+                <button class="btn btn-sm btn-ghost" onclick="closePlanModal()">Schließen</button>
             </div>
         </div>
     </div>

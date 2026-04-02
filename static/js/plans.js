@@ -1,11 +1,24 @@
 /**
- * Plans - Import, Filter, Detail-Ansicht
+ * Plans - Import, Filter, Detail-Ansicht, Drag & Drop Board
  */
 let allPlans = [];
 let filters = { status: '', project: '', category: '' };
+let currentView = 'grid';
+
+// Workflow-Stage Spalten-Definition (Mapping: Label → workflow_stage)
+const BOARD_COLUMNS = [
+    { label: 'Idea',    stage: 'idea' },
+    { label: 'Spec',    stage: 'spec_ready' },
+    { label: 'Prompt',  stage: 'prompt_ready' },
+    { label: 'Execute', stage: 'executing' },
+    { label: 'Review',  stage: 'review_pending' },
+    { label: 'Fixed',   stage: 'fixed' },
+    { label: 'Done',    stage: 'done' },
+    { label: 'Blocked', stage: 'blocked' },
+];
 
 document.addEventListener('DOMContentLoaded', () => {
-    // URL-Parameter auswerten (z.B. /plans?project=contypio)
+    // URL-Parameter auswerten (z.B. /plans?project=contypio&view=board&plan=123)
     const params = new URLSearchParams(window.location.search);
     if (params.get('project')) {
         filters.project = params.get('project');
@@ -93,70 +106,217 @@ function loadProjects() {
 
 // === Rendering ===
 function renderPlans() {
-    document.getElementById('loading').style.display = 'none';
+    var loading = document.getElementById('loading');
+    var grid = document.getElementById('plansGrid');
+    var board = document.getElementById('plansBoard');
+    var empty = document.getElementById('emptyState');
+
+    if (loading) loading.style.display = 'none';
 
     if (allPlans.length === 0) {
-        document.getElementById('plansGrid').style.display = 'none';
-        document.getElementById('emptyState').style.display = 'block';
+        if (grid) grid.style.display = 'none';
+        if (board) board.style.display = 'none';
+        if (empty) empty.style.display = 'block';
         if (typeof lucide !== 'undefined') lucide.createIcons();
         return;
     }
 
-    document.getElementById('emptyState').style.display = 'none';
+    if (empty) empty.style.display = 'none';
+
+    if (currentView === 'board') {
+        if (grid) grid.style.display = 'none';
+        renderBoard();
+    } else {
+        if (board) board.style.display = 'none';
+        renderGrid();
+    }
+}
+
+function _buildCardHtml(plan, draggable) {
+    const statusClass = plan.status || 'draft';
+    const wfStage = plan.workflow_stage || 'idea';
+    const catIcon = getCategoryIcon(plan.category);
+    const dragAttr = draggable ? `draggable="true" data-plan-id="${plan.id}" data-stage="${wfStage}"` : '';
+
+    const summary = plan.context_summary || plan.description || '';
+
+    const projectBadge = plan.project_name
+        ? `<span class="card-project"><i data-lucide="folder" class="icon icon-xs"></i> ${escapeHtml(plan.project_name)}</span>`
+        : '';
+
+    return `
+    <div class="plan-card status-${statusClass}" ${dragAttr} onclick="showPlan(${plan.id})">
+        <div class="card-head">
+            <span class="card-cat-badge cat-${plan.category || 'plan'}"><i data-lucide="${catIcon}" class="icon icon-xs"></i> ${plan.category || 'plan'}</span>
+            <span class="card-wf-badge wf-${wfStage}">${wfStage.replace(/_/g, ' ')}</span>
+        </div>
+        <div class="card-body">
+            <p class="card-title">${escapeHtml(plan.title)}</p>
+            ${summary ? `<p class="card-summary">${escapeHtml(summary)}</p>` : ''}
+        </div>
+        ${projectBadge ? `<div class="card-foot">${projectBadge}</div>` : ''}
+    </div>`;
+}
+
+function renderGrid() {
     const grid = document.getElementById('plansGrid');
     grid.style.display = 'grid';
+    let html = '';
+    allPlans.forEach(plan => { html += _buildCardHtml(plan, false); });
+    grid.innerHTML = html;
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+function renderBoard() {
+    const board = document.getElementById('plansBoard');
+    board.style.display = 'flex';
+
+    // Gruppiere Plans nach workflow_stage
+    const grouped = {};
+    BOARD_COLUMNS.forEach(col => { grouped[col.stage] = []; });
+    allPlans.forEach(plan => {
+        const stage = plan.workflow_stage || 'idea';
+        if (grouped[stage]) {
+            grouped[stage].push(plan);
+        } else {
+            grouped['idea'].push(plan);
+        }
+    });
 
     let html = '';
-    allPlans.forEach(plan => {
-        const statusClass = plan.status || 'draft';
-        const catIcon = getCategoryIcon(plan.category);
-        const date = formatDate(plan.created_at);
-        const projectName = plan.project_name
-            ? escapeHtml(plan.project_name)
-            : '<span class="text-muted">No project</span>';
-        const sessionLink = plan.session_slug
-            ? `<a href="/sessions/${plan.session_slug}" class="session-link" onclick="event.stopPropagation()"><i data-lucide="bot" class="icon icon-xs"></i> Session</a>`
-            : '';
-
-        // Workflow-Badges
-        const wfStage = plan.workflow_stage || 'idea';
-        const wfBadge = `<span class="badge badge-wf badge-wf-${wfStage}">${wfStage.replace('_', ' ')}</span>`;
-        const execBadge = plan.latest_executor_status
-            ? `<span class="badge badge-exec badge-exec-${plan.latest_executor_status}">exec: ${plan.latest_executor_status}</span>` : '';
-        const reviewBadge = plan.latest_review_status
-            ? `<span class="badge badge-review badge-review-${plan.latest_review_status}">review: ${plan.latest_review_status}</span>` : '';
-
-        // Ist/Soll/Next Micro-Info
-        let microInfo = '';
-        if (plan.current_state || plan.target_state || plan.next_action) {
-            microInfo = '<div class="plan-card-micro">';
-            if (plan.current_state) microInfo += `<div class="micro-row"><span class="micro-label">Ist:</span> ${escapeHtml(plan.current_state.substring(0, 80))}</div>`;
-            if (plan.target_state) microInfo += `<div class="micro-row"><span class="micro-label">Soll:</span> ${escapeHtml(plan.target_state.substring(0, 80))}</div>`;
-            if (plan.next_action) microInfo += `<div class="micro-row micro-next"><span class="micro-label">Next:</span> ${escapeHtml(plan.next_action.substring(0, 80))}</div>`;
-            microInfo += '</div>';
-        }
-
+    BOARD_COLUMNS.forEach(col => {
+        const plans = grouped[col.stage];
+        const count = plans.length;
         html += `
-        <div class="plan-card status-${statusClass}" onclick="showPlan(${plan.id})">
-            <div class="plan-card-top">
-                <span class="plan-project"><i data-lucide="folder" class="icon icon-xs"></i> ${projectName}</span>
-                <span class="plan-date">${date}</span>
+        <div class="board-column" data-stage="${col.stage}">
+            <div class="board-column-header">
+                <span class="badge badge-wf badge-wf-${col.stage}">${col.label}</span>
+                <span class="board-count">${count}</span>
             </div>
-            <h3 class="plan-card-title">${escapeHtml(plan.title)}</h3>
-            ${plan.context_summary ? `<p class="plan-card-context">${escapeHtml(plan.context_summary.substring(0, 120))}${plan.context_summary.length > 120 ? '...' : ''}</p>` : ''}
-            ${microInfo}
-            <div class="plan-card-footer">
-                ${wfBadge}
-                <span class="badge badge-cat"><i data-lucide="${catIcon}" class="icon icon-xs"></i> ${plan.category || 'plan'}</span>
-                <span class="badge badge-status badge-${statusClass}">${statusLabel(plan.status)}</span>
-                ${execBadge}${reviewBadge}
-                ${sessionLink}
+            <div class="board-column-body" data-stage="${col.stage}">`;
+        plans.forEach(plan => { html += _buildCardHtml(plan, true); });
+        html += `
             </div>
         </div>`;
     });
 
-    grid.innerHTML = html;
+    board.innerHTML = html;
+    _initBoardDragDrop();
     if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+// === View Toggle ===
+function setView(view) {
+    currentView = view;
+    document.getElementById('viewGrid').classList.toggle('active', view === 'grid');
+    document.getElementById('viewBoard').classList.toggle('active', view === 'board');
+    renderPlans();
+}
+
+// === Drag & Drop ===
+let _dragPlanId = null;
+let _dragSourceStage = null;
+
+function _initBoardDragDrop() {
+    // Drag-Start auf Cards
+    document.querySelectorAll('.plans-board .plan-card[draggable]').forEach(card => {
+        card.addEventListener('dragstart', function(e) {
+            _dragPlanId = parseInt(this.dataset.planId);
+            _dragSourceStage = this.dataset.stage;
+            this.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', _dragPlanId);
+        });
+        card.addEventListener('dragend', function() {
+            this.classList.remove('dragging');
+            document.querySelectorAll('.board-column-body.drag-over').forEach(el => el.classList.remove('drag-over'));
+            _dragPlanId = null;
+            _dragSourceStage = null;
+        });
+    });
+
+    // Drop-Zonen auf Column-Bodies
+    document.querySelectorAll('.board-column-body').forEach(colBody => {
+        colBody.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            this.classList.add('drag-over');
+        });
+        colBody.addEventListener('dragleave', function(e) {
+            // Nur entfernen wenn wirklich verlassen (nicht bei Kind-Elementen)
+            if (!this.contains(e.relatedTarget)) {
+                this.classList.remove('drag-over');
+            }
+        });
+        colBody.addEventListener('drop', function(e) {
+            e.preventDefault();
+            this.classList.remove('drag-over');
+            const targetStage = this.dataset.stage;
+            const planId = parseInt(e.dataTransfer.getData('text/plain'));
+            if (!planId || targetStage === _dragSourceStage) return;
+            _moveCardToStage(planId, _dragSourceStage, targetStage);
+        });
+    });
+}
+
+function _moveCardToStage(planId, oldStage, newStage) {
+    // Optimistisch: Card sofort verschieben
+    const card = document.querySelector(`.plan-card[data-plan-id="${planId}"]`);
+    const targetCol = document.querySelector(`.board-column-body[data-stage="${newStage}"]`);
+    if (card && targetCol) {
+        targetCol.appendChild(card);
+        card.dataset.stage = newStage;
+        // Badge auf Card aktualisieren
+        const wfBadge = card.querySelector('.badge-wf');
+        if (wfBadge) {
+            wfBadge.className = `badge badge-wf badge-wf-${newStage}`;
+            wfBadge.textContent = newStage.replace('_', ' ');
+        }
+        // Column-Counts aktualisieren
+        _updateColumnCounts();
+    }
+
+    // API-Call
+    api.put(`/api/plans/${planId}/workflow`, { workflow_stage: newStage })
+        .then(function(result) {
+            // Lokale Daten aktualisieren
+            const plan = allPlans.find(p => p.id === planId);
+            if (plan) {
+                plan.workflow_stage = newStage;
+                if (result.current_state !== undefined) plan.current_state = result.current_state;
+                if (result.target_state !== undefined) plan.target_state = result.target_state;
+                if (result.next_action !== undefined) plan.next_action = result.next_action;
+            }
+            showToast(`Plan in "${_stageLabel(newStage)}" verschoben`);
+        })
+        .catch(function(err) {
+            // Rollback: Card zurueck in alte Spalte
+            const sourceCol = document.querySelector(`.board-column-body[data-stage="${oldStage}"]`);
+            if (card && sourceCol) {
+                sourceCol.appendChild(card);
+                card.dataset.stage = oldStage;
+                const wfBadge = card.querySelector('.badge-wf');
+                if (wfBadge) {
+                    wfBadge.className = `badge badge-wf badge-wf-${oldStage}`;
+                    wfBadge.textContent = oldStage.replace('_', ' ');
+                }
+                _updateColumnCounts();
+            }
+            showToast('Fehler: ' + (err.message || 'Workflow-Update fehlgeschlagen'), true);
+        });
+}
+
+function _stageLabel(stage) {
+    const col = BOARD_COLUMNS.find(c => c.stage === stage);
+    return col ? col.label : stage;
+}
+
+function _updateColumnCounts() {
+    document.querySelectorAll('.board-column').forEach(col => {
+        const count = col.querySelectorAll('.plan-card').length;
+        const countEl = col.querySelector('.board-count');
+        if (countEl) countEl.textContent = count;
+    });
 }
 
 function getCategoryIcon(cat) {
@@ -196,30 +356,47 @@ function setFilter(key, value) {
 }
 
 // === Detail ===
+var currentPlanId = null;
+
 function showPlan(id) {
+    currentPlanId = id;
     api.get(`/api/plans/${id}`)
         .then(plan => {
+            // Header
+            document.getElementById('modalCat').innerHTML = `<i data-lucide="${getCategoryIcon(plan.category)}" class="icon"></i> ${plan.category || 'plan'}`;
             document.getElementById('modalTitle').textContent = plan.title;
 
+            // Meta header
             const meta = [];
-            if (plan.project_name) meta.push(`<span class="meta-item"><i data-lucide="folder" class="icon icon-xs"></i> ${escapeHtml(plan.project_name)}</span>`);
-            meta.push(`<span class="meta-item"><i data-lucide="calendar" class="icon icon-xs"></i> ${formatDate(plan.created_at)}</span>`);
-            if (plan.session_slug) {
-                meta.push(`<a href="/sessions/${plan.session_slug}" class="meta-item session-link"><i data-lucide="bot" class="icon icon-xs"></i> View session</a>`);
-            }
+            if (plan.project_name) meta.push(`<span><i data-lucide="folder" class="icon icon-xs"></i> ${escapeHtml(plan.project_name)}</span>`);
+            meta.push(`<span><i data-lucide="calendar" class="icon icon-xs"></i> ${formatDate(plan.created_at)}</span>`);
             document.getElementById('modalMeta').innerHTML = meta.join('');
 
-            // Toolbar: Status (auto-erkannt), Kategorie, Dateiname
-            document.getElementById('modalToolbar').innerHTML = `
-                <span class="badge badge-status badge-${plan.status}">${statusLabel(plan.status)}</span>
-                <span class="badge badge-cat"><i data-lucide="${getCategoryIcon(plan.category)}" class="icon icon-xs"></i> ${plan.category}</span>
-                <code class="filename">${escapeHtml(plan.filename)}</code>
-            `;
+            // Ist/Soll Overview
+            document.getElementById('modalIst').textContent = plan.current_state || '—';
+            document.getElementById('modalSoll').textContent = plan.target_state || '—';
 
+            // Content
             document.getElementById('modalContent').innerHTML = plan.content_html || '<em>No content</em>';
 
-            // Workflow-Daten laden (Sprint E)
-            _loadPlanWorkflow(id, plan.project_name);
+            // Sidebar Status
+            document.getElementById('modalStatus').innerHTML = `<span class="status-pill status-${plan.status}">${statusLabel(plan.status)}</span>`;
+
+            // Sidebar Workflow
+            const wfStage = plan.workflow_stage || 'idea';
+            document.getElementById('modalWorkflow').innerHTML = `<span class="wf-pill wf-${wfStage}">${wfStage.replace(/_/g, ' ')}</span>`;
+
+            // Sidebar Meta
+            const metaSidebar = [];
+            if (plan.filename) metaSidebar.push(`<div class="meta-row"><span>Datei</span><code>${escapeHtml(plan.filename.split('/').pop())}</code></div>`);
+            if (plan.session_slug) metaSidebar.push(`<div class="meta-row"><a href="/sessions/${plan.session_slug}"><i data-lucide="bot" class="icon icon-xs"></i> Session</a></div>`);
+            document.getElementById('modalMetaSidebar').innerHTML = metaSidebar.join('') || '<span class="text-muted">—</span>';
+
+            // Copilot Button
+            document.getElementById('modalCopilotBtn').href = `/copilot?plan_id=${plan.id}`;
+
+            // Workflow Panel via API
+            _loadPlanWorkflow(id);
 
             openModal('planModal');
             if (typeof lucide !== 'undefined') lucide.createIcons();
@@ -255,49 +432,61 @@ function syncPlans() {
         });
 }
 
-// === Sprint E: Workflow Panel ===
-function _loadPlanWorkflow(planId, projectName) {
-    var panel = document.getElementById('workflowPanel');
-    if (!panel) return;
-    panel.innerHTML = '<span class="text-muted">Workflow laden...</span>';
-
+// === Workflow Panel für Sidebar ===
+function _loadPlanWorkflow(planId) {
     api.get('/api/plans/' + planId + '/workflow')
         .then(function(wf) {
-            var html = '<div class="wf-grid">';
-
-            // Ist / Soll / Next (M6)
-            html += '<div class="wf-section">';
-            html += '<div class="wf-field"><span class="wf-label">Ist:</span> ' + escapeHtml(wf.current_state || '—') + '</div>';
-            html += '<div class="wf-field"><span class="wf-label">Soll:</span> ' + escapeHtml(wf.target_state || '—') + '</div>';
-            html += '<div class="wf-field wf-next"><span class="wf-label">Next:</span> ' + escapeHtml(wf.next_action || '—') + '</div>';
-            html += '</div>';
-
-            // Status-Badges
-            html += '<div class="wf-section">';
-            html += '<span class="badge badge-wf badge-wf-' + (wf.workflow_stage || 'idea') + '">' + (wf.workflow_stage || 'idea').replace('_', ' ') + '</span> ';
-            if (wf.latest_executor_status) html += '<span class="badge badge-exec badge-exec-' + wf.latest_executor_status + '">exec: ' + wf.latest_executor_status + '</span> ';
-            if (wf.latest_review_status) html += '<span class="badge badge-review badge-review-' + wf.latest_review_status + '">review: ' + wf.latest_review_status + '</span> ';
-            html += '</div>';
-
-            // Signale (M7)
-            html += '<div class="wf-section wf-signals">';
-            if (wf.latest_quality_score != null) html += '<span class="wf-signal">Quality: ' + wf.latest_quality_score + '</span> ';
-            if (wf.governance_status) html += '<span class="wf-signal wf-gov-' + wf.governance_status + '">Gov: ' + wf.governance_status + '</span> ';
-            if (wf.latest_audit_status) html += '<span class="wf-signal">Audit: ' + wf.latest_audit_status + '</span> ';
-            if (wf.spec_ref) html += '<span class="wf-signal">Spec: ' + escapeHtml(wf.spec_ref) + '</span> ';
-            html += '</div>';
-
-            // Copilot-Link (M5)
-            if (projectName) {
-                html += '<div class="wf-section"><a href="/copilot?project=' + encodeURIComponent(projectName) + '&plan_id=' + planId + '" class="btn btn-sm btn-secondary">Copilot fuer diesen Plan</a></div>';
+            // Next Action in Sidebar
+            const nextEl = document.querySelector('.plan-sidebar-section:last-child') || document.getElementById('modalWorkflow');
+            if (wf.next_action) {
+                const nextSection = document.createElement('div');
+                nextSection.className = 'plan-sidebar-section';
+                nextSection.innerHTML = `<span class="plan-sidebar-label">Next</span><div class="plan-next">${escapeHtml(wf.next_action)}</div>`;
+                document.querySelector('.plan-modal-sidebar').appendChild(nextSection);
             }
 
-            html += '</div>';
-            panel.innerHTML = html;
+            // Signale
+            const signals = [];
+            if (wf.latest_quality_score != null) signals.push(`<span class="signal-pill">Quality ${wf.latest_quality_score}</span>`);
+            if (wf.governance_status) signals.push(`<span class="signal-pill gov-${wf.governance_status}">Gov ${wf.governance_status}</span>`);
+            if (wf.latest_executor_status) signals.push(`<span class="signal-pill exec-${wf.latest_executor_status}">exec ${wf.latest_executor_status}</span>`);
+
+            if (signals.length) {
+                const sigSection = document.createElement('div');
+                sigSection.className = 'plan-sidebar-section';
+                sigSection.innerHTML = `<span class="plan-sidebar-label">Signale</span><div class="plan-signals">${signals.join('')}</div>`;
+                document.querySelector('.plan-modal-sidebar').appendChild(sigSection);
+            }
         })
-        .catch(function() {
-            panel.innerHTML = '<span class="text-muted">Workflow nicht verfuegbar</span>';
+        .catch(function() {});
+}
+
+function showHandoff(planId) {
+    api.request('/api/plans/' + planId + '/handoff', { raw: true })
+        .then(function(resp) { return resp.text(); })
+        .then(function(md) {
+            // Handoff-Markdown im Modal-Content anzeigen
+            var content = document.getElementById('modalContent');
+            content.innerHTML = '<div class="handoff-view">'
+                + '<div class="handoff-actions">'
+                + '<button class="btn btn-sm btn-primary" onclick="copyHandoff()"><i data-lucide="copy" class="icon icon-xs"></i> Kopieren</button> '
+                + '<a href="/api/plans/' + planId + '/handoff" download="plan-handoff-' + planId + '.md" class="btn btn-sm btn-secondary"><i data-lucide="download" class="icon icon-xs"></i> Download</a>'
+                + '</div>'
+                + '<pre class="handoff-content">' + escapeHtml(md) + '</pre>'
+                + '</div>';
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        })
+        .catch(function(err) {
+            showToast('Handoff-Fehler: ' + (err.message || 'Unbekannt'), true);
         });
+}
+
+function copyHandoff() {
+    var pre = document.querySelector('.handoff-content');
+    if (!pre) return;
+    navigator.clipboard.writeText(pre.textContent)
+        .then(function() { showToast('Handoff in Zwischenablage kopiert'); })
+        .catch(function() { showToast('Kopieren fehlgeschlagen', true); });
 }
 
 function showToast(msg, isError) {
@@ -306,4 +495,5 @@ function showToast(msg, isError) {
     toast.className = 'toast show' + (isError ? ' toast-error' : '');
     setTimeout(() => toast.className = 'toast', 4000);
 }
+
 // formatDate: in base.js (global)
