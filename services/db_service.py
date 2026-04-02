@@ -367,12 +367,7 @@ def ensure_file_touch_schema():
                 created_at TIMESTAMPTZ DEFAULT NOW()
             )
         """)
-        execute("CREATE INDEX IF NOT EXISTS idx_file_touches_session ON ai_file_touches(session_id)")
-        execute("CREATE INDEX IF NOT EXISTS idx_file_touches_path ON ai_file_touches(file_path)")
-        execute("CREATE INDEX IF NOT EXISTS idx_file_touches_type ON ai_file_touches(touch_type)")
-        execute("CREATE INDEX IF NOT EXISTS idx_file_touches_project ON ai_file_touches(project)")
-        execute("CREATE INDEX IF NOT EXISTS idx_file_touches_date ON ai_file_touches(timestamp)")
-        # Spec-Spalten nachrüsten falls Tabelle schon existiert
+        # Spec-Spalten nachrüsten falls Tabelle schon existiert (VOR Index-Erstellung!)
         for col, definition in [
             ("project", "VARCHAR(200) NOT NULL DEFAULT ''"),
             ("ai_written", "BOOLEAN DEFAULT FALSE"),
@@ -386,18 +381,33 @@ def ensure_file_touch_schema():
                 EXCEPTION WHEN duplicate_column THEN NULL;
                 END $$
             """)
+        # Indexes (nach ALTER TABLE, damit alle Spalten existieren)
+        execute("CREATE INDEX IF NOT EXISTS idx_file_touches_session ON ai_file_touches(session_id)")
+        execute("CREATE INDEX IF NOT EXISTS idx_file_touches_path ON ai_file_touches(file_path)")
+        execute("CREATE INDEX IF NOT EXISTS idx_file_touches_type ON ai_file_touches(touch_type)")
+        execute("CREATE INDEX IF NOT EXISTS idx_file_touches_project ON ai_file_touches(project)")
+        execute("CREATE INDEX IF NOT EXISTS idx_file_touches_date ON ai_file_touches(timestamp)")
         # Partial index for written files
         execute("""
             CREATE INDEX IF NOT EXISTS idx_file_touches_written
             ON ai_file_touches(ai_written) WHERE ai_written = TRUE
         """)
         # Unique constraint (session_id statt session_uuid, da FK auf id)
+        # Erst Duplikate bereinigen, dann Constraint anlegen
+        execute("""
+            DELETE FROM ai_file_touches a USING ai_file_touches b
+            WHERE a.id < b.id
+              AND a.session_id = b.session_id
+              AND a.file_path = b.file_path
+              AND a.touch_type = b.touch_type
+        """)
         execute("""
             DO $$ BEGIN
                 ALTER TABLE ai_file_touches
                     ADD CONSTRAINT uq_file_touch_session_path_type
                     UNIQUE(session_id, file_path, touch_type);
             EXCEPTION WHEN duplicate_table THEN NULL;
+                      WHEN unique_violation THEN NULL;
             END $$
         """)
         _file_touch_ready = True

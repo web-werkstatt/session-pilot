@@ -83,7 +83,7 @@ API_ROUTES_CORE = [
     # Widgets
     "/api/widgets/overview",
     "/api/widgets/activity",
-    # "/api/widgets/ai-hotspots",  # BUG: column "project" missing in ai_file_touches
+    "/api/widgets/ai-hotspots",
     # Copilot
     "/api/copilot/stats",
     "/api/copilot/runs",
