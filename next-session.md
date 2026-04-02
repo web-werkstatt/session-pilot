@@ -1,12 +1,32 @@
 # Projekt-Dashboard - Naechste Session
 
 > **Letzte Aktualisierung:** 2026-04-02
-> **Status:** Test-Cleanup abgeschlossen, Handoff-Service sauber, Copilot-Landing-Seite neu. 258/259 Tests gruen.
-> **Naechste Aufgabe:** Quality-Scanner Re-Scan, dann Copilot-Board visuell testen
+> **Status:** Plans-Cards & Modal redesigned, auf Gitea commited (54b521c)
+> **Naechste Aufgabe:** Sticky Filter-Bar testen, Quality-Scanner Re-Scan
 
 ---
 
 ## Was in dieser Session fertig wurde (2026-04-02)
+
+### Sprint M2.7: Plans-Cards & Modal Redesign
+**Änderungen:**
+- **Cards im Grid**: Ist/Soll/Next/exec von Cards entfernt, nur noch Header (Typ-Badge + Titel + Stage-Badge) + Body (Kurzbeschreibung, 2 Zeilen max) + Footer (Projekt-Tag)
+- **Card-Design**: Dezente Background-Tints nach Status (Draft=grau, Active=blau, Completed=grün), einheitliche Höhe (140px), Ellipsis bei langem Text
+- **Modal komplett neu**: Linear/Notion Style
+  - Header: Kategorie-Badge + Titel + Meta (Projekt/Datum)
+  - Body links: Ist/Soll nebeneinander (2-Spalten), dann Details
+  - Body rechts: Sidebar mit Status, Workflow, Metadaten, Aktionen (Copilot, Handoff)
+  - Footer: Schließen-Button
+- **Sticky Filter-Bar**: KPI-Header bleibt sticky, Filter-Leiste soll ebenfalls sticky sein (mit kpi-wrapper)
+- **Commit**: `54b521c` — "UI: Plans-Cards redesign + Modal im Linear/Notion Style"
+- **Dateien**: `templates/plans.html`, `static/js/plans.js`, `static/css/plans.css`
+
+**Noch offen:**
+- [ ] Sticky Filter-Bar muss noch getestet werden (beide sticky, `top: 56px`)
+
+---
+
+### Sprint M: Test-Cleanup fuer Plan-Tests
 
 ### Sprint M: Test-Cleanup fuer Plan-Tests
 - pytest-Fixtures in `test_plan_workflow.py` und `test_plan_sections.py` auf `yield` + `DELETE` umgebaut
