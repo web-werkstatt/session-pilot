@@ -2,7 +2,7 @@
 Plans Routes - Uebersicht und Verwaltung von Claude Code Plans
 """
 import markdown
-from flask import Blueprint, jsonify, request, render_template
+from flask import Blueprint, Response, jsonify, request, render_template
 from services.db_service import execute, ensure_plans_schema, ensure_plan_workflow_schema
 from services.plans_import import sync_plans
 from services.plan_workflow_service import (
@@ -10,6 +10,7 @@ from services.plan_workflow_service import (
     update_plan_workflow,
     get_project_plan_workflows,
 )
+from services.project_handoff_service import write_handoff
 
 plans_bp = Blueprint('plans', __name__)
 
@@ -277,6 +278,23 @@ def api_update_plan_workflow(plan_id):
     if not result:
         return jsonify({'error': 'Plan not found'}), 404
     return jsonify(result)
+
+
+@plans_bp.route('/api/plans/<int:plan_id>/handoff')
+def api_get_plan_handoff(plan_id):
+    """Projekt-Handoff als Markdown fuer LLM-Executors. Ermittelt project_name aus plan_id."""
+    row = execute(
+        "SELECT project_name FROM project_plans WHERE id = %s",
+        (plan_id,), fetchone=True,
+    )
+    if not row or not row.get("project_name"):
+        return jsonify({'error': 'Plan not found or no project assigned'}), 404
+    project_name = row["project_name"]
+    _, md = write_handoff(project_name)
+    if md is None:
+        return jsonify({'error': 'Could not generate handoff'}), 404
+    return Response(md, mimetype='text/markdown',
+                    headers={'Content-Disposition': f'inline; filename="handoff.md"'})
 
 
 @plans_bp.route('/api/plans/workflow')

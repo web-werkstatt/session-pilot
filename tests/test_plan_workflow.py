@@ -12,6 +12,7 @@ from services.plan_workflow_service import (
     get_plan_workflow,
     update_plan_workflow,
     get_project_plan_workflows,
+    build_plan_handoff_markdown,
     WORKFLOW_STAGES,
     EXECUTOR_STATUSES,
     REVIEW_STATUSES,
@@ -150,6 +151,79 @@ class TestM3WorkflowLogic:
             update_plan_workflow(test_plan, {"latest_executor_status": "bogus"})
 
 
+# --- D: Drag & Drop Workflow-Update ---
+
+class TestDragDropWorkflow:
+    """Tests fuer Drag & Drop Board: workflow_stage per API aendern."""
+
+    def test_drag_drop_stage_update_via_api(self, client, test_plan):
+        """D2: PUT /api/plans/<id>/workflow setzt workflow_stage korrekt."""
+        for stage in WORKFLOW_STAGES:
+            r = client.put(f"/api/plans/{test_plan}/workflow",
+                           data=json.dumps({"workflow_stage": stage}),
+                           content_type="application/json")
+            assert r.status_code == 200
+            d = r.get_json()
+            assert d["workflow_stage"] == stage
+
+    def test_drag_drop_invalid_stage_rejected(self, client, test_plan):
+        """D4: Ungueltige workflow_stage-Werte werden abgewiesen (400)."""
+        invalid_stages = ["planning", "in_progress", "testing", "deployed", "", "DONE"]
+        for stage in invalid_stages:
+            r = client.put(f"/api/plans/{test_plan}/workflow",
+                           data=json.dumps({"workflow_stage": stage}),
+                           content_type="application/json")
+            assert r.status_code == 400, f"Stage '{stage}' haette abgewiesen werden muessen"
+
+    def test_drag_drop_preserves_other_fields(self, client, test_plan):
+        """D2: Stage-Aenderung ueberschreibt nicht current_state/target_state/next_action."""
+        # Erst Ist/Soll/Next setzen
+        client.put(f"/api/plans/{test_plan}/workflow",
+                   data=json.dumps({
+                       "workflow_stage": "idea",
+                       "current_state": "Entwurf liegt vor",
+                       "target_state": "Spec fertig",
+                       "next_action": "Review durch Team",
+                   }),
+                   content_type="application/json")
+
+        # Nur workflow_stage aendern (wie beim Board-Drop)
+        r = client.put(f"/api/plans/{test_plan}/workflow",
+                       data=json.dumps({"workflow_stage": "spec_ready"}),
+                       content_type="application/json")
+        assert r.status_code == 200
+        d = r.get_json()
+        assert d["workflow_stage"] == "spec_ready"
+        assert d["current_state"] == "Entwurf liegt vor"
+        assert d["target_state"] == "Spec fertig"
+        assert d["next_action"] == "Review durch Team"
+
+    def test_drag_drop_stage_reflected_in_listing(self, client, test_plan):
+        """D3: Nach Stage-Update zeigt GET /api/plans den neuen Stage."""
+        client.put(f"/api/plans/{test_plan}/workflow",
+                   data=json.dumps({"workflow_stage": "executing"}),
+                   content_type="application/json")
+
+        r = client.get("/api/plans")
+        plans = r.get_json()["plans"]
+        plan = next((p for p in plans if p["id"] == test_plan), None)
+        assert plan is not None
+        assert plan["workflow_stage"] == "executing"
+
+    def test_drag_drop_nonexistent_plan(self, client):
+        """D2: Drop auf nicht-existierenden Plan gibt 404."""
+        r = client.put("/api/plans/999999/workflow",
+                       data=json.dumps({"workflow_stage": "done"}),
+                       content_type="application/json")
+        assert r.status_code == 404
+
+    def test_drag_drop_no_body(self, client, test_plan):
+        """D2: Leerer Body gibt 400."""
+        r = client.put(f"/api/plans/{test_plan}/workflow",
+                       content_type="application/json")
+        assert r.status_code == 400
+
+
 # --- M5: Copilot Plan-Binding ---
 
 class TestM5CopilotBinding:
@@ -219,3 +293,132 @@ class TestM7Signals:
         assert "governance_status" in d
         # project_dashboard hat Governance-Gate
         assert d["governance_status"] in ("green", "yellow", "red", None)
+
+
+# --- N: Plan-Handoff Markdown ---
+
+class TestPlanHandoff:
+    """Tests fuer build_plan_handoff_markdown und GET /api/plans/<id>/handoff."""
+
+    def test_handoff_full_plan(self, test_plan):
+        """N1/N3: Handoff mit voll befuelltem Plan enthaelt alle Sektionen."""
+        # Plan mit Workflow-Daten befuellen
+        update_plan_workflow(test_plan, {
+            "workflow_stage": "executing",
+            "current_state": "Implementierung laeuft",
+            "target_state": "Feature fertig + Tests gruen",
+            "next_action": "Unit-Tests ergaenzen",
+            "latest_executor_status": "running",
+            "latest_review_status": "pending",
+            "spec_ref": "SPEC-TEST-001",
+            "open_items_count": 3,
+        })
+
+        md = build_plan_handoff_markdown(test_plan)
+        assert md is not None
+
+        # YAML-Frontmatter
+        assert md.startswith("---\n")
+        assert "handoff:" in md
+        assert "type: executor" in md
+        assert "stage: executing" in md
+        assert "scope: SPEC-TEST-001" in md
+        assert "expected_output:" in md
+        assert "priority: must" in md
+
+        # Alle Sektionen vorhanden (N3: konsistentes Template)
+        assert "Projektkontext" in md
+        assert "Aktueller Stand (Ist)" in md
+        assert "Soll-Bild" in md
+        assert "Bisherige Ergebnisse" in md
+        assert "Offene Punkte / Blocker" in md
+        assert "Konkreter Auftrag fuer den naechsten LLM-Run" in md
+        assert "Erwartetes Output-Format" in md
+
+        # Inhaltliche Werte
+        assert "Implementierung laeuft" in md
+        assert "Feature fertig + Tests gruen" in md
+        assert "Unit-Tests ergaenzen" in md
+        assert "running" in md
+        assert "open_items_count: 3" in md
+
+    def test_handoff_missing_signals(self):
+        """N1: Fehlende Signale erzeugen Fallback-Texte statt Crash."""
+        # Plan ohne Projekt-Zuordnung → keine Live-Signale
+        ensure_plan_workflow_schema()
+        unique = str(uuid.uuid4())[:8]
+        row = execute(
+            """INSERT INTO project_plans (filename, title, project_name, status, category)
+               VALUES (%s, %s, NULL, %s, %s)
+               RETURNING id""",
+            (f"test-handoff-{unique}.md", "Handoff No-Project", "draft", "plan"),
+            fetchone=True,
+        )
+        plan_id = row["id"]
+
+        md = build_plan_handoff_markdown(plan_id)
+        assert md is not None
+
+        # Fallbacks fuer fehlende Signale (kein Projekt → keine Live-Daten)
+        assert "(kein Quality-Report vorhanden)" in md
+        assert "(kein Audit gelaufen)" in md
+        assert "(kein Governance-Gate konfiguriert)" in md
+        assert "(noch kein Run)" in md
+
+    def test_handoff_nonexistent_plan(self):
+        """N1: Nicht-existierender Plan gibt None."""
+        md = build_plan_handoff_markdown(999999)
+        assert md is None
+
+    def test_handoff_type_spec_for_idea(self, test_plan):
+        """N1: handoff type=spec fuer idea/spec_ready Stages."""
+        update_plan_workflow(test_plan, {"workflow_stage": "idea"})
+        md = build_plan_handoff_markdown(test_plan)
+        assert "type: spec" in md
+
+        update_plan_workflow(test_plan, {"workflow_stage": "spec_ready"})
+        md = build_plan_handoff_markdown(test_plan)
+        assert "type: spec" in md
+
+    def test_handoff_type_review(self, test_plan):
+        """N1: handoff type=review fuer review_pending Stage."""
+        update_plan_workflow(test_plan, {"workflow_stage": "review_pending"})
+        md = build_plan_handoff_markdown(test_plan)
+        assert "type: review" in md
+
+    def test_handoff_api_200(self, client, test_plan):
+        """N2: GET /api/plans/<id>/handoff liefert 200 + text/markdown."""
+        r = client.get(f"/api/plans/{test_plan}/handoff")
+        assert r.status_code == 200
+        assert r.content_type.startswith("text/markdown")
+        data = r.data.decode("utf-8")
+        assert "---" in data
+        assert "Aktueller Stand" in data
+
+    def test_handoff_api_404(self, client):
+        """N2: GET /api/plans/999999/handoff liefert 404."""
+        r = client.get("/api/plans/999999/handoff")
+        assert r.status_code == 404
+
+    def test_handoff_section_order(self, test_plan):
+        """N3: Sektionen kommen in der definierten Reihenfolge."""
+        update_plan_workflow(test_plan, {"workflow_stage": "executing"})
+        md = build_plan_handoff_markdown(test_plan)
+
+        sections = [
+            "Projektkontext",
+            "Aktueller Stand (Ist)",
+            "Soll-Bild",
+            "Bisherige Ergebnisse",
+            "Offene Punkte / Blocker",
+            "Konkreter Auftrag fuer den naechsten LLM-Run",
+            "Erwartetes Output-Format",
+        ]
+        positions = [md.index(s) for s in sections]
+        assert positions == sorted(positions), "Sektionen nicht in korrekter Reihenfolge"
+
+    def test_handoff_blocker_hints(self, test_plan):
+        """N1: Blocker-Hinweise aus Signalen werden generiert."""
+        update_plan_workflow(test_plan, {"workflow_stage": "blocked"})
+        md = build_plan_handoff_markdown(test_plan)
+        assert "BLOCKER: Plan ist als blockiert markiert" in md

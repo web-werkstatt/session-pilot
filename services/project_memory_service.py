@@ -172,6 +172,18 @@ def _get_file_activity(project_name, limit=10):
     }
 
 
+def _get_handoffs(project_name):
+    """Generiert/aktualisiert die eine handoff.md fuer dieses Projekt."""
+    try:
+        from services.project_handoff_service import write_handoff
+        filepath, _ = write_handoff(project_name)
+        if filepath is None:
+            return []
+        return [{"filepath": filepath, "exists": True, "generated": True}]
+    except Exception:
+        return []
+
+
 def get_project_memory(project_name):
     """Aggregiert Project Memory aus allen verfuegbaren Quellen.
 
@@ -215,4 +227,5 @@ def get_project_memory(project_name):
         "session_summary": _get_session_summary(project_name),
         "recent_plans": _get_recent_plans(project_name),
         "file_activity": _get_file_activity(project_name),
+        "handoffs": _get_handoffs(project_name),
     }

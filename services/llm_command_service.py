@@ -130,10 +130,12 @@ def _parse_command(content):
 def _resolve_context(command, context):
     """Laedt Daten basierend auf Command-data_sources und fuellt den Prompt."""
     project = context.get("project", "")
+    plan_id = context.get("plan_id", "")
     prompt = command["prompt_body"]
 
     # Platzhalter ersetzen
-    prompt = prompt.replace("{{project}}", project)
+    prompt = prompt.replace("{{project}}", str(project))
+    prompt = prompt.replace("{{plan_id}}", str(plan_id))
 
     # Gate-Daten laden
     if "{{gate_data}}" in prompt:
@@ -144,6 +146,16 @@ def _resolve_context(command, context):
     if "{{quality_data}}" in prompt:
         quality_data = _fetch_quality_data(project)
         prompt = prompt.replace("{{quality_data}}", json.dumps(quality_data, indent=2, ensure_ascii=False))
+
+    # Handoff-Daten laden
+    if "{{handoff_data}}" in prompt and plan_id:
+        handoff_data = _fetch_handoff_data(plan_id)
+        prompt = prompt.replace("{{handoff_data}}", handoff_data)
+
+    # Sections-Daten laden
+    if "{{sections_data}}" in prompt and plan_id:
+        sections_data = _fetch_sections_data(plan_id)
+        prompt = prompt.replace("{{sections_data}}", json.dumps(sections_data, indent=2, ensure_ascii=False))
 
     return prompt
 
@@ -179,6 +191,38 @@ def _fetch_quality_data(project):
             ],
         }
     except (json.JSONDecodeError, OSError) as e:
+        return {"error": str(e)}
+
+
+def _fetch_handoff_data(plan_id):
+    """Laedt Projekt-Handoff-Markdown. Ermittelt project_name aus plan_id."""
+    try:
+        from services.db_service import execute
+        from services.project_handoff_service import write_handoff
+        row = execute(
+            "SELECT project_name FROM project_plans WHERE id = %s",
+            (int(plan_id),), fetchone=True,
+        )
+        if not row or not row.get("project_name"):
+            return "(Kein Projekt fuer diesen Plan)"
+        _, md = write_handoff(row["project_name"])
+        return md or "(Kein Handoff vorhanden)"
+    except Exception as e:
+        return f"(Handoff-Fehler: {e})"
+
+
+def _fetch_sections_data(plan_id):
+    """Laedt plan_sections fuer einen Plan."""
+    try:
+        from services.plan_section_service import list_plan_sections
+        sections = list_plan_sections(int(plan_id))
+        return [
+            {"id": s["id"], "kind": s["kind"], "title": s["title"],
+             "status": s.get("status"), "spec_ref": s.get("spec_ref"),
+             "summary": s.get("summary")}
+            for s in sections
+        ]
+    except Exception as e:
         return {"error": str(e)}
 
 
