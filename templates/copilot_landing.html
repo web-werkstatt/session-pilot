@@ -1,40 +1,415 @@
 {% extends "base.html" %}
 
-{% block title %}Copilot - Dashboard{% endblock %}
+{% block title %}Copilot - AI Work OS{% endblock %}
 
 {% block breadcrumb %}Copilot{% endblock %}
 
 {% block topbar_actions %}
-<button class="btn btn-secondary btn-sm" onclick="loadCopilotStats()"><i data-lucide="refresh-cw" class="icon icon-sm"></i> Refresh</button>
+<button class="btn btn-secondary btn-sm" onclick="loadCopilotStats()">
+    <i data-lucide="refresh-cw" class="icon icon-sm"></i> Refresh
+</button>
 {% endblock %}
 
 {% block head_extra %}
 <link rel="stylesheet" href="/static/css/plans.css">
 <link rel="stylesheet" href="/static/css/copilot_landing.css">
+<style>
+    /* Landing Page Redesign */
+    .copilot-hero {
+        text-align: center;
+        padding: 32px 20px 24px;
+        margin-bottom: 24px;
+    }
+    
+    .copilot-hero h2 {
+        font-size: 24px;
+        font-weight: 700;
+        margin-bottom: 8px;
+        background: linear-gradient(135deg, #8b5cf6, #a78bfa);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    
+    .copilot-hero p {
+        color: var(--text-secondary);
+        font-size: 14px;
+        max-width: 400px;
+        margin: 0 auto;
+    }
+    
+    /* Continue Section */
+    .continue-section {
+        max-width: 700px;
+        margin: 0 auto 24px;
+    }
+    
+    .continue-section-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 12px;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .continue-card {
+        background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(99, 102, 241, 0.1));
+        border: 1px solid rgba(139, 92, 246, 0.3);
+        border-radius: 12px;
+        padding: 16px 20px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .continue-card:hover {
+        border-color: rgba(139, 92, 246, 0.5);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(139, 92, 246, 0.15);
+    }
+    
+    .continue-card-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 10px;
+    }
+    
+    .continue-card-icon {
+        width: 40px;
+        height: 40px;
+        background: rgba(139, 92, 246, 0.2);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+    }
+    
+    .continue-card-info {
+        flex: 1;
+    }
+    
+    .continue-card-plan {
+        font-size: 11px;
+        color: var(--text-secondary);
+        margin-bottom: 2px;
+    }
+    
+    .continue-card-title {
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+    
+    .continue-card-preview {
+        padding: 10px 12px;
+        background: rgba(0,0,0,0.2);
+        border-radius: 6px;
+        border-left: 3px solid #8b5cf6;
+        font-size: 12px;
+        color: var(--text-secondary);
+        font-style: italic;
+        margin-bottom: 12px;
+    }
+    
+    .continue-card-action {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 6px;
+        font-size: 12px;
+        color: #a78bfa;
+        font-weight: 600;
+    }
+    
+    /* Quick Start */
+    .quickstart-section {
+        max-width: 700px;
+        margin: 0 auto 24px;
+    }
+    
+    .quickstart-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 12px;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .quickstart-buttons {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+    
+    .quickstart-btn {
+        flex: 1;
+        min-width: 180px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 14px 18px;
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        cursor: pointer;
+        transition: all 0.15s;
+        text-decoration: none;
+        color: inherit;
+    }
+    
+    .quickstart-btn:hover {
+        border-color: var(--accent);
+        background: rgba(99, 102, 241, 0.08);
+    }
+    
+    .quickstart-btn-icon {
+        font-size: 20px;
+    }
+    
+    .quickstart-btn-text {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+    
+    .quickstart-btn-desc {
+        font-size: 11px;
+        color: var(--text-secondary);
+    }
+    
+    /* Stats */
+    .stats-row {
+        display: flex;
+        justify-content: center;
+        gap: 24px;
+        margin: 20px 0;
+        flex-wrap: wrap;
+    }
+    
+    .stat-item {
+        text-align: center;
+    }
+    
+    .stat-value {
+        font-size: 24px;
+        font-weight: 700;
+        color: var(--text-primary);
+    }
+    
+    .stat-label {
+        font-size: 11px;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    /* Plans Section */
+    .plans-section {
+        max-width: 700px;
+        margin: 0 auto;
+        padding-top: 24px;
+        border-top: 1px solid var(--border);
+    }
+    
+    .plans-section-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 16px;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+</style>
 {% endblock %}
 
 {% block content %}
+    <div class="copilot-hero">
+        <h2>🧠 Copilot</h2>
+        <p>Dein AI-native Work OS. Erstelle Steps, arbeite mit Copilot, tracke Fortschritt.</p>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-row" id="statsRow">
+        <div class="stat-item">
+            <div class="stat-value" id="statPlans">-</div>
+            <div class="stat-label">Plans</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value" id="statActive">-</div>
+            <div class="stat-label">Aktiv</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value" id="statSections">-</div>
+            <div class="stat-label">Steps</div>
+        </div>
+    </div>
+
+    <!-- Continue -->
+    <div class="continue-section" id="continueSection" style="display:none;">
+        <div class="continue-section-header">
+            <i data-lucide="clock" class="icon icon-sm"></i>
+            Weiterarbeiten
+        </div>
+        <div class="continue-card" id="continueCard" onclick="continueLastActivity()">
+            <div class="continue-card-header">
+                <div class="continue-card-icon">⚡</div>
+                <div class="continue-card-info">
+                    <div class="continue-card-plan" id="continuePlanName">-</div>
+                    <div class="continue-card-title" id="continueSectionTitle">-</div>
+                </div>
+            </div>
+            <div class="continue-card-preview" id="continuePreview">-</div>
+            <div class="continue-card-action">
+                Weiterarbeiten <i data-lucide="arrow-right" class="icon icon-sm"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Start -->
+    <div class="quickstart-section">
+        <div class="quickstart-header">
+            <i data-lucide="zap" class="icon icon-sm"></i>
+            Schnellstart
+        </div>
+        <div class="quickstart-buttons">
+            <a href="/plans" class="quickstart-btn">
+                <div class="quickstart-btn-icon">📋</div>
+                <div>
+                    <div class="quickstart-btn-text">Plans ansehen</div>
+                    <div class="quickstart-btn-desc">Alle Plans verwalten</div>
+                </div>
+            </a>
+            <a href="/copilot" class="quickstart-btn" onclick="showPlanSelector(event)">
+                <div class="quickstart-btn-icon">🚀</div>
+                <div>
+                    <div class="quickstart-btn-text">Copilot starten</div>
+                    <div class="quickstart-btn-desc">Step auswählen</div>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <!-- Recent Projects -->
     <div class="copilot-header">
-        <div class="copilot-header-label"><i data-lucide="clock" class="icon icon-sm"></i> Letzte Projekte</div>
+        <div class="copilot-header-label">
+            <i data-lucide="folder" class="icon icon-sm"></i>
+            Letzte Projekte
+        </div>
         <div class="recent-projects-list" id="recentProjectsList">
             <span class="rp-loading">Laden...</span>
         </div>
     </div>
 
-    <!-- Aktive Plans -->
-    <div class="copilot-section">
-        <h3 class="copilot-section-title"><i data-lucide="file-text" class="icon icon-sm"></i> Plans zum Bearbeiten</h3>
+    <!-- Plans -->
+    <div class="plans-section">
+        <div class="plans-section-header">
+            <i data-lucide="file-text" class="icon icon-sm"></i>
+            Aktive Plans
+        </div>
         <div id="activePlansList" class="plans-grid">
             <div class="loading"><div class="spinner"></div></div>
         </div>
         <div id="emptyState" class="empty-state" style="display:none;">
             <div class="empty-icon"><i data-lucide="bot" style="width:48px;height:48px;opacity:0.3"></i></div>
             <h3>Keine aktiven Plans</h3>
-            <p>Erstelle oder importiere Plans unter <a href="/plans">Plans</a>, dann starte hier den Copilot.</p>
+            <p>Erstelle oder importiere Plans unter <a href="/plans">Plans</a></p>
         </div>
     </div>
 {% endblock %}
 
 {% block scripts %}
-<script src="/static/js/copilot_landing.js"></script>
+<script>
+var _lastActivity = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadCopilotStats();
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+});
+
+function loadCopilotStats() {
+    api.get('/api/copilot/stats')
+        .then(function(data) {
+            document.getElementById('statPlans').textContent = data.plans_total || 0;
+            document.getElementById('statActive').textContent = data.plans_active || 0;
+            document.getElementById('statSections').textContent = data.sections_total || 0;
+
+            var recent = data.recent_projects || [];
+            var projList = document.getElementById('recentProjectsList');
+            if (recent.length === 0) {
+                projList.innerHTML = '<span style="font-size:12px;color:var(--text-secondary);opacity:0.5;">Keine Projekte</span>';
+            } else {
+                projList.innerHTML = recent.map(function(p) {
+                    return '<a href="/plans?project=' + encodeURIComponent(p.project_name) + '" class="recent-project-item">'
+                        + '<span class="rp-name">' + escapeHtml(p.project_name) + '</span>'
+                        + '<span class="rp-pills">'
+                        + '<span class="stat-pill stat-pill-total">' + p.plan_count + '</span>'
+                        + '</span>'
+                        + '</a>';
+                }).join('');
+            }
+
+            var plans = data.active_plans || [];
+            var plansList = document.getElementById('activePlansList');
+            if (plans.length === 0) {
+                plansList.innerHTML = '';
+                document.getElementById('emptyState').style.display = 'block';
+            } else {
+                document.getElementById('emptyState').style.display = 'none';
+                plansList.innerHTML = plans.map(function(p) {
+                    return '<a href="/copilot?plan_id=' + p.id + '" class="plan-card-link">'
+                        + '<div class="plan-card" style="border-left:3px solid #818cf8;">'
+                        + '<div style="display:flex;align-items:center;gap:8px;padding:10px 12px;">'
+                        + '<span style="font-size:12px;font-weight:600;flex:1;">' + escapeHtml(p.title) + '</span>'
+                        + '<span class="badge badge-cat"><i data-lucide="zap" class="icon icon-xs"></i> Starten</span>'
+                        + '</div>'
+                        + '<div style="padding:0 12px 10px;font-size:11px;color:var(--text-secondary);">'
+                        + (p.project_name || 'Kein Projekt') + '</div>'
+                        + '</div></a>';
+                }).join('');
+            }
+
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        })
+        .catch(function() {
+            document.getElementById('statPlans').textContent = '?';
+            document.getElementById('statActive').textContent = '?';
+            document.getElementById('statSections').textContent = '?';
+        });
+}
+
+function showPlanSelector(e) {
+    e.preventDefault();
+    api.get('/api/copilot/stats')
+        .then(function(data) {
+            var plans = data.active_plans || [];
+            if (plans.length === 0) {
+                alert('Keine aktiven Plans vorhanden. Erstelle zuerst einen Plan unter /plans');
+                return;
+            }
+            var choice = prompt('Plan-ID eingeben:\n\n' + plans.map(function(p) {
+                return p.id + ': ' + p.title;
+            }).join('\n'));
+            if (choice) {
+                window.location.href = '/copilot?plan_id=' + choice.trim();
+            }
+        });
+}
+
+function escapeHtml(text) {
+    if (!text) return '';
+    var div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+</script>
 {% endblock %}

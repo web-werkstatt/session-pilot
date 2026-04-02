@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+
+{% block title %}Copilot Board{% endblock %}
+{% block breadcrumb %}Copilot Board{% endblock %}
+
+{% block topbar_actions %}
+<button class="btn btn-primary btn-sm" onclick="openAddSectionModal()">
+    <i data-lucide="plus" class="icon icon-sm"></i> Step
+</button>
+<a href="/copilot" class="btn btn-secondary btn-sm">
+    <i data-lucide="arrow-left" class="icon icon-sm"></i> Plans
+</a>
+{% endblock %}
+
+{% block head_extra %}
+<link rel="stylesheet" href="/static/css/plans.css">
+<link rel="stylesheet" href="/static/css/copilot.css">
+{% endblock %}
+
+{% block content %}
+    <!-- Flow Guidance -->
+    <div class="board-flow-hint">
+        <span class="board-flow-hint-step" id="flowStep1">1. Step erstellen</span>
+        <span class="board-flow-hint-arrow">→</span>
+        <span class="board-flow-hint-step" id="flowStep2">2. Copilot ausführen</span>
+        <span class="board-flow-hint-arrow">→</span>
+        <span class="board-flow-hint-step" id="flowStep3">3. Review</span>
+        <span class="board-flow-hint-arrow">→</span>
+        <span class="board-flow-hint-step" id="flowStep4">4. Abschließen</span>
+    </div>
+
+    <!-- Split View -->
+    <div class="board-split-view">
+        <!-- Board (links) -->
+        <div class="board-main">
+            <div id="boardHeader" class="section-board-header">
+                <h3 id="boardPlanTitle">Plan laden...</h3>
+                <span class="badge" id="boardSectionCount"></span>
+            </div>
+
+            <div id="sectionsBoard" class="plans-board" style="display:none;"></div>
+
+            <div id="loading" class="loading">
+                <div class="spinner"></div>
+                <div>Steps laden...</div>
+            </div>
+
+            <div id="emptyState" class="empty-state" style="display:none;">
+                <div class="empty-icon"><i data-lucide="layers" style="width:48px;height:48px;opacity:0.3"></i></div>
+                <h3>Keine Steps vorhanden</h3>
+                <p>Klicke <strong>+ Step</strong> um einen AI-Schritt hinzuzufügen.</p>
+            </div>
+        </div>
+
+        <!-- Side Panel (rechts) -->
+        <div class="board-panel" id="sectionPanel">
+            <div class="board-panel-header">
+                <button class="board-panel-back" onclick="closeSectionPanel()">
+                    <i data-lucide="chevron-left" class="icon icon-sm"></i> Board
+                </button>
+                <span class="board-panel-title" id="panelSectionTitle">Section</span>
+                <button class="board-panel-close" onclick="closeSectionPanel()">&times;</button>
+            </div>
+
+            <div class="panel-section-meta" id="panelSectionMeta"></div>
+
+            <div class="panel-ai-preview" id="panelAiPreview" style="display:none;">
+                <div class="panel-ai-preview-label">
+                    <i data-lucide="sparkles" class="icon icon-xs"></i>
+                    Letzte Antwort
+                </div>
+                <div class="panel-ai-preview-text" id="panelAiPreviewText"></div>
+            </div>
+
+            <div class="panel-chat">
+                <div class="panel-chat-messages" id="panelChatMessages">
+                    <div class="panel-chat-empty">
+                        <div class="panel-chat-empty-icon">💬</div>
+                        Noch keine Nachrichten.<br>Stelle eine Frage!
+                    </div>
+                </div>
+                <div class="panel-chat-input">
+                    <div class="panel-chat-input-row">
+                        <button class="btn btn-sm btn-secondary" onclick="document.getElementById('panelFileInput').click()" title="Bild anhängen">
+                            <i data-lucide="paperclip" class="icon icon-xs"></i>
+                        </button>
+                        <textarea id="panelChatInput" rows="1" placeholder="Nachricht an Copilot..." 
+                            onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendPanelMessage()}"></textarea>
+                        <button class="btn btn-sm btn-primary" id="btnPanelSend" onclick="sendPanelMessage()">Senden</button>
+                    </div>
+                    <input type="file" id="panelFileInput" accept="image/png,image/jpeg,image/gif,image/webp" multiple style="display:none;" onchange="handlePanelImageSelect(this)">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="syncToast"></div>
+
+    <!-- Add Section Modal -->
+    <div class="modal-overlay" id="addSectionModal">
+        <div class="modal-content" style="max-width:500px;">
+            <div class="modal-header">
+                <h2>Neuer AI Step</h2>
+                <button class="modal-close" onclick="closeModal('addSectionModal')">&times;</button>
+            </div>
+            <div class="modal-body" style="padding:16px 24px;">
+                <div class="form-group" style="margin-bottom:12px;">
+                    <label style="font-size:13px;font-weight:600;">Titel</label>
+                    <input type="text" id="newSectionTitle" class="filter-select" style="width:100%;padding:8px;" placeholder="z.B. Spezifikation erstellen">
+                </div>
+                <div class="form-group" style="margin-bottom:12px;">
+                    <label style="font-size:13px;font-weight:600;">Typ</label>
+                    <select id="newSectionKind" class="filter-select" style="width:100%;padding:8px;">
+                        <option value="section">AI Step</option>
+                        <option value="spec">Spec</option>
+                    </select>
+                </div>
+                <div class="form-group" style="margin-bottom:12px;">
+                    <label style="font-size:13px;font-weight:600;">Beschreibung (optional)</label>
+                    <textarea id="newSectionSummary" class="filter-select" style="width:100%;padding:8px;min-height:60px;resize:vertical;font-family:inherit;" placeholder="Was soll dieser Step erreichen?"></textarea>
+                </div>
+                <div class="form-group" style="margin-bottom:12px;">
+                    <label style="font-size:13px;font-weight:600;">Spec-Referenz (optional)</label>
+                    <input type="text" id="newSectionSpecRef" class="filter-select" style="width:100%;padding:8px;" placeholder="z.B. SPEC-QUALITY-001">
+                </div>
+                <button class="btn btn-primary" onclick="createSection()" style="width:100%;">Erstellen</button>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/marked.min.js"></script>
+<script>var PLAN_ID = {{ plan_id }};</script>
+<script src="/static/js/copilot_board.js"></script>
+{% endblock %}

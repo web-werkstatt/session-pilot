@@ -281,8 +281,8 @@ class TestCopilotBoardUI:
         html = r.get_data(as_text=True)
         assert "sectionsBoard" in html
         assert "copilot_board.js" in html
-        assert "sectionModal" in html
-        assert "sectionChatInput" in html
+        assert "sectionPanel" in html
+        assert "panelChatInput" in html
 
     def test_copilot_without_plan_id_shows_landing(self, client):
         """/copilot ohne plan_id zeigt Landing-Seite (kein Redirect)."""
