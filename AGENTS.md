@@ -17,3 +17,8 @@ There is no committed automated test, lint, or build pipeline yet. Before openin
 
 ## Commit, PR, and Data Safety Guidelines
 Recent history uses short imperative subjects such as `Feature: ...`, `Refactoring: ...`, and `Dokumentation: ...`. PRs should include a summary, impacted routes/services, linked issue if available, and screenshots for template or CSS changes. Never commit `.env` secrets, and treat JSON store files as user data: preserve keys, make format changes explicit, and document new storage expectations in `README.md`.
+
+## Sprint Documentation
+After completing a Sprint or meaningful feature work, always document in BOTH files:
+1. **sprints/master-plan-2026-04-01.md** — Add/update Sprint entry under "Completed Sprints" with: Sprint name, goal, changes, files modified, and commit hash
+2. **next-session.md** — Update "Was in dieser Session fertig wurde" section with the work summary, and add open items to "Naechste Session" if any
