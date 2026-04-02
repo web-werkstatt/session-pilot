@@ -300,5 +300,5 @@ class TestPlanCopilotChat:
         html = r.get_data(as_text=True)
         assert "sectionsBoard" in html
         assert "copilot_board.js" in html
-        assert "sectionModal" in html
-        assert "sectionChatInput" in html
+        assert "addSectionModal" in html
+        assert "panel-chat-input" in html
