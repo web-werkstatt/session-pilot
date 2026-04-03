@@ -1,76 +1,92 @@
 /**
- * Sprint N: Copilot Board UX Redesign — AI-native Work OS
- * Split View: Board links, Panel rechts
- * Rich Cards mit AI-Preview
+ * Copilot Workspace — AI-native Work OS
+ * Split View: Board links, permanent Panel rechts mit Tabs
  */
 
 var BOARD_COLUMNS = [
-    { status: 'backlog',      label: 'Backlog',     emoji: '💡', description: 'Noch zu klären' },
-    { status: 'ready',        label: 'Ready',       emoji: '🚀', description: 'Bereit für Copilot' },
-    { status: 'in_progress',   label: 'In Progress', emoji: '⚡', description: 'Wird bearbeitet' },
-    { status: 'review',        label: 'Review',      emoji: '👀', description: 'Zur Kontrolle' },
-    { status: 'done',          label: 'Done',        emoji: '✅', description: 'Abgeschlossen' },
-    { status: 'blocked',       label: 'Blocked',     emoji: '🚧', description: 'Wartet auf...' },
+    { status: 'todo',         label: 'Todo',          emoji: '📝', dot: '#64748b', description: 'Noch nicht gestartet', emptyText: 'Keine offenen Marker' },
+    { status: 'in_progress',  label: 'Generating',    emoji: '⚡', dot: '#3b82f6', description: 'AI arbeitet', emptyText: 'Keine laufenden Marker' },
+    { status: 'done',         label: 'Done',          emoji: '✅', dot: '#22c55e', description: 'Abgeschlossen', emptyText: 'Noch nichts erledigt' },
+    { status: 'blocked',      label: 'Blocked',       emoji: '🚧', dot: '#ef4444', description: 'Wartet auf Klaerung', emptyText: 'Keine blockierten Marker' },
 ];
 
 var allSections = [];
 var _currentSection = null;
 var _currentThreadId = null;
 var _pendingImages = [];
-var _sectionAiPreviews = {};
+var _planInfo = null;
+var _activePanelTab = 'chat';
+var _currentProjectId = null;
 
 document.addEventListener('DOMContentLoaded', function() {
-    _loadPlanInfo();
-    _loadSections();
-    _loadAiPreviews();
+    _loadPlanInfo()
+        .finally(function() {
+            _loadSections();
+            _loadPlanSwitcher();
+        });
+    document.addEventListener('click', function(e) {
+        var dd = document.getElementById('planSwitcherDD');
+        var btn = document.getElementById('planSwitcherBtn');
+        if (dd && dd.style.display !== 'none' && !dd.contains(e.target) && !btn.contains(e.target)) {
+            dd.style.display = 'none';
+        }
+    });
 });
 
+/* === Plan Info === */
 function _loadPlanInfo() {
-    api.get('/api/plans/' + PLAN_ID)
+    return api.get('/api/plans/' + PLAN_ID)
         .then(function(plan) {
-            document.getElementById('boardPlanTitle').textContent = plan.title || 'Plan #' + PLAN_ID;
-            _updateFlowHint();
+            _planInfo = plan;
+            _currentProjectId = plan.project_name || null;
+            var label = plan.title || 'Plan #' + PLAN_ID;
+            document.getElementById('planSwitcherLabel').textContent = 'Plan switch';
+            document.getElementById('currentPlanTitle').textContent = label;
         })
         .catch(function() {
-            document.getElementById('boardPlanTitle').textContent = 'Plan #' + PLAN_ID;
+            document.getElementById('planSwitcherLabel').textContent = 'Plan switch';
+            document.getElementById('currentPlanTitle').textContent = 'Plan #' + PLAN_ID;
         });
 }
 
-function _loadAiPreviews() {
-    api.get('/api/plans/' + PLAN_ID + '/sections')
+/* === Plan Switcher === */
+function _loadPlanSwitcher() {
+    api.get('/api/copilot/stats')
         .then(function(data) {
-            var sections = data.sections || [];
-            var sectionIds = sections.map(function(s) { return s.id; });
-            if (sectionIds.length === 0) return;
-            
-            api.get('/api/copilot/ai-previews?section_ids=' + sectionIds.join(','))
-                .then(function(previews) {
-                    _sectionAiPreviews = previews.previews || {};
-                    _renderBoard();
-                })
-                .catch(function() {});
+            var plans = data.active_plans || [];
+            var dd = document.getElementById('planSwitcherDD');
+            var html = '';
+            plans.forEach(function(p) {
+                var cls = p.id === PLAN_ID ? ' active' : '';
+                html += '<button class="copilot-plan-switch-item' + cls + '" onclick="switchPlan(' + p.id + ')">'
+                    + escapeHtml(p.title || 'Plan #' + p.id)
+                    + '<small>' + escapeHtml(p.project_name || '') + ' &middot; ' + (p.status || '') + '</small>'
+                    + '</button>';
+            });
+            if (plans.length > 0) {
+                html += '<div class="copilot-plan-switch-divider"></div>';
+            }
+            html += '<button class="copilot-plan-switch-item" onclick="window.location.href=\'/plans\'">Show all plans &rarr;</button>';
+            dd.innerHTML = html;
         })
         .catch(function() {});
 }
 
-function _updateFlowHint() {
-    var hasBacklog = allSections.some(function(s) { return s.status === 'backlog'; });
-    var hasInProgress = allSections.some(function(s) { return s.status === 'in_progress'; });
-    var hasReview = allSections.some(function(s) { return s.status === 'review'; });
-    var hasDone = allSections.some(function(s) { return s.status === 'done'; });
-
-    document.getElementById('flowStep1').classList.toggle('active', hasBacklog);
-    document.getElementById('flowStep2').classList.toggle('active', hasInProgress);
-    document.getElementById('flowStep3').classList.toggle('active', hasReview);
-    document.getElementById('flowStep4').classList.toggle('active', hasDone);
+function togglePlanSwitcher() {
+    var dd = document.getElementById('planSwitcherDD');
+    dd.style.display = dd.style.display === 'none' ? 'block' : 'none';
 }
 
+function switchPlan(planId) {
+    window.location.href = '/copilot?plan_id=' + planId;
+}
+
+/* === Sections laden === */
 function _loadSections() {
-    api.get('/api/plans/' + PLAN_ID + '/sections')
+    api.get(_buildMarkerApiUrl())
         .then(function(data) {
-            allSections = data.sections || [];
+            allSections = (data.markers || []).map(_normalizeMarker);
             document.getElementById('loading').style.display = 'none';
-            document.getElementById('boardSectionCount').textContent = allSections.length + ' Steps';
             if (allSections.length === 0) {
                 document.getElementById('sectionsBoard').style.display = 'none';
                 document.getElementById('emptyState').style.display = 'block';
@@ -78,14 +94,29 @@ function _loadSections() {
                 document.getElementById('emptyState').style.display = 'none';
                 _renderBoard();
             }
-            _updateFlowHint();
+            _renderProgress();
             if (typeof lucide !== 'undefined') lucide.createIcons();
         })
-        .catch(function(err) {
+        .catch(function() {
             document.getElementById('loading').innerHTML = '<div class="error">Fehler beim Laden</div>';
         });
 }
 
+/* === Progress Bar === */
+function _renderProgress() {
+    var total = allSections.length;
+    var done = allSections.filter(function(s) { return s.status === 'done'; }).length;
+    var blocked = allSections.filter(function(s) { return s.status === 'blocked'; }).length;
+    var pct = total > 0 ? Math.round((done / total) * 100) : 0;
+
+    document.getElementById('progressBar').style.width = pct + '%';
+    document.getElementById('progressPercent').textContent = pct + '%';
+    document.getElementById('progressTasks').textContent = total + ' Tasks';
+    document.getElementById('progressDone').textContent = done + ' Done';
+    document.getElementById('progressReview').textContent = blocked + ' Blocked';
+}
+
+/* === Board rendern === */
 function _renderBoard() {
     var board = document.getElementById('sectionsBoard');
     board.style.display = 'flex';
@@ -93,9 +124,9 @@ function _renderBoard() {
     var grouped = {};
     BOARD_COLUMNS.forEach(function(col) { grouped[col.status] = []; });
     allSections.forEach(function(sec) {
-        var st = sec.status || 'backlog';
+        var st = sec.status || 'todo';
         if (grouped[st]) grouped[st].push(sec);
-        else grouped['backlog'].push(sec);
+        else grouped.todo.push(sec);
     });
 
     var html = '';
@@ -103,13 +134,17 @@ function _renderBoard() {
         var items = grouped[col.status];
         html += '<div class="board-column" data-status="' + col.status + '">';
         html += '<div class="board-column-header">';
-        html += '<span class="column-label"><span class="column-emoji">' + col.emoji + '</span>' + col.label + '</span>';
+        html += '<span class="column-emoji">' + col.emoji + '</span>';
+        html += '<span class="column-label">' + col.label + '</span>';
         html += '<span class="board-count">' + items.length + '</span>';
         html += '</div>';
-        html += '<div class="board-description">' + col.description + '</div>';
+        html += '<div class="column-description">' + col.description + '</div>';
         html += '<div class="board-column-body" data-status="' + col.status + '">';
+        if (items.length === 0) {
+            html += '<div class="column-empty">' + col.emptyText + '</div>';
+        }
         items.forEach(function(sec) {
-            html += _buildSectionCard(sec);
+            html += _buildCard(sec);
         });
         html += '</div></div>';
     });
@@ -119,44 +154,61 @@ function _renderBoard() {
     if (typeof lucide !== 'undefined') lucide.createIcons();
 }
 
-function _buildSectionCard(sec) {
-    var st = sec.status || 'backlog';
-    var kindLabel = sec.kind === 'spec' ? 'Spec' : 'Step';
-    var kindIcon = sec.kind === 'spec' ? 'file-check' : 'zap';
-    
-    var col = BOARD_COLUMNS.find(function(c) { return c.status === st; });
-    var statusBadge = col ? (col.emoji + ' ' + col.label) : st.replace('_', ' ');
-    
-    var aiPreview = _sectionAiPreviews[sec.id];
-    var previewHtml = '';
-    if (aiPreview && aiPreview.last_message) {
-        var previewText = aiPreview.last_message.substring(0, 60) + (aiPreview.last_message.length > 60 ? '...' : '');
-        previewHtml = '<div class="card-ai-preview">'
-            + '<div class="card-ai-preview-label"><i data-lucide="sparkles" class="icon"></i> ' + aiPreview.message_count + ' msgs</div>'
-            + '<div class="card-ai-preview-text">"' + escapeHtml(previewText) + '"</div>'
-            + '</div>';
-    } else {
-        previewHtml = '<div class="card-meta-row">'
-            + '<span class="card-meta-item"><i data-lucide="message-circle" class="icon"></i> 0</span>'
-            + '</div>';
+/* === Card bauen === */
+function _buildCard(sec) {
+    var st = sec.status || 'todo';
+    var selected = _currentSection && _currentSection.marker_id === sec.marker_id ? ' selected' : '';
+    var locked = sec.is_activatable === false;
+    var gateHtml = locked
+        ? '<div class="card-gate card-gate--locked"><i data-lucide="lock" class="icon icon-xs"></i> ' + escapeHtml(sec.gate_reason || 'gesperrt') + '</div>'
+        : '<div class="card-gate card-gate--ready"><i data-lucide="shield-check" class="icon icon-xs"></i> freigegeben</div>';
+    var previewText = sec.ziel || sec.naechster_schritt || '';
+    var previewHtml = previewText
+        ? '<div class="card-ai-preview"><div class="card-ai-preview-text">' + escapeHtml(previewText) + '</div></div>'
+        : '';
+
+    // Generating indicator
+    var genHtml = '';
+    if (st === 'in_progress') {
+        genHtml = '<div class="card-generating-indicator"><span class="card-generating-dot"></span> Generating...</div>';
     }
 
-    return '<div class="plan-card sec-status-' + st + '" draggable="true" '
-        + 'data-section-id="' + sec.id + '" data-status="' + st + '" '
-        + 'onclick="openSectionPanel(' + sec.id + ')">'
+    var timeHtml = '';
+    if (sec.updated_at) {
+        timeHtml = '<span class="card-time">' + (typeof formatTimeAgo === 'function' ? formatTimeAgo(sec.updated_at) : '') + '</span>';
+    }
+
+    var activateBtnHtml = sec.is_activatable
+        ? '<button class="card-action-btn ui-button ui-button--ghost" onclick="event.stopPropagation();activateMarker(\'' + _escapeJsString(sec.marker_id) + '\')">OK</button>'
+        : '';
+
+    return '<div class="plan-card ui-card board-task-card sec-status-' + st + (locked ? ' is-locked' : '') + selected + '" draggable="true" '
+        + 'data-marker-id="' + escapeHtml(sec.marker_id) + '" data-status="' + st + '" '
+        + 'onclick="openSectionPanel(\'' + _escapeJsString(sec.marker_id) + '\')">'
         + '<div class="card-head">'
-        + '<span class="badge badge-cat"><i data-lucide="' + kindIcon + '" class="icon icon-xs"></i> ' + kindLabel + '</span>'
-        + '<span class="card-head-title">' + escapeHtml(sec.title) + '</span>'
-        + '<span class="badge badge-section-status badge-sec-' + st + '">' + statusBadge + '</span>'
+        + '<span class="card-kind ui-badge">Marker</span>'
+        + '<span class="card-msg-badge ui-badge">' + escapeHtml(st.replace('_', ' ')) + '</span>'
         + '</div>'
+        + '<div class="card-title">' + escapeHtml(sec.titel) + '</div>'
+        + genHtml
+        + gateHtml
         + previewHtml
-        + '</div>';
+        + '<div class="card-footer">'
+        + timeHtml
+        + '<div class="card-actions">'
+        + activateBtnHtml
+        + '<button class="card-action-btn ui-button ui-button--ghost" onclick="event.stopPropagation();openSectionPanel(\'' + _escapeJsString(sec.marker_id) + '\', \'chat\')">Chat</button>'
+        + '</div></div></div>';
 }
+
+/* === Drag & Drop === */
+var _dragSectionId = null;
+var _dragSourceStatus = null;
 
 function _initDragDrop() {
     document.querySelectorAll('#sectionsBoard .plan-card[draggable]').forEach(function(card) {
         card.addEventListener('dragstart', function(e) {
-            _dragSectionId = parseInt(this.dataset.sectionId);
+            _dragSectionId = this.dataset.markerId;
             _dragSourceStatus = this.dataset.status;
             this.classList.add('dragging');
             e.dataTransfer.effectAllowed = 'move';
@@ -183,47 +235,40 @@ function _initDragDrop() {
             e.preventDefault();
             this.classList.remove('drag-over');
             var targetStatus = this.dataset.status;
-            var secId = parseInt(e.dataTransfer.getData('text/plain'));
+            var secId = e.dataTransfer.getData('text/plain');
             if (!secId || targetStatus === _dragSourceStatus) return;
-            _moveSectionCard(secId, _dragSourceStatus, targetStatus);
+            _moveCard(secId, _dragSourceStatus, targetStatus);
         });
     });
 }
 
-var _dragSectionId = null;
-var _dragSourceStatus = null;
-
-function _moveSectionCard(sectionId, oldStatus, newStatus) {
-    var card = document.querySelector('.plan-card[data-section-id="' + sectionId + '"]');
+function _moveCard(sectionId, oldStatus, newStatus) {
+    var card = document.querySelector('.plan-card[data-marker-id="' + sectionId + '"]');
     var targetCol = document.querySelector('.board-column-body[data-status="' + newStatus + '"]');
     if (card && targetCol) {
+        var emptyEl = targetCol.querySelector('.column-empty');
+        if (emptyEl) emptyEl.remove();
         targetCol.appendChild(card);
         card.dataset.status = newStatus;
-        
-        var badge = card.querySelector('.badge-section-status');
-        if (badge) {
-            badge.className = 'badge badge-section-status badge-sec-' + newStatus;
-            badge.textContent = newStatus.replace('_', ' ');
-        }
-        
         card.classList.remove('sec-status-' + oldStatus);
         card.classList.add('sec-status-' + newStatus);
-        
-        var col = BOARD_COLUMNS.find(function(c) { return c.status === newStatus; });
-        if (badge && col) {
-            badge.textContent = (col.emoji + ' ' + col.label);
-        }
-        
         _updateColumnCounts();
-        _updateFlowHint();
     }
 
-    api.put('/api/plan-sections/' + sectionId, { status: newStatus })
-        .then(function() {
-            var label = BOARD_COLUMNS.find(function(c) { return c.status === newStatus; });
-            _showToast('Verschoben nach "' + (label ? label.label : newStatus) + '"');
-            var sec = allSections.find(function(s) { return s.id === sectionId; });
-            if (sec) sec.status = newStatus;
+    api.patch('/api/copilot/markers/' + encodeURIComponent(sectionId) + '/status', {
+        project_id: _currentProjectId,
+        plan_id: PLAN_ID,
+        status: newStatus
+    })
+        .then(function(data) {
+            var col = BOARD_COLUMNS.find(function(c) { return c.status === newStatus; });
+            _showToast('Verschoben nach "' + (col ? col.label : newStatus) + '"');
+            var sec = allSections.find(function(s) { return s.marker_id === sectionId; });
+            if (sec) {
+                sec.status = newStatus;
+                sec.updated_at = data.updated_at || sec.updated_at;
+            }
+            _renderProgress();
         })
         .catch(function(err) {
             var sourceCol = document.querySelector('.board-column-body[data-status="' + oldStatus + '"]');
@@ -232,12 +277,6 @@ function _moveSectionCard(sectionId, oldStatus, newStatus) {
                 card.dataset.status = oldStatus;
                 card.classList.remove('sec-status-' + newStatus);
                 card.classList.add('sec-status-' + oldStatus);
-                var badge = card.querySelector('.badge-section-status');
-                if (badge) {
-                    badge.className = 'badge badge-section-status badge-sec-' + oldStatus;
-                    var col = BOARD_COLUMNS.find(function(c) { return c.status === oldStatus; });
-                    badge.textContent = col ? (col.emoji + ' ' + col.label) : oldStatus.replace('_', ' ');
-                }
                 _updateColumnCounts();
             }
             _showToast('Fehler: ' + (err.message || 'Update fehlgeschlagen'), true);
@@ -251,6 +290,7 @@ function _updateColumnCounts() {
     });
 }
 
+/* === Add Section === */
 function openAddSectionModal() {
     document.getElementById('newSectionTitle').value = '';
     document.getElementById('newSectionKind').value = 'section';
@@ -274,7 +314,7 @@ function createSection() {
     api.post('/api/plans/' + PLAN_ID + '/sections', body)
         .then(function() {
             closeModal('addSectionModal');
-            _showToast('Step erstellt');
+            _showToast('AI Task erstellt');
             _loadSections();
         })
         .catch(function(err) {
@@ -282,79 +322,101 @@ function createSection() {
         });
 }
 
-function openSectionPanel(sectionId) {
-    var sec = allSections.find(function(s) { return s.id === sectionId; });
+/* === Panel === */
+function openSectionPanel(sectionId, tab) {
+    var sec = allSections.find(function(s) { return s.marker_id === sectionId; });
     if (!sec) return;
 
     _currentSection = sec;
-    _currentThreadId = null;
+    _currentThreadId = _markerThreadId(sec.marker_id);
     _pendingImages = [];
 
-    document.getElementById('panelSectionTitle').textContent = sec.title;
-    
-    var secStatus = sec.status || 'backlog';
-    var col = BOARD_COLUMNS.find(function(c) { return c.status === secStatus; });
-    var statusHtml = '<span class="badge badge-section-status badge-sec-' + secStatus + '">' 
-        + (col ? col.emoji + ' ' : '') + (col ? col.label : secStatus.replace('_', ' ')) + '</span>';
-    
-    var metaHtml = statusHtml;
-    if (sec.kind === 'spec') {
-        metaHtml += ' <span class="badge badge-cat"><i data-lucide="file-check" class="icon icon-xs"></i> Spec</span>';
-    }
-    if (sec.spec_ref) {
-        metaHtml += ' <code class="filename" style="font-size:10px;">' + escapeHtml(sec.spec_ref) + '</code>';
-    }
-    if (sec.summary) {
-        metaHtml += ' <span style="font-size:11px;color:var(--text-secondary);margin-left:8px;">' + escapeHtml(sec.summary) + '</span>';
-    }
+    // Highlight selected card
+    document.querySelectorAll('#sectionsBoard .plan-card').forEach(function(c) { c.classList.remove('selected'); });
+    var card = document.querySelector('.plan-card[data-marker-id="' + sectionId + '"]');
+    if (card) card.classList.add('selected');
+
+    // Show panel
+    document.querySelector('.board-split-view').classList.add('panel-open');
+    document.getElementById('panelEmptyState').style.display = 'none';
+    document.getElementById('panelContent').style.display = 'flex';
+
+    // Title + Status
+    document.getElementById('panelSectionTitle').textContent = sec.titel;
+    var st = sec.status || 'todo';
+    var col = BOARD_COLUMNS.find(function(c) { return c.status === st; });
+    document.getElementById('panelStatusBadge').innerHTML =
+        '<span class="badge ui-badge badge-section-status badge-sec-' + st + '">' + (col ? col.label : st) + '</span>';
+
+    // Meta
+    var metaHtml = '<span style="font-weight:600;">Marker</span>';
+    metaHtml += ' &middot; Plan ' + escapeHtml(sec.plan_id || String(PLAN_ID));
+    metaHtml += ' &middot; ' + escapeHtml(sec.is_activatable ? 'freigegeben' : (sec.gate_reason || 'gesperrt'));
     document.getElementById('panelSectionMeta').innerHTML = metaHtml;
 
-    var aiPreview = _sectionAiPreviews[sec.id];
-    if (aiPreview && aiPreview.last_message) {
-        var previewText = aiPreview.last_message.substring(0, 150) + (aiPreview.last_message.length > 150 ? '...' : '');
-        document.getElementById('panelAiPreviewText').textContent = previewText;
-        document.getElementById('panelAiPreview').style.display = 'block';
-    } else {
-        document.getElementById('panelAiPreview').style.display = 'none';
-    }
-
-    document.getElementById('sectionPanel').classList.add('open');
+    // Restore last active tab, or force chat when requested explicitly.
+    switchPanelTab(tab || _activePanelTab || 'chat');
+    _renderPanelMarkerDetails(sec);
+    _loadMarkerContext(sectionId);
     _loadPanelChat(sectionId);
     if (typeof lucide !== 'undefined') lucide.createIcons();
 }
 
 function closeSectionPanel() {
-    document.getElementById('sectionPanel').classList.remove('open');
     _currentSection = null;
+    document.querySelector('.board-split-view').classList.remove('panel-open');
+    document.getElementById('panelContent').style.display = 'none';
+    document.getElementById('panelEmptyState').style.display = 'flex';
+    document.querySelectorAll('#sectionsBoard .plan-card').forEach(function(c) { c.classList.remove('selected'); });
 }
 
+/* === Panel Tabs === */
+function switchPanelTab(tab) {
+    _activePanelTab = tab;
+    document.querySelectorAll('.panel-tab').forEach(function(t) {
+        t.classList.toggle('active', t.dataset.tab === tab);
+    });
+    document.querySelectorAll('.panel-tab-body').forEach(function(b) {
+        b.classList.toggle('active', b.id === 'tab' + tab.charAt(0).toUpperCase() + tab.slice(1));
+    });
+}
+
+/* === Ask Copilot === */
+function askCopilot() {
+    if (_currentSection) {
+        switchPanelTab('chat');
+        document.getElementById('panelChatInput').focus();
+    } else {
+        _showToast('Waehle zuerst einen AI Task aus', true);
+    }
+}
+
+/* === Chat === */
 function _loadPanelChat(sectionId) {
     var container = document.getElementById('panelChatMessages');
-    container.innerHTML = '<div class="panel-chat-empty"><div class="panel-chat-empty-icon">💬</div>Chat laden...</div>';
+    container.innerHTML = '<div class="panel-chat-empty"><div class="panel-chat-empty-icon">...</div>Chat laden...</div>';
 
-    api.get('/api/copilot/threads?section_id=' + sectionId + '&plan_id=' + PLAN_ID)
+    api.get('/api/copilot/runs?thread_id=' + encodeURIComponent(_markerThreadId(sectionId)) + '&plan_id=' + PLAN_ID + _projectQueryParam())
         .then(function(data) {
-            _currentThreadId = data.thread_id;
-            return api.get('/api/copilot/messages?thread_id=' + data.thread_id + '&limit=50');
-        })
-        .then(function(data) {
-            var msgs = data.messages || [];
+            _currentThreadId = _markerThreadId(sectionId);
+            var msgs = data.runs || [];
             container.innerHTML = '';
             if (msgs.length === 0) {
                 container.innerHTML = '<div class="panel-chat-empty"><div class="panel-chat-empty-icon">💬</div>Noch keine Nachrichten.<br>Stelle eine Frage!</div>';
                 return;
             }
             msgs.forEach(function(msg) {
-                _appendPanelChatMsg(msg.role, msg.content, msg.images);
+                if (msg.user_message) _appendChatMsg('user', msg.user_message, msg.images);
+                if (msg.assistant_reply) _appendChatMsg('assistant', msg.assistant_reply);
             });
-            _scrollPanelChat();
+            _scrollChat();
         })
         .catch(function() {
             container.innerHTML = '<div class="panel-chat-empty"><div class="panel-chat-empty-icon">⚠️</div>Chat konnte nicht geladen werden.</div>';
         });
 }
 
-function _appendPanelChatMsg(role, text, images) {
+function _appendChatMsg(role, text, images) {
     var container = document.getElementById('panelChatMessages');
     var empty = container.querySelector('.panel-chat-empty');
     if (empty) empty.remove();
@@ -391,10 +453,10 @@ function _appendPanelChatMsg(role, text, images) {
     div.appendChild(label);
     div.appendChild(body);
     container.appendChild(div);
-    _scrollPanelChat();
+    _scrollChat();
 }
 
-function _scrollPanelChat() {
+function _scrollChat() {
     var c = document.getElementById('panelChatMessages');
     c.scrollTop = c.scrollHeight;
 }
@@ -406,38 +468,47 @@ function sendPanelMessage() {
     if (!_currentSection) return;
 
     var btn = document.getElementById('btnPanelSend');
-    btn.disabled = true; btn.textContent = '...';
+    btn.disabled = true;
 
-    _appendPanelChatMsg('user', message || '(Bild)', _pendingImages.length > 0 ? _pendingImages : null);
+    _appendChatMsg('user', message || '(Bild)', _pendingImages.length > 0 ? _pendingImages : null);
     input.value = '';
 
     var body = {
-        message: message || '(Bild angehängt)',
+        message: message || '(Bild angehaengt)',
+        project_id: _currentProjectId,
         plan_id: PLAN_ID,
-        section_id: _currentSection.id,
+        thread_id: _currentThreadId || _markerThreadId(_currentSection.marker_id),
+        context: {
+            marker_id: _currentSection.marker_id,
+            titel: _currentSection.titel,
+            status: _currentSection.status,
+            ziel: _currentSection.ziel,
+            naechster_schritt: _currentSection.naechster_schritt,
+            prompt: _currentSection.prompt || '',
+            checks: _currentSection.checks || [],
+            risiko: _currentSection.risiko || ''
+        }
     };
-    if (_currentThreadId) body.thread_id = _currentThreadId;
     if (_pendingImages.length > 0) body.images = _pendingImages;
     _pendingImages = [];
 
-    api.post('/api/copilot/section-chat', body)
+    api.post('/api/copilot/chat', body)
         .then(function(data) {
             if (data.thread_id) _currentThreadId = data.thread_id;
-            if (data.status === 'success' && data.assistant_message) {
-                _appendPanelChatMsg('assistant', data.assistant_message.content);
-                _loadAiPreviews();
+            if (data.status === 'success' && data.reply) {
+                _appendChatMsg('assistant', data.reply);
             } else if (data.error) {
-                _appendPanelChatMsg('assistant', 'Fehler: ' + data.error);
+                _appendChatMsg('assistant', 'Fehler: ' + data.error);
             }
         })
         .catch(function(err) {
             var msg = 'Fehler';
             if (err.body && err.body.error) msg = err.body.error;
             else if (err.message) msg = err.message;
-            _appendPanelChatMsg('assistant', msg);
+            _appendChatMsg('assistant', msg);
         })
         .finally(function() {
-            btn.disabled = false; btn.textContent = 'Senden';
+            btn.disabled = false;
             input.focus();
         });
 }
@@ -458,6 +529,7 @@ function handlePanelImageSelect(input) {
     input.value = '';
 }
 
+/* === Helpers === */
 function _showToast(msg, isError) {
     var toast = document.getElementById('syncToast');
     if (toast) {
@@ -472,4 +544,158 @@ function escapeHtml(text) {
     var div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+}
+
+function _escapeJsString(text) {
+    return String(text || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+}
+
+function _buildMarkerApiUrl(markerId) {
+    var url = '/api/copilot/markers';
+    if (markerId) url += '/' + encodeURIComponent(markerId);
+    url += '?plan_id=' + encodeURIComponent(PLAN_ID);
+    if (_currentProjectId) url += '&project_id=' + encodeURIComponent(_currentProjectId);
+    return url;
+}
+
+function _projectQueryParam() {
+    return _currentProjectId ? '&project_id=' + encodeURIComponent(_currentProjectId) : '';
+}
+
+function _normalizeMarker(marker) {
+    var normalized = Object.assign({}, marker || {});
+    normalized.marker_id = String(normalized.marker_id || '');
+    normalized.status = normalized.status || 'todo';
+    normalized.titel = normalized.titel || 'Unbenannter Marker';
+    normalized.ziel = normalized.ziel || '';
+    normalized.naechster_schritt = normalized.naechster_schritt || '';
+    normalized.prompt = normalized.prompt || '';
+    normalized.prompt_suggestion = normalized.prompt_suggestion || '';
+    normalized.risiko = normalized.risiko || '';
+    normalized.checks = Array.isArray(normalized.checks) ? normalized.checks : [];
+    normalized.last_session = normalized.last_session || '';
+    normalized.updated_at = normalized.updated_at || '';
+    normalized.is_activatable = normalized.is_activatable === true;
+    normalized.gate_reason = normalized.gate_reason || '';
+    return normalized;
+}
+
+function _loadMarkerContext(markerId) {
+    api.get(_buildMarkerApiUrl(markerId))
+        .then(function(marker) {
+            var normalized = _normalizeMarker(marker);
+            _currentSection = normalized;
+            _upsertSection(normalized);
+            _renderPanelMarkerDetails(normalized);
+            _renderBoard();
+            _renderProgress();
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        })
+        .catch(function(err) {
+            _showToast('Fehler: ' + (err.message || 'Marker konnte nicht geladen werden'), true);
+        });
+}
+
+function _renderPanelMarkerDetails(marker) {
+    var outputEmpty = document.getElementById('panelOutputEmpty');
+    var outputFields = document.getElementById('panelOutputFields');
+    var historyEmpty = document.getElementById('panelHistoryEmpty');
+    var historyFields = document.getElementById('panelHistoryFields');
+    var adoptBtn = document.getElementById('panelAdoptSuggestionBtn');
+
+    outputEmpty.style.display = 'none';
+    outputFields.style.display = 'flex';
+    historyEmpty.style.display = 'none';
+    historyFields.style.display = 'flex';
+
+    document.getElementById('panelMarkerGoal').textContent = marker.ziel || '-';
+    document.getElementById('panelMarkerNextStep').textContent = marker.naechster_schritt || '-';
+    document.getElementById('panelMarkerPrompt').value = marker.prompt || '';
+    document.getElementById('panelMarkerRisk').textContent = marker.risiko || '-';
+    document.getElementById('panelMarkerLastSession').textContent = marker.last_session || '-';
+    document.getElementById('panelMarkerUpdatedAt').textContent = marker.updated_at || '-';
+    document.getElementById('panelMarkerGate').textContent = marker.is_activatable ? 'freigegeben' : (marker.gate_reason || 'gesperrt');
+    document.getElementById('panelMarkerChecks').innerHTML = _renderChecksHtml(marker.checks);
+    adoptBtn.style.display = marker.prompt_suggestion ? 'inline-flex' : 'none';
+}
+
+function _renderChecksHtml(checks) {
+    if (!checks || checks.length === 0) {
+        return '<div class="panel-check-empty">Keine checks definiert</div>';
+    }
+    return checks.map(function(item) {
+        return '<div class="panel-check-item"><i data-lucide="check" class="icon icon-xs"></i>' + escapeHtml(item) + '</div>';
+    }).join('');
+}
+
+function _upsertSection(marker) {
+    var idx = allSections.findIndex(function(item) { return item.marker_id === marker.marker_id; });
+    if (idx >= 0) allSections[idx] = Object.assign({}, allSections[idx], marker);
+    else allSections.push(marker);
+}
+
+function _markerThreadId(markerId) {
+    return 'marker:' + PLAN_ID + ':' + markerId;
+}
+
+function activateMarker(markerId) {
+    var marker = allSections.find(function(item) { return item.marker_id === markerId; });
+    if (!marker) return;
+    if (!marker.is_activatable) {
+        _showToast(marker.gate_reason || 'Marker ist nicht freigegeben', true);
+        return;
+    }
+
+    api.post('/api/copilot/markers/' + encodeURIComponent(markerId) + '/activate', {
+        project_id: _currentProjectId,
+        plan_id: PLAN_ID,
+        context_path: 'marker-context.md'
+    })
+        .then(function(data) {
+            marker.status = data.status || 'in_progress';
+            marker.updated_at = data.updated_at || marker.updated_at;
+            _upsertSection(marker);
+            if (_currentSection && _currentSection.marker_id === markerId) {
+                _currentSection.status = marker.status;
+                _currentSection.updated_at = marker.updated_at;
+            }
+            _renderBoard();
+            _renderProgress();
+            if (_currentSection && _currentSection.marker_id === markerId) {
+                openSectionPanel(markerId, _activePanelTab || 'chat');
+            }
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+            _showToast('Kontext vorbereitet, du kannst jetzt Claude Code starten.');
+        })
+        .catch(function(err) {
+            var body = err && err.body ? err.body : {};
+            if (body.error === 'gate_blocked') {
+                _showToast(body.reason || marker.gate_reason || 'Gate blockiert', true);
+                return;
+            }
+            _showToast('Fehler: ' + (body.error || err.message || 'Aktivierung fehlgeschlagen'), true);
+        });
+}
+
+function adoptPromptSuggestion() {
+    if (!_currentSection || !_currentSection.prompt_suggestion) return;
+
+    api.patch('/api/copilot/markers/' + encodeURIComponent(_currentSection.marker_id) + '/fields', {
+        project_id: _currentProjectId,
+        plan_id: PLAN_ID,
+        fields: { prompt: _currentSection.prompt_suggestion }
+    })
+        .then(function(marker) {
+            var normalized = _normalizeMarker(marker);
+            _currentSection = normalized;
+            _upsertSection(normalized);
+            _renderPanelMarkerDetails(normalized);
+            _renderBoard();
+            _renderProgress();
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+            _showToast('Prompt-Vorschlag uebernommen');
+        })
+        .catch(function(err) {
+            _showToast('Fehler: ' + (err.message || 'Vorschlag konnte nicht uebernommen werden'), true);
+        });
 }

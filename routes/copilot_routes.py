@@ -4,8 +4,18 @@ POST /api/copilot/chat, GET /api/copilot/runs, POST /api/copilot/upload_image.
 """
 import os
 import uuid
-from flask import Blueprint, jsonify, request, render_template
+from flask import Blueprint, jsonify, request, render_template, redirect
+from services.copilot_marker_service import (
+    MarkerActivationError,
+    activate_marker,
+    get_marker_context,
+    is_activatable,
+    list_markers_for_plan,
+    update_marker_fields,
+    update_marker_status,
+)
 from services.copilot_service import call_copilot, list_copilot_runs
+from services.db_service import execute
 
 copilot_bp = Blueprint("copilot", __name__)
 
@@ -13,13 +23,39 @@ UPLOAD_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "static", 
 ALLOWED_IMAGE_TYPES = {"image/png", "image/jpeg", "image/jpg", "image/gif", "image/webp"}
 
 
+def _resolve_project_id(project_id=None, plan_id=None):
+    if project_id:
+        return str(project_id).strip()
+    if plan_id is None:
+        return None
+    row = execute(
+        "SELECT project_name FROM project_plans WHERE id = %s",
+        (plan_id,),
+        fetchone=True,
+    )
+    if not row or not row.get("project_name"):
+        return None
+    return str(row["project_name"]).strip()
+
+
 @copilot_bp.route("/copilot")
 def copilot_page():
     plan_id = request.args.get("plan_id", type=int)
     if plan_id:
         return render_template("copilot_board.html", active_page="copilot", plan_id=plan_id)
-    # Ohne plan_id: Copilot-Startseite mit letzten Projekten
-    return render_template("copilot_landing.html", active_page="copilot")
+    # Ohne plan_id: Redirect zum letzten aktiven Plan oder /plans
+    from services.db_service import execute
+    try:
+        last = execute("""
+            SELECT id FROM project_plans
+            WHERE status IN ('active', 'draft')
+            ORDER BY updated_at DESC NULLS LAST LIMIT 1
+        """, fetchone=True)
+        if last:
+            return redirect(f"/copilot?plan_id={last['id']}")
+    except Exception:
+        pass
+    return redirect("/plans")
 
 
 @copilot_bp.route("/api/copilot/stats")
@@ -84,12 +120,20 @@ def api_copilot_stats():
 
     # Aktive Plans mit Copilot-Link
     active_plans = execute("""
-        SELECT id, title, project_name, status, updated_at
-        FROM project_plans
-        WHERE status IN ('active', 'draft')
+        SELECT
+            p.id,
+            p.title,
+            p.project_name,
+            p.status,
+            p.updated_at,
+            COUNT(ps.id) AS section_count
+        FROM project_plans p
+        LEFT JOIN plan_sections ps ON ps.plan_id = p.id
+        WHERE p.status IN ('active', 'draft')
+        GROUP BY p.id, p.title, p.project_name, p.status, p.updated_at
         ORDER BY
-            CASE WHEN status = 'active' THEN 0 ELSE 1 END,
-            updated_at DESC NULLS LAST
+            CASE WHEN p.status = 'active' THEN 0 ELSE 1 END,
+            p.updated_at DESC NULLS LAST
         LIMIT 20
     """, fetch=True) or []
 
@@ -100,6 +144,7 @@ def api_copilot_stats():
             "title": p["title"],
             "project_name": p["project_name"],
             "status": p["status"],
+            "section_count": p["section_count"],
             "updated_at": p["updated_at"].isoformat() if p["updated_at"] else None,
         })
 
@@ -113,6 +158,126 @@ def api_copilot_stats():
         "sections_in_progress": sec_stats.get("in_progress", 0),
         "recent_projects": recent_projects,
         "active_plans": plans_list,
+    })
+
+
+@copilot_bp.route("/api/copilot/markers")
+def api_copilot_markers():
+    plan_id = request.args.get("plan_id")
+    project_id = _resolve_project_id(request.args.get("project_id"), plan_id)
+    if not plan_id:
+        return jsonify({"error": "plan_id ist erforderlich"}), 400
+    if not project_id:
+        return jsonify({"error": "project_id konnte nicht aufgeloest werden"}), 400
+
+    try:
+        markers = list_markers_for_plan(project_id, plan_id)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    return jsonify({"markers": markers})
+
+
+@copilot_bp.route("/api/copilot/markers/<marker_id>")
+def api_copilot_marker(marker_id):
+    plan_id = request.args.get("plan_id")
+    project_id = _resolve_project_id(request.args.get("project_id"), plan_id)
+    if not project_id:
+        return jsonify({"error": "project_id ist erforderlich"}), 400
+
+    try:
+        marker = get_marker_context(project_id, marker_id)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+    if not marker:
+        return jsonify({"error": "Marker nicht gefunden"}), 404
+    return jsonify(marker)
+
+
+@copilot_bp.route("/api/copilot/markers/<marker_id>/status", methods=["PATCH"])
+def api_copilot_marker_status(marker_id):
+    data = request.get_json(silent=True) or {}
+    project_id = _resolve_project_id(data.get("project_id"), data.get("plan_id"))
+    status = data.get("status")
+    if not project_id:
+        return jsonify({"error": "project_id ist erforderlich"}), 400
+    if not status:
+        return jsonify({"error": "status ist erforderlich"}), 400
+
+    try:
+        marker = update_marker_status(project_id, marker_id, status)
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+    if not marker:
+        return jsonify({"error": "Marker nicht gefunden"}), 404
+    return jsonify({
+        "ok": True,
+        "marker_id": marker["marker_id"],
+        "status": marker["status"],
+        "updated_at": marker["updated_at"],
+    })
+
+
+@copilot_bp.route("/api/copilot/markers/<marker_id>/fields", methods=["PATCH"])
+def api_copilot_marker_fields(marker_id):
+    data = request.get_json(silent=True) or {}
+    project_id = _resolve_project_id(data.get("project_id"), data.get("plan_id"))
+    fields = data.get("fields")
+    if not project_id:
+        return jsonify({"error": "project_id ist erforderlich"}), 400
+    if fields is None:
+        return jsonify({"error": "fields ist erforderlich"}), 400
+
+    try:
+        marker = update_marker_fields(project_id, marker_id, fields)
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+    if not marker:
+        return jsonify({"error": "Marker nicht gefunden"}), 404
+    return jsonify(marker)
+
+
+@copilot_bp.route("/api/copilot/markers/<marker_id>/activate", methods=["POST"])
+def api_copilot_marker_activate(marker_id):
+    data = request.get_json(silent=True) or {}
+    project_id = _resolve_project_id(data.get("project_id"), data.get("plan_id"))
+    handoff_path = data.get("handoff_path")
+    context_path = data.get("context_path") or "marker-context.md"
+
+    if not project_id:
+        return jsonify({"error": "project_id ist erforderlich"}), 400
+
+    try:
+        if handoff_path:
+            activatable, gate_reason = is_activatable(handoff_path, marker_id)
+            if not activatable:
+                return jsonify({"ok": False, "error": "gate_blocked", "reason": gate_reason}), 409
+
+        result = activate_marker(project_id, marker_id, context_path)
+    except MarkerActivationError as e:
+        if getattr(e, "gate_reason", "") and str(e) == "gate_blocked":
+            return jsonify({"ok": False, "error": "gate_blocked", "reason": e.gate_reason}), 409
+        if str(e) == "Marker nicht gefunden":
+            return jsonify({"error": str(e)}), 404
+        return jsonify({"error": str(e)}), 400
+    except FileNotFoundError as e:
+        return jsonify({"error": str(e)}), 404
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+    marker = result["marker"]
+    return jsonify({
+        "ok": True,
+        "marker_id": marker["marker_id"],
+        "status": marker["status"],
+        "updated_at": marker["updated_at"],
+        "context_path": result["context_path"],
     })
 
 

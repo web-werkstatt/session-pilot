@@ -2,6 +2,13 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Fokusauftrag
+
+1. Lies beim Start immer zuerst `sprints/master-plan-*.md` als Rahmen.
+2. Wenn `marker-context.md` existiert und nicht leer ist, behandle ihn als aktuellen Fokusauftrag.
+3. Wenn kein `marker-context.md` existiert, frag nach, bevor du an einem Marker arbeitest.
+4. Veraendere `marker-context.md` nie eigenmaechtig, ausser auf ausdruecklichen Auftrag.
+
 ## Projekt
 
 Flask-basiertes Web-Dashboard zur Verwaltung und Uebersicht aller Projekte unter `/mnt/projects/` sowie Docker-Container und Claude Code Sessions. Laeuft als systemd-Service (`project-dashboard`) auf Port 5055. Installierbar via Docker oder setup.sh.
@@ -79,6 +86,10 @@ Kein Build-Schritt, keine Tests, kein Linting konfiguriert. Abhaengigkeiten in `
 
 **Konfiguration:** `config.py` laedt alle Werte via `os.environ` mit Defaults. Secrets in `.env`-Datei, geladen via systemd `EnvironmentFile`.
 
+## Verbote
+
+- **Kein `python3 -c` und kein eigenes `psycopg2.connect()`** fuer DB-Zugriffe oder Tests. Ausschliesslich die vorhandenen DB-Funktionen und Service-Schicht im Projekt nutzen. DB-Struktur durch Code-Lesen verstehen, nicht durch Abfragen ans Running-System.
+
 ## Wichtige Patterns
 
 - **Blueprint-Architektur:** Jedes Route-Modul ist ein Flask Blueprint, registriert in `routes/__init__.py`.
@@ -99,6 +110,9 @@ Kein Build-Schritt, keine Tests, kein Linting konfiguriert. Abhaengigkeiten in `
 - **Search-Parser:** `_parse_search_output()` in `search_routes.py` - gemeinsame Ergebnis-Verarbeitung fuer rg und grep.
 - **Timesheet-Filter:** `_build_timesheet_filter()` in `timesheet_routes.py` - baut WHERE-Klausel aus Request-Parametern.
 - **API Error-Handling:** `@api_route` Decorator aus `routes/api_utils.py` statt try/except in jedem Endpoint. Fuer Endpoints mit speziellen Fehler-Responses (z.B. Fallback-Daten) weiterhin manuelles try/except.
+- **Plan-Handoff:** `build_plan_handoff_markdown(plan_id)` erzeugt YAML-Frontmatter + 7 Sektionen inkl. Sections/Specs aus `plan_sections`. `write_plan_handoff(plan_id)` schreibt `handoff-<plan_id>.md` ins Projektverzeichnis. Handoff ist IMMER abgeleitet aus DB (plan_sections.status, position) — nie manuell in der .md-Datei pflegen. Wird automatisch beim Project-Memory-Abruf und beim API-Call generiert/aktualisiert.
+- **Plan-Sections:** `plan_sections` Tabelle fuer Level-2-Cards (Abschnitte/Specs innerhalb eines Plans). CRUD via `plan_section_service.py`. Board-Spalten nutzen `status` (backlog/ready/in_progress/review/done/blocked), NICHT `workflow_stage`. `/copilot?plan_id=X` zeigt das Section-Board, `/plans` bleibt Level 1.
+- **LLM Commands mit Handoff-Kontext:** Platzhalter `{{handoff_data}}`, `{{sections_data}}`, `{{plan_id}}` in `prompts/*.md` verfuegbar. Context Resolver in `llm_command_service.py` laedt diese aus der DB.
 
 ## Scheduled Tasks (Claude Code)
 

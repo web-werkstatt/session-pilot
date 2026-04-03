@@ -228,9 +228,126 @@ aber nicht verschachteltes `.kilo/node_modules/`.
 
 **Commits:** e42ed29, ab65270, 5c752de, 3142cc2, 83e5774, 94d2e18, d430d51
 
+### Sprint P — Copilot Dark Design-System Seed — DONE (2026-04-03)
+**Ziel:** Ohne Architekturumbau ein konsistentes Dark-SaaS-Design-System fuer den bestehenden Copilot-Workspace anlegen.
+
+**Aenderungen:**
+- `static/css/design-tokens.css` um zentrale Dark-SaaS-Tokens erweitert (`--bg-main`, `--bg-panel`, `--bg-card`, `--border`, `--text-*`, `--accent`, Statusfarben, Radien)
+- `static/css/components.css` um neue UI-Primitives erweitert: `ui-card`, `ui-panel`, `ui-button`, `ui-badge`, `ui-tabs`, `ui-input`
+- `static/css/copilot.css` auf die neuen Tokens gemappt und gezielt fuer Board-Card + rechtes Panel nachgeschaerft
+- `static/js/copilot_board.js` erzeugt Board-Cards jetzt mit `ui-*` Klassen; Status-Badge im rechten Panel ebenfalls angeglichen
+- `templates/copilot_board.html` nutzt `ui-panel`, `ui-tabs` und `ui-input` im bestehenden Layout
+
+**Dateien:**
+- `static/css/design-tokens.css`
+- `static/css/components.css`
+- `static/css/copilot.css`
+- `static/js/copilot_board.js`
+- `templates/copilot_board.html`
+- `next-session.md`
+
+**Commit:** uncommitted
+
+### Sprint P1 — Copilot Workspace Header + Progress Refactor — DONE (2026-04-03)
+**Ziel:** Den oberen Bereich von `/copilot?plan_id=X` wie einen echten AI-Workspace wirken lassen, ohne weitere UI-Bereiche anzufassen.
+
+**Aenderungen:**
+- Header in `templates/copilot_board.html` neu strukturiert: Brand, Plan-Switcher, aktiver Plan, Actions
+- Progress-Bereich als eigener kompakter Info-Block mit staerkerer Typohierarchie und KPI-Karten umgesetzt
+- `static/css/copilot.css` um wiederverwendbare Header-/Progress-Klassen erweitert
+- `static/js/copilot_board.js` so angepasst, dass Plan-Switcher und aktueller Planname getrennt befuellt werden
+
+**Dateien:**
+- `templates/copilot_board.html`
+- `static/css/copilot.css`
+- `static/js/copilot_board.js`
+- `next-session.md`
+
+**Commit:** uncommitted
+
+### Sprint P1.1 — Marker-Schema & handoff.md Generator — DONE (2026-04-03)
+**Ziel:** `handoff.md` als fuehrende State-Datei auf ein maschinenlesbares Marker-Format umstellen.
+
+**Aenderungen:**
+- Neuer Kernservice `services/copilot_marker_service.py` mit `Marker`-Dataclass, `_serialize_marker()`, `_write_marker()` und `parse_markers()`
+- Dual-Format eingefuehrt: JSON im HTML-Kommentar + lesbarer Markdown-Teil
+- `services/project_handoff_service.py` erzeugt jetzt Marker-Bloecke statt aggregiertem Prosatext
+- Gezielte Tests fuer Marker-Roundtrip und Generator ergaenzt
+
+**Dateien:**
+- `services/copilot_marker_service.py`
+- `services/project_handoff_service.py`
+- `tests/test_copilot_marker_service.py`
+- `tests/test_project_handoff.py`
+- `next-session.md`
+
+**Commit:** uncommitted
+
+### Sprint P2 — Cards aus Markdown + Status Write-back — DONE (2026-04-03)
+**Ziel:** Copilot-Board auf Marker aus `handoff.md` umstellen und Status-/Prompt-Aenderungen direkt in die Marker-Datei zurueckschreiben.
+
+**Aenderungen:**
+- `services/copilot_marker_service.py` um plan-gefilterte Read-/Update-Funktionen erweitert: `list_markers_for_plan()`, `get_marker_context()`, `update_marker_status()`, `update_marker_fields()`
+- `routes/copilot_routes.py` um Marker-Endpunkte erweitert: `GET /api/copilot/markers`, `GET /api/copilot/markers/<id>`, `PATCH /status`, `PATCH /fields`
+- `static/js/copilot_board.js` von DB-`plan_sections` auf Marker-API umgestellt; Board rendert jetzt `titel`, `ziel`, `naechster_schritt`, Gate-Status und schreibt Drag-&-Drop-Status per PATCH zurueck
+- Detail-Panel in `templates/copilot_board.html`/`static/js/copilot_board.js` zeigt Marker-Kontext, Checks, Risiko, last_session, updated_at und den Button `Vorschlag uebernehmen`
+- Panel-Chat auf markerbasierte Copilot-Runs mit stabiler `thread_id` umgestellt, damit Chat weiter pro Card funktioniert
+- `services/project_handoff_service.py` erzeugt Default-Checks fuer neue Marker, damit Prompt-Uebernahme den Gate-Status sinnvoll beeinflussen kann
+- Gezielte Tests fuer Marker-Service und Marker-API ergaenzt
+
+**Dateien:**
+- `services/copilot_marker_service.py`
+- `services/project_handoff_service.py`
+- `routes/copilot_routes.py`
+- `templates/copilot_board.html`
+- `static/css/copilot.css`
+- `static/js/copilot_board.js`
+- `tests/test_copilot_marker_service.py`
+- `tests/test_copilot.py`
+- `next-session.md`
+
+**Commit:** uncommitted
+
+### Sprint P3 — Prompt-Chain & Execution — DONE (2026-04-03)
+**Ziel:** Aktivierbare Marker im Copilot-Board kontrolliert starten, indem nur fokussierter Marker-Kontext vorbereitet und der Marker-Status auf `in_progress` gesetzt wird.
+
+**Aenderungen:**
+- `services/copilot_marker_service.py` um die oeffentlichen Aktivierungshelfer `is_activatable()` und `activate_marker()` erweitert; dabei wird `marker-context.md` aus exakt einem Marker erzeugt und `handoff.md` per `_write_marker()` auf `in_progress` aktualisiert
+- `routes/copilot_routes.py` um `POST /api/copilot/markers/<id>/activate` erweitert, inklusive Gate-Blocked-Response ohne Nebenlogik fuer Sessions
+- `static/js/copilot_board.js` zeigt nur fuer freigegebene Cards einen `OK`-Button und aktualisiert nach erfolgreicher Aktivierung den lokalen Card-Status auf `in_progress`
+- `CLAUDE.md` um die Minimalregel ergaenzt, `marker-context.md` beim Start als Fokusauftrag zu behandeln
+- Gezielte Tests fuer Aktivierungsservice und API hinzugefuegt
+
+**Dateien:**
+- `services/copilot_marker_service.py`
+- `routes/copilot_routes.py`
+- `static/js/copilot_board.js`
+- `tests/test_copilot_marker_service.py`
+- `tests/test_copilot.py`
+- `CLAUDE.md`
+- `next-session.md`
+
+**Commit:** uncommitted
+
 ---
 
 ## Open / Next Sprints
+
+### Sprint 17 — Marker-Driven Copilot Orchestration
+
+**Ziel:** Copilot-Board von DB-zentrierten `plan_sections` in Richtung eines Markdown-gefuehrten Marker-/Zeiger-Workflows entwickeln, ohne neue Seite und ohne Aenderungen an `/plans`.
+
+**Kurzfassung:**
+- Fuehrende Projektdatei mit Marker-Block als expliziter Arbeitszustand
+- Marker werden als Copilot-Cards visualisiert
+- Card-Klick oeffnet Perplexity-/Copilot-Chat fuer genau diesen Marker-Kontext
+- Status-/Fortschritt sollen mittelfristig in dieselbe Markdown-Datei zurueckgeschrieben werden
+- `handoff.md` und aktuelle Copilot-Cards muessen dafuer fachlich sauber entkoppelt bzw. neu gemappt werden
+
+**Plan-Datei:**
+- `sprints/sprint-17-marker-driven-copilot-orchestration.md`
+
+**Hinweis:** Diese Planung ist absichtlich in eine eigene Datei ausgelagert, weil das Thema ueber einen normalen UI-Sprint hinausgeht und Datenmodell, Handoff, Copilot-Interaktion und Migrationsstrategie gemeinsam beruehrt.
 
 ### Sprint A — Quality Scanner Spec & Scope Lock
 

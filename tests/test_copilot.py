@@ -7,6 +7,8 @@ import pytest
 from unittest.mock import patch
 
 from app import app as flask_app
+from services import copilot_marker_service
+from services.copilot_marker_service import Marker, _write_marker
 from services.copilot_service import call_copilot, list_copilot_runs
 
 
@@ -258,6 +260,63 @@ class TestPlanCopilotChat:
         r = client.post("/api/copilot/upload_image")
         assert r.status_code == 400
 
+
+class TestMarkerActivationEndpoint:
+    def test_activate_marker_success(self, client, tmp_path, monkeypatch):
+        project_dir = tmp_path / "demo"
+        project_dir.mkdir()
+        monkeypatch.setattr(copilot_marker_service, "PROJECTS_DIR", str(tmp_path))
+
+        _write_marker(str(project_dir / "handoff.md"), Marker(
+            marker_id="001",
+            titel="Startbereit",
+            plan_id="42",
+            status="todo",
+            ziel="Ziel",
+            naechster_schritt="Schritt",
+            prompt="Arbeite diesen Marker ab",
+            checks=["Check eins"],
+        ))
+
+        r = client.post(
+            "/api/copilot/markers/001/activate",
+            data=json.dumps({"project_id": "demo", "context_path": "marker-context.md"}),
+            content_type="application/json",
+        )
+        assert r.status_code == 200
+        data = r.get_json()
+        assert data["ok"] is True
+        assert data["marker_id"] == "001"
+        assert data["status"] == "in_progress"
+        assert (project_dir / "marker-context.md").exists()
+
+    def test_activate_marker_gate_blocked(self, client, tmp_path, monkeypatch):
+        project_dir = tmp_path / "demo"
+        project_dir.mkdir()
+        monkeypatch.setattr(copilot_marker_service, "PROJECTS_DIR", str(tmp_path))
+
+        _write_marker(str(project_dir / "handoff.md"), Marker(
+            marker_id="001",
+            titel="Nicht startbereit",
+            plan_id="42",
+            status="todo",
+            ziel="Ziel",
+            naechster_schritt="Schritt",
+            prompt="",
+            checks=["Check eins"],
+        ))
+
+        r = client.post(
+            "/api/copilot/markers/001/activate",
+            data=json.dumps({"project_id": "demo", "context_path": "marker-context.md"}),
+            content_type="application/json",
+        )
+        assert r.status_code == 409
+        data = r.get_json()
+        assert data["ok"] is False
+        assert data["error"] == "gate_blocked"
+        assert data["reason"] == "prompt ist leer"
+
     def test_upload_image_success(self, client):
         """C4: Upload mit gueltigem Bild gibt URL zurueck."""
         import io
@@ -302,3 +361,85 @@ class TestPlanCopilotChat:
         assert "copilot_board.js" in html
         assert "addSectionModal" in html
         assert "panel-chat-input" in html
+
+
+class TestMarkerAPI:
+    def test_get_markers_for_plan(self, client, tmp_path, monkeypatch):
+        project_dir = tmp_path / "demo"
+        project_dir.mkdir()
+        handoff_path = project_dir / "handoff.md"
+        monkeypatch.setattr(copilot_marker_service, "PROJECTS_DIR", str(tmp_path))
+
+        _write_marker(str(handoff_path), Marker(
+            marker_id="001",
+            titel="Marker Eins",
+            plan_id="42",
+            status="todo",
+            ziel="Ziel",
+            naechster_schritt="Schritt",
+            prompt="",
+            checks=["Check eins"],
+        ))
+
+        r = client.get("/api/copilot/markers?project_id=demo&plan_id=42")
+        assert r.status_code == 200
+        data = r.get_json()
+        assert len(data["markers"]) == 1
+        assert data["markers"][0]["marker_id"] == "001"
+        assert data["markers"][0]["gate_reason"] == "prompt ist leer"
+
+    def test_patch_marker_status(self, client, tmp_path, monkeypatch):
+        project_dir = tmp_path / "demo"
+        project_dir.mkdir()
+        handoff_path = project_dir / "handoff.md"
+        monkeypatch.setattr(copilot_marker_service, "PROJECTS_DIR", str(tmp_path))
+
+        _write_marker(str(handoff_path), Marker(
+            marker_id="001",
+            titel="Marker Eins",
+            plan_id="42",
+            status="todo",
+            ziel="Ziel",
+            naechster_schritt="Schritt",
+            prompt="Prompt",
+            checks=["Check eins"],
+        ))
+
+        r = client.patch(
+            "/api/copilot/markers/001/status",
+            data=json.dumps({"project_id": "demo", "status": "done"}),
+            content_type="application/json",
+        )
+        assert r.status_code == 200
+        data = r.get_json()
+        assert data["ok"] is True
+        assert data["status"] == "done"
+
+    def test_patch_marker_fields_adopts_prompt(self, client, tmp_path, monkeypatch):
+        project_dir = tmp_path / "demo"
+        project_dir.mkdir()
+        handoff_path = project_dir / "handoff.md"
+        monkeypatch.setattr(copilot_marker_service, "PROJECTS_DIR", str(tmp_path))
+
+        _write_marker(str(handoff_path), Marker(
+            marker_id="001",
+            titel="Marker Eins",
+            plan_id="42",
+            status="todo",
+            ziel="Ziel",
+            naechster_schritt="Schritt",
+            prompt="",
+            prompt_suggestion="Nutze diesen Prompt",
+            checks=["Check eins"],
+        ))
+
+        r = client.patch(
+            "/api/copilot/markers/001/fields",
+            data=json.dumps({"project_id": "demo", "fields": {"prompt": "Nutze diesen Prompt"}}),
+            content_type="application/json",
+        )
+        assert r.status_code == 200
+        data = r.get_json()
+        assert data["prompt"] == "Nutze diesen Prompt"
+        assert data["is_activatable"] is True
+        assert data["gate_reason"] == ""

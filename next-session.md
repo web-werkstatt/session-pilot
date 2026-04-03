@@ -1,71 +1,199 @@
 # Projekt-Dashboard - Naechste Session
 
-> **Letzte Aktualisierung:** 2026-04-02
-> **Status:** Release v1.2.0, Test-Suite komplett (Stufe 1-3)
-> **Naechste Aufgabe:** Refactoring + offene Feature-Arbeit
+> **Letzte Aktualisierung:** 2026-04-03
+> **Status:** Copilot Workspace Redesign (unfertig, Qualitaet unbefriedigend)
+> **Naechste Aufgabe:** Copilot UI ueberarbeiten oder zuruecksetzen
 
 ---
 
-## Was in dieser Session fertig wurde (2026-04-02 Abend)
+## Was in dieser Session passiert ist (2026-04-03)
 
-### Release v1.2.0
-- CHANGELOG.md erstellt (27 Features, 22 Fixes, 19 Docs seit v1.1.0)
-- Git-Tag v1.2.0 gesetzt, Docker-Image getaggt (sessionpilot:v1.2.0)
-- Release-Skill `sessionpilot-release` als wiederverwendbarer 7-Schritt-Prozess gespeichert
+### Copilot Workspace Redesign (teilweise umgesetzt)
 
-### Test-Infrastruktur (Stufe 1-3)
-**Vorher:** 258 Tests, 37 failed, 54 errors
-**Nachher:** 451 Tests, 0 failed, 0 errors (65s)
+**Ziel:** /copilot?plan_id=X als AI-native Work OS umbauen (Referenzbild vorhanden).
 
-**Stufe 1 — Shared Fixtures:**
-- `tests/conftest.py` — client, mock_perplexity, mock_docker, mock_gitea, mock_scanner
+**Umgesetzt:**
+- `/copilot` ohne plan_id → Redirect zum letzten aktiven Plan (oder /plans)
+- Landing-Page wird umgangen (kein doppeltes Plan-Dashboard mehr)
+- Workspace Header mit Plan-Switcher Dropdown
+- Progress-Bar (done/total, Prozent, Task/Done/Review Counts)
+- Board-Spalten: Backlog, Ready, Generating (statt in_progress), Review, Done, Blocked
+- Emoji-Icons, Beschreibungszeilen, Empty-States pro Spalte
+- Cards: Typ-Badge, Message-Count, Generating-Indikator, Zeitinfo, Hover-Actions
+- Detail-Panel rechts: oeffnet/schliesst bei Karte-Klick, Tabs (Chat/Output/History)
+- Panel-Close gibt Board volle Breite zurueck
+- Lila-Farbe entfernt, Landing-Page auf var(--accent) umgestellt
+- shadcn/ui Zinc-Palette als CSS-Design-Tokens eingefuehrt
 
-**Stufe 2 — Smoke-Tests (110 Tests):**
-- `tests/test_routes_smoke.py` — 20 HTML-Seiten, 66 API-Endpoints, 6 Param-Required, 6 Param-Missing, 7 Edge-Cases, 13 Struktur-Checks
+**Geaenderte Dateien:**
+- `routes/copilot_routes.py` — Redirect-Logik (redirect import, /copilot Fallback)
+- `templates/copilot_board.html` — Komplett neu: Header, Progress, Split-View, Panel mit Tabs
+- `templates/copilot_landing.html` — Lila entfernt, Zentrierung entfernt (wird nicht mehr direkt aufgerufen)
+- `static/css/copilot.css` — Komplett neu: shadcn/ui Zinc-Tokens, alle Komponenten
+- `static/css/copilot_landing.css` — Lila-Farbwerte durch var(--accent) ersetzt
+- `static/js/copilot_board.js` — Komplett neu: Generating-Column, Progress, Plan-Switcher, Tabs, Panel-Logik
 
-**Stufe 3 — Unit-Tests (82 Tests):**
-- `tests/test_cost_service.py` — 14 Tests (Pricing, Berechnung, Formatierung)
-- `tests/test_notification_service.py` — 13 Tests (CRUD, Dedup, Thread-Safety)
-- `tests/test_session_import.py` — 23 Tests (Projektname, Content-Parsing, JSONL, Hash-Dedup)
-- `tests/test_session_import_utils.py` — 14 Tests (parse_ts, sanitize, time_range)
-- `tests/test_project_detector.py` — 14 Tests (Tags, Typen, Validierung, Schema)
+**Bekannte Probleme / User-Feedback:**
+- Qualitaet entspricht NICHT dem Referenzbild (Linear/Vercel-Niveau nicht erreicht)
+- Zu viele Iterationen fuer selbst eingefuehrte Bugs (Panel-Close, Farben, Icons)
+- Zeitanzeige in Cards bricht auf 3 Zeilen um ("24 min ago" → 3 Zeilen)
+- shadcn-Tokens kollidieren teilweise mit base.html Design-System
+- Output-Tab und History-Tab sind leer (nur Empty-States)
+- User ist enttaeuscht vom Ergebnis
 
-### Bugs gefixt
-1. **config.py** — `load_dotenv()` fehlte: Tests konnten DB-Credentials nicht laden (91 Failures weg)
-2. **timesheets/projects** — SQL-Bug: `'<%>'` wurde von psycopg2 als Format-Spezifikator interpretiert → Produktion kaputt, Fix: `'<%%>'`
-3. **ai_file_touches Schema** — CREATE INDEX vor ALTER TABLE ADD COLUMN + Duplikate vor UNIQUE Constraint → Widget ai-hotspots kaputt
-4. **copilot_board Test** — Template-IDs aus Sprint N Redesign nicht nachgezogen (sectionModal→addSectionModal, sectionChatInput→panel-chat-input)
+### Copilot Design-System Refresh (gezielte Nachschaerfung)
 
-### Commits
-- `e42ed29` docs: CHANGELOG fuer v1.2.0
-- `ab65270` fix: load_dotenv in config.py
-- `5c752de` test: conftest.py + 39 Smoke-Tests
-- `3142cc2` fix: Copilot-Board Test Template-IDs
-- `83e5774` test: Stufe 2 komplett — 110 Smoke-Tests + fix timesheets SQL
-- `94d2e18` fix: ai_file_touches Schema-Migration
-- `d430d51` test: Stufe 3 — Unit-Tests fuer 5 Services
+**Ziel:** Kein weiterer Komplettumbau, sondern ein kleines, sauberes Dark-SaaS-Design-System auf bestehender Struktur.
+
+**Umgesetzt:**
+- Zentrale Dark-SaaS-Tokens in `static/css/design-tokens.css` auf konsistente Werte vereinheitlicht
+- Neue Basis-Klassen in `static/css/components.css`: `ui-card`, `ui-panel`, `ui-button`, `ui-badge`, `ui-tabs`, `ui-input`
+- Board-Card-Pattern im Copilot-Board auf die neuen Primitives gezogen (`ui-card`, `ui-badge`, `ui-button`)
+- Rechtes Detail-Panel auf `ui-panel` plus neue Tabs-/Input-Primitive umgestellt
+- Keine neue Seite, keine Frameworks, keine Backend- oder Architektur-Aenderung
+
+**Geaenderte Dateien:**
+- `static/css/design-tokens.css`
+- `static/css/components.css`
+- `static/css/copilot.css`
+- `static/js/copilot_board.js`
+- `templates/copilot_board.html`
+
+**Offen / naechster sinnvoller Schritt:**
+- Im Browser pruefen, ob das Panel visuell sauber mit bestehendem `base.html` harmoniert
+- Bei Bedarf als naechsten kleinen Schritt weitere Copilot-Elemente selektiv auf `ui-*` Klassen umstellen
+
+### Copilot Header + Progress Refactor
+
+**Ziel:** Nur den oberen Workspace-Bereich hochwertiger machen, ohne Board, Cards oder Panel weiter anzufassen.
+
+**Umgesetzt:**
+- Workspace-Header als eigener `ui-panel` Block mit klarer Hierarchie aufgebaut
+- Linke Seite trennt jetzt Brand, Plan-Switcher und aktiven Plan
+- Rechte Actions (`AI Task`, `Ask Copilot`) aus der engen Topbar in den Workspace-Header verschoben
+- Progress-Leiste als kompakter Info-Block mit staerkerer visueller Gewichtung umgesetzt
+- Stats (`Tasks`, `Done`, `Review`) als kleine `ui-card` KPI-Elemente dargestellt
+- Bestehende Logik fuer Plan-Laden, Switcher und Progress-Berechnung unveraendert gelassen
+
+**Geaenderte Dateien:**
+- `templates/copilot_board.html`
+- `static/css/copilot.css`
+- `static/js/copilot_board.js`
+
+### Marker-/Zeiger-Orchestrierung geplant
+
+**Ziel:** Copilot fachlich von einem reinen Section-Board zu einem Markdown-gefuehrten Marker-Workflow weiterdenken.
+
+**Erarbeitet:**
+- `handoff.md` gegen aktuelle Copilot-UI geprueft: passt fachlich nicht, weil `handoff.md` projektweit aggregiert ist, Copilot-Cards aber plan-spezifisch sind
+- Neue Detail-Planung erstellt: `sprints/sprint-17-marker-driven-copilot-orchestration.md`
+- Master-Plan um Verweis auf Sprint 17 erweitert
+
+**Kernidee Sprint 17:**
+- feste Markdown-Datei als fuehrender Projektzustand
+- Marker/Zeiger darin als adressierbare Arbeitseinheiten
+- Anzeige der Marker als Copilot-Cards
+- Card-Klick -> Chat/Perplexity fuer genau diesen Marker-Kontext
+- spaeterer Status-Write-Back in dieselbe Datei
+
+### Sprint P1 umgesetzt: Marker-Schema & handoff.md Generator
+
+**Ziel:** `handoff.md` von einer aggregierten Textdatei auf ein maschinenlesbares Marker-Dual-Format umstellen.
+
+**Umgesetzt:**
+- `services/copilot_marker_service.py` neu: `Marker`-Dataclass, `_serialize_marker()`, `_write_marker()`, `parse_markers()`
+- Wahrheitsquelle beim Einlesen ist jetzt der JSON-Block im HTML-Kommentar; Markdown-Teil wird immer neu aus dem Objekt erzeugt
+- `services/project_handoff_service.py` schreibt jetzt Marker-Bloecke statt aggregiertem Prosatext
+- Gezielte Tests fuer Parser/Writer-Roundtrip und Generator erstellt
+
+**Geaenderte Dateien:**
+- `services/copilot_marker_service.py`
+- `services/project_handoff_service.py`
+- `tests/test_copilot_marker_service.py`
+- `tests/test_project_handoff.py`
+
+### Sprint P2 umgesetzt: Cards aus Markdown + Status Write-back
+
+**Ziel:** Copilot-Board auf Marker aus `handoff.md` umstellen und Status-/Prompt-Write-back direkt in die Datei schreiben.
+
+**Umgesetzt:**
+- `services/copilot_marker_service.py` um Marker-Read-/Update-Funktionen erweitert: `list_markers_for_plan()`, `get_marker_context()`, `update_marker_status()`, `update_marker_fields()`
+- `routes/copilot_routes.py` um Marker-API erweitert: `GET /api/copilot/markers`, `GET /api/copilot/markers/<id>`, `PATCH /status`, `PATCH /fields`
+- `static/js/copilot_board.js` laedt Board-Cards jetzt aus der Marker-API statt aus `plan_sections`
+- Drag & Drop schreibt Marker-Status direkt nach `handoff.md` zurueck
+- Gate-Logik im Board sichtbar gemacht (`is_activatable`, `gate_reason`)
+- Detail-Panel zeigt Marker-Felder und bietet `Vorschlag uebernehmen` fuer `prompt_suggestion -> prompt`
+- Chat im Panel auf markerbasierte Copilot-Threads via `thread_id=marker:<plan_id>:<marker_id>` umgelegt
+- `services/project_handoff_service.py` erzeugt Default-Checks, damit Prompt-Uebernahme Marker sinnvoll aktivierbar machen kann
+- Gezielte Marker-/API-Tests fuer P2 ergaenzt
+
+**Geaenderte Dateien:**
+- `services/copilot_marker_service.py`
+- `services/project_handoff_service.py`
+- `routes/copilot_routes.py`
+- `templates/copilot_board.html`
+- `static/css/copilot.css`
+- `static/js/copilot_board.js`
+- `tests/test_copilot_marker_service.py`
+- `tests/test_copilot.py`
+
+### Sprint P3 umgesetzt: Prompt-Chain & Execution
+
+**Ziel:** Aktivierbare Marker direkt aus dem Copilot-Board in einen fokussierten Ausfuehrungskontext ueberfuehren, ohne Sessions automatisch zu starten.
+
+**Umgesetzt:**
+- `services/copilot_marker_service.py` um `is_activatable()` und `activate_marker()` erweitert; die Aktivierung nutzt dieselbe Gate-Logik wie P2, schreibt `marker-context.md` fuer genau einen Marker und setzt den Marker in `handoff.md` auf `in_progress`
+- Neue API `POST /api/copilot/markers/<id>/activate` in `routes/copilot_routes.py` liefert bei Erfolg `{ ok: true, status: "in_progress" }` und bei Gate-Block sauber `{ ok: false, error: "gate_blocked", reason: ... }`
+- `static/js/copilot_board.js` zeigt pro freigegebener Card einen `OK`-Button, ruft die Aktivierung auf und aktualisiert Status/UI lokal ohne Session-Autostart
+- `CLAUDE.md` minimal um die Regel erweitert, dass `marker-context.md` als aktueller Fokusauftrag gilt
+- Tests fuer Service- und API-Roundtrip der Marker-Aktivierung ergaenzt
+
+**Geaenderte Dateien:**
+- `services/copilot_marker_service.py`
+- `routes/copilot_routes.py`
+- `static/js/copilot_board.js`
+- `tests/test_copilot_marker_service.py`
+- `tests/test_copilot.py`
+- `CLAUDE.md`
+
+### Testdaten angelegt
+- 5 Sections in Plan #5 erstellt (IDs 796-800)
+- Verschiedene Status: backlog, ready, in_progress, review, done
+- Diese koennen geloescht werden wenn nicht gewuenscht
+
+### Copilot Landing-Page Aenderungen (vor dem Redesign)
+- Lila Gradient-Farbe durch var(--accent) blau ersetzt
+- Zentrierung entfernt (Karten linksbuendig)
+- continue-card, quickstart-btn Farben angepasst
 
 ---
 
-## Naechste Session
+## Naechste Session — Empfohlene Vorgehensweise
 
-### Offene Aufgaben
+### OPTION A: Copilot UI gezielt verbessern
+1. Referenzbild nochmal studieren: `upload/ChatGPT Image 3. Apr. 2026, 11_49_55.png`
+2. Marker-Board im Browser gegen echte `handoff.md` eines Projekts pruefen
+3. Drag-&-Drop-Write-back und `Vorschlag uebernehmen` einmal live auf Port 5055 gegenchecken
+4. AI-Task-Button fachlich auf Marker-Modell ausrichten oder bewusst deaktivieren
+5. Weitere Copilot-Bausteine nur selektiv auf `ui-*` Komponenten migrieren
+6. Gesamteindruck auf Linear/Vercel-Niveau bringen
 
+### OPTION B: Auf letzten stabilen Stand zuruecksetzen
+- `git diff HEAD` zeigt alle ungestagten Aenderungen
+- Betroffene Dateien: copilot_board.html, copilot.css, copilot_board.js, copilot_routes.py, copilot_landing.html, copilot_landing.css
+- Zuruecksetzen und dann sauber neu anfangen
+
+### Offene Aufgaben (aus vorheriger Session)
 - [ ] Copilot-Workflow: Perplexity als Copilot einsetzen
 - [ ] LLM-agnostischer Connector (llm_connector.py)
-- [ ] Pre-Commit Zeilenlimits fixen (db_service.py 526 Zeilen, governance_service.py 519 Zeilen)
-- [ ] 6x bare except: fixen (cache_service, docker_service, git_service, gitea_service)
-- [ ] 5x f-strings ohne Platzhalter (F541) pruefen
-- [ ] 7x unused global Declarations (F824) bereinigen
-
-### Moegliche naechste Schritte
-- Error Class Tagging (Fehler-Kategorisierung pro Session)
-- Git Diff per Session (welche Dateien hat Claude geaendert)
-- CLAUDE.md Effectiveness Tracking
-- Refactoring der 104 Funktionen mit >50 Zeilen (Top: build_plan_handoff_markdown 199 Zeilen)
+- [ ] Pre-Commit Zeilenlimits fixen (db_service.py 526Z, governance_service.py 519Z)
+- [ ] 6x bare except fixen
+- [ ] 5x f-strings ohne Platzhalter (F541)
+- [ ] 7x unused global Declarations (F824)
 
 ### Nicht vergessen
-- **Release-Skill:** `sessionpilot-release` — einfach "Mach ein Release" sagen
-- **Rollenmodell:** Perplexity = Copilot (plant/reviewt), Claude Code = Executor (.md), Joseph = Abnahme
-- **Level-Architektur:** /plans = Plan-Board (Level 1), /copilot?plan_id=X = Section-Board + Chat (Level 2)
-- **Handoff-Service:** project_handoff_service.py — 3 Funktionen, eine handoff.md pro Projekt
+- **Referenzbild:** `upload/ChatGPT Image 3. Apr. 2026, 11_49_55.png`
+- **Release-Skill:** `sessionpilot-release`
+- **Level-Architektur:** /plans = Level 1, /copilot?plan_id=X = Level 2
+- **Handoff-Service:** project_handoff_service.py
+- **User-Erwartung:** Professionell, reduziert, dark, elegant — KEINE Marketing-UI, KEINE generische Kanban-Optik
