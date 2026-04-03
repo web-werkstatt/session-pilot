@@ -1,6 +1,7 @@
 // Sidebar Toggle
 var _lastSidebarTrigger = null;
 var _sidebarSectionDefaultCollapsed = {
+    analysis: true,
     system: true,
     content: true,
     integrations: true

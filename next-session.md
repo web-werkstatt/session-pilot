@@ -115,6 +115,19 @@
 - `templates/base.html`
 - `static/js/base.js`
 
+### Auswerten als Accordion hinter Steuern
+
+**Ziel:** `Auswerten` soll dieselbe Accordion-Logik wie `System`, `Inhalte` und `Integrationen` nutzen und in der Reihenfolge hinter `Steuern` stehen.
+
+**Umgesetzt:**
+- `templates/base.html` fuehrt `Auswerten` jetzt als einklappbaren Block
+- `Auswerten` steht jetzt nach `Steuern`
+- `static/js/base.js` erweitert die Default-Collapse-Zustaende um `analysis`
+
+**Geaenderte Dateien:**
+- `templates/base.html`
+- `static/js/base.js`
+
 ### Handoff-Fallback fuer neue Projektordner
 
 **Ziel:** `handoff.md` auch dann robust erzeugen, wenn ein Projektordner schon existiert, aber in `project_plans` noch keine Plaene vorhanden sind.

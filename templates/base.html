@@ -64,9 +64,12 @@
                     </a>
                 </div>
             </div>
-            <div class="nav-section">
-                <div class="nav-label">Auswerten</div>
-                <div class="nav-section-body">
+            <div class="nav-section nav-section--collapsible is-collapsed" data-section-key="analysis">
+                <button class="nav-section-toggle" type="button" onclick="toggleSidebarSection('analysis')" aria-expanded="false">
+                    <span class="nav-label">Auswerten</span>
+                    <span class="nav-section-chevron"><i data-lucide="chevron-down" class="icon icon-xs"></i></span>
+                </button>
+                <div class="nav-section-body" data-section-body="analysis">
                     <a href="/sessions/analysis" class="nav-item {% if active_page == 'analysis' %}active{% endif %}">
                         <span class="nav-icon"><i data-lucide="trending-up" class="icon"></i></span><span class="nav-text">Analysis</span>
                     </a>
@@ -81,7 +84,7 @@
                     </a>
                 </div>
             </div>
-            <div class="nav-section nav-section--collapsible is-collapsed" data-section-key="system">
+            <div class="nav-section">
                 <div class="nav-label">Steuern</div>
                 <div class="nav-section-body">
                     <a href="/quality" class="nav-item {% if active_page == 'quality' %}active{% endif %}">

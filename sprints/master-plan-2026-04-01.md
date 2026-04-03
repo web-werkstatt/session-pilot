@@ -398,6 +398,20 @@ aber nicht verschachteltes `.kilo/node_modules/`.
 - `static/js/base.js`
 
 **Commit:** uncommitted
+
+### Sprint P3.11 — Auswerten als Accordion nach Steuern — DONE (2026-04-03)
+**Ziel:** Der Bereich `Auswerten` soll dieselbe Accordion-Logik wie die restlichen Nebenbereiche nutzen und in der Reihenfolge hinter `Steuern` liegen.
+
+**Aenderungen:**
+- `templates/base.html` fuehrt `Auswerten` jetzt als einklappbaren Block
+- Reihenfolge der Sidebar angepasst: `Steuern` vor `Auswerten`
+- `static/js/base.js` erweitert die Default-Collapse-Zustaende um `analysis`
+
+**Dateien:**
+- `templates/base.html`
+- `static/js/base.js`
+
+**Commit:** uncommitted
 - `templates/copilot_board.html`
 - `static/css/copilot.css`
 - `static/js/copilot_board.js`
