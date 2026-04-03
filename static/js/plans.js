@@ -143,6 +143,7 @@ function _buildCardHtml(plan, draggable) {
     const projectBadge = plan.project_name
         ? `<span class="card-project"><i data-lucide="folder" class="icon icon-xs"></i> ${escapeHtml(plan.project_name)}</span>`
         : '';
+    const cockpitUrl = `/copilot?plan_id=${plan.id}`;
 
     return `
     <div class="plan-card status-${statusClass}" ${dragAttr} onclick="showPlan(${plan.id})">
@@ -154,7 +155,12 @@ function _buildCardHtml(plan, draggable) {
             <p class="card-title">${escapeHtml(plan.title)}</p>
             ${summary ? `<p class="card-summary">${escapeHtml(summary)}</p>` : ''}
         </div>
-        ${projectBadge ? `<div class="card-foot">${projectBadge}</div>` : ''}
+        <div class="card-foot">
+            <div class="card-foot-meta">${projectBadge}</div>
+            <div class="card-foot-actions">
+                <a href="${cockpitUrl}" class="card-inline-btn" onclick="event.stopPropagation()"><i data-lucide="message-square" class="icon icon-xs"></i> Cockpit</a>
+            </div>
+        </div>
     </div>`;
 }
 
@@ -406,6 +412,11 @@ function showPlan(id) {
 
 function closePlanModal() {
     closeModal('planModal');
+}
+
+function openPlanCockpit(planId, event) {
+    if (event) event.stopPropagation();
+    window.location.href = `/copilot?plan_id=${planId}`;
 }
 
 // === Sync ===

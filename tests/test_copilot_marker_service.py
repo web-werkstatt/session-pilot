@@ -197,6 +197,33 @@ class TestCopilotMarkerService:
         assert context["prompt"] == "Nutze den Vorschlag"
         assert context["updated_at"]
 
+    def test_list_markers_regenerates_legacy_handoff_once(self, tmp_path, monkeypatch):
+        project_dir = tmp_path / "demo"
+        project_dir.mkdir()
+        handoff_path = project_dir / "handoff.md"
+        handoff_path.write_text("# Legacy Handoff\n", encoding="utf-8")
+        monkeypatch.setattr(copilot_marker_service, "PROJECTS_DIR", str(tmp_path))
+
+        def fake_write_handoff(project_id):
+            _write_marker(str(handoff_path), Marker(
+                marker_id="145",
+                titel="Regenerierter Marker",
+                plan_id="145",
+                status="todo",
+                ziel="Ziel",
+                naechster_schritt="Schritt",
+                prompt="Prompt",
+                checks=["Check eins"],
+            ))
+            return str(handoff_path), handoff_path.read_text(encoding="utf-8")
+
+        monkeypatch.setattr("services.project_handoff_service.write_handoff", fake_write_handoff)
+
+        markers = list_markers_for_plan("demo", "145")
+        assert len(markers) == 1
+        assert markers[0]["marker_id"] == "145"
+        assert markers[0]["is_activatable"] is True
+
     def test_is_activatable_matches_gate_logic(self, tmp_path):
         handoff_path = tmp_path / "handoff.md"
         _write_marker(str(handoff_path), Marker(

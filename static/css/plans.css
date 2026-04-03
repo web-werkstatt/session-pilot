@@ -76,6 +76,51 @@
     gap: 4px;
 }
 
+.card-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 10px 14px 14px;
+    margin-top: auto;
+}
+
+.card-foot-meta {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.card-foot-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.card-inline-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    height: 28px;
+    padding: 0 10px;
+    border-radius: 7px;
+    border: 1px solid var(--border);
+    background: rgba(255,255,255,0.03);
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.15s;
+}
+
+.card-inline-btn:hover {
+    color: var(--text-primary);
+    border-color: rgba(255,255,255,0.18);
+    background: rgba(255,255,255,0.06);
+}
+
 .plan-date {
     white-space: nowrap;
 }
@@ -719,5 +764,4 @@
 .badge-exec-failed, .badge-review-fail { background: rgba(220,38,38,0.15); color: #f87171; }
 .badge-exec-running, .badge-exec-pending, .badge-review-pending { background: rgba(234,179,8,0.15); color: #facc15; }
 .badge-review-partial { background: rgba(249,115,22,0.15); color: #fb923c; }
-
 

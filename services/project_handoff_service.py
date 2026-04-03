@@ -14,6 +14,7 @@ from datetime import timezone
 from config import PROJECTS_DIR
 from services.copilot_marker_service import Marker, _serialize_marker
 from services.db_service import execute, ensure_plans_schema
+from services.path_resolver import resolve_project_path
 
 
 def get_handoff_path(project_id):
@@ -22,6 +23,10 @@ def get_handoff_path(project_id):
     Beispiel:
         project_dashboard -> /mnt/projects/project_dashboard/handoff.md
     """
+    project_id = str(project_id).strip()
+    project_root = resolve_project_path(project_id)
+    if project_root:
+        return os.path.join(project_root, "handoff.md")
     return os.path.join(PROJECTS_DIR, project_id, "handoff.md")
 
 
@@ -146,7 +151,8 @@ def write_handoff(project_id):
     Returns:
         (filepath, markdown) oder (None, None) bei Fehler.
     """
-    project_dir = os.path.join(PROJECTS_DIR, project_id)
+    project_id = str(project_id).strip()
+    project_dir = resolve_project_path(project_id) or os.path.join(PROJECTS_DIR, project_id)
     if not os.path.isdir(project_dir):
         return None, None
 

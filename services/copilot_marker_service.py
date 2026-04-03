@@ -212,6 +212,25 @@ def _compute_gate(marker):
     return True, ""
 
 
+def _load_markers_with_regeneration(project_id):
+    """Laedt Marker und regeneriert ein Legacy-Handoff bei Bedarf einmalig."""
+    handoff_path = _get_handoff_path(project_id)
+    markers = parse_markers(handoff_path)
+    if markers:
+        return markers
+    if not os.path.exists(handoff_path):
+        return []
+
+    try:
+        from services.project_handoff_service import write_handoff
+        filepath, _ = write_handoff(project_id)
+        if not filepath:
+            return []
+        return parse_markers(filepath)
+    except Exception:
+        return []
+
+
 def _render_marker_context(marker):
     checks = marker.checks or []
     checks_text = "\n".join(f"- {item}" for item in checks) if checks else "- _(keine checks definiert)_"
@@ -284,7 +303,7 @@ def _marker_to_dict(marker, include_gate=False):
 
 def list_markers_for_plan(project_id, plan_id):
     """Laedt Marker fuer einen Plan aus der handoff.md des Projekts."""
-    markers = parse_markers(_get_handoff_path(project_id))
+    markers = _load_markers_with_regeneration(project_id)
     plan_id = str(plan_id).strip()
     return [
         _marker_to_dict(marker, include_gate=True)
@@ -296,7 +315,7 @@ def list_markers_for_plan(project_id, plan_id):
 def get_marker_context(project_id, marker_id):
     """Liefert den vollstaendigen Marker-Kontext fuer das Detail-Panel."""
     marker_id = str(marker_id).strip()
-    for marker in parse_markers(_get_handoff_path(project_id)):
+    for marker in _load_markers_with_regeneration(project_id):
         if marker.marker_id == marker_id:
             return _marker_to_dict(marker, include_gate=True)
     return None
@@ -310,7 +329,7 @@ def update_marker_status(project_id, marker_id, status):
 
     handoff_path = _get_handoff_path(project_id)
     marker_id = str(marker_id).strip()
-    for marker in parse_markers(handoff_path):
+    for marker in _load_markers_with_regeneration(project_id):
         if marker.marker_id != marker_id:
             continue
         marker.status = status
@@ -342,7 +361,7 @@ def update_marker_fields(project_id, marker_id, fields):
         "updated_at",
     }
 
-    for marker in parse_markers(handoff_path):
+    for marker in _load_markers_with_regeneration(project_id):
         if marker.marker_id != marker_id:
             continue
         for key, value in fields.items():

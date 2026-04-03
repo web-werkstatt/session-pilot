@@ -6,8 +6,10 @@
 {% block topbar_actions %}{% endblock %}
 
 {% block head_extra %}
-<link rel="stylesheet" href="/static/css/plans.css">
-<link rel="stylesheet" href="/static/css/copilot.css">
+<link rel="stylesheet" href="/static/css/design-tokens.css?v={{ cache_bust }}">
+<link rel="stylesheet" href="/static/css/components.css?v={{ cache_bust }}">
+<link rel="stylesheet" href="/static/css/plans.css?v={{ cache_bust }}">
+<link rel="stylesheet" href="/static/css/copilot.css?v={{ cache_bust }}">
 {% endblock %}
 
 {% block content %}
@@ -231,5 +233,5 @@
 {% block scripts %}
 <script src="/static/js/marked.min.js"></script>
 <script>var PLAN_ID = {{ plan_id }};</script>
-<script src="/static/js/copilot_board.js"></script>
+<script src="/static/js/copilot_board.js?v={{ cache_bust }}"></script>
 {% endblock %}
