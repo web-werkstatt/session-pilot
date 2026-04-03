@@ -1,7 +1,9 @@
 // Sidebar Toggle
 var _lastSidebarTrigger = null;
 var _sidebarSectionDefaultCollapsed = {
-    system: true
+    system: true,
+    content: true,
+    integrations: true
 };
 
 function _isMobileSidebar() {

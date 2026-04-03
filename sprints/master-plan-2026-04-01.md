@@ -384,6 +384,20 @@ aber nicht verschachteltes `.kilo/node_modules/`.
 - `templates/base.html`
 
 **Commit:** uncommitted
+
+### Sprint P3.10 — Inhalte und Integrationen als Accordion — DONE (2026-04-03)
+**Ziel:** Seltenere Sidebar-Bereiche sollen Platz sparen und dieselbe Collapse-Logik wie der Systemblock nutzen.
+
+**Aenderungen:**
+- `templates/base.html` fuehrt `Inhalte` und `Integrationen` als einklappbare Bereiche
+- `static/js/base.js` erweitert die gespeicherten Sidebar-Collapse-Zustaende um `content` und `integrations`
+- beide Bereiche starten standardmaessig eingeklappt
+
+**Dateien:**
+- `templates/base.html`
+- `static/js/base.js`
+
+**Commit:** uncommitted
 - `templates/copilot_board.html`
 - `static/css/copilot.css`
 - `static/js/copilot_board.js`

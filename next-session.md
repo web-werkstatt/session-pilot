@@ -102,6 +102,19 @@
 **Geaenderte Dateien:**
 - `templates/base.html`
 
+### Inhalte und Integrationen als Accordion
+
+**Ziel:** Seltenere Sidebar-Bereiche sollen Platz sparen und dieselbe Collapse-Logik wie `System` nutzen.
+
+**Umgesetzt:**
+- `templates/base.html` fuehrt `Inhalte` und `Integrationen` jetzt als einklappbare Sidebar-Bloecke
+- `static/js/base.js` speichert deren Collapse-Zustand ebenfalls in `localStorage`
+- beide Bereiche starten standardmaessig eingeklappt
+
+**Geaenderte Dateien:**
+- `templates/base.html`
+- `static/js/base.js`
+
 ### Handoff-Fallback fuer neue Projektordner
 
 **Ziel:** `handoff.md` auch dann robust erzeugen, wenn ein Projektordner schon existiert, aber in `project_plans` noch keine Plaene vorhanden sind.
