@@ -10,6 +10,7 @@ from services.copilot_marker_service import parse_markers
 from services.project_handoff_service import (
     get_handoff_path,
     build_handoff_markdown,
+    build_empty_handoff_markdown,
     write_handoff,
 )
 
@@ -88,6 +89,13 @@ class TestBuildHandoffMarkdown:
         md = build_handoff_markdown("nonexistent_project_xyz_999")
         assert md is None
 
+    def test_builds_empty_marker_handoff(self):
+        md = build_empty_handoff_markdown("empty_project")
+        assert 'project_id: "empty_project"' in md
+        assert 'state_format: "copilot_markers_v1"' in md
+        assert "## Copilot Markers" in md
+        assert "noch keine Marker vorhanden" in md
+
 
 class TestWriteHandoff:
     @patch("services.project_handoff_service.ensure_plans_schema")
@@ -108,6 +116,33 @@ class TestWriteHandoff:
         filepath, md = write_handoff("nonexistent_project_xyz_999")
         assert filepath is None
         assert md is None
+
+    @patch("services.project_handoff_service.ensure_plans_schema")
+    @patch("services.project_handoff_service.execute")
+    @patch("services.project_handoff_service.get_handoff_path")
+    @patch("services.project_handoff_service.resolve_project_path")
+    def test_writes_empty_handoff_for_existing_project_without_plans(
+        self,
+        mock_resolve_project_path,
+        mock_path,
+        mock_execute,
+        _mock_schema,
+        tmp_path,
+    ):
+        project_dir = tmp_path / "empty_project"
+        project_dir.mkdir()
+        handoff_path = project_dir / "handoff.md"
+        mock_resolve_project_path.return_value = str(project_dir)
+        mock_path.return_value = str(handoff_path)
+        mock_execute.return_value = []
+
+        filepath, md = write_handoff("empty_project")
+
+        assert filepath == str(handoff_path)
+        assert os.path.isfile(filepath)
+        assert 'state_format: "copilot_markers_v1"' in md
+        assert "noch keine Marker vorhanden" in md
+        assert parse_markers(filepath) == []
 
     @patch("services.project_handoff_service.ensure_plans_schema")
     @patch("services.project_handoff_service.execute")

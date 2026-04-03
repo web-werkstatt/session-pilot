@@ -258,6 +258,20 @@ aber nicht verschachteltes `.kilo/node_modules/`.
 - `static/js/copilot_board.js` so angepasst, dass Plan-Switcher und aktueller Planname getrennt befuellt werden
 
 **Dateien:**
+
+### Sprint P3.1 — Leerer Handoff fuer neue Projektordner — DONE (2026-04-03)
+**Ziel:** `handoff.md` auch fuer existierende Projektordner ohne `project_plans` robust anlegen, damit Copilot-/Handoff-Flows nicht an `None` scheitern.
+
+**Aenderungen:**
+- `services/project_handoff_service.py` um `build_empty_handoff_markdown()` erweitert
+- `write_handoff()` schreibt jetzt fuer existierende Projektordner ohne Plans einen minimalen `copilot_markers_v1`-Handoff statt `(None, None)` zurueckzugeben
+- `tests/test_project_handoff.py` um Abdeckung fuer den Empty-Handoff-Fall erweitert
+
+**Dateien:**
+- `services/project_handoff_service.py`
+- `tests/test_project_handoff.py`
+
+**Commit:** uncommitted
 - `templates/copilot_board.html`
 - `static/css/copilot.css`
 - `static/js/copilot_board.js`

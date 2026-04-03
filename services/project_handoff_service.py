@@ -94,6 +94,25 @@ handoff:
     return header.strip() + "\n\n" + "\n\n".join(blocks) + "\n"
 
 
+def build_empty_handoff_markdown(project_id):
+    """Erzeugt einen minimalen Marker-Handoff fuer Projekte ohne Plans."""
+    scope = f"0 Plan(s) fuer {project_id}"
+    return f"""---
+handoff:
+  project_id: "{project_id}"
+  state_format: "copilot_markers_v1"
+  stage: "n/a"
+  scope: "{scope}"
+---
+
+# Handoff fuer Projekt {project_id}
+
+## Copilot Markers
+
+_(noch keine Marker vorhanden)_
+"""
+
+
 def _map_plan_status(status):
     mapping = {
         "draft": "todo",
@@ -158,7 +177,7 @@ def write_handoff(project_id):
 
     md = build_handoff_markdown(project_id)
     if md is None:
-        return None, None
+        md = build_empty_handoff_markdown(project_id)
 
     filepath = get_handoff_path(project_id)
     with open(filepath, "w", encoding="utf-8") as f:

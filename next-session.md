@@ -8,6 +8,19 @@
 
 ## Was in dieser Session passiert ist (2026-04-03)
 
+### Handoff-Fallback fuer neue Projektordner
+
+**Ziel:** `handoff.md` auch dann robust erzeugen, wenn ein Projektordner schon existiert, aber in `project_plans` noch keine Plaene vorhanden sind.
+
+**Umgesetzt:**
+- `services/project_handoff_service.py` erzeugt in `write_handoff()` jetzt einen minimalen `copilot_markers_v1`-Handoff statt mit `None` abzubrechen
+- Neuer Minimal-Handoff bleibt marker-kompatibel, enthaelt aber bewusst keine Marker-Bloecke
+- Tests decken jetzt den Fall "Projektordner existiert, aber keine Plans" explizit ab
+
+**Geaenderte Dateien:**
+- `services/project_handoff_service.py`
+- `tests/test_project_handoff.py`
+
 ### Copilot Workspace Redesign (teilweise umgesetzt)
 
 **Ziel:** /copilot?plan_id=X als AI-native Work OS umbauen (Referenzbild vorhanden).
