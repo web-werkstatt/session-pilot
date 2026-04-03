@@ -42,80 +42,91 @@
         </div>
         <nav class="sidebar-nav">
             <div class="nav-section">
-                <div class="nav-label">Core</div>
-                <a href="/" class="nav-item {% if active_page == 'dashboard' %}active{% endif %}">
-                    <span class="nav-icon"><i data-lucide="bar-chart-3" class="icon"></i></span><span class="nav-text">Dashboard</span>
-                </a>
-                <a href="/" class="nav-item {% if active_page == 'projects' %}active{% endif %}" onclick="if(window.location.pathname==='/'){event.preventDefault();if(typeof showTab==='function')showTab('projects');}">
-                    <span class="nav-icon"><i data-lucide="folder-open" class="icon"></i></span><span class="nav-text">Projects</span>
-                </a>
-                <a href="/plans" class="nav-item {% if active_page == 'plans' %}active{% endif %}">
-                    <span class="nav-icon"><i data-lucide="clipboard-list" class="icon"></i></span><span class="nav-text">Plans</span>
-                </a>
-                <a href="/copilot" class="nav-item {% if active_page == 'copilot' %}active{% endif %}">
-                    <span class="nav-icon"><i data-lucide="message-circle" class="icon"></i></span><span class="nav-text">Copilot</span>
-                </a>
-                <a href="/scaffold" class="nav-item {% if active_page == 'scaffold' %}active{% endif %}">
-                    <span class="nav-icon"><i data-lucide="plus-circle" class="icon"></i></span><span class="nav-text">New Project</span>
-                </a>
+                <div class="nav-label">Arbeiten</div>
+                <div class="nav-section-body">
+                    <a href="/" class="nav-item nav-item--primary {% if active_page == 'dashboard' %}active{% endif %}">
+                        <span class="nav-icon"><i data-lucide="bar-chart-3" class="icon"></i></span><span class="nav-text">Dashboard</span>
+                    </a>
+                    <a href="/" class="nav-item {% if active_page == 'projects' %}active{% endif %}" onclick="if(window.location.pathname==='/'){event.preventDefault();if(typeof showTab==='function')showTab('projects');}">
+                        <span class="nav-icon"><i data-lucide="folder-open" class="icon"></i></span><span class="nav-text">Projects</span>
+                    </a>
+                    <a href="/plans" class="nav-item {% if active_page == 'plans' %}active{% endif %}">
+                        <span class="nav-icon"><i data-lucide="clipboard-list" class="icon"></i></span><span class="nav-text">Plans</span>
+                    </a>
+                    <a href="/copilot" class="nav-item nav-item--primary nav-item--copilot {% if active_page == 'copilot' %}active{% endif %}">
+                        <span class="nav-icon"><i data-lucide="message-circle" class="icon"></i></span><span class="nav-text">Copilot</span>
+                    </a>
+                    <a href="/sessions" class="nav-item nav-item--primary {% if active_page == 'sessions' %}active{% endif %}">
+                        <span class="nav-icon"><i data-lucide="bot" class="icon"></i></span><span class="nav-text">Sessions</span>
+                    </a>
+                    <a href="/timesheets" class="nav-item {% if active_page == 'timesheets' %}active{% endif %}">
+                        <span class="nav-icon"><i data-lucide="clock" class="icon"></i></span><span class="nav-text">Timesheets</span>
+                    </a>
+                    <a href="/scaffold" class="nav-item {% if active_page == 'scaffold' %}active{% endif %}">
+                        <span class="nav-icon"><i data-lucide="plus-circle" class="icon"></i></span><span class="nav-text">New Project</span>
+                    </a>
+                </div>
             </div>
             <div class="nav-section">
-                <div class="nav-label">AI Ops</div>
-                <a href="/sessions" class="nav-item {% if active_page == 'sessions' %}active{% endif %}">
-                    <span class="nav-icon"><i data-lucide="bot" class="icon"></i></span><span class="nav-text">Sessions</span>
-                </a>
-                <a href="/sessions/analysis" class="nav-item {% if active_page == 'analysis' %}active{% endif %}">
-                    <span class="nav-icon"><i data-lucide="trending-up" class="icon"></i></span><span class="nav-text">Analysis</span>
-                </a>
-                <a href="/timesheets" class="nav-item {% if active_page == 'timesheets' %}active{% endif %}">
-                    <span class="nav-icon"><i data-lucide="clock" class="icon"></i></span><span class="nav-text">Timesheets</span>
-                </a>
-                <a href="/usage-monitor" class="nav-item {% if active_page == 'usage_monitor' %}active{% endif %}">
-                    <span class="nav-icon"><i data-lucide="activity" class="icon"></i></span><span class="nav-text">Usage Monitor</span>
-                </a>
-                <a href="/usage-reports" class="nav-item {% if active_page == 'usage_reports' %}active{% endif %}">
-                    <span class="nav-icon"><i data-lucide="bar-chart-3" class="icon"></i></span><span class="nav-text">Usage Reports</span>
-                </a>
-                <a href="/model-comparison" class="nav-item {% if active_page == 'model_comparison' %}active{% endif %}">
-                    <span class="nav-icon"><i data-lucide="git-compare" class="icon"></i></span><span class="nav-text">Models</span>
-                </a>
+                <div class="nav-label">Auswerten</div>
+                <div class="nav-section-body">
+                    <a href="/sessions/analysis" class="nav-item {% if active_page == 'analysis' %}active{% endif %}">
+                        <span class="nav-icon"><i data-lucide="trending-up" class="icon"></i></span><span class="nav-text">Analysis</span>
+                    </a>
+                    <a href="/usage-monitor" class="nav-item {% if active_page == 'usage_monitor' %}active{% endif %}">
+                        <span class="nav-icon"><i data-lucide="activity" class="icon"></i></span><span class="nav-text">Usage Monitor</span>
+                    </a>
+                    <a href="/usage-reports" class="nav-item {% if active_page == 'usage_reports' %}active{% endif %}">
+                        <span class="nav-icon"><i data-lucide="bar-chart-3" class="icon"></i></span><span class="nav-text">Usage Reports</span>
+                    </a>
+                </div>
+            </div>
+            <div class="nav-section nav-section--collapsible is-collapsed" data-section-key="system">
+                <button class="nav-section-toggle" type="button" onclick="toggleSidebarSection('system')" aria-expanded="false">
+                    <span class="nav-label">System</span>
+                    <span class="nav-section-chevron"><i data-lucide="chevron-down" class="icon icon-xs"></i></span>
+                </button>
+                <div class="nav-section-body" data-section-body="system">
+                    <a href="/model-comparison" class="nav-item {% if active_page == 'model_comparison' %}active{% endif %}">
+                        <span class="nav-icon"><i data-lucide="git-compare" class="icon"></i></span><span class="nav-text">Models</span>
+                    </a>
+                    <a href="/containers" class="nav-item {% if active_page == 'containers' %}active{% endif %}">
+                        <span class="nav-icon"><i data-lucide="container" class="icon"></i></span><span class="nav-text">Containers</span>
+                    </a>
+                    <a href="/dependencies" class="nav-item {% if active_page == 'dependencies' %}active{% endif %}">
+                        <span class="nav-icon"><i data-lucide="git-branch" class="icon"></i></span><span class="nav-text">Dependencies</span>
+                    </a>
+                    <a href="/scheduled-tasks" class="nav-item {% if active_page == 'scheduled_tasks' %}active{% endif %}">
+                        <span class="nav-icon"><i data-lucide="timer" class="icon"></i></span><span class="nav-text">Schedules</span>
+                    </a>
+                    <a href="/quality" class="nav-item {% if active_page == 'quality' %}active{% endif %}">
+                        <span class="nav-icon"><i data-lucide="shield-check" class="icon"></i></span><span class="nav-text">Quality</span>
+                    </a>
+                    <a href="/governance" class="nav-item {% if active_page == 'governance' %}active{% endif %}">
+                        <span class="nav-icon"><i data-lucide="shield" class="icon"></i></span><span class="nav-text">Governance</span>
+                    </a>
+                    <a href="/audits" class="nav-item {% if active_page == 'audits' %}active{% endif %}">
+                        <span class="nav-icon"><i data-lucide="scan-search" class="icon"></i></span><span class="nav-text">Audits</span>
+                    </a>
+                    <a href="/llm-commands" class="nav-item {% if active_page == 'llm_commands' %}active{% endif %}">
+                        <span class="nav-icon"><i data-lucide="terminal" class="icon"></i></span><span class="nav-text">Commands</span>
+                    </a>
+                </div>
             </div>
             <div class="nav-section">
-                <div class="nav-label">Engineering</div>
-                <a href="/containers" class="nav-item {% if active_page == 'containers' %}active{% endif %}">
-                    <span class="nav-icon"><i data-lucide="container" class="icon"></i></span><span class="nav-text">Containers</span>
-                </a>
-                <a href="/dependencies" class="nav-item {% if active_page == 'dependencies' %}active{% endif %}">
-                    <span class="nav-icon"><i data-lucide="git-branch" class="icon"></i></span><span class="nav-text">Dependencies</span>
-                </a>
-                <a href="/scheduled-tasks" class="nav-item {% if active_page == 'scheduled_tasks' %}active{% endif %}">
-                    <span class="nav-icon"><i data-lucide="timer" class="icon"></i></span><span class="nav-text">Schedules</span>
-                </a>
-                <a href="/quality" class="nav-item {% if active_page == 'quality' %}active{% endif %}">
-                    <span class="nav-icon"><i data-lucide="shield-check" class="icon"></i></span><span class="nav-text">Quality</span>
-                </a>
-                <a href="/governance" class="nav-item {% if active_page == 'governance' %}active{% endif %}">
-                    <span class="nav-icon"><i data-lucide="shield" class="icon"></i></span><span class="nav-text">Governance</span>
-                </a>
-                <a href="/audits" class="nav-item {% if active_page == 'audits' %}active{% endif %}">
-                    <span class="nav-icon"><i data-lucide="scan-search" class="icon"></i></span><span class="nav-text">Audits</span>
-                </a>
-                <a href="/llm-commands" class="nav-item {% if active_page == 'llm_commands' %}active{% endif %}">
-                    <span class="nav-icon"><i data-lucide="terminal" class="icon"></i></span><span class="nav-text">Commands</span>
-                </a>
-            </div>
-            <div class="nav-section">
-                <div class="nav-label">Content</div>
-                <a href="/vorlagen" class="nav-item {% if active_page == 'vorlagen' %}active{% endif %}">
-                    <span class="nav-icon"><i data-lucide="package" class="icon"></i></span><span class="nav-text">Templates</span>
-                </a>
-                <a href="/news" class="nav-item {% if active_page == 'news' %}active{% endif %}">
-                    <span class="nav-icon"><i data-lucide="newspaper" class="icon"></i></span><span class="nav-text">News</span>
-                </a>
+                <div class="nav-label">Inhalte</div>
+                <div class="nav-section-body">
+                    <a href="/vorlagen" class="nav-item {% if active_page == 'vorlagen' %}active{% endif %}">
+                        <span class="nav-icon"><i data-lucide="package" class="icon"></i></span><span class="nav-text">Templates</span>
+                    </a>
+                    <a href="/news" class="nav-item {% if active_page == 'news' %}active{% endif %}">
+                        <span class="nav-icon"><i data-lucide="newspaper" class="icon"></i></span><span class="nav-text">News</span>
+                    </a>
+                </div>
             </div>
             <div class="nav-section" id="externalLinksSection" style="display:none">
-                <div class="nav-label">External</div>
-                <div id="externalLinksNav"></div>
+                <div class="nav-label">Integrationen</div>
+                <div class="nav-section-body" id="externalLinksNav"></div>
             </div>
         </nav>
         <div class="sidebar-footer">

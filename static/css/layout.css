@@ -17,7 +17,8 @@
 .sidebar.collapsed .nav-text,
 .sidebar.collapsed .logo-text,
 .sidebar.collapsed .nav-label,
-.sidebar.collapsed .sidebar-footer { display: none; }
+.sidebar.collapsed .sidebar-footer,
+.sidebar.collapsed .nav-section-toggle { display: none; }
 .sidebar.collapsed .nav-item { justify-content: center; padding: 10px; }
 .sidebar.collapsed .nav-icon { margin-right: 0; }
 .sidebar-logo {
@@ -30,14 +31,55 @@
 .logo-icon { font-size: 18px; color: var(--accent-light); }
 .logo-text { font-size: 14px; font-weight: 700; color: var(--text-heading); letter-spacing: 0.01em; }
 .sidebar-nav { flex: 1; padding: 10px 0 6px; overflow-y: auto; }
-.nav-section { margin-bottom: 10px; }
+.nav-section { margin-bottom: 14px; }
+.nav-section-body {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
 .nav-label {
-    padding: 6px 16px 5px;
-    font-size: 10px;
+    display: block;
+    padding: 0;
+    font-size: 11px;
     text-transform: uppercase;
-    letter-spacing: 0.12em;
-    color: rgba(255, 255, 255, 0.36);
+    letter-spacing: 0.08em;
+    color: rgba(255, 255, 255, 0.44);
     font-weight: 700;
+}
+.nav-section > .nav-label,
+.nav-section-toggle {
+    margin: 0 14px 8px;
+}
+.nav-section > .nav-label {
+    padding-top: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+.nav-section:first-child > .nav-label {
+    padding-top: 0;
+    border-top: none;
+}
+.nav-section-toggle {
+    width: calc(100% - 28px);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: transparent;
+    border: none;
+    color: inherit;
+    cursor: pointer;
+    padding: 10px 0 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+.nav-section-chevron {
+    color: rgba(255, 255, 255, 0.44);
+    transition: transform var(--transition-fast), color var(--transition-fast);
+}
+.nav-section--collapsible:not(.is-collapsed) .nav-section-chevron {
+    transform: rotate(180deg);
+    color: rgba(255, 255, 255, 0.72);
+}
+.nav-section--collapsible.is-collapsed .nav-section-body {
+    display: none;
 }
 .nav-item {
     display: flex;
@@ -60,6 +102,19 @@
     color: #f4f8ff;
     background: rgba(79, 195, 247, 0.14);
     box-shadow: inset 0 0 0 1px rgba(79, 195, 247, 0.18);
+}
+.nav-item--primary {
+    color: rgba(255, 255, 255, 0.84);
+    font-weight: 600;
+}
+.nav-item--copilot {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.16), rgba(79, 195, 247, 0.08));
+    box-shadow: inset 0 0 0 1px rgba(79, 195, 247, 0.14);
+}
+.nav-item--copilot:hover,
+.nav-item--copilot.active {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.22), rgba(79, 195, 247, 0.14));
+    box-shadow: inset 0 0 0 1px rgba(79, 195, 247, 0.24);
 }
 .nav-icon { margin-right: 0; font-size: 14px; width: 16px; text-align: center; display: flex; align-items: center; justify-content: center; opacity: 0.88; }
 .nav-text { white-space: nowrap; }
@@ -251,6 +306,11 @@
     .nav-item {
         min-height: 38px;
         font-size: 14px;
+    }
+    .nav-section > .nav-label,
+    .nav-section-toggle {
+        margin-left: 16px;
+        margin-right: 16px;
     }
     .sidebar.mobile-open {
         transform: translateX(0);

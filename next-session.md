@@ -50,6 +50,23 @@
 **Geaenderte Dateien:**
 - `static/css/layout.css`
 
+### Sidebar auf Task-Mentalmodell umgestellt
+
+**Ziel:** Die globale Navigation soll sich an echten Nutzeraufgaben statt an internen Systemkategorien orientieren.
+
+**Umgesetzt:**
+- `templates/base.html` gruppiert die Sidebar jetzt in `Arbeiten`, `Auswerten`, `System`, `Inhalte`, `Integrationen`
+- `Copilot`, `Dashboard` und `Sessions` sind als primaere Ziele hervorgehoben
+- `System` ist als einklappbarer Block umgesetzt und standardmaessig reduziert
+- `External` wurde zu `Integrationen` umbenannt
+- `static/js/base.js` speichert den Collapse-Zustand des `System`-Blocks in `localStorage`
+- `static/css/layout.css` staerkt Section-Header und gibt `Copilot` einen klareren Fokuszustand
+
+**Geaenderte Dateien:**
+- `templates/base.html`
+- `static/js/base.js`
+- `static/css/layout.css`
+
 ### Handoff-Fallback fuer neue Projektordner
 
 **Ziel:** `handoff.md` auch dann robust erzeugen, wenn ein Projektordner schon existiert, aber in `project_plans` noch keine Plaene vorhanden sind.

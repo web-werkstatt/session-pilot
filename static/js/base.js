@@ -1,5 +1,8 @@
 // Sidebar Toggle
 var _lastSidebarTrigger = null;
+var _sidebarSectionDefaultCollapsed = {
+    system: true
+};
 
 function _isMobileSidebar() {
     return window.innerWidth <= 1024;
@@ -60,6 +63,7 @@ function syncSidebarLayout() {
 
 document.addEventListener('DOMContentLoaded', function() {
     syncSidebarLayout();
+    syncSidebarSections();
 
     document.querySelectorAll('.sidebar .nav-item').forEach(function(item) {
         item.addEventListener('click', function() {
@@ -75,6 +79,33 @@ window.addEventListener('resize', function() {
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape' && _isMobileSidebar()) closeMobileSidebar();
 });
+
+function _sidebarSectionStorageKey(sectionKey) {
+    return 'sidebar-section-' + sectionKey + '-collapsed';
+}
+
+function toggleSidebarSection(sectionKey) {
+    var section = document.querySelector('.nav-section[data-section-key="' + sectionKey + '"]');
+    if (!section) return;
+    var isCollapsed = !section.classList.contains('is-collapsed');
+    section.classList.toggle('is-collapsed', isCollapsed);
+    localStorage.setItem(_sidebarSectionStorageKey(sectionKey), isCollapsed ? 'true' : 'false');
+    var toggle = section.querySelector('.nav-section-toggle');
+    if (toggle) toggle.setAttribute('aria-expanded', isCollapsed ? 'false' : 'true');
+}
+
+function syncSidebarSections() {
+    document.querySelectorAll('.nav-section[data-section-key]').forEach(function(section) {
+        var sectionKey = section.getAttribute('data-section-key');
+        var stored = localStorage.getItem(_sidebarSectionStorageKey(sectionKey));
+        var shouldCollapse = stored === null
+            ? !!_sidebarSectionDefaultCollapsed[sectionKey]
+            : stored === 'true';
+        section.classList.toggle('is-collapsed', shouldCollapse);
+        var toggle = section.querySelector('.nav-section-toggle');
+        if (toggle) toggle.setAttribute('aria-expanded', shouldCollapse ? 'false' : 'true');
+    });
+}
 
 // Lightbox mit Navigation
 var lbImages = [];

@@ -329,6 +329,23 @@ aber nicht verschachteltes `.kilo/node_modules/`.
 - `static/css/layout.css`
 
 **Commit:** uncommitted
+
+### Sprint P3.6 — Sidebar auf Task-Navigation umgestellt — DONE (2026-04-03)
+**Ziel:** Die globale Navigation soll sich an Nutzeraufgaben statt an technischen Systemkategorien orientieren.
+
+**Aenderungen:**
+- `templates/base.html` auf die Gruppen `Arbeiten`, `Auswerten`, `System`, `Inhalte`, `Integrationen` umgebaut
+- `Copilot`, `Dashboard` und `Sessions` als primaere Ziele hervorgehoben
+- `System` als standardmaessig eingeklappter Block umgesetzt
+- `static/js/base.js` speichert den Collapse-Zustand des System-Blocks in `localStorage`
+- `static/css/layout.css` staerkt die Section-Hierarchie und hebt den Copilot-Einstieg deutlicher hervor
+
+**Dateien:**
+- `templates/base.html`
+- `static/js/base.js`
+- `static/css/layout.css`
+
+**Commit:** uncommitted
 - `templates/copilot_board.html`
 - `static/css/copilot.css`
 - `static/js/copilot_board.js`
