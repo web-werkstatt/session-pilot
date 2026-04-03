@@ -316,6 +316,19 @@ aber nicht verschachteltes `.kilo/node_modules/`.
 - `templates/base.html`
 
 **Commit:** uncommitted
+
+### Sprint P3.5 — Sidebar Density Tuning — DONE (2026-04-03)
+**Ziel:** Die globale Sidebar soll visuell kompakter und ruhiger wirken, ohne Funktion oder Struktur weiter zu aendern.
+
+**Aenderungen:**
+- `static/css/layout.css` auf dichtere Typografie, kleinere Icons und flachere Nav-Zeilen umgestellt
+- Section-Labels feiner gewichtet und Utility-Footer visuell abgeschwaecht
+- Active- und Hover-States auf kompaktere, weniger schwere Flaechen reduziert
+
+**Dateien:**
+- `static/css/layout.css`
+
+**Commit:** uncommitted
 - `templates/copilot_board.html`
 - `static/css/copilot.css`
 - `static/js/copilot_board.js`

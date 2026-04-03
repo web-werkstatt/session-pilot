@@ -37,6 +37,19 @@
 **Geaenderte Dateien:**
 - `templates/base.html`
 
+### Sidebar visuell verdichtet
+
+**Ziel:** Die linke Navigation soll auf Desktop weniger schwer und gross wirken, ohne an Lesbarkeit zu verlieren.
+
+**Umgesetzt:**
+- `static/css/layout.css` auf dichtere Sidebar-Typografie und flachere Nav-Zeilen umgestellt
+- Section-Labels feiner und ruhiger gemacht
+- Active-/Hover-State weniger breit und eher als kompakte Surface statt als schwere Vollflaeche umgesetzt
+- Footer-Links visuell als Utility-Layer abgeschwaecht
+
+**Geaenderte Dateien:**
+- `static/css/layout.css`
+
 ### Handoff-Fallback fuer neue Projektordner
 
 **Ziel:** `handoff.md` auch dann robust erzeugen, wenn ein Projektordner schon existiert, aber in `project_plans` noch keine Plaene vorhanden sind.
