@@ -1,6 +1,6 @@
 # Master Sprint Plan v0.3
 
-Stand: 2026-04-01 (Session-Update)
+Stand: 2026-04-03 (Session-Update)
 
 ## Rollenmodell
 
@@ -88,6 +88,16 @@ Audit v1 ist funktional, aber isoliert. Offene Verbindungen:
 ---
 
 ## Completed Sprints (diese Session)
+
+### Session-Status 2026-04-03
+
+**Konsolidiert live:**
+- Copilot Sprint P3 auf `main` inkl. Marker-Aktivierung, `marker-context.md` und OK-Flow ohne Auto-Session-Start
+- Sidebar task-basiert neu gruppiert, responsive gemacht, mehrfach gestrafft und mit Accordions fuer seltene Bereiche versehen
+- `/quality` und `/governance` auf "aktive Projekte der letzten 90 Tage" begrenzt
+
+**Rest-Risiko / offen:**
+- Copilot-Workspace braucht weiter gezielten UI-Feinschliff; die globale Navigation und die Filterlogik sind dagegen fuer den Moment stabil
 
 ### Sprint M2.11a — Governance auf aktive Projekte begrenzen — DONE
 

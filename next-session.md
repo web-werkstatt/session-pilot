@@ -1,12 +1,25 @@
 # Projekt-Dashboard - Naechste Session
 
 > **Letzte Aktualisierung:** 2026-04-03
-> **Status:** Copilot Workspace Redesign (unfertig, Qualitaet unbefriedigend)
-> **Naechste Aufgabe:** Copilot UI ueberarbeiten oder zuruecksetzen
+> **Status:** Sidebar-Navigation, Copilot P3 und 90-Tage-Filter fuer Quality/Governance sind live; Copilot-Workspace-Feinschliff bleibt offen
+> **Naechste Aufgabe:** Copilot UI gezielt nachschaerfen (Board-Visuals, Panel-Harmonie, History/Output) statt weiterer Navigation-/Filter-Arbeit
 
 ---
 
 ## Was in dieser Session passiert ist (2026-04-03)
+
+### Session-Abschluss: Live-Stand konsolidiert
+
+**Ziel:** Den aktuellen Produktstand fuer die naechste Session realistisch zusammenfassen.
+
+**Stand jetzt:**
+- Sidebar ist task-basiert gruppiert, verdichtet, responsiv und mit Accordions fuer seltenere Bereiche live
+- Copilot Sprint P3 ist live: Marker-Aktivierung schreibt `marker-context.md`, setzt Marker auf `in_progress`, startet aber keine Session automatisch
+- `Quality` und `Governance` zeigen nur noch Projekte mit relevanten Datei-Aenderungen in den letzten 90 Tagen
+- Mehrere UI-/Service-Fixes der Session sind bereits auf `main` gepusht und auf dem Server deployed
+
+**Naechster sinnvoller Fokus:**
+- Copilot-Workspace visuell und funktional fertigziehen, statt weitere globale Navigation umzubauen
 
 ### Responsive Sidebar fuer Mobile
 
