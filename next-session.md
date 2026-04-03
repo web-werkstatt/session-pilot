@@ -25,6 +25,18 @@
 - `static/css/layout.css`
 - `static/css/base.css`
 
+### Sidebar-Navigation logisch gestrafft
+
+**Ziel:** Die globale Navigation soll weniger verstreut wirken und in der Reihenfolge schneller erfassbar sein.
+
+**Umgesetzt:**
+- `templates/base.html` gruppiert die Sidebar jetzt in `Core`, `AI Ops`, `Engineering` und `Content`
+- `Plans`, `Copilot` und `New Project` sind in den Kernbereich gezogen
+- Lange Labels wurden gekuerzt, z.B. `Claude Sessions` -> `Sessions`, `Model Comparison` -> `Models`, `LLM Commands` -> `Commands`
+
+**Geaenderte Dateien:**
+- `templates/base.html`
+
 ### Handoff-Fallback fuer neue Projektordner
 
 **Ziel:** `handoff.md` auch dann robust erzeugen, wenn ein Projektordner schon existiert, aber in `project_plans` noch keine Plaene vorhanden sind.

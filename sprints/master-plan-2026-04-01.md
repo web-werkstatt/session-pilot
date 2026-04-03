@@ -303,6 +303,19 @@ aber nicht verschachteltes `.kilo/node_modules/`.
 - `static/css/base.css`
 
 **Commit:** uncommitted
+
+### Sprint P3.4 — Sidebar-Navigation gestrafft — DONE (2026-04-03)
+**Ziel:** Die globale Navigation soll fachlich klarer gruppiert und textlich kompakter werden.
+
+**Aenderungen:**
+- `templates/base.html` gruppiert die Sidebar jetzt in `Core`, `AI Ops`, `Engineering` und `Content`
+- `Plans`, `Copilot` und `New Project` stehen jetzt im Kernbereich statt verteilt zwischen DevOps- und Workspace-Links
+- Mehrere lange Labels wurden gekuerzt, damit die Navigation schneller scanbar ist
+
+**Dateien:**
+- `templates/base.html`
+
+**Commit:** uncommitted
 - `templates/copilot_board.html`
 - `static/css/copilot.css`
 - `static/js/copilot_board.js`
