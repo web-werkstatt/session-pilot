@@ -90,6 +90,18 @@
 **Geaenderte Dateien:**
 - `templates/base.html`
 
+### Quality/Governance/Audits/Commands als eigener Block
+
+**Ziel:** Bewertungs- und Steuerungsfunktionen sollen nicht im Infrastruktur-Block `System` untergehen.
+
+**Umgesetzt:**
+- `templates/base.html` fuehrt jetzt einen eigenen Bereich `Steuern`
+- `Quality`, `Governance`, `Audits` und `Commands` liegen nicht mehr unter `System`
+- `System` bleibt damit auf operative Themen wie `Containers`, `Dependencies` und `Schedules` fokussiert
+
+**Geaenderte Dateien:**
+- `templates/base.html`
+
 ### Handoff-Fallback fuer neue Projektordner
 
 **Ziel:** `handoff.md` auch dann robust erzeugen, wenn ein Projektordner schon existiert, aber in `project_plans` noch keine Plaene vorhanden sind.

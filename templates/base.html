@@ -82,6 +82,23 @@
                 </div>
             </div>
             <div class="nav-section nav-section--collapsible is-collapsed" data-section-key="system">
+                <div class="nav-label">Steuern</div>
+                <div class="nav-section-body">
+                    <a href="/quality" class="nav-item {% if active_page == 'quality' %}active{% endif %}">
+                        <span class="nav-icon"><i data-lucide="shield-check" class="icon"></i></span><span class="nav-text">Quality</span>
+                    </a>
+                    <a href="/governance" class="nav-item {% if active_page == 'governance' %}active{% endif %}">
+                        <span class="nav-icon"><i data-lucide="shield" class="icon"></i></span><span class="nav-text">Governance</span>
+                    </a>
+                    <a href="/audits" class="nav-item {% if active_page == 'audits' %}active{% endif %}">
+                        <span class="nav-icon"><i data-lucide="scan-search" class="icon"></i></span><span class="nav-text">Audits</span>
+                    </a>
+                    <a href="/llm-commands" class="nav-item {% if active_page == 'llm_commands' %}active{% endif %}">
+                        <span class="nav-icon"><i data-lucide="terminal" class="icon"></i></span><span class="nav-text">Commands</span>
+                    </a>
+                </div>
+            </div>
+            <div class="nav-section nav-section--collapsible is-collapsed" data-section-key="system">
                 <button class="nav-section-toggle" type="button" onclick="toggleSidebarSection('system')" aria-expanded="false">
                     <span class="nav-label">System</span>
                     <span class="nav-section-chevron"><i data-lucide="chevron-down" class="icon icon-xs"></i></span>
@@ -95,18 +112,6 @@
                     </a>
                     <a href="/scheduled-tasks" class="nav-item {% if active_page == 'scheduled_tasks' %}active{% endif %}">
                         <span class="nav-icon"><i data-lucide="timer" class="icon"></i></span><span class="nav-text">Schedules</span>
-                    </a>
-                    <a href="/quality" class="nav-item {% if active_page == 'quality' %}active{% endif %}">
-                        <span class="nav-icon"><i data-lucide="shield-check" class="icon"></i></span><span class="nav-text">Quality</span>
-                    </a>
-                    <a href="/governance" class="nav-item {% if active_page == 'governance' %}active{% endif %}">
-                        <span class="nav-icon"><i data-lucide="shield" class="icon"></i></span><span class="nav-text">Governance</span>
-                    </a>
-                    <a href="/audits" class="nav-item {% if active_page == 'audits' %}active{% endif %}">
-                        <span class="nav-icon"><i data-lucide="scan-search" class="icon"></i></span><span class="nav-text">Audits</span>
-                    </a>
-                    <a href="/llm-commands" class="nav-item {% if active_page == 'llm_commands' %}active{% endif %}">
-                        <span class="nav-icon"><i data-lucide="terminal" class="icon"></i></span><span class="nav-text">Commands</span>
                     </a>
                 </div>
             </div>

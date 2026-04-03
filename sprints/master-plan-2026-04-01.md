@@ -371,6 +371,19 @@ aber nicht verschachteltes `.kilo/node_modules/`.
 - `templates/base.html`
 
 **Commit:** uncommitted
+
+### Sprint P3.9 — Steuerungsfunktionen aus System herausgezogen — DONE (2026-04-03)
+**Ziel:** `Quality`, `Governance`, `Audits` und `Commands` sollen als eigener Steuerungsblock statt als Teil von `System` erscheinen.
+
+**Aenderungen:**
+- `templates/base.html` fuehrt einen eigenen Bereich `Steuern`
+- `Quality`, `Governance`, `Audits` und `Commands` aus dem `System`-Block herausgezogen
+- `System` bleibt dadurch klarer auf operative und infrastrukturelle Themen fokussiert
+
+**Dateien:**
+- `templates/base.html`
+
+**Commit:** uncommitted
 - `templates/copilot_board.html`
 - `static/css/copilot.css`
 - `static/js/copilot_board.js`
