@@ -44,10 +44,7 @@
             <div class="nav-section">
                 <div class="nav-label">Arbeiten</div>
                 <div class="nav-section-body">
-                    <a href="/" class="nav-item nav-item--primary {% if active_page == 'dashboard' %}active{% endif %}">
-                        <span class="nav-icon"><i data-lucide="bar-chart-3" class="icon"></i></span><span class="nav-text">Dashboard</span>
-                    </a>
-                    <a href="/" class="nav-item {% if active_page == 'projects' %}active{% endif %}" onclick="if(window.location.pathname==='/'){event.preventDefault();if(typeof showTab==='function')showTab('projects');}">
+                    <a href="/" class="nav-item nav-item--primary {% if active_page in ['dashboard', 'projects'] %}active{% endif %}" onclick="if(window.location.pathname==='/'){event.preventDefault();if(typeof showTab==='function')showTab('projects');}">
                         <span class="nav-icon"><i data-lucide="folder-open" class="icon"></i></span><span class="nav-text">Projects</span>
                     </a>
                     <a href="/plans" class="nav-item {% if active_page == 'plans' %}active{% endif %}">

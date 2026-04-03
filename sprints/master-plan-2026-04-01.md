@@ -346,6 +346,19 @@ aber nicht verschachteltes `.kilo/node_modules/`.
 - `static/css/layout.css`
 
 **Commit:** uncommitted
+
+### Sprint P3.7 — Startseite in Sidebar entdoppelt — DONE (2026-04-03)
+**Ziel:** Die Startseite `/` soll in der Sidebar nicht mehr doppelt als `Dashboard` und `Projects` erscheinen.
+
+**Aenderungen:**
+- `templates/base.html` fuehrt `/` jetzt nur noch als `Projects`
+- aktiver Zustand deckt `dashboard` und `projects` gemeinsam ueber denselben Menüpunkt ab
+- separater `Dashboard`-Eintrag aus der Sidebar entfernt
+
+**Dateien:**
+- `templates/base.html`
+
+**Commit:** uncommitted
 - `templates/copilot_board.html`
 - `static/css/copilot.css`
 - `static/js/copilot_board.js`

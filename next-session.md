@@ -67,6 +67,18 @@
 - `static/js/base.js`
 - `static/css/layout.css`
 
+### Startseite nur noch als ein Sidebar-Ziel
+
+**Ziel:** `/` soll in der Navigation nicht mehr doppelt als `Dashboard` und `Projects` auftauchen.
+
+**Umgesetzt:**
+- `templates/base.html` fuehrt die Startseite jetzt nur noch als `Projects`
+- der aktive Zustand greift fuer `dashboard` und `projects` auf demselben Sidebar-Eintrag
+- der separate `Dashboard`-Eintrag ist entfernt
+
+**Geaenderte Dateien:**
+- `templates/base.html`
+
 ### Handoff-Fallback fuer neue Projektordner
 
 **Ziel:** `handoff.md` auch dann robust erzeugen, wenn ein Projektordner schon existiert, aber in `project_plans` noch keine Plaene vorhanden sind.
