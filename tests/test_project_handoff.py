@@ -2,11 +2,11 @@
 Tests fuer project_handoff_service: Projekt-weite handoff.md.
 """
 import os
-import uuid
 import pytest
+from unittest.mock import patch
 
 from app import app as flask_app
-from services.db_service import execute, ensure_plans_schema
+from services.copilot_marker_service import parse_markers
 from services.project_handoff_service import (
     get_handoff_path,
     build_handoff_markdown,
@@ -22,20 +22,26 @@ def client():
 
 
 @pytest.fixture
-def test_plan():
-    """Plan fuer project_dashboard (existierendes Projektverzeichnis)."""
-    ensure_plans_schema()
-    unique = str(uuid.uuid4())[:8]
-    row = execute(
-        """INSERT INTO project_plans (filename, title, project_name, status, category)
-           VALUES (%s, %s, %s, %s, %s) RETURNING id""",
-        (f"test-ho-{unique}.md", "[TEST] Handoff Plan", "project_dashboard", "active", "feature"),
-        fetchone=True,
-    )
-    plan_id = row["id"]
-    yield plan_id
-    # Cleanup: Test-Plan entfernen
-    execute("DELETE FROM project_plans WHERE id = %s", (plan_id,))
+def mock_plan_rows():
+    return [
+        {
+            "id": 145,
+            "title": "[TEST] Handoff Plan",
+            "status": "active",
+            "category": "feature",
+            "plan_type": "plan",
+            "workflow_stage": "idea",
+            "current_state": "Ist-Zustand vorhanden",
+            "target_state": "Soll-Zustand definiert",
+            "next_action": "Naechsten Schritt umsetzen",
+            "latest_executor_status": "pending",
+            "latest_review_status": "pending",
+            "latest_quality_score": None,
+            "latest_audit_status": None,
+            "governance_status": None,
+            "updated_at": None,
+        }
+    ]
 
 
 class TestGetHandoffPath:
@@ -49,33 +55,66 @@ class TestGetHandoffPath:
 
 
 class TestBuildHandoffMarkdown:
-    def test_builds_markdown_for_project_with_plans(self, test_plan):
+    @patch("services.project_handoff_service.ensure_plans_schema")
+    @patch("services.project_handoff_service.execute")
+    def test_builds_markdown_for_project_with_plans(self, mock_execute, _mock_schema, mock_plan_rows):
+        mock_execute.return_value = mock_plan_rows
         md = build_handoff_markdown("project_dashboard")
         assert md is not None
         assert "project_dashboard" in md
         assert "[TEST] Handoff Plan" in md
         assert "handoff:" in md
-        assert "## Aktueller Stand (IST)" in md
+        assert "## Copilot Markers" in md
+        assert "<!-- MARKER:" in md
 
-    def test_returns_none_for_project_without_plans(self):
+    @patch("services.project_handoff_service.ensure_plans_schema")
+    @patch("services.project_handoff_service.execute")
+    def test_generated_markers_are_parseable(self, mock_execute, _mock_schema, mock_plan_rows, tmp_path):
+        mock_execute.return_value = mock_plan_rows
+        md = build_handoff_markdown("project_dashboard")
+        handoff_path = tmp_path / "handoff.md"
+        handoff_path.write_text(md, encoding="utf-8")
+        markers = parse_markers(str(handoff_path))
+        assert len(markers) >= 1
+        marker = next(m for m in markers if m.titel == "[TEST] Handoff Plan")
+        assert marker.plan_id == "145"
+        assert marker.status == "in_progress"
+        assert marker.prompt == ""
+
+    @patch("services.project_handoff_service.ensure_plans_schema")
+    @patch("services.project_handoff_service.execute")
+    def test_returns_none_for_project_without_plans(self, mock_execute, _mock_schema):
+        mock_execute.return_value = []
         md = build_handoff_markdown("nonexistent_project_xyz_999")
         assert md is None
 
 
 class TestWriteHandoff:
-    def test_writes_single_file(self, test_plan):
+    @patch("services.project_handoff_service.ensure_plans_schema")
+    @patch("services.project_handoff_service.execute")
+    @patch("services.project_handoff_service.get_handoff_path")
+    def test_writes_single_file(self, mock_path, mock_execute, _mock_schema, mock_plan_rows, tmp_path):
+        mock_path.return_value = str(tmp_path / "handoff.md")
+        mock_execute.return_value = mock_plan_rows
         filepath, md = write_handoff("project_dashboard")
         assert filepath is not None
-        assert filepath.endswith("/project_dashboard/handoff.md")
+        assert filepath.endswith("handoff.md")
         assert os.path.isfile(filepath)
         assert "project_dashboard" in md
+        markers = parse_markers(filepath)
+        assert any(m.plan_id == "145" for m in markers)
 
     def test_nonexistent_project_dir(self):
         filepath, md = write_handoff("nonexistent_project_xyz_999")
         assert filepath is None
         assert md is None
 
-    def test_overwrites_on_second_call(self, test_plan):
+    @patch("services.project_handoff_service.ensure_plans_schema")
+    @patch("services.project_handoff_service.execute")
+    @patch("services.project_handoff_service.get_handoff_path")
+    def test_overwrites_on_second_call(self, mock_path, mock_execute, _mock_schema, mock_plan_rows, tmp_path):
+        mock_path.return_value = str(tmp_path / "handoff.md")
+        mock_execute.return_value = mock_plan_rows
         filepath1, md1 = write_handoff("project_dashboard")
         filepath2, md2 = write_handoff("project_dashboard")
         assert filepath1 == filepath2
@@ -84,14 +123,20 @@ class TestWriteHandoff:
 
 
 class TestAPIUsesHandoffService:
-    def test_handoff_api_endpoint(self, client, test_plan):
+    @patch("routes.plans_routes.write_handoff")
+    @patch("routes.plans_routes.execute")
+    def test_handoff_api_endpoint(self, mock_execute, mock_write_handoff, client):
         """API-Endpoint /api/plans/<id>/handoff nutzt write_handoff."""
-        r = client.get(f"/api/plans/{test_plan}/handoff")
+        mock_execute.return_value = {"project_name": "project_dashboard"}
+        mock_write_handoff.return_value = ("/mnt/projects/project_dashboard/handoff.md", "---\n# Handoff fuer Projekt project_dashboard\n")
+        r = client.get("/api/plans/145/handoff")
         assert r.status_code == 200
         assert r.content_type.startswith("text/markdown")
         data = r.data.decode("utf-8")
         assert "project_dashboard" in data
 
-    def test_handoff_api_nonexistent_plan(self, client):
+    @patch("routes.plans_routes.execute")
+    def test_handoff_api_nonexistent_plan(self, mock_execute, client):
+        mock_execute.return_value = None
         r = client.get("/api/plans/999999/handoff")
         assert r.status_code == 404
