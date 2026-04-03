@@ -168,6 +168,7 @@
                 <kbd>Ctrl+K</kbd>
             </div>
             <div class="topbar-actions">
+                {% block topbar_actions %}{% endblock %}
                 <a href="https://doc.session-pilot.com" target="_blank" class="topbar-help" title="Help Center">
                     <i data-lucide="circle-help" class="icon"></i>
                 </a>
@@ -184,7 +185,6 @@
                         </div>
                     </div>
                 </div>
-                {% block topbar_actions %}{% endblock %}
             </div>
         </header>
 

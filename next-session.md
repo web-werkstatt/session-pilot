@@ -90,6 +90,17 @@
 **Geaenderte Dateien:**
 - `templates/base.html`
 
+### Seitenaktionen vor globalem Hilfe-Icon
+
+**Ziel:** Kontextbezogene Header-Aktionen wie `Guide` sollen vor dem globalen Hilfe-Icon stehen.
+
+**Umgesetzt:**
+- `templates/base.html` rendert `topbar_actions` jetzt vor dem globalen `?`-Hilfe-Icon
+- auf `/quality` steht der `Guide`-Button damit vor dem Help-Center-Shortcut
+
+**Geaenderte Dateien:**
+- `templates/base.html`
+
 ### Quality/Governance/Audits/Commands als eigener Block
 
 **Ziel:** Bewertungs- und Steuerungsfunktionen sollen nicht im Infrastruktur-Block `System` untergehen.

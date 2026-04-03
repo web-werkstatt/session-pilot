@@ -412,6 +412,18 @@ aber nicht verschachteltes `.kilo/node_modules/`.
 - `static/js/base.js`
 
 **Commit:** uncommitted
+
+### Sprint P3.12 — Kontextaktionen vor globaler Hilfe — DONE (2026-04-03)
+**Ziel:** Seitenspezifische Header-Aktionen sollen vor dem globalen Help-Center-Shortcut stehen.
+
+**Aenderungen:**
+- `templates/base.html` rendert `topbar_actions` jetzt vor dem globalen `?`-Icon
+- kontextbezogene Aktionen wie `Guide` auf der Quality-Seite erscheinen dadurch vor der globalen Hilfe
+
+**Dateien:**
+- `templates/base.html`
+
+**Commit:** uncommitted
 - `templates/copilot_board.html`
 - `static/css/copilot.css`
 - `static/js/copilot_board.js`
