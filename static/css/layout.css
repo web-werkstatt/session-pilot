@@ -30,12 +30,12 @@
 }
 .logo-icon { font-size: 18px; color: var(--accent-light); }
 .logo-text { font-size: 14px; font-weight: 700; color: var(--text-heading); letter-spacing: 0.01em; }
-.sidebar-nav { flex: 1; padding: 10px 0 6px; overflow-y: auto; }
-.nav-section { margin-bottom: 14px; }
+.sidebar-nav { flex: 1; padding: 8px 0 4px; overflow-y: auto; }
+.nav-section { margin-bottom: 8px; }
 .nav-section-body {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 1px;
 }
 .nav-label {
     display: block;
@@ -48,10 +48,10 @@
 }
 .nav-section > .nav-label,
 .nav-section-toggle {
-    margin: 0 14px 8px;
+    margin: 0 14px 5px;
 }
 .nav-section > .nav-label {
-    padding-top: 10px;
+    padding-top: 6px;
     border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
 .nav-section:first-child > .nav-label {
@@ -67,7 +67,7 @@
     border: none;
     color: inherit;
     cursor: pointer;
-    padding: 10px 0 0;
+    padding: 6px 0 0;
     border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
 .nav-section-chevron {
@@ -313,6 +313,7 @@
     .nav-section-toggle {
         margin-left: 16px;
         margin-right: 16px;
+        margin-bottom: 6px;
     }
     .sidebar.mobile-open {
         transform: translateX(0);
