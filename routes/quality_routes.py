@@ -4,6 +4,7 @@ import json
 import os
 import subprocess
 import sys
+from datetime import datetime, timedelta, timezone
 from flask import Blueprint, jsonify, render_template
 
 from config import PROJECTS_DIR
@@ -12,6 +13,11 @@ quality_bp = Blueprint('quality', __name__)
 
 AUTO_CODER_PATH = os.path.join(PROJECTS_DIR, "auto_coder")
 QUALITY_DIR = ".quality"
+QUALITY_RECENT_MONTHS_DAYS = 90
+QUALITY_FILE_EXTENSIONS = {
+    ".py", ".js", ".ts", ".php", ".html", ".css", ".vue",
+    ".jsx", ".tsx", ".md", ".yml", ".yaml", ".sh", ".sql",
+}
 
 
 def _read_report(project_path):
@@ -38,6 +44,41 @@ def _read_baseline(project_path):
         return None
 
 
+def _is_relevant_quality_file(path):
+    normalized = path.replace(os.sep, "/")
+    if "/node_modules/" in normalized or "/.git/" in normalized or "/logs/" in normalized:
+        return False
+    if normalized.endswith("/project.json"):
+        return False
+    _, ext = os.path.splitext(path)
+    return ext.lower() in QUALITY_FILE_EXTENSIONS
+
+
+def _has_recent_project_change(project_path, cutoff):
+    """Prueft, ob ein Projekt in den letzten 90 Tagen relevante Dateiaenderungen hatte."""
+    project_path = os.path.abspath(project_path)
+    base_depth = project_path.rstrip(os.sep).count(os.sep)
+
+    for root, dirs, files in os.walk(project_path):
+        depth = root.count(os.sep) - base_depth
+        dirs[:] = [d for d in dirs if d not in ("node_modules", ".git", "logs")]
+        if depth >= 4:
+            dirs[:] = []
+
+        for filename in files:
+            full_path = os.path.join(root, filename)
+            if not _is_relevant_quality_file(full_path):
+                continue
+            try:
+                modified_at = datetime.fromtimestamp(os.path.getmtime(full_path), tz=timezone.utc)
+            except OSError:
+                continue
+            if modified_at >= cutoff:
+                return True
+
+    return False
+
+
 @quality_bp.route('/quality')
 def quality_page():
     return render_template('quality.html', active_page='quality')
@@ -45,27 +86,32 @@ def quality_page():
 
 @quality_bp.route('/api/quality/projects')
 def quality_projects():
-    """Alle Projekte mit Quality-Reports"""
+    """Alle Projekte mit Quality-Reports und Aenderungen in den letzten 90 Tagen."""
     results = []
     if not os.path.isdir(PROJECTS_DIR):
         return jsonify(results)
+
+    cutoff = datetime.now(timezone.utc) - timedelta(days=QUALITY_RECENT_MONTHS_DAYS)
 
     for entry in sorted(os.listdir(PROJECTS_DIR)):
         path = os.path.join(PROJECTS_DIR, entry)
         if not os.path.isdir(path) or entry.startswith('.'):
             continue
         report = _read_report(path)
-        if report:
-            results.append({
-                "name": entry,
-                "score": report.get("score", "?"),
-                "score_numeric": report.get("score_numeric", 0),
-                "errors": report.get("summary", {}).get("errors", 0),
-                "warnings": report.get("summary", {}).get("warnings", 0),
-                "info": report.get("summary", {}).get("info", 0),
-                "total_issues": report.get("summary", {}).get("total_issues", 0),
-                "scanned_at": report.get("scanned_at", ""),
-            })
+        if not report:
+            continue
+        if not _has_recent_project_change(path, cutoff):
+            continue
+        results.append({
+            "name": entry,
+            "score": report.get("score", "?"),
+            "score_numeric": report.get("score_numeric", 0),
+            "errors": report.get("summary", {}).get("errors", 0),
+            "warnings": report.get("summary", {}).get("warnings", 0),
+            "info": report.get("summary", {}).get("info", 0),
+            "total_issues": report.get("summary", {}).get("total_issues", 0),
+            "scanned_at": report.get("scanned_at", ""),
+        })
 
     results.sort(key=lambda x: x["score_numeric"])
     return jsonify(results)
