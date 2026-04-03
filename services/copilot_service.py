@@ -25,15 +25,21 @@ COPILOT_SYSTEM_PROMPT = (
 
 _schema_ready = False
 _schema_lock = threading.Lock()
+_schema_migrations_ready = False
 
 
 def ensure_copilot_schema():
     """Erstellt copilot_runs Tabelle falls nicht vorhanden."""
     global _schema_ready
+    global _schema_migrations_ready
     if _schema_ready:
+        if not _schema_migrations_ready:
+            _ensure_copilot_run_migrations()
         return
     with _schema_lock:
         if _schema_ready:
+            if not _schema_migrations_ready:
+                _ensure_copilot_run_migrations()
             return
         execute("""
             CREATE TABLE IF NOT EXISTS copilot_runs (
@@ -51,7 +57,22 @@ def ensure_copilot_schema():
         execute("CREATE INDEX IF NOT EXISTS idx_copilot_runs_project ON copilot_runs(project_id)")
         execute("CREATE INDEX IF NOT EXISTS idx_copilot_runs_thread ON copilot_runs(thread_id)")
         execute("CREATE INDEX IF NOT EXISTS idx_copilot_runs_created ON copilot_runs(created_at DESC)")
+        _ensure_copilot_run_migrations()
         _schema_ready = True
+
+
+def _ensure_copilot_run_migrations():
+    """Sichert nachtraegliche Copilot-Run-Spalten/Indizes ab."""
+    global _schema_migrations_ready
+    try:
+        execute("ALTER TABLE copilot_runs ADD COLUMN plan_id INTEGER")
+    except Exception:
+        pass
+    try:
+        execute("CREATE INDEX IF NOT EXISTS idx_copilot_runs_plan ON copilot_runs(plan_id)")
+    except Exception:
+        pass
+    _schema_migrations_ready = True
 
 
 # --- Chat ---
@@ -142,8 +163,8 @@ def _save_run(project_id, thread_id, user_message, assistant_reply, model, statu
 
 # --- Verlauf ---
 
-def list_copilot_runs(project_id=None, thread_id=None, limit=50):
-    """Laedt Copilot-Runs, gefiltert nach project_id und/oder thread_id."""
+def list_copilot_runs(project_id=None, thread_id=None, plan_id=None, limit=50):
+    """Laedt Copilot-Runs, gefiltert nach project_id, thread_id und/oder plan_id."""
     ensure_copilot_schema()
 
     conditions = []
@@ -155,12 +176,15 @@ def list_copilot_runs(project_id=None, thread_id=None, limit=50):
     if thread_id:
         conditions.append("thread_id = %s")
         params.append(thread_id)
+    if plan_id is not None:
+        conditions.append("plan_id = %s")
+        params.append(plan_id)
 
     where = "WHERE " + " AND ".join(conditions) if conditions else ""
     params.append(min(limit, 200))
 
     rows = execute(
-        f"""SELECT id, project_id, thread_id, user_message, assistant_reply,
+        f"""SELECT id, project_id, thread_id, plan_id, user_message, assistant_reply,
                    model, status, error_info, created_at
             FROM copilot_runs
             {where}
@@ -175,6 +199,7 @@ def list_copilot_runs(project_id=None, thread_id=None, limit=50):
             "id": r["id"],
             "project_id": r.get("project_id"),
             "thread_id": r.get("thread_id"),
+            "plan_id": r.get("plan_id"),
             "user_message": r.get("user_message"),
             "assistant_reply": r.get("assistant_reply"),
             "model": r.get("model"),

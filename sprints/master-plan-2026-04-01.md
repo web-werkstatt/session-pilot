@@ -272,6 +272,19 @@ aber nicht verschachteltes `.kilo/node_modules/`.
 - `tests/test_project_handoff.py`
 
 **Commit:** uncommitted
+
+### Sprint P3.2 — Marker-Chat-Verlauf Fix — DONE (2026-04-03)
+**Ziel:** Das Copilot-Panel soll Marker-Threads wieder laden koennen, ohne dass `/api/copilot/runs` bei `plan_id`-Filtern mit 500 scheitert.
+
+**Aenderungen:**
+- `services/copilot_service.py` um `plan_id`-Filter in `list_copilot_runs()` erweitert
+- Verlaufseintraege liefern `plan_id` wieder mit an die Route und das Board
+- Live-Fehler `list_copilot_runs() got an unexpected keyword argument 'plan_id'` damit beseitigt
+
+**Dateien:**
+- `services/copilot_service.py`
+
+**Commit:** uncommitted
 - `templates/copilot_board.html`
 - `static/css/copilot.css`
 - `static/js/copilot_board.js`

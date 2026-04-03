@@ -21,6 +21,18 @@
 - `services/project_handoff_service.py`
 - `tests/test_project_handoff.py`
 
+### Copilot Chat-Verlauf fuer Marker wiederhergestellt
+
+**Ziel:** Panel-Chat im Copilot-Board soll Marker-Threads wieder laden koennen, ohne auf `/api/copilot/runs` mit 500 zu scheitern.
+
+**Umgesetzt:**
+- `services/copilot_service.py` akzeptiert in `list_copilot_runs()` jetzt wieder `plan_id` als Filter
+- Verlauf-Response liefert `plan_id` wieder mit aus
+- Damit funktioniert der Marker-Chat-Load aus `static/js/copilot_board.js` wieder gegen den Live-Endpunkt
+
+**Geaenderte Dateien:**
+- `services/copilot_service.py`
+
 ### Copilot Workspace Redesign (teilweise umgesetzt)
 
 **Ziel:** /copilot?plan_id=X als AI-native Work OS umbauen (Referenzbild vorhanden).
