@@ -4,7 +4,7 @@ Liest/schreibt ai_policy in project.json, liefert Governance-Uebersicht.
 """
 import os
 import json
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from config import PROJECTS_DIR
 from services.project_scanner import load_project_json
@@ -65,6 +65,47 @@ GATE_THRESHOLDS = {
     "quality_yellow": 60,    # Score unter 60 → gelb
     "audit_stale_days": 30,  # Audit aelter als 30 Tage → gelb-Signal
 }
+
+GOVERNANCE_RECENT_MONTHS_DAYS = 90
+GOVERNANCE_FILE_EXTENSIONS = {
+    ".py", ".js", ".ts", ".php", ".html", ".css", ".vue",
+    ".jsx", ".tsx", ".md", ".yml", ".yaml", ".sh", ".sql",
+}
+
+
+def _is_relevant_governance_file(path):
+    normalized = path.replace(os.sep, "/")
+    if "/node_modules/" in normalized or "/.git/" in normalized or "/logs/" in normalized:
+        return False
+    if normalized.endswith("/project.json"):
+        return False
+    _, ext = os.path.splitext(path)
+    return ext.lower() in GOVERNANCE_FILE_EXTENSIONS
+
+
+def _has_recent_governance_change(project_path, cutoff):
+    """Prueft, ob ein Projekt in den letzten 90 Tagen relevante Dateiaenderungen hatte."""
+    project_path = os.path.abspath(project_path)
+    base_depth = project_path.rstrip(os.sep).count(os.sep)
+
+    for root, dirs, files in os.walk(project_path):
+        depth = root.count(os.sep) - base_depth
+        dirs[:] = [d for d in dirs if d not in ("node_modules", ".git", "logs")]
+        if depth >= 4:
+            dirs[:] = []
+
+        for filename in files:
+            full_path = os.path.join(root, filename)
+            if not _is_relevant_governance_file(full_path):
+                continue
+            try:
+                modified_at = datetime.fromtimestamp(os.path.getmtime(full_path), tz=timezone.utc)
+            except OSError:
+                continue
+            if modified_at >= cutoff:
+                return True
+
+    return False
 
 
 def get_governance_gate(project_name):
@@ -279,6 +320,7 @@ def get_governance_overview():
 
     rework_map = _get_rework_rates()
     ai_touch_map = _get_last_ai_touch()
+    cutoff = datetime.now(timezone.utc) - timedelta(days=GOVERNANCE_RECENT_MONTHS_DAYS)
 
     if not os.path.isdir(PROJECTS_DIR):
         return {"summary": summary, "projects": []}
@@ -289,6 +331,8 @@ def get_governance_overview():
             continue
         json_path = os.path.join(project_path, "project.json")
         if not os.path.exists(json_path):
+            continue
+        if not _has_recent_governance_change(project_path, cutoff):
             continue
 
         data = load_project_json(project_path)

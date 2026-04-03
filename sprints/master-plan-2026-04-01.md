@@ -89,6 +89,19 @@ Audit v1 ist funktional, aber isoliert. Offene Verbindungen:
 
 ## Completed Sprints (diese Session)
 
+### Sprint M2.11a — Governance auf aktive Projekte begrenzen — DONE
+
+**Ziel:** Die Governance-Seite soll wie die Quality-Seite nur Projekte mit relevanten Datei-Aenderungen in den letzten 90 Tagen anzeigen.
+
+**Umgesetzt:**
+- `services/governance_service.py` filtert `get_governance_overview()` jetzt auf relevante Projektdateien mit `mtime >= 90 Tage`
+- `project.json` allein zaehlt nicht als Aktivitaet, damit reine Metadaten-Aenderungen keine Governance-Kacheln mehr sichtbar halten
+- Service-Tests decken sowohl den Positivfall als auch den Fall "nur frisches project.json, aber alter Code" ab
+
+**Geaenderte Dateien:**
+- `services/governance_service.py`
+- `tests/test_governance_gate.py`
+
 ### Sprint A — Quality Scanner Spec & Scope Lock — DONE
 Spec erstellt: `sprints/spec-quality-scanner-mvp-001.md`
 

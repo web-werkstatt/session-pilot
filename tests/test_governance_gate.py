@@ -5,10 +5,12 @@ Deckt Gate-Logik, API-Endpoint und Randfaelle ab.
 import json
 import os
 import pytest
+from datetime import datetime, timedelta, timezone
 from unittest.mock import patch
 
 from services.governance_service import (
     get_governance_gate,
+    get_governance_overview,
     GATE_THRESHOLDS,
     _load_quality_summary,
 )
@@ -183,3 +185,62 @@ class TestGateEndpoint:
         assert r.status_code == 200
         d = r.get_json()
         assert d["status"] in ("yellow", "red")
+
+
+class TestGovernanceOverviewFilter:
+    def test_overview_only_returns_recently_changed_projects(self, tmp_path, monkeypatch):
+        recent_project = tmp_path / "recent_project"
+        stale_project = tmp_path / "stale_project"
+        recent_project.mkdir()
+        stale_project.mkdir()
+
+        for project_dir in (recent_project, stale_project):
+            (project_dir / "project.json").write_text(json.dumps({
+                "name": project_dir.name,
+                "ai_policy": {"level": 2, "level_name": "controlled"},
+            }), encoding="utf-8")
+
+        recent_file = recent_project / "app.py"
+        stale_file = stale_project / "app.py"
+        recent_file.write_text("print('recent')\n", encoding="utf-8")
+        stale_file.write_text("print('stale')\n", encoding="utf-8")
+
+        now_ts = datetime.now(timezone.utc).timestamp()
+        old_ts = (datetime.now(timezone.utc) - timedelta(days=120)).timestamp()
+        os.utime(recent_file, (now_ts, now_ts))
+        os.utime(stale_file, (old_ts, old_ts))
+
+        monkeypatch.setattr("services.governance_service.PROJECTS_DIR", str(tmp_path))
+        monkeypatch.setattr("services.governance_service._get_rework_rates", lambda: {})
+        monkeypatch.setattr("services.governance_service._get_last_ai_touch", lambda: {})
+
+        overview = get_governance_overview()
+
+        assert [project["name"] for project in overview["projects"]] == ["recent_project"]
+        assert overview["summary"]["controlled"] == 1
+
+    def test_overview_ignores_recent_project_json_without_recent_code_change(self, tmp_path, monkeypatch):
+        stale_project = tmp_path / "stale_project"
+        stale_project.mkdir()
+
+        project_json = stale_project / "project.json"
+        project_json.write_text(json.dumps({
+            "name": "stale_project",
+            "ai_policy": {"level": 1, "level_name": "sandbox"},
+        }), encoding="utf-8")
+        code_file = stale_project / "main.py"
+        code_file.write_text("print('stale')\n", encoding="utf-8")
+
+        now_ts = datetime.now(timezone.utc).timestamp()
+        old_ts = (datetime.now(timezone.utc) - timedelta(days=120)).timestamp()
+        os.utime(project_json, (now_ts, now_ts))
+        os.utime(code_file, (old_ts, old_ts))
+
+        monkeypatch.setattr("services.governance_service.PROJECTS_DIR", str(tmp_path))
+        monkeypatch.setattr("services.governance_service._get_rework_rates", lambda: {})
+        monkeypatch.setattr("services.governance_service._get_last_ai_touch", lambda: {})
+
+        overview = get_governance_overview()
+
+        assert overview["projects"] == []
+        assert overview["summary"]["sandbox"] == 0

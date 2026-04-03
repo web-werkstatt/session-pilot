@@ -113,6 +113,19 @@
 **Geaenderte Dateien:**
 - `templates/base.html`
 
+### Governance nur fuer kuerzlich geaenderte Projekte
+
+**Ziel:** Die Governance-Uebersicht soll wie `Quality` nur aktive Projekte zeigen, die in den letzten 90 Tagen relevante Datei-Aenderungen hatten.
+
+**Umgesetzt:**
+- `services/governance_service.py` filtert `get_governance_overview()` jetzt auf Projektdateien mit relevanter Aenderung in den letzten 90 Tagen
+- `project.json` allein zaehlt bewusst nicht als Aktivitaet, damit keine reinen Metadaten-Leichen in `/governance` erscheinen
+- Tests decken den Fall "recent code" sowie "nur frisches project.json, aber alter Code" explizit ab
+
+**Geaenderte Dateien:**
+- `services/governance_service.py`
+- `tests/test_governance_gate.py`
+
 ### Inhalte und Integrationen als Accordion
 
 **Ziel:** Seltenere Sidebar-Bereiche sollen Platz sparen und dieselbe Collapse-Logik wie `System` nutzen.
