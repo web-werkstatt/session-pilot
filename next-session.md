@@ -79,6 +79,17 @@
 **Geaenderte Dateien:**
 - `templates/base.html`
 
+### Models nach Auswerten verschoben
+
+**Ziel:** `Models` soll fachlich als Analyse-/Vergleichsbereich statt als Systempunkt eingeordnet sein.
+
+**Umgesetzt:**
+- `templates/base.html` verschiebt `Models` aus `System` nach `Auswerten`
+- der `System`-Block bleibt dadurch klarer auf operative und infrastrukturelle Punkte fokussiert
+
+**Geaenderte Dateien:**
+- `templates/base.html`
+
 ### Handoff-Fallback fuer neue Projektordner
 
 **Ziel:** `handoff.md` auch dann robust erzeugen, wenn ein Projektordner schon existiert, aber in `project_plans` noch keine Plaene vorhanden sind.

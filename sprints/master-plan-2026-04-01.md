@@ -359,6 +359,18 @@ aber nicht verschachteltes `.kilo/node_modules/`.
 - `templates/base.html`
 
 **Commit:** uncommitted
+
+### Sprint P3.8 — Models nach Auswerten verschoben — DONE (2026-04-03)
+**Ziel:** Der Menüpunkt `Models` soll fachlich im Analyse-/Auswertungsbereich statt im Systemblock liegen.
+
+**Aenderungen:**
+- `templates/base.html` verschiebt `Models` von `System` nach `Auswerten`
+- `System` bleibt dadurch klarer auf operative und infrastrukturelle Punkte fokussiert
+
+**Dateien:**
+- `templates/base.html`
+
+**Commit:** uncommitted
 - `templates/copilot_board.html`
 - `static/css/copilot.css`
 - `static/js/copilot_board.js`
