@@ -285,6 +285,24 @@ aber nicht verschachteltes `.kilo/node_modules/`.
 - `services/copilot_service.py`
 
 **Commit:** uncommitted
+
+### Sprint P3.3 — Responsive Sidebar Layout — DONE (2026-04-03)
+**Ziel:** Die globale linke Navigation soll auf kleineren Viewports als sauberer Off-Canvas-Drawer funktionieren, ohne den Content zu quetschen.
+
+**Aenderungen:**
+- `templates/base.html` um mobilen Backdrop fuer die Sidebar erweitert
+- `static/js/base.js` um Mobile-Drawer-Logik, `Esc`-Close, Focus-Restore und Auto-Close nach Navigation erweitert
+- `static/css/layout.css` fuer Off-Canvas-Sidebar, Backdrop und responsive Topbar aufbereitet
+- `static/css/base.css` sperrt den Body-Scroll bei offener mobiler Sidebar
+- Mobile scrollt jetzt die gesamte Sidebar inklusive Footer-Links statt nur den mittleren Nav-Bereich
+
+**Dateien:**
+- `templates/base.html`
+- `static/js/base.js`
+- `static/css/layout.css`
+- `static/css/base.css`
+
+**Commit:** uncommitted
 - `templates/copilot_board.html`
 - `static/css/copilot.css`
 - `static/js/copilot_board.js`

@@ -8,6 +8,23 @@
 
 ## Was in dieser Session passiert ist (2026-04-03)
 
+### Responsive Sidebar fuer Mobile
+
+**Ziel:** Die linke Navigationsleiste soll auf Tablet/Mobile nicht mehr fix den Content einengen, sondern als sauberer Drawer funktionieren.
+
+**Umgesetzt:**
+- `templates/base.html` um einen Sidebar-Backdrop erweitert
+- `static/js/base.js` um Mobile-Drawer-Logik, `Esc`-Close, Focus-Restore und Auto-Close bei Navigation erweitert
+- `static/css/layout.css` fuer Off-Canvas-Sidebar, Backdrop und responsive Topbar angepasst
+- `static/css/base.css` sperrt Body-Scroll, solange die mobile Sidebar offen ist
+- Auf Mobile scrollt jetzt die gesamte Sidebar inklusive `Help Center` und `Settings`, statt den Footer separat stehen zu lassen
+
+**Geaenderte Dateien:**
+- `templates/base.html`
+- `static/js/base.js`
+- `static/css/layout.css`
+- `static/css/base.css`
+
 ### Handoff-Fallback fuer neue Projektordner
 
 **Ziel:** `handoff.md` auch dann robust erzeugen, wenn ein Projektordner schon existiert, aber in `project_plans` noch keine Plaene vorhanden sind.

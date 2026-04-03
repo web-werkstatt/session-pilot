@@ -7,6 +7,9 @@ body {
     min-height: 100vh;
     display: flex;
 }
+body.sidebar-mobile-open {
+    overflow: hidden;
+}
 
 /* ===== LOADING ===== */
 .loading { text-align: center; padding: 60px; color: var(--text-faint); }
