@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block title %}Model Eval{% endblock %}
+{% block breadcrumb %}Model Eval{% endblock %}
+
+{% block head_extra %}
+<link rel="stylesheet" href="/static/css/kpi-cards.css">
+<link rel="stylesheet" href="/static/css/model-eval.css">
+{% endblock %}
+
+{% block content %}
+    <!-- KPI Summary -->
+    <div class="eval-kpi-row">
+        <div class="kpi-card">
+            <div class="kpi-value" id="evalRunCount">-</div>
+            <div class="kpi-label">Eval Runs</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-value" id="evalAvgScore">-</div>
+            <div class="kpi-label">Avg Final Score</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-value" id="evalModelsCount">-</div>
+            <div class="kpi-label">Models</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-value" id="evalLayerCount">-</div>
+            <div class="kpi-label">With Layers</div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="eval-filters">
+        <select id="evalFilterProject" onchange="loadRuns()">
+            <option value="">Alle Projekte</option>
+        </select>
+        <button class="btn btn-sm btn-primary" onclick="toggleCreateForm()">+ Neuer Eval Run</button>
+    </div>
+
+    <!-- Create Form -->
+    <div id="evalCreateForm" class="eval-form" style="display:none">
+        <h3 style="margin:0 0 0.75rem;font-size:0.95rem">Neuer Eval Run</h3>
+        <div class="eval-form__grid">
+            <div class="eval-form__field">
+                <label class="eval-form__label">Task-Titel *</label>
+                <input id="evalTaskTitle" placeholder="z.B. Fix: Auth-Middleware Refactor">
+            </div>
+            <div class="eval-form__field">
+                <label class="eval-form__label">Projekt</label>
+                <input id="evalProjectId" placeholder="z.B. project_dashboard">
+            </div>
+            <div class="eval-form__field">
+                <label class="eval-form__label">Model A *</label>
+                <input id="evalModelA" placeholder="z.B. claude-opus-4-6">
+            </div>
+            <div class="eval-form__field">
+                <label class="eval-form__label">Model B (optional)</label>
+                <input id="evalModelB" placeholder="z.B. codex-mini">
+            </div>
+            <div class="eval-form__field eval-form__field--full">
+                <label class="eval-form__label">Beschreibung</label>
+                <textarea id="evalDescription" rows="2" placeholder="Was war die Aufgabe?"></textarea>
+            </div>
+        </div>
+        <h4 style="margin:0.5rem 0 0.25rem;font-size:0.85rem;color:var(--color-text-muted,#999)">Scores Model A (0-5)</h4>
+        <div id="scoresA" class="eval-scores-grid"></div>
+        <div id="scoresBWrap" style="display:none">
+            <h4 style="margin:0.75rem 0 0.25rem;font-size:0.85rem;color:var(--color-text-muted,#999)">Scores Model B (0-5)</h4>
+            <div id="scoresB" class="eval-scores-grid"></div>
+        </div>
+        <div class="eval-form__field eval-form__field--full" style="margin-top:0.75rem">
+            <label class="eval-form__label">Notizen</label>
+            <textarea id="evalNotes" rows="2" placeholder="Beobachtungen, Kontext..."></textarea>
+        </div>
+        <div style="margin-top:0.75rem;display:flex;gap:0.5rem">
+            <button class="btn btn-primary" onclick="submitEvalRun()">Speichern</button>
+            <button class="btn btn-ghost" onclick="toggleCreateForm()">Abbrechen</button>
+        </div>
+    </div>
+
+    <!-- Runs Table -->
+    <div class="eval-table-wrap">
+        <table class="eval-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Task</th>
+                    <th>Projekt</th>
+                    <th>Model A</th>
+                    <th>Final A</th>
+                    <th>Model B</th>
+                    <th>Final B</th>
+                    <th>Layers</th>
+                    <th>Winner</th>
+                    <th>Datum</th>
+                </tr>
+            </thead>
+            <tbody id="evalTableBody">
+                <tr><td colspan="10" style="text-align:center;color:#666">Lade...</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Detail Panel -->
+    <div id="evalDetail" class="eval-detail" style="display:none"></div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/model_eval.js?v={{ cache_bust }}"></script>
+<script src="/static/js/model_eval_detail.js?v={{ cache_bust }}"></script>
+{% endblock %}

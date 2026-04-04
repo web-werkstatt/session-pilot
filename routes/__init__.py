@@ -32,6 +32,7 @@ from routes.project_memory_routes import project_memory_bp
 from routes.audit_routes import audit_bp
 from routes.llm_command_routes import llm_commands_bp
 from routes.copilot_routes import copilot_bp
+from routes.model_eval_routes import model_eval_bp
 
 
 def register_blueprints(app):
@@ -68,3 +69,4 @@ def register_blueprints(app):
     app.register_blueprint(audit_bp)
     app.register_blueprint(llm_commands_bp)
     app.register_blueprint(copilot_bp)
+    app.register_blueprint(model_eval_bp)

@@ -6,7 +6,6 @@ import uuid
 import pytest
 from unittest.mock import patch
 
-from app import app as flask_app
 from services.plan_section_service import (
     ensure_section_schema,
     create_plan_section,
@@ -22,13 +21,6 @@ from services.plan_section_service import (
     VALID_SECTION_STAGES,
 )
 from services.db_service import execute, ensure_plans_schema
-
-
-@pytest.fixture
-def client():
-    flask_app.config["TESTING"] = True
-    with flask_app.test_client() as c:
-        yield c
 
 
 @pytest.fixture
@@ -257,10 +249,11 @@ class TestSectionChat:
 
 # --- API3: Messages ---
 
+@pytest.mark.usefixtures("mock_plan_sections_db")
 class TestMessagesAPI:
-    def test_list_messages_via_api(self, client, test_section):
-        thr = get_or_create_thread(None, 1, test_section)
-        create_message(thr["thread_id"], "user", "API-Test-Msg", section_id=test_section)
+    def test_list_messages_via_api(self, client):
+        thr = get_or_create_thread(None, 1, 999)
+        create_message(thr["thread_id"], "user", "API-Test-Msg", section_id=999)
 
         r = client.get(f"/api/copilot/messages?thread_id={thr['thread_id']}")
         assert r.status_code == 200
@@ -275,8 +268,8 @@ class TestMessagesAPI:
 # --- UI1: /copilot?plan_id=X ---
 
 class TestCopilotBoardUI:
-    def test_copilot_board_renders(self, client, test_plan):
-        r = client.get(f"/copilot?plan_id={test_plan}")
+    def test_copilot_board_renders(self, client):
+        r = client.get("/copilot?plan_id=1")
         assert r.status_code == 200
         html = r.get_data(as_text=True)
         assert "sectionsBoard" in html
@@ -284,10 +277,12 @@ class TestCopilotBoardUI:
         assert "sectionPanel" in html
         assert "panelChatInput" in html
 
-    def test_copilot_without_plan_id_shows_landing(self, client):
-        """/copilot ohne plan_id zeigt Landing-Seite (kein Redirect)."""
-        r = client.get("/copilot")
-        assert r.status_code == 200
+    def test_copilot_without_plan_id_redirects(self, client):
+        """/copilot ohne plan_id redirectet zum letzten Plan oder nach /plans."""
+        r = client.get("/copilot", follow_redirects=False)
+        assert r.status_code in (302, 303)
+        location = r.headers.get("Location", "")
+        assert location.startswith("/copilot?plan_id=") or location == "/plans"
 
     def test_plans_page_no_copilot_elements(self, client):
         """Plans-Seite enthaelt keine Copilot-/Section-Elemente (nur Links)."""
