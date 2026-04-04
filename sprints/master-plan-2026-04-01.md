@@ -99,6 +99,67 @@ Audit v1 ist funktional, aber isoliert. Offene Verbindungen:
 **Rest-Risiko / offen:**
 - Copilot-Workspace braucht weiter gezielten UI-Feinschliff; die globale Navigation und die Filterlogik sind dagegen fuer den Moment stabil
 
+### Sprint P4 — Session Write-back — DONE
+
+**Ziel:** Den Status eines aktiv bearbeiteten Markers am Session-Ende explizit in `handoff.md` zurueckschreiben, ohne P3 um Auto-Start oder neue Aktivierungslogik zu erweitern.
+
+**Umgesetzt:**
+- `services/copilot_marker_service.py` um `close_marker(handoff_path, marker_id, ...)` erweitert; aktualisiert `status`, `naechster_schritt`, `last_session` und `updated_at` im bestehenden Dual-Format
+- `routes/copilot_routes.py` um `POST /api/copilot/markers/<id>/close` erweitert; Fehlerfaelle `handoff_missing` und `marker_not_found` sind explizit abgebildet, und `project_id` kann optional aus `marker-context.md` gelesen werden
+- `marker-context.md` schreibt beim Aktivieren jetzt auch `project_id`, neben `marker_id` und `plan_id`
+- `static/js/copilot_board.js` enthaelt eine kleine Refresh-Hilfe fuer den expliziten Close-Call
+- Service- und API-Tests fuer den Write-back-Roundtrip ergaenzt, plus manueller `activate -> close -> parse_markers()`-Check
+- Copilot-Testsuite lokal stabilisiert: `tests/test_copilot.py` nutzt jetzt einen In-Memory-DB-Fake statt Live-Postgres, `/copilot`-Redirect-Tests spiegeln den aktuellen UI-Flow, und `services/copilot_service.py` persistiert optional `images`
+- Copilot-/Plan-Tests teilweise vereinheitlicht: gemeinsames `client`-Fixture aus `tests/conftest.py`, derselbe `mock_copilot_db`-Pfad fuer Copilot-Binding, und UI-Render-Tests vermeiden unnoetige DB-Fixures
+- `tests/test_plan_workflow.py` auf die aktuelle Handoff-Architektur gezogen: Handoff-Tests nutzen `project_handoff_service`, pruefen das Marker-Format und laufen fuer diesen Teilbereich ohne Postgres ueber einen kleinen In-Memory-Plan-Store
+
+**Geaenderte Dateien:**
+- `services/copilot_marker_service.py`
+- `services/copilot_service.py`
+- `routes/copilot_routes.py`
+- `static/js/copilot_board.js`
+- `tests/conftest.py`
+- `tests/test_copilot_marker_service.py`
+- `tests/test_copilot.py`
+- `tests/test_plan_sections.py`
+- `tests/test_plan_workflow.py`
+- `next-session.md`
+- `sprints/master-plan-2026-04-01.md`
+
+**Commit-Hash:** noch nicht committed
+
+### Sprint P5 — Sprint to Markers — DONE
+
+**Ziel:** Sprint-Aufgaben aus einem Sprint-Plan per Klick als Marker in `handoff.md` erzeugen oder aktualisieren, ohne Duplikate.
+
+**Umgesetzt:**
+- `services/copilot_marker_service.py` um `sprinttomarkers()` und `buildsuggestion()` erweitert; Sprint-Sektion wird ueber `Plan-ID` gefunden und Aufgaben-Bullets werden als Marker in `handoff.md` geschrieben
+- Marker werden ueber deterministische IDs aus `plan_id + titel` idempotent erzeugt oder aktualisiert
+- `routes/copilot_routes.py` um `POST /api/sprint/<plan_id>/to-markers` erweitert
+- `templates/copilot_board.html` und `static/js/copilot_board.js` um den Header-Button `Sprint -> Marker` erweitert; nach Erfolg laedt das Board die Marker neu
+- Marker-Board nutzt bei Bedarf eine semantische `Plan-ID` aus dem Plan-Inhalt und faellt sonst auf das bisherige Verhalten zurueck
+- Service- und API-Tests fuer Sprint->Marker und Duplikat-Schutz ergaenzt
+- `static/css/copilot.css` zeigt laengere Marker-Titel und Vorschau-Texte jetzt mehrzeilig, und die Board-Spalten wurden breiter gesetzt, damit Marker-Text in den Cards nicht vorzeitig abgeschnitten wird
+- `static/js/copilot_board.js` rendert den Vorschau-Block jetzt direkt unter dem Marker-Titel statt erst unter Gate/Status-Hinweisen
+- `static/css/copilot.css` haertet die Chat-Nachrichten im Panel gegen Overflow ab; lange Antworten und Markdown-Code bleiben innerhalb der Chat-Card
+- `static/css/copilot.css` setzt die relevanten Flex-/Scroll-Container im Chat-Panel auf `min-height: 0`, damit Chat-Boxen beim Scrollen nicht abgeschnitten werden
+- `services/copilot_service.py` persistiert fuer `copilot_runs` jetzt auch Token- und Kostenfelder; `static/js/copilot_board.js` zeigt Modell, Tokens und USD-Kosten unter Assistant-Nachrichten im Chat-Panel an
+- `services/copilot_service.py` baut vor dem LLM-Call serverseitig einen kompakten Marker-Kontext aus `marker-context.md` und `handoff.md`; `handoff.md` bleibt fuehrende Wahrheit, Frontend-Kontext dient nur als Fallback
+- `services/copilot_service.py` loest fuer diesen Marker-Kontext jetzt auch den lesbaren Plan-Titel auf; `static/js/copilot_board.js`, `static/js/plans.js` und `templates/copilot_landing.html` zeigen bzw. verwenden den Plan-Namen im Panel und als lesbaren URL-Slug zusaetzlich zur `plan_id`
+
+**Geaenderte Dateien:**
+- `services/copilot_marker_service.py`
+- `routes/copilot_routes.py`
+- `templates/copilot_board.html`
+- `static/js/copilot_board.js`
+- `static/css/copilot.css`
+- `tests/test_copilot_marker_service.py`
+- `tests/test_copilot.py`
+- `next-session.md`
+- `sprints/master-plan-2026-04-01.md`
+
+**Commit-Hash:** noch nicht committed
+
 ### Sprint M2.11a — Governance auf aktive Projekte begrenzen — DONE
 
 **Ziel:** Die Governance-Seite soll wie die Quality-Seite nur Projekte mit relevanten Datei-Aenderungen in den letzten 90 Tagen anzeigen.

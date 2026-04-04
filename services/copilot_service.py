@@ -3,10 +3,12 @@ SPEC-COPILOT-CHAT-PERPLEXITY-001: Copilot-Chat Service.
 Persistenz, LLM-Aufruf und Verlauf fuer freien Chat mit Perplexity.
 """
 import json
+import os
 import threading
 import uuid
 from datetime import datetime, timezone
 
+from services.cost_service import calculate_cost
 from services.db_service import execute
 from services.perplexity_service import (
     query_perplexity,
@@ -26,6 +28,157 @@ COPILOT_SYSTEM_PROMPT = (
 _schema_ready = False
 _schema_lock = threading.Lock()
 _schema_migrations_ready = False
+
+
+def _first_non_empty(*values):
+    for value in values:
+        if value is None:
+            continue
+        if isinstance(value, str):
+            stripped = value.strip()
+            if stripped:
+                return stripped
+            continue
+        if isinstance(value, list) and value:
+            return value
+        if value:
+            return value
+    return None
+
+
+def _compact_marker_context(data):
+    checks = data.get("checks")
+    if not isinstance(checks, list):
+        checks = []
+    compact = {
+        "project_id": _first_non_empty(data.get("project_id")),
+        "marker_id": _first_non_empty(data.get("marker_id")),
+        "plan_id": _first_non_empty(data.get("plan_id")),
+        "plan_title": _first_non_empty(data.get("plan_title")),
+        "titel": _first_non_empty(data.get("titel")),
+        "status": _first_non_empty(data.get("status")),
+        "ziel": _first_non_empty(data.get("ziel")),
+        "naechster_schritt": _first_non_empty(data.get("naechster_schritt")),
+        "risiko": _first_non_empty(data.get("risiko")),
+        "checks": [str(item).strip() for item in checks if str(item).strip()],
+        "prompt": _first_non_empty(data.get("prompt")),
+        "prompt_suggestion": _first_non_empty(data.get("prompt_suggestion")),
+        "last_session": _first_non_empty(data.get("last_session")),
+        "updated_at": _first_non_empty(data.get("updated_at")),
+    }
+    return {key: value for key, value in compact.items() if value not in (None, "", [])}
+
+
+def _resolve_plan_title(plan_id):
+    try:
+        numeric_plan_id = int(str(plan_id).strip())
+    except Exception:
+        return None
+
+    try:
+        row = execute(
+            "SELECT title FROM project_plans WHERE id = %s",
+            (numeric_plan_id,),
+            fetchone=True,
+        )
+    except Exception:
+        return None
+
+    if not row:
+        return None
+    return _first_non_empty(row.get("title"))
+
+
+def build_marker_chat_context(project_id=None, marker_id=None, handoff_path=None,
+                              context_path=None, frontend_context=None):
+    """Baut kompakten Marker-Kontext fuer den LLM-Call.
+
+    Wahrheitsquelle ist handoff.md. marker-context.md liefert den aktiven Fokus.
+    frontend_context wird nur als Zusatz/Fallback verwendet.
+    """
+    from services.copilot_marker_service import (
+        _get_handoff_path,
+        get_marker_context,
+        parse_markers,
+        read_marker_context,
+    )
+
+    frontend = frontend_context if isinstance(frontend_context, dict) else {}
+    marker_meta = {}
+
+    try:
+        if project_id:
+            marker_meta = read_marker_context(project_id=project_id, context_path=context_path)
+        elif context_path:
+            marker_meta = read_marker_context(context_path=context_path)
+    except FileNotFoundError:
+        marker_meta = {}
+    except Exception:
+        marker_meta = {}
+
+    resolved_project_id = _first_non_empty(project_id, marker_meta.get("project_id"), frontend.get("project_id"))
+    resolved_marker_id = _first_non_empty(marker_id, marker_meta.get("marker_id"), frontend.get("marker_id"))
+    resolved_handoff_path = handoff_path or (_get_handoff_path(resolved_project_id) if resolved_project_id else None)
+
+    handoff_marker = None
+    if resolved_marker_id:
+        try:
+            if handoff_path and resolved_handoff_path and os.path.exists(resolved_handoff_path):
+                for candidate in parse_markers(resolved_handoff_path):
+                    if candidate.marker_id == resolved_marker_id:
+                        handoff_marker = {
+                            "marker_id": candidate.marker_id,
+                            "plan_id": candidate.plan_id,
+                            "titel": candidate.titel,
+                            "status": candidate.status,
+                            "ziel": candidate.ziel,
+                            "naechster_schritt": candidate.naechster_schritt,
+                            "risiko": candidate.risiko,
+                            "checks": candidate.checks,
+                            "prompt": candidate.prompt,
+                            "prompt_suggestion": candidate.prompt_suggestion,
+                            "last_session": candidate.last_session,
+                            "updated_at": candidate.updated_at,
+                        }
+                        break
+            elif resolved_project_id:
+                handoff_marker = get_marker_context(resolved_project_id, resolved_marker_id)
+        except Exception:
+            handoff_marker = None
+
+    merged = {}
+    for source in (frontend, marker_meta, handoff_marker or {}):
+        if not isinstance(source, dict):
+            continue
+        merged.update({k: v for k, v in source.items() if v not in (None, "", [])})
+
+    if resolved_project_id:
+        merged["project_id"] = resolved_project_id
+    if resolved_marker_id:
+        merged["marker_id"] = resolved_marker_id
+    resolved_plan_id = _first_non_empty(
+        merged.get("plan_id"),
+        marker_meta.get("plan_id"),
+        frontend.get("plan_id"),
+    )
+    if resolved_plan_id:
+        merged["plan_id"] = resolved_plan_id
+        plan_title = _resolve_plan_title(resolved_plan_id)
+        if plan_title:
+            merged["plan_title"] = plan_title
+
+    return _compact_marker_context(merged)
+
+
+def _build_marker_context_message(marker_context):
+    if not marker_context:
+        return None
+    return (
+        "Aktiver Marker-Kontext aus marker-context.md und handoff.md "
+        "(handoff.md ist fuehrende Wahrheit):\n```json\n"
+        + json.dumps(marker_context, indent=2, ensure_ascii=False)
+        + "\n```"
+    )
 
 
 def ensure_copilot_schema():
@@ -72,12 +225,33 @@ def _ensure_copilot_run_migrations():
         execute("CREATE INDEX IF NOT EXISTS idx_copilot_runs_plan ON copilot_runs(plan_id)")
     except Exception:
         pass
+    try:
+        execute("ALTER TABLE copilot_runs ADD COLUMN images JSONB")
+    except Exception:
+        pass
+    try:
+        execute("ALTER TABLE copilot_runs ADD COLUMN input_tokens INTEGER")
+    except Exception:
+        pass
+    try:
+        execute("ALTER TABLE copilot_runs ADD COLUMN output_tokens INTEGER")
+    except Exception:
+        pass
+    try:
+        execute("ALTER TABLE copilot_runs ADD COLUMN total_tokens INTEGER")
+    except Exception:
+        pass
+    try:
+        execute("ALTER TABLE copilot_runs ADD COLUMN cost_usd NUMERIC(10,6)")
+    except Exception:
+        pass
     _schema_migrations_ready = True
 
 
 # --- Chat ---
 
-def call_copilot(message, project_id=None, thread_id=None, context=None, plan_id=None):
+def call_copilot(message, project_id=None, thread_id=None, context=None, plan_id=None,
+                 images=None, context_path=None):
     """Sendet eine Nachricht an Perplexity und persistiert das Ergebnis.
 
     Args:
@@ -86,6 +260,7 @@ def call_copilot(message, project_id=None, thread_id=None, context=None, plan_id
         thread_id: Optionaler Thread-Identifikator. Wird generiert wenn leer.
         context: Optionales dict das als Kontext mitgesendet wird.
         plan_id: Optionale Plan-ID fuer Plan-Kontext-Bindung (Sprint E M5).
+        images: Optionale Liste angehaengter Bilder.
 
     Returns:
         dict mit reply, project_id, thread_id, plan_id, copilot_run_id, model, status, created_at.
@@ -106,9 +281,17 @@ def call_copilot(message, project_id=None, thread_id=None, context=None, plan_id
         if run["assistant_reply"]:
             messages.append({"role": "assistant", "content": run["assistant_reply"]})
 
+    marker_context = build_marker_chat_context(
+        project_id=project_id,
+        marker_id=context.get("marker_id") if isinstance(context, dict) else None,
+        context_path=context_path,
+        frontend_context=context,
+    )
+
     # Optionalen Kontext einfuegen
-    if context:
-        context_text = "Aktueller Projektkontext:\n```json\n" + json.dumps(context, indent=2, ensure_ascii=False) + "\n```"
+    context_payload = marker_context or (context if isinstance(context, dict) else None)
+    if context_payload:
+        context_text = _build_marker_context_message(context_payload)
         messages.append({"role": "user", "content": context_text})
         messages.append({"role": "assistant", "content": "Verstanden, ich habe den Projektkontext erhalten."})
 
@@ -121,30 +304,48 @@ def call_copilot(message, project_id=None, thread_id=None, context=None, plan_id
         result = query_perplexity(messages=messages, temperature=0.3)
         reply = result.get("content", "")
         model = result.get("model", "")
+        usage = result.get("usage", {}) or {}
+        input_tokens = usage.get("prompt_tokens") or usage.get("input_tokens")
+        output_tokens = usage.get("completion_tokens") or usage.get("output_tokens")
+        total_tokens = usage.get("total_tokens")
+        if total_tokens is None and (input_tokens is not None or output_tokens is not None):
+            total_tokens = int(input_tokens or 0) + int(output_tokens or 0)
+        cost_usd = calculate_cost(model, input_tokens, output_tokens) if (input_tokens or output_tokens) else None
 
-        return _save_run(project_id, thread_id, message, reply, model, "success", None, plan_id)
+        return _save_run(
+            project_id, thread_id, message, reply, model, "success", None, plan_id, images,
+            input_tokens=input_tokens, output_tokens=output_tokens,
+            total_tokens=total_tokens, cost_usd=cost_usd,
+        )
 
     except PerplexityConfigError as e:
         return _save_run(project_id, thread_id, message, None, None, "failure",
-                         f"Config-Fehler: {e}", plan_id)
+                         f"Config-Fehler: {e}", plan_id, images)
     except (PerplexityRequestError, PerplexityAPIError) as e:
         return _save_run(project_id, thread_id, message, None, None, "failure",
-                         f"LLM-Fehler: {e}", plan_id)
+                         f"LLM-Fehler: {e}", plan_id, images)
     except Exception as e:
         return _save_run(project_id, thread_id, message, None, None, "failure",
-                         f"Unerwarteter Fehler: {e}", plan_id)
+                         f"Unerwarteter Fehler: {e}", plan_id, images)
 
 
-def _save_run(project_id, thread_id, user_message, assistant_reply, model, status, error_info, plan_id=None):
+def _save_run(project_id, thread_id, user_message, assistant_reply, model, status, error_info,
+              plan_id=None, images=None, input_tokens=None, output_tokens=None,
+              total_tokens=None, cost_usd=None):
     """Persistiert einen Copilot-Run."""
     ensure_copilot_schema()
 
     row = execute(
         """INSERT INTO copilot_runs
-               (project_id, thread_id, user_message, assistant_reply, model, status, error_info, plan_id)
-           VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+               (project_id, thread_id, user_message, assistant_reply, model, status, error_info,
+                plan_id, images, input_tokens, output_tokens, total_tokens, cost_usd)
+           VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
            RETURNING id, created_at""",
-        (project_id, thread_id, user_message, assistant_reply, model, status, error_info, plan_id),
+        (
+            project_id, thread_id, user_message, assistant_reply, model, status, error_info,
+            plan_id, json.dumps(images) if images is not None else None,
+            input_tokens, output_tokens, total_tokens, cost_usd,
+        ),
         fetchone=True,
     )
 
@@ -157,6 +358,11 @@ def _save_run(project_id, thread_id, user_message, assistant_reply, model, statu
         "model": model,
         "status": status,
         "error_info": error_info,
+        "images": images,
+        "input_tokens": input_tokens,
+        "output_tokens": output_tokens,
+        "total_tokens": total_tokens,
+        "cost_usd": float(cost_usd) if cost_usd is not None else None,
         "created_at": row["created_at"].isoformat() if row.get("created_at") else None,
     }
 
@@ -185,7 +391,8 @@ def list_copilot_runs(project_id=None, thread_id=None, plan_id=None, limit=50):
 
     rows = execute(
         f"""SELECT id, project_id, thread_id, plan_id, user_message, assistant_reply,
-                   model, status, error_info, created_at
+                   images, model, status, error_info, input_tokens, output_tokens,
+                   total_tokens, cost_usd, created_at
             FROM copilot_runs
             {where}
             ORDER BY created_at ASC
@@ -193,6 +400,18 @@ def list_copilot_runs(project_id=None, thread_id=None, plan_id=None, limit=50):
         tuple(params),
         fetch=True,
     ) or []
+
+    def _parse_images(value):
+        if value in (None, ""):
+            return None
+        if isinstance(value, list):
+            return value
+        if isinstance(value, str):
+            try:
+                return json.loads(value)
+            except Exception:
+                return None
+        return value
 
     return [
         {
@@ -202,9 +421,14 @@ def list_copilot_runs(project_id=None, thread_id=None, plan_id=None, limit=50):
             "plan_id": r.get("plan_id"),
             "user_message": r.get("user_message"),
             "assistant_reply": r.get("assistant_reply"),
+            "images": _parse_images(r.get("images")),
             "model": r.get("model"),
             "status": r["status"],
             "error_info": r.get("error_info"),
+            "input_tokens": r.get("input_tokens"),
+            "output_tokens": r.get("output_tokens"),
+            "total_tokens": r.get("total_tokens"),
+            "cost_usd": float(r["cost_usd"]) if r.get("cost_usd") is not None else None,
             "created_at": r["created_at"].isoformat() if r.get("created_at") else None,
         }
         for r in rows

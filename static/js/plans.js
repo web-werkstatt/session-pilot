@@ -143,7 +143,7 @@ function _buildCardHtml(plan, draggable) {
     const projectBadge = plan.project_name
         ? `<span class="card-project"><i data-lucide="folder" class="icon icon-xs"></i> ${escapeHtml(plan.project_name)}</span>`
         : '';
-    const cockpitUrl = `/copilot?plan_id=${plan.id}`;
+    const cockpitUrl = buildCopilotUrl(plan.id, plan.title);
 
     return `
     <div class="plan-card status-${statusClass}" ${dragAttr} onclick="showPlan(${plan.id})">
@@ -399,7 +399,7 @@ function showPlan(id) {
             document.getElementById('modalMetaSidebar').innerHTML = metaSidebar.join('') || '<span class="text-muted">—</span>';
 
             // Copilot Button
-            document.getElementById('modalCopilotBtn').href = `/copilot?plan_id=${plan.id}`;
+            document.getElementById('modalCopilotBtn').href = buildCopilotUrl(plan.id, plan.title);
 
             // Workflow Panel via API
             _loadPlanWorkflow(id);
@@ -416,7 +416,19 @@ function closePlanModal() {
 
 function openPlanCockpit(planId, event) {
     if (event) event.stopPropagation();
-    window.location.href = `/copilot?plan_id=${planId}`;
+    const plan = allPlans.find(p => p.id === planId);
+    window.location.href = buildCopilotUrl(planId, plan ? plan.title : `Plan ${planId}`);
+}
+
+function slugifyPlanTitle(text) {
+    return String(text || '')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '') || 'plan';
+}
+
+function buildCopilotUrl(planId, planTitle) {
+    return `/copilot?plan_id=${encodeURIComponent(planId)}&plan=${encodeURIComponent(slugifyPlanTitle(planTitle))}`;
 }
 
 // === Sync ===

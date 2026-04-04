@@ -56,9 +56,6 @@
                     <a href="/sessions" class="nav-item nav-item--primary {% if active_page == 'sessions' %}active{% endif %}">
                         <span class="nav-icon"><i data-lucide="bot" class="icon"></i></span><span class="nav-text">Sessions</span>
                     </a>
-                    <a href="/timesheets" class="nav-item {% if active_page == 'timesheets' %}active{% endif %}">
-                        <span class="nav-icon"><i data-lucide="clock" class="icon"></i></span><span class="nav-text">Timesheets</span>
-                    </a>
                     <a href="/scaffold" class="nav-item {% if active_page == 'scaffold' %}active{% endif %}">
                         <span class="nav-icon"><i data-lucide="plus-circle" class="icon"></i></span><span class="nav-text">New Project</span>
                     </a>
@@ -87,6 +84,9 @@
                     <span class="nav-section-chevron"><i data-lucide="chevron-down" class="icon icon-xs"></i></span>
                 </button>
                 <div class="nav-section-body" data-section-body="analysis">
+                    <a href="/timesheets" class="nav-item {% if active_page == 'timesheets' %}active{% endif %}">
+                        <span class="nav-icon"><i data-lucide="clock" class="icon"></i></span><span class="nav-text">Timesheets</span>
+                    </a>
                     <a href="/sessions/analysis" class="nav-item {% if active_page == 'analysis' %}active{% endif %}">
                         <span class="nav-icon"><i data-lucide="trending-up" class="icon"></i></span><span class="nav-text">Analysis</span>
                     </a>

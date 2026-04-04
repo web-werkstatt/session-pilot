@@ -16,6 +16,8 @@ from services.path_resolver import resolve_project_path
 
 
 VALID_STATUSES = {"todo", "in_progress", "done", "blocked"}
+_PLAN_ID_LINE_RE = re.compile(r"plan-id:\*+\s*(?P<plan_id>[^\s*]+)|plan-id:\s*(?P<plan_id_plain>[^\s*]+)", re.IGNORECASE)
+_TASK_BULLET_RE = re.compile(r"^\s*[-*]\s+(?:\[[ xX]\]\s+)?(?P<task>.+?)\s*$")
 
 _MARKER_BLOCK_RE = re.compile(
     r"""
@@ -82,6 +84,10 @@ class MarkerActivationError(ValueError):
     def __init__(self, message, gate_reason=""):
         super().__init__(message)
         self.gate_reason = gate_reason or message
+
+
+class MarkerCloseError(ValueError):
+    """Fehler fuer ungueltige oder nicht auffindbare Marker beim Session-Write-back."""
 
 
 def _render_marker_markdown(marker):
@@ -202,6 +208,28 @@ def _resolve_context_path(project_id, context_path):
     return os.path.join(project_root, context_name)
 
 
+def read_marker_context(project_id=None, context_path="marker-context.md"):
+    """Liest einfache Metadaten aus marker-context.md."""
+    if project_id:
+        resolved_path = _resolve_context_path(project_id, context_path)
+    else:
+        context_name = str(context_path or "marker-context.md").strip() or "marker-context.md"
+        resolved_path = context_name if os.path.isabs(context_name) else os.path.abspath(context_name)
+
+    if not os.path.exists(resolved_path):
+        raise FileNotFoundError(resolved_path)
+
+    metadata = {"context_path": resolved_path}
+    with open(resolved_path, "r", encoding="utf-8") as f:
+        for raw_line in f:
+            line = raw_line.strip()
+            if not line.startswith("- ") or ":" not in line:
+                continue
+            key, value = line[2:].split(":", 1)
+            metadata[key.strip()] = value.strip()
+    return metadata
+
+
 def _compute_gate(marker):
     prompt = (marker.prompt or "").strip()
     checks = marker.checks or []
@@ -210,6 +238,181 @@ def _compute_gate(marker):
     if len(checks) < 1:
         return False, "keine checks definiert"
     return True, ""
+
+
+def _normalize_marker_title(title):
+    return re.sub(r"\s+", " ", str(title or "").strip()).lower()
+
+
+def _slugify_marker_part(value):
+    slug = re.sub(r"[^a-z0-9]+", "-", str(value or "").strip().lower()).strip("-")
+    return slug or "marker"
+
+
+def _build_sprint_marker_id(plan_id, title):
+    return f"{_slugify_marker_part(plan_id)}-{_slugify_marker_part(title)}"
+
+
+def _read_sprint_content(sprint_path):
+    resolved = str(sprint_path or "").strip()
+    if not resolved:
+        raise FileNotFoundError("sprint_missing")
+    if not os.path.isabs(resolved):
+        resolved = os.path.abspath(resolved)
+    if os.path.exists(resolved):
+        with open(resolved, "r", encoding="utf-8") as f:
+            return resolved, f.read()
+
+    plan_token = os.path.splitext(os.path.basename(resolved))[0]
+    candidates = [
+        os.path.join(os.getcwd(), "upload", "Sprints"),
+        os.path.join(os.getcwd(), "sprints"),
+    ]
+    for base in candidates:
+        if not os.path.isdir(base):
+            continue
+        for filename in sorted(os.listdir(base)):
+            if plan_token in filename or plan_token.replace("_", "-") in filename:
+                candidate = os.path.join(base, filename)
+                with open(candidate, "r", encoding="utf-8") as f:
+                    return candidate, f.read()
+    raise FileNotFoundError(resolved)
+
+
+def _extract_tasks_from_sprint(sprint_path, plan_id):
+    resolved_path, content = _read_sprint_content(sprint_path)
+    lines = content.splitlines()
+    plan_id = str(plan_id).strip()
+
+    plan_line_idx = None
+    for idx, line in enumerate(lines):
+        match = _PLAN_ID_LINE_RE.search(line)
+        matched_plan_id = (match.group("plan_id") or match.group("plan_id_plain") or "").strip() if match else ""
+        if matched_plan_id == plan_id:
+            plan_line_idx = idx
+            break
+    if plan_line_idx is None:
+        raise ValueError("plan_id_not_found")
+
+    section_start = 0
+    section_level = 1
+    for idx in range(plan_line_idx, -1, -1):
+        stripped = lines[idx].strip()
+        if stripped.startswith("#"):
+            section_start = idx
+            section_level = len(stripped) - len(stripped.lstrip("#"))
+            break
+
+    section_end = len(lines)
+    for idx in range(plan_line_idx + 1, len(lines)):
+        stripped = lines[idx].strip()
+        if stripped.startswith("#"):
+            level = len(stripped) - len(stripped.lstrip("#"))
+            if level <= section_level:
+                section_end = idx
+                break
+
+    section_lines = lines[section_start:section_end]
+    sprint_title = lines[section_start].strip().lstrip("#").strip() if lines[section_start].strip().startswith("#") else plan_id
+
+    tasks_start = None
+    tasks_heading_level = None
+    for idx, line in enumerate(section_lines):
+        stripped = line.strip()
+        if stripped.startswith("#") and "aufgaben" in stripped.lower():
+            tasks_start = idx + 1
+            tasks_heading_level = len(stripped) - len(stripped.lstrip("#"))
+            break
+        if stripped.lower().startswith("aufgaben:"):
+            tasks_start = idx + 1
+            tasks_heading_level = None
+            break
+
+    search_lines = section_lines[tasks_start:] if tasks_start is not None else section_lines
+    tasks = []
+    for line in search_lines:
+        stripped = line.strip()
+        if tasks_heading_level is not None and stripped.startswith("#"):
+            level = len(stripped) - len(stripped.lstrip("#"))
+            if level <= tasks_heading_level:
+                break
+        match = _TASK_BULLET_RE.match(line)
+        if not match:
+            continue
+        task = match.group("task").strip()
+        if task:
+            tasks.append(task)
+
+    if not tasks:
+        raise ValueError("tasks_not_found")
+
+    return {
+        "sprint_path": resolved_path,
+        "sprint_title": sprint_title,
+        "tasks": tasks,
+    }
+
+
+def buildsuggestion(marker, sprint_context):
+    sprint_title = str((sprint_context or {}).get("sprint_title") or marker.plan_id).strip()
+    sprint_name = os.path.basename(str((sprint_context or {}).get("sprint_path") or "")).strip()
+    suggestion = f"Arbeite die Sprint-Aufgabe '{marker.titel}' aus {sprint_title} ab."
+    if sprint_name:
+        suggestion += f" Orientiere dich am Sprint-Plan in {sprint_name}."
+    if marker.ziel and marker.ziel != marker.titel:
+        suggestion += f" Ziel: {marker.ziel}."
+    return suggestion.strip()
+
+
+def sprinttomarkers(sprint_path, plan_id, handoff_path):
+    """Erzeugt oder aktualisiert Marker aus einer Sprint-Aufgabenliste."""
+    plan_id = str(plan_id).strip()
+    if not plan_id:
+        raise ValueError("plan_id ist erforderlich")
+
+    sprint_context = _extract_tasks_from_sprint(sprint_path, plan_id)
+    existing_markers = parse_markers(handoff_path)
+    existing_by_id = {marker.marker_id: marker for marker in existing_markers}
+    existing_by_title = {
+        _normalize_marker_title(marker.titel): marker
+        for marker in existing_markers
+        if marker.plan_id == plan_id
+    }
+
+    written = []
+    for task in sprint_context["tasks"]:
+        normalized_title = _normalize_marker_title(task)
+        marker_id = _build_sprint_marker_id(plan_id, task)
+        existing = existing_by_id.get(marker_id) or existing_by_title.get(normalized_title)
+
+        if existing:
+            marker = Marker(**asdict(existing))
+            marker.marker_id = existing.marker_id
+            marker.titel = task
+            marker.ziel = task
+            marker.prompt_suggestion = buildsuggestion(marker, sprint_context)
+            marker.updated_at = datetime.now(timezone.utc).isoformat()
+        else:
+            marker = Marker(
+                marker_id=marker_id,
+                titel=task,
+                plan_id=plan_id,
+                status="todo",
+                ziel=task,
+                naechster_schritt="Sprint-Aufgabe im Detail ausarbeiten",
+                prompt="",
+                prompt_suggestion="",
+                risiko="",
+                checks=[],
+                last_session="",
+                updated_at=datetime.now(timezone.utc).isoformat(),
+            )
+            marker.prompt_suggestion = buildsuggestion(marker, sprint_context)
+
+        _write_marker(handoff_path, marker)
+        written.append(marker)
+
+    return written
 
 
 def _load_markers_with_regeneration(project_id):
@@ -231,15 +434,17 @@ def _load_markers_with_regeneration(project_id):
         return []
 
 
-def _render_marker_context(marker):
+def _render_marker_context(marker, project_id=""):
     checks = marker.checks or []
     checks_text = "\n".join(f"- {item}" for item in checks) if checks else "- _(keine checks definiert)_"
     last_session = marker.last_session or ""
     prompt = marker.prompt or ""
+    project_line = f"- project_id: {project_id}\n" if project_id else ""
     return (
         "# Marker-Kontext\n\n"
         f"- marker_id: {marker.marker_id}\n"
         f"- plan_id: {marker.plan_id}\n"
+        f"{project_line}"
         f"- titel: {marker.titel}\n"
         f"- ziel: {marker.ziel}\n"
         f"- naechster_schritt: {marker.naechster_schritt}\n"
@@ -281,7 +486,7 @@ def activate_marker(project_id, marker_id, context_path):
         marker = Marker(**asdict(marker))
 
         with open(resolved_context_path, "w", encoding="utf-8") as f:
-            f.write(_render_marker_context(marker))
+            f.write(_render_marker_context(marker, project_id=project_id))
 
         _write_marker(handoff_path, marker)
         return {
@@ -373,3 +578,50 @@ def update_marker_fields(project_id, marker_id, fields):
         _write_marker(handoff_path, marker)
         return _marker_to_dict(marker, include_gate=True)
     return None
+
+
+def close_marker(
+    handoff_path,
+    marker_id,
+    *,
+    status=None,
+    naechster_schritt=None,
+    last_session=None,
+    updated_at=None
+):
+    """Schreibt den Session-Fortschritt fuer genau einen Marker in handoff.md zurueck."""
+    if not os.path.exists(handoff_path):
+        raise FileNotFoundError("handoff_missing")
+
+    marker_id = str(marker_id).strip()
+    if not marker_id:
+        raise MarkerCloseError("marker_not_found")
+
+    markers = parse_markers(handoff_path)
+    for marker in markers:
+        if marker.marker_id != marker_id:
+            continue
+
+        if status is not None:
+            next_status = str(status).strip()
+            if next_status not in VALID_STATUSES:
+                raise MarkerCloseError(f"ungueltiger status: {next_status}")
+            marker.status = next_status
+
+        if naechster_schritt is not None:
+            marker.naechster_schritt = str(naechster_schritt).strip()
+
+        if last_session is not None:
+            marker.last_session = str(last_session).strip()
+
+        effective_updated_at = updated_at or datetime.now(timezone.utc)
+        if isinstance(effective_updated_at, datetime):
+            marker.updated_at = effective_updated_at.astimezone(timezone.utc).isoformat()
+        else:
+            marker.updated_at = str(effective_updated_at).strip()
+
+        marker = Marker(**asdict(marker))
+        _write_marker(handoff_path, marker)
+        return marker
+
+    raise MarkerCloseError("marker_not_found")

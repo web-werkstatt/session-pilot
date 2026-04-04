@@ -130,6 +130,10 @@ def mock_copilot_db(monkeypatch):
                 "error_info": params[6],
                 "plan_id": params[7],
                 "images": params[8] if len(params) > 8 else None,
+                "input_tokens": params[9] if len(params) > 9 else None,
+                "output_tokens": params[10] if len(params) > 10 else None,
+                "total_tokens": params[11] if len(params) > 11 else None,
+                "cost_usd": params[12] if len(params) > 12 else None,
                 "created_at": created_at,
             }
             runs.append(run)

@@ -17,6 +17,7 @@ var _pendingImages = [];
 var _planInfo = null;
 var _activePanelTab = 'chat';
 var _currentProjectId = null;
+var _currentMarkerPlanId = null;
 
 document.addEventListener('DOMContentLoaded', function() {
     _loadPlanInfo()
@@ -39,11 +40,16 @@ function _loadPlanInfo() {
         .then(function(plan) {
             _planInfo = plan;
             _currentProjectId = plan.project_name || null;
+            _currentMarkerPlanId = _extractMarkerPlanId(plan) || String(PLAN_ID);
             var label = plan.title || 'Plan #' + PLAN_ID;
             document.getElementById('planSwitcherLabel').textContent = 'Plan switch';
             document.getElementById('currentPlanTitle').textContent = label;
+            if (window.history && window.history.replaceState) {
+                window.history.replaceState(null, '', _buildCopilotUrl(PLAN_ID, label));
+            }
         })
         .catch(function() {
+            _currentMarkerPlanId = String(PLAN_ID);
             document.getElementById('planSwitcherLabel').textContent = 'Plan switch';
             document.getElementById('currentPlanTitle').textContent = 'Plan #' + PLAN_ID;
         });
@@ -58,7 +64,7 @@ function _loadPlanSwitcher() {
             var html = '';
             plans.forEach(function(p) {
                 var cls = p.id === PLAN_ID ? ' active' : '';
-                html += '<button class="copilot-plan-switch-item' + cls + '" onclick="switchPlan(' + p.id + ')">'
+                html += '<button class="copilot-plan-switch-item' + cls + '" onclick="switchPlan(' + p.id + ', \'' + _escapeJsString(p.title || ('Plan ' + p.id)) + '\')">'
                     + escapeHtml(p.title || 'Plan #' + p.id)
                     + '<small>' + escapeHtml(p.project_name || '') + ' &middot; ' + (p.status || '') + '</small>'
                     + '</button>';
@@ -77,8 +83,8 @@ function togglePlanSwitcher() {
     dd.style.display = dd.style.display === 'none' ? 'block' : 'none';
 }
 
-function switchPlan(planId) {
-    window.location.href = '/copilot?plan_id=' + planId;
+function switchPlan(planId, planTitle) {
+    window.location.href = _buildCopilotUrl(planId, planTitle);
 }
 
 /* === Sections laden === */
@@ -190,9 +196,9 @@ function _buildCard(sec) {
         + '<span class="card-msg-badge ui-badge">' + escapeHtml(st.replace('_', ' ')) + '</span>'
         + '</div>'
         + '<div class="card-title">' + escapeHtml(sec.titel) + '</div>'
+        + previewHtml
         + genHtml
         + gateHtml
-        + previewHtml
         + '<div class="card-footer">'
         + timeHtml
         + '<div class="card-actions">'
@@ -350,7 +356,8 @@ function openSectionPanel(sectionId, tab) {
 
     // Meta
     var metaHtml = '<span style="font-weight:600;">Marker</span>';
-    metaHtml += ' &middot; Plan ' + escapeHtml(sec.plan_id || String(PLAN_ID));
+    var planLabel = sec.plan_title || (_planInfo && _planInfo.title) || ('Plan ' + (sec.plan_id || String(PLAN_ID)));
+    metaHtml += ' &middot; ' + escapeHtml(planLabel);
     metaHtml += ' &middot; ' + escapeHtml(sec.is_activatable ? 'freigegeben' : (sec.gate_reason || 'gesperrt'));
     document.getElementById('panelSectionMeta').innerHTML = metaHtml;
 
@@ -406,8 +413,16 @@ function _loadPanelChat(sectionId) {
                 return;
             }
             msgs.forEach(function(msg) {
-                if (msg.user_message) _appendChatMsg('user', msg.user_message, msg.images);
-                if (msg.assistant_reply) _appendChatMsg('assistant', msg.assistant_reply);
+                if (msg.user_message) _appendChatMsg('user', msg.user_message, msg.images, null);
+                if (msg.assistant_reply) {
+                    _appendChatMsg('assistant', msg.assistant_reply, null, {
+                        model: msg.model,
+                        input_tokens: msg.input_tokens,
+                        output_tokens: msg.output_tokens,
+                        total_tokens: msg.total_tokens,
+                        cost_usd: msg.cost_usd,
+                    });
+                }
             });
             _scrollChat();
         })
@@ -416,7 +431,7 @@ function _loadPanelChat(sectionId) {
         });
 }
 
-function _appendChatMsg(role, text, images) {
+function _appendChatMsg(role, text, images, usageMeta) {
     var container = document.getElementById('panelChatMessages');
     var empty = container.querySelector('.panel-chat-empty');
     if (empty) empty.remove();
@@ -452,8 +467,38 @@ function _appendChatMsg(role, text, images) {
 
     div.appendChild(label);
     div.appendChild(body);
+    var usageHtml = _buildChatUsageHtml(role, usageMeta);
+    if (usageHtml) {
+        var usage = document.createElement('div');
+        usage.className = 'chat-msg-usage';
+        usage.innerHTML = usageHtml;
+        div.appendChild(usage);
+    }
     container.appendChild(div);
     _scrollChat();
+}
+
+function _buildChatUsageHtml(role, usageMeta) {
+    if (role !== 'assistant' || !usageMeta) return '';
+    var parts = [];
+    if (usageMeta.model) parts.push(escapeHtml(usageMeta.model));
+    if (usageMeta.total_tokens) parts.push(_formatTokenCount(usageMeta.total_tokens) + ' Tok');
+    if (usageMeta.cost_usd !== null && usageMeta.cost_usd !== undefined) parts.push(_formatUsd(usageMeta.cost_usd));
+    return parts.length ? parts.join(' · ') : '';
+}
+
+function _formatTokenCount(value) {
+    var num = Number(value || 0);
+    if (!isFinite(num)) return '0';
+    return num.toLocaleString('de-DE');
+}
+
+function _formatUsd(value) {
+    var num = Number(value || 0);
+    if (!isFinite(num)) return '$0.00';
+    if (num < 0.01) return '$' + num.toFixed(4);
+    if (num < 1) return '$' + num.toFixed(2);
+    return '$' + num.toFixed(2);
 }
 
 function _scrollChat() {
@@ -496,16 +541,22 @@ function sendPanelMessage() {
         .then(function(data) {
             if (data.thread_id) _currentThreadId = data.thread_id;
             if (data.status === 'success' && data.reply) {
-                _appendChatMsg('assistant', data.reply);
+                _appendChatMsg('assistant', data.reply, null, {
+                    model: data.model,
+                    input_tokens: data.input_tokens,
+                    output_tokens: data.output_tokens,
+                    total_tokens: data.total_tokens,
+                    cost_usd: data.cost_usd,
+                });
             } else if (data.error) {
-                _appendChatMsg('assistant', 'Fehler: ' + data.error);
+                _appendChatMsg('assistant', 'Fehler: ' + data.error, null, null);
             }
         })
         .catch(function(err) {
             var msg = 'Fehler';
             if (err.body && err.body.error) msg = err.body.error;
             else if (err.message) msg = err.message;
-            _appendChatMsg('assistant', msg);
+            _appendChatMsg('assistant', msg, null, null);
         })
         .finally(function() {
             btn.disabled = false;
@@ -550,10 +601,29 @@ function _escapeJsString(text) {
     return String(text || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
 }
 
+function _slugifyPlanTitle(text) {
+    return String(text || '')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '') || 'plan';
+}
+
+function _buildCopilotUrl(planId, planTitle) {
+    var url = '/copilot?plan_id=' + encodeURIComponent(planId);
+    var slug = _slugifyPlanTitle(planTitle);
+    if (slug) url += '&plan=' + encodeURIComponent(slug);
+    return url;
+}
+
 function _buildMarkerApiUrl(markerId) {
     var url = '/api/copilot/markers';
     if (markerId) url += '/' + encodeURIComponent(markerId);
     url += '?plan_id=' + encodeURIComponent(PLAN_ID);
+    if (_currentMarkerPlanId && String(_currentMarkerPlanId) !== String(PLAN_ID)) {
+        url = '/api/copilot/markers';
+        if (markerId) url += '/' + encodeURIComponent(markerId);
+        url += '?plan_id=' + encodeURIComponent(_currentMarkerPlanId);
+    }
     if (_currentProjectId) url += '&project_id=' + encodeURIComponent(_currentProjectId);
     return url;
 }
@@ -567,6 +637,7 @@ function _normalizeMarker(marker) {
     normalized.marker_id = String(normalized.marker_id || '');
     normalized.status = normalized.status || 'todo';
     normalized.titel = normalized.titel || 'Unbenannter Marker';
+    normalized.plan_title = normalized.plan_title || ((_planInfo && _planInfo.title) ? _planInfo.title : '');
     normalized.ziel = normalized.ziel || '';
     normalized.naechster_schritt = normalized.naechster_schritt || '';
     normalized.prompt = normalized.prompt || '';
@@ -665,7 +736,7 @@ function activateMarker(markerId) {
                 openSectionPanel(markerId, _activePanelTab || 'chat');
             }
             if (typeof lucide !== 'undefined') lucide.createIcons();
-            _showToast('Kontext vorbereitet, du kannst jetzt Claude Code starten.');
+        _showToast('Kontext vorbereitet, du kannst jetzt Claude Code starten.');
         })
         .catch(function(err) {
             var body = err && err.body ? err.body : {};
@@ -675,6 +746,58 @@ function activateMarker(markerId) {
             }
             _showToast('Fehler: ' + (body.error || err.message || 'Aktivierung fehlgeschlagen'), true);
         });
+}
+
+function importSprintMarkers() {
+    var markerPlanId = _currentMarkerPlanId || String(PLAN_ID);
+    var sprintPath = _deriveSprintPath();
+    if (!sprintPath) {
+        _showToast('Sprint-Pfad konnte nicht bestimmt werden', true);
+        return;
+    }
+
+    return api.post('/api/sprint/' + encodeURIComponent(markerPlanId) + '/to-markers', {
+        project_id: _currentProjectId,
+        db_plan_id: PLAN_ID,
+        sprint_path: sprintPath
+    })
+        .then(function(data) {
+            _showToast(data.count + ' Marker aus Sprint ' + markerPlanId + ' erzeugt/aktualisiert');
+            return _loadSections();
+        })
+        .catch(function(err) {
+            _showToast('Fehler: ' + (err.message || 'Sprint-Import fehlgeschlagen'), true);
+        });
+}
+
+function closeMarkerSession(markerId, payload) {
+    var body = payload || {};
+    if (!body.project_id && _currentProjectId) body.project_id = _currentProjectId;
+    if (!body.plan_id) body.plan_id = PLAN_ID;
+
+    return api.post('/api/copilot/markers/' + encodeURIComponent(markerId) + '/close', body)
+        .then(function(data) {
+            _showToast('Marker-Status aktualisiert');
+            _loadSections();
+            if (_currentSection && _currentSection.marker_id === markerId) {
+                _loadMarkerContext(markerId);
+            }
+            return data;
+        });
+}
+
+function _extractMarkerPlanId(plan) {
+    var content = plan && plan.content ? String(plan.content) : '';
+    var match = content.match(/plan-id:\s*([^\s*]+)/i);
+    return match ? match[1].trim() : null;
+}
+
+function _deriveSprintPath() {
+    if (_planInfo && _planInfo.filename) {
+        return 'upload/Sprints/' + _planInfo.filename;
+    }
+    var markerPlanId = _currentMarkerPlanId || String(PLAN_ID);
+    return 'upload/Sprints/' + markerPlanId + '.md';
 }
 
 function adoptPromptSuggestion() {

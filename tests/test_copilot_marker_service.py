@@ -2,6 +2,10 @@ from services import copilot_marker_service
 from services.copilot_marker_service import (
     Marker,
     MarkerActivationError,
+    buildsuggestion,
+    close_marker,
+    read_marker_context,
+    sprinttomarkers,
     _serialize_marker,
     _write_marker,
     activate_marker,
@@ -279,6 +283,7 @@ class TestCopilotMarkerService:
         content = context_path.read_text(encoding="utf-8")
         assert "# Marker-Kontext" in content
         assert "- marker_id: 001" in content
+        assert "- project_id: demo" in content
         assert "## Prompt" in content
         assert "Bitte fuehre den Marker aus" in content
         assert "- Check eins" in content
@@ -314,3 +319,99 @@ class TestCopilotMarkerService:
         assert not (project_dir / "marker-context.md").exists()
         parsed = parse_markers(str(handoff_path))
         assert parsed[0].status == "todo"
+
+    def test_close_marker_roundtrip_writes_back_session_fields(self, tmp_path):
+        handoff_path = tmp_path / "handoff.md"
+        _write_marker(str(handoff_path), Marker(
+            marker_id="001",
+            titel="Writeback Marker",
+            plan_id="42",
+            status="in_progress",
+            ziel="Ziel",
+            naechster_schritt="Aktuell",
+            prompt="Prompt",
+            checks=["Check eins"],
+            updated_at="2026-04-04T08:00:00+00:00",
+        ))
+
+        marker = close_marker(
+            str(handoff_path),
+            "001",
+            status="done",
+            naechster_schritt="Parser noch einmal gegen echten Repo-Stand laufen lassen",
+            last_session="sess_123",
+        )
+
+        assert marker.status == "done"
+        assert marker.naechster_schritt == "Parser noch einmal gegen echten Repo-Stand laufen lassen"
+        assert marker.last_session == "sess_123"
+        assert marker.updated_at
+
+        parsed = parse_markers(str(handoff_path))
+        assert len(parsed) == 1
+        assert parsed[0].status == "done"
+        assert parsed[0].naechster_schritt == "Parser noch einmal gegen echten Repo-Stand laufen lassen"
+        assert parsed[0].last_session == "sess_123"
+        assert parsed[0].updated_at == marker.updated_at
+
+    def test_read_marker_context_reads_project_and_plan_ids(self, tmp_path):
+        context_path = tmp_path / "marker-context.md"
+        context_path.write_text(
+            "# Marker-Kontext\n\n"
+            "- marker_id: 001\n"
+            "- plan_id: 42\n"
+            "- project_id: demo\n"
+            "- titel: Beispiel\n",
+            encoding="utf-8",
+        )
+
+        context = read_marker_context(context_path=str(context_path))
+        assert context["marker_id"] == "001"
+        assert context["plan_id"] == "42"
+        assert context["project_id"] == "demo"
+        assert context["context_path"] == str(context_path)
+
+    def test_sprinttomarkers_creates_markers_and_is_idempotent(self, tmp_path):
+        sprint_path = tmp_path / "sprint-p5.md"
+        handoff_path = tmp_path / "handoff.md"
+        sprint_path.write_text(
+            "# Sprint P5\n\n"
+            "**Plan-ID:** sprint-p5\n\n"
+            "## Aufgaben\n\n"
+            "- [ ] Marker-Service implementieren\n"
+            "- [ ] Route bauen\n",
+            encoding="utf-8",
+        )
+
+        markers = sprinttomarkers(str(sprint_path), "sprint-p5", str(handoff_path))
+        assert len(markers) == 2
+        assert markers[0].plan_id == "sprint-p5"
+        assert markers[0].status == "todo"
+        assert markers[0].prompt == ""
+        assert markers[0].prompt_suggestion
+
+        second_run = sprinttomarkers(str(sprint_path), "sprint-p5", str(handoff_path))
+        assert len(second_run) == 2
+
+        parsed = parse_markers(str(handoff_path))
+        assert len(parsed) == 2
+        assert parsed[0].prompt_suggestion
+        assert parsed[1].prompt_suggestion
+
+    def test_buildsuggestion_uses_sprint_context(self):
+        marker = Marker(
+            marker_id="sprint-p5-route-bauen",
+            titel="Route bauen",
+            plan_id="sprint-p5",
+            status="todo",
+            ziel="Route bauen",
+            naechster_schritt="Sprint-Aufgabe im Detail ausarbeiten",
+            prompt="",
+        )
+        suggestion = buildsuggestion(marker, {
+            "sprint_title": "Sprint P5",
+            "sprint_path": "/tmp/sprint-p5.md",
+        })
+        assert "Route bauen" in suggestion
+        assert "Sprint P5" in suggestion
+        assert "sprint-p5.md" in suggestion

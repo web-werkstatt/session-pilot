@@ -247,8 +247,8 @@
     background: var(--cn-bg-card);
     border-radius: var(--cn-radius);
     border: 1px solid var(--cn-border);
-    min-width: 190px;
-    max-width: 260px;
+    min-width: 250px;
+    max-width: 340px;
     display: flex;
     flex-direction: column;
     max-height: 100%;
@@ -393,7 +393,7 @@
     line-height: 1.45;
     margin-bottom: 10px;
     display: -webkit-box;
-    -webkit-line-clamp: 2;
+    -webkit-line-clamp: 4;
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
@@ -427,10 +427,14 @@
 .card-ai-preview-text {
     font-size: 11px;
     color: var(--cn-text-muted);
-    line-height: 1.3;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
     overflow: hidden;
     text-overflow: ellipsis;
-    white-space: nowrap;
+    white-space: normal;
+    word-break: break-word;
 }
 
 /* Card Footer */
@@ -635,6 +639,7 @@
     display: flex;
     flex-direction: column;
     height: 100%;
+    min-height: 0;
     overflow: hidden;
 }
 
@@ -689,12 +694,14 @@
 .panel-tab-body {
     display: none;
     flex: 1;
+    min-height: 0;
     overflow: hidden;
 }
 
 .panel-tab-body.active {
     display: flex;
     flex-direction: column;
+    min-height: 0;
 }
 
 /* Output / History empty */
@@ -794,11 +801,13 @@
     flex: 1;
     display: flex;
     flex-direction: column;
+    min-height: 0;
     overflow: hidden;
 }
 
 .panel-chat-messages {
     flex: 1;
+    min-height: 0;
     overflow-y: auto;
     padding: 16px;
     display: flex;
@@ -880,6 +889,7 @@
     border-radius: var(--cn-radius);
     font-size: 13px;
     line-height: 1.6;
+    min-width: 0;
 }
 
 .chat-msg-label {
@@ -905,6 +915,36 @@
 }
 
 .chat-msg--assistant .chat-msg-label { color: #4ade80; }
+
+.chat-msg-body {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+.chat-msg-body pre,
+.chat-msg-body code {
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.chat-msg-body pre {
+    max-width: 100%;
+    overflow-x: auto;
+}
+
+.chat-msg-body img,
+.chat-msg-body table {
+    max-width: 100%;
+}
+
+.chat-msg-usage {
+    margin-top: 8px;
+    font-size: 11px;
+    line-height: 1.4;
+    color: var(--cn-text-muted);
+    opacity: 0.9;
+}
 
 .chat-msg-images {
     display: flex;
@@ -1020,8 +1060,8 @@
 
 @media (max-width: 600px) {
     .board-column {
-        min-width: 150px;
-        max-width: 180px;
+        min-width: 210px;
+        max-width: 240px;
     }
 
     .copilot-progress {

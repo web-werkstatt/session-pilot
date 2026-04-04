@@ -1,8 +1,72 @@
 # Projekt-Dashboard - Naechste Session
 
-> **Letzte Aktualisierung:** 2026-04-03
-> **Status:** Sidebar-Navigation, Copilot P3 und 90-Tage-Filter fuer Quality/Governance sind live; Copilot-Workspace-Feinschliff bleibt offen
-> **Naechste Aufgabe:** Copilot UI gezielt nachschaerfen (Board-Visuals, Panel-Harmonie, History/Output) statt weiterer Navigation-/Filter-Arbeit
+> **Letzte Aktualisierung:** 2026-04-04
+> **Status:** Copilot Sprint P5 ist live; Sprint-Aufgaben koennen jetzt als Marker nach `handoff.md` erzeugt oder aktualisiert werden, waehrend erste Card-Lesbarkeitsfixes im Workspace nachgezogen wurden
+> **Naechste Aufgabe:** Sprint->Marker-Flow mit realen Sprint-Dateien weiter im Alltag nutzen und den Copilot-Workspace gezielt nachschaerfen
+
+---
+
+## Was in dieser Session passiert ist (2026-04-04)
+
+### Copilot Sprint P4: Session Write-back geschlossen
+
+**Ziel:** Den Session-Ende-Stand explizit in den zugehoerigen Marker in `handoff.md` zurueckschreiben, ohne neue Auto-Start-Logik einzufuehren.
+
+**Umgesetzt:**
+- `services/copilot_marker_service.py` um `close_marker()` erweitert; schreibt gezielt `status`, `naechster_schritt`, `last_session` und `updated_at` in den betroffenen Marker zurueck
+- `routes/copilot_routes.py` um `POST /api/copilot/markers/<id>/close` erweitert; liefert definierte Fehler fuer `handoff_missing` und `marker_not_found` und kann `project_id` bei Bedarf aus `marker-context.md` ableiten
+- `marker-context.md` enthaelt beim Aktivieren jetzt zusaetzlich `project_id`, damit die Session-Zuordnung stabiler bleibt und der Close-Flow ohne explizites `project_id` arbeiten kann
+- `static/js/copilot_board.js` hat eine kleine `closeMarkerSession()`-Hilfsfunktion; nach erfolgreichem Close wird das Board neu geladen und zeigt den Statuswechsel spaetestens beim Refresh
+- Tests decken den Service-Roundtrip und den neuen Close-Endpunkt ab; ein manueller Test-Flow `activate -> close -> parse_markers()` liefert `done`, `last_session` und aktualisierten Next Step
+- `tests/test_copilot.py` laeuft jetzt lokal ohne Postgres: In-Memory-Copilot-DB-Fake in `tests/conftest.py`, Redirect-Erwartung fuer `/copilot` aktualisiert und Bild-Persistenz im Copilot-Service an die bestehende API-Spec angeglichen
+- Copilot-/Plan-Testinfrastruktur teilweise vereinheitlicht: `tests/test_copilot.py`, `tests/test_plan_sections.py` und der Copilot-Binding-Test in `tests/test_plan_workflow.py` nutzen jetzt denselben Mock-/Shared-Fixture-Pfad; reine UI-Render-Tests erzeugen keinen DB-Plan mehr
+- `tests/test_plan_workflow.py` Handoff-Drift behoben: Legacy-Import auf den aktuellen `project_handoff_service` umgestellt, Erwartungen auf das Marker-Format aktualisiert und Handoff-Tests mit kleinem In-Memory-Plan-Store von Postgres entkoppelt
+
+### Copilot Sprint P5: Sprint -> Marker Import
+
+**Ziel:** Aufgaben aus einem Sprint-Plan per Klick in Marker in `handoff.md` ueberfuehren, ohne Duplikate zu erzeugen.
+
+**Umgesetzt:**
+- `services/copilot_marker_service.py` um `sprinttomarkers()` und `buildsuggestion()` erweitert; Sprint-Sektion wird ueber `Plan-ID` gelesen, Aufgaben-Bullets werden als Marker geschrieben oder aktualisiert
+- Marker-IDs sind deterministisch aus `plan_id + titel`, so dass wiederholte Aufrufe keine doppelten Marker erzeugen
+- `routes/copilot_routes.py` enthaelt jetzt `POST /api/sprint/<plan_id>/to-markers`
+- `templates/copilot_board.html` und `static/js/copilot_board.js` haben den Button `Sprint -> Marker`; nach erfolgreichem Import wird das Marker-Board neu geladen
+- Das Board erkennt fuer Marker bei Bedarf eine semantische `Plan-ID` aus dem Plan-Inhalt und faellt sonst auf die bisherige numerische Plan-ID zurueck
+- `static/css/copilot.css` zeigt Marker-Titel jetzt ueber bis zu vier Zeilen und den Vorschau-/Prompt-Text ueber bis zu drei Zeilen statt nur als Einzeiler; ausserdem sind die Board-Spalten fuer Marker-Cards breiter, damit TODO/GENERATING/DONE/BLOCKED mehr Inhalt aufnehmen
+- `static/js/copilot_board.js` rendert den Vorschau-Block direkt unter dem Marker-Titel statt erst unter Gate/Status-Hinweisen, damit der eigentliche Inhalt in der Card frueher lesbar ist
+- `static/css/copilot.css` haertet die Chat-Nachrichten im rechten Panel gegen Overflow ab; lange Antworten, Markdown-Code und Tabellen umbrechen bzw. bleiben innerhalb der Chat-Card
+- `static/css/copilot.css` haertet die Scroll-Container im rechten Chat-Panel mit `min-height: 0` ab, damit Chat-Boxen beim Scrollen nicht abgeschnitten werden
+- `services/copilot_service.py` persistiert fuer `copilot_runs` jetzt auch `input_tokens`, `output_tokens`, `total_tokens` und `cost_usd`; `static/js/copilot_board.js` zeigt diese API-Kosten als Meta-Zeile unter Assistant-Nachrichten im Chat-Panel an
+- `services/copilot_service.py` baut vor dem Perplexity-Call jetzt serverseitig einen kompakten Marker-Kontext aus `marker-context.md` und `handoff.md`; `handoff.md` bleibt fuehrende Wahrheit, Frontend-Kontext ist nur noch Fallback
+- `services/copilot_service.py` loest fuer den serverseitigen Marker-Kontext jetzt auch den lesbaren `plan_title` aus `project_plans` auf; `static/js/copilot_board.js`, `static/js/plans.js` und `templates/copilot_landing.html` zeigen bzw. verwenden den Plan-Namen in Panel und Copilot-URL zusaetzlich zur `plan_id`
+
+**Geaenderte Dateien:**
+- `services/copilot_marker_service.py`
+- `routes/copilot_routes.py`
+- `templates/copilot_board.html`
+- `static/js/copilot_board.js`
+- `static/css/copilot.css`
+- `tests/test_copilot_marker_service.py`
+- `tests/test_copilot.py`
+
+**Naechste Session:**
+- Den Import einmal gegen reale Sprint-Dateien im laufenden Board pruefen
+- Optional spaeter die Sprint-Pfad-Ableitung weiter haerten, falls Plans aus anderen Verzeichnissen kommen
+
+**Geaenderte Dateien:**
+- `services/copilot_marker_service.py`
+- `services/copilot_service.py`
+- `routes/copilot_routes.py`
+- `static/js/copilot_board.js`
+- `tests/conftest.py`
+- `tests/test_copilot_marker_service.py`
+- `tests/test_copilot.py`
+- `tests/test_plan_sections.py`
+- `tests/test_plan_workflow.py`
+
+**Naechste Session:**
+- Optional den Close-Endpunkt aus einer Session-Detailansicht oder einem Import-Flow explizit aufrufen
+- Copilot-Workspace weiter optisch nachschaerfen; P4 selbst fuehrt keine neue Session-Start-Logik ein
 
 ---
 

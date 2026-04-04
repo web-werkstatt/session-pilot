@@ -7,24 +7,16 @@ import uuid
 import pytest
 from unittest.mock import patch
 
-from app import app as flask_app
 from services.plan_workflow_service import (
     get_plan_workflow,
     update_plan_workflow,
     get_project_plan_workflows,
-    build_plan_handoff_markdown,
     WORKFLOW_STAGES,
     EXECUTOR_STATUSES,
     REVIEW_STATUSES,
 )
+from services.project_handoff_service import build_handoff_markdown
 from services.db_service import execute, ensure_plan_workflow_schema
-
-
-@pytest.fixture
-def client():
-    flask_app.config["TESTING"] = True
-    with flask_app.test_client() as c:
-        yield c
 
 
 @pytest.fixture
@@ -233,7 +225,7 @@ class TestDragDropWorkflow:
 
 class TestM5CopilotBinding:
     @patch("services.copilot_service.query_perplexity")
-    def test_copilot_with_plan_id(self, mock_llm, client, test_plan):
+    def test_copilot_with_plan_id(self, mock_llm, client, test_plan, mock_copilot_db):
         mock_llm.return_value = {"content": "Reply", "model": "sonar", "usage": {}}
         r = client.post("/api/copilot/chat",
                         data=json.dumps({
@@ -302,11 +294,12 @@ class TestM7Signals:
 
 # --- N: Plan-Handoff Markdown ---
 
+@pytest.mark.usefixtures("mock_plan_handoff_db")
 class TestPlanHandoff:
-    """Tests fuer build_plan_handoff_markdown und GET /api/plans/<id>/handoff."""
+    """Tests fuer build_handoff_markdown und GET /api/plans/<id>/handoff."""
 
-    def test_handoff_full_plan(self, test_plan):
-        """N1/N3: Handoff mit voll befuelltem Plan enthaelt alle Sektionen."""
+    def test_handoff_full_plan(self, mock_plan_handoff_db, test_plan):
+        """N1/N3: Projekt-Handoff enthaelt Marker-Header und den Plan als Marker."""
         # Plan mit Workflow-Daten befuellen
         update_plan_workflow(test_plan, {
             "workflow_stage": "executing",
@@ -319,37 +312,27 @@ class TestPlanHandoff:
             "open_items_count": 3,
         })
 
-        md = build_plan_handoff_markdown(test_plan)
+        md = build_handoff_markdown("project_dashboard")
         assert md is not None
 
-        # YAML-Frontmatter
+        # YAML-Frontmatter / Marker-Format
         assert md.startswith("---\n")
         assert "handoff:" in md
-        assert "type: executor" in md
-        assert "stage: executing" in md
-        assert "scope: SPEC-TEST-001" in md
-        assert "expected_output:" in md
-        assert "priority: must" in md
-
-        # Alle Sektionen vorhanden (N3: konsistentes Template)
-        assert "Projektkontext" in md
-        assert "Aktueller Stand (Ist)" in md
-        assert "Soll-Bild" in md
-        assert "Bisherige Ergebnisse" in md
-        assert "Offene Punkte / Blocker" in md
-        assert "Konkreter Auftrag fuer den naechsten LLM-Run" in md
-        assert "Erwartetes Output-Format" in md
+        assert 'stage: "executing"' in md
+        assert 'state_format: "copilot_markers_v1"' in md
+        assert "# Handoff fuer Projekt project_dashboard" in md
+        assert "## Copilot Markers" in md
+        assert f'<!-- MARKER:{test_plan}' in md
 
         # Inhaltliche Werte
-        assert "Implementierung laeuft" in md
         assert "Feature fertig + Tests gruen" in md
         assert "Unit-Tests ergaenzen" in md
-        assert "running" in md
-        assert "open_items_count: 3" in md
+        assert "Soll-Zustand: Feature fertig + Tests gruen." in md
+        assert "Naechster Schritt: Unit-Tests ergaenzen." in md
 
-    def test_handoff_missing_signals(self):
-        """N1: Fehlende Signale erzeugen Fallback-Texte statt Crash."""
-        # Plan ohne Projekt-Zuordnung → keine Live-Signale
+    def test_handoff_missing_signals(self, mock_plan_handoff_db):
+        """N1: Plan ohne Projekt-Zuordnung gibt heute bewusst keinen Projekt-Handoff."""
+        # Plan ohne Projekt-Zuordnung → kein Projekt-Handoff moeglich
         ensure_plan_workflow_schema()
         unique = str(uuid.uuid4())[:8]
         row = execute(
@@ -362,71 +345,62 @@ class TestPlanHandoff:
         plan_id = row["id"]
 
         try:
-            md = build_plan_handoff_markdown(plan_id)
-            assert md is not None
-
-            # Fallbacks fuer fehlende Signale (kein Projekt → keine Live-Daten)
-            assert "(kein Quality-Report vorhanden)" in md
-            assert "(kein Audit gelaufen)" in md
-            assert "(kein Governance-Gate konfiguriert)" in md
-            assert "(noch kein Run)" in md
+            md = build_handoff_markdown("project_dashboard")
+            assert md is None
         finally:
             execute("DELETE FROM project_plans WHERE id = %s", (plan_id,))
 
-    def test_handoff_nonexistent_plan(self):
-        """N1: Nicht-existierender Plan gibt None."""
-        md = build_plan_handoff_markdown(999999)
+    def test_handoff_nonexistent_plan(self, mock_plan_handoff_db):
+        """N1: Nicht-existierendes Projekt gibt None."""
+        md = build_handoff_markdown("does_not_exist_999999")
         assert md is None
 
-    def test_handoff_type_spec_for_idea(self, test_plan):
-        """N1: handoff type=spec fuer idea/spec_ready Stages."""
+    def test_handoff_stage_for_idea(self, mock_plan_handoff_db, test_plan):
+        """N1: stage spiegelt idea/spec_ready im Projekt-Handoff."""
         update_plan_workflow(test_plan, {"workflow_stage": "idea"})
-        md = build_plan_handoff_markdown(test_plan)
-        assert "type: spec" in md
+        md = build_handoff_markdown("project_dashboard")
+        assert 'stage: "idea"' in md
 
         update_plan_workflow(test_plan, {"workflow_stage": "spec_ready"})
-        md = build_plan_handoff_markdown(test_plan)
-        assert "type: spec" in md
+        md = build_handoff_markdown("project_dashboard")
+        assert 'stage: "spec_ready"' in md
 
-    def test_handoff_type_review(self, test_plan):
-        """N1: handoff type=review fuer review_pending Stage."""
+    def test_handoff_stage_review_pending(self, mock_plan_handoff_db, test_plan):
+        """N1: stage spiegelt review_pending im Projekt-Handoff."""
         update_plan_workflow(test_plan, {"workflow_stage": "review_pending"})
-        md = build_plan_handoff_markdown(test_plan)
-        assert "type: review" in md
+        md = build_handoff_markdown("project_dashboard")
+        assert 'stage: "review_pending"' in md
 
-    def test_handoff_api_200(self, client, test_plan):
+    def test_handoff_api_200(self, client, mock_plan_handoff_db, test_plan):
         """N2: GET /api/plans/<id>/handoff liefert 200 + text/markdown."""
         r = client.get(f"/api/plans/{test_plan}/handoff")
         assert r.status_code == 200
         assert r.content_type.startswith("text/markdown")
         data = r.data.decode("utf-8")
         assert "---" in data
-        assert "Aktueller Stand" in data
+        assert "## Copilot Markers" in data
 
-    def test_handoff_api_404(self, client):
+    def test_handoff_api_404(self, client, mock_plan_handoff_db):
         """N2: GET /api/plans/999999/handoff liefert 404."""
         r = client.get("/api/plans/999999/handoff")
         assert r.status_code == 404
 
-    def test_handoff_section_order(self, test_plan):
-        """N3: Sektionen kommen in der definierten Reihenfolge."""
+    def test_handoff_marker_header_order(self, mock_plan_handoff_db, test_plan):
+        """N3: Header kommt vor den Marker-Bloecken."""
         update_plan_workflow(test_plan, {"workflow_stage": "executing"})
-        md = build_plan_handoff_markdown(test_plan)
+        md = build_handoff_markdown("project_dashboard")
 
         sections = [
-            "Projektkontext",
-            "Aktueller Stand (Ist)",
-            "Soll-Bild",
-            "Bisherige Ergebnisse",
-            "Offene Punkte / Blocker",
-            "Konkreter Auftrag fuer den naechsten LLM-Run",
-            "Erwartetes Output-Format",
+            "# Handoff fuer Projekt project_dashboard",
+            "## Copilot Markers",
+            f"<!-- MARKER:{test_plan}",
         ]
         positions = [md.index(s) for s in sections]
-        assert positions == sorted(positions), "Sektionen nicht in korrekter Reihenfolge"
+        assert positions == sorted(positions), "Marker-Header nicht in korrekter Reihenfolge"
 
-    def test_handoff_blocker_hints(self, test_plan):
-        """N1: Blocker-Hinweise aus Signalen werden generiert."""
-        update_plan_workflow(test_plan, {"workflow_stage": "blocked"})
-        md = build_plan_handoff_markdown(test_plan)
-        assert "BLOCKER: Plan ist als blockiert markiert" in md
+    def test_handoff_maps_completed_plan_to_done_marker(self, mock_plan_handoff_db, test_plan):
+        """N1: Abgeschlossene Plans werden als done-Marker serialisiert."""
+        execute("UPDATE project_plans SET status = %s WHERE id = %s", ("completed", test_plan))
+        md = build_handoff_markdown("project_dashboard")
+        assert f'"marker_id": "{test_plan}"' in md
+        assert '"status": "done"' in md

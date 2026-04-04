@@ -366,7 +366,7 @@ function loadCopilotStats() {
             } else {
                 document.getElementById('emptyState').style.display = 'none';
                 plansList.innerHTML = plans.map(function(p) {
-                    return '<a href="/copilot?plan_id=' + p.id + '" class="plan-card-link">'
+                    return '<a href="' + buildCopilotUrl(p.id, p.title) + '" class="plan-card-link">'
                         + '<div class="plan-card" style="border-left:3px solid #818cf8;">'
                         + '<div style="display:flex;align-items:center;gap:8px;padding:10px 12px;">'
                         + '<span style="font-size:12px;font-weight:600;flex:1;">' + escapeHtml(p.title) + '</span>'
@@ -400,9 +400,21 @@ function showPlanSelector(e) {
                 return p.id + ': ' + p.title;
             }).join('\n'));
             if (choice) {
-                window.location.href = '/copilot?plan_id=' + choice.trim();
+                var selected = plans.find(function(p) { return String(p.id) === choice.trim(); });
+                window.location.href = buildCopilotUrl(choice.trim(), selected ? selected.title : ('Plan ' + choice.trim()));
             }
         });
+}
+
+function slugifyPlanTitle(text) {
+    return String(text || '')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '') || 'plan';
+}
+
+function buildCopilotUrl(planId, planTitle) {
+    return '/copilot?plan_id=' + encodeURIComponent(planId) + '&plan=' + encodeURIComponent(slugifyPlanTitle(planTitle));
 }
 
 function escapeHtml(text) {

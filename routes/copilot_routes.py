@@ -7,10 +7,15 @@ import uuid
 from flask import Blueprint, jsonify, request, render_template, redirect
 from services.copilot_marker_service import (
     MarkerActivationError,
+    MarkerCloseError,
+    _get_handoff_path,
     activate_marker,
+    sprinttomarkers,
+    close_marker,
     get_marker_context,
     is_activatable,
     list_markers_for_plan,
+    read_marker_context,
     update_marker_fields,
     update_marker_status,
 )
@@ -281,6 +286,81 @@ def api_copilot_marker_activate(marker_id):
     })
 
 
+@copilot_bp.route("/api/copilot/markers/<marker_id>/close", methods=["POST"])
+def api_copilot_marker_close(marker_id):
+    data = request.get_json(silent=True) or {}
+    project_id = _resolve_project_id(data.get("project_id"), data.get("plan_id"))
+    handoff_path = data.get("handoff_path")
+    context_path = data.get("context_path")
+
+    if not handoff_path and not project_id and context_path:
+        try:
+            context = read_marker_context(context_path=context_path)
+            project_id = _resolve_project_id(context.get("project_id"), context.get("plan_id"))
+        except FileNotFoundError:
+            pass
+
+    if not handoff_path:
+        if not project_id:
+            return jsonify({"ok": False, "error": "project_id ist erforderlich"}), 400
+        handoff_path = _get_handoff_path(project_id)
+
+    try:
+        marker = close_marker(
+            handoff_path,
+            marker_id,
+            status=data.get("status"),
+            naechster_schritt=data.get("naechster_schritt"),
+            last_session=data.get("last_session"),
+        )
+    except FileNotFoundError:
+        return jsonify({"ok": False, "error": "handoff_missing"}), 404
+    except MarkerCloseError as e:
+        if str(e) == "marker_not_found":
+            return jsonify({"ok": False, "error": "marker_not_found"}), 404
+        return jsonify({"ok": False, "error": str(e)}), 400
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 500
+
+    return jsonify({
+        "ok": True,
+        "marker_id": marker.marker_id,
+        "status": marker.status,
+        "updated_at": marker.updated_at,
+    })
+
+
+@copilot_bp.route("/api/sprint/<plan_id>/to-markers", methods=["POST"])
+def api_sprint_to_markers(plan_id):
+    data = request.get_json(silent=True) or {}
+    project_id = _resolve_project_id(data.get("project_id"), data.get("db_plan_id"))
+    sprint_path = data.get("sprint_path") or plan_id
+    handoff_path = data.get("handoff_path")
+
+    if not handoff_path:
+        if not project_id:
+            return jsonify({"ok": False, "error": "project_id ist erforderlich"}), 400
+        handoff_path = _get_handoff_path(project_id)
+
+    try:
+        markers = sprinttomarkers(sprint_path, plan_id, handoff_path)
+    except FileNotFoundError:
+        return jsonify({"ok": False, "error": "sprint_missing"}), 404
+    except ValueError as e:
+        if str(e) in ("plan_id_not_found", "tasks_not_found"):
+            return jsonify({"ok": False, "error": str(e)}), 404
+        return jsonify({"ok": False, "error": str(e)}), 400
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 500
+
+    return jsonify({
+        "ok": True,
+        "plan_id": plan_id,
+        "count": len(markers),
+        "markers": [marker.__dict__ for marker in markers],
+    })
+
+
 @copilot_bp.route("/api/copilot/chat", methods=["POST"])
 def api_copilot_chat():
     """Sendet eine Nachricht an den Copilot und speichert die Antwort."""
@@ -295,6 +375,7 @@ def api_copilot_chat():
     project_id = data.get("project_id")
     thread_id = data.get("thread_id")
     context = data.get("context")
+    context_path = data.get("context_path")
     plan_id = data.get("plan_id")
     images = data.get("images")
 
@@ -309,6 +390,7 @@ def api_copilot_chat():
             project_id=project_id,
             thread_id=thread_id,
             context=context,
+            context_path=context_path,
             plan_id=plan_id,
             images=images,
         )
