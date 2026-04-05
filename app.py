@@ -23,9 +23,15 @@ if os.path.exists(env_path):
 
 from flask import Flask, render_template, jsonify, request
 from config import HOST, PORT
+from services.dashboard_settings_service import load_dashboard_settings
 
 app = Flask(__name__)
 app.jinja_env.globals['cache_bust'] = int(time.time())
+
+
+@app.context_processor
+def inject_dashboard_settings():
+    return {"dashboard_settings": load_dashboard_settings()}
 
 # Alle Blueprints registrieren
 from routes import register_blueprints

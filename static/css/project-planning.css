@@ -186,6 +186,9 @@
 .planning-detail-panel {
     position: sticky;
     top: 18px;
+    max-height: calc(100vh - 36px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
     border: 1px solid var(--border);
     border-radius: 14px;
     background: var(--bg-card);
@@ -267,6 +270,14 @@
     padding: 10px 12px;
     color: var(--text-primary);
     cursor: pointer;
+}
+.planning-session-link {
+    display: block;
+    text-decoration: none;
+}
+.planning-session-link:hover {
+    border-color: rgba(79,195,247,0.45);
+    background: rgba(79,195,247,0.08);
 }
 .planning-session-main {
     display: block;

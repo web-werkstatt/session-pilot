@@ -14,6 +14,20 @@ function setWidth(val) {
     localStorage.setItem('session-width', val);
 }
 
+function goSessionBack() {
+    var fallbackUrl = '/sessions';
+    try {
+        if (document.referrer) {
+            var refUrl = new URL(document.referrer, window.location.origin);
+            if (refUrl.origin === window.location.origin && refUrl.pathname !== window.location.pathname) {
+                window.history.back();
+                return;
+            }
+        }
+    } catch (e) {}
+    window.location.href = fallbackUrl;
+}
+
 (function initWidth() {
     const saved = localStorage.getItem('session-width') || '1000';
     setWidth(saved);
@@ -148,8 +162,9 @@ function getSelectedThreadTitle() {
 function renderMeta(session) {
     const outcomeCls = session.outcome ? ` outcome-${session.outcome}` : '';
     const outcomeLabel = session.outcome ? formatOutcomeLabel(session.outcome) : '';
+    const accountStyle = typeof getAccountBadgeStyle === 'function' ? getAccountBadgeStyle(session.account, session.tool) : '';
     const badges = [
-        `<span class="meta-badge meta-badge-account">${escapeHtml(session.account || '-')}</span>`,
+        `<span class="meta-badge meta-badge-account" style="${escapeHtml(accountStyle)}">${escapeHtml(session.account || '-')}</span>`,
         `<span class="meta-badge meta-badge-model">${escapeHtml(formatModel(session.model))}</span>`,
         session.git_branch ? `<span class="meta-badge meta-badge-branch">${escapeHtml(session.git_branch)}</span>` : '',
         outcomeLabel ? `<span class="meta-badge meta-badge-outcome${outcomeCls}">${escapeHtml(outcomeLabel)}</span>` : '',

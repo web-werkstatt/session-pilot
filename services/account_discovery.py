@@ -6,6 +6,8 @@ Unterstuetzte Assistenten:
 - Claude Code (~/.claude, ~/.claude-*)
 - OpenAI Codex CLI (~/.codex)
 - Google Gemini CLI (~/.gemini)
+- OpenCode (~/.local/share/opencode)
+- Kilo (~/.local/share/kilo)
 - GitHub Copilot CLI (~/.copilot)
 - Amazon Q Developer CLI (~/.aws/amazonq)
 
@@ -109,6 +111,45 @@ def discover_gemini_accounts(home_dir):
     }]
 
 
+def discover_opencode_accounts(home_dir):
+    """Findet OpenCode Session-Daten"""
+    data_dir = os.path.join(home_dir, ".local", "share", "opencode")
+    session_root = os.path.join(data_dir, "storage", "session")
+    if not os.path.isdir(session_root):
+        return []
+
+    has_sessions = any(
+        filename.endswith(".json")
+        for project_id in os.listdir(session_root)
+        if os.path.isdir(os.path.join(session_root, project_id))
+        for filename in os.listdir(os.path.join(session_root, project_id))
+    )
+    if not has_sessions:
+        return []
+
+    return [{
+        "name": "opencode",
+        "tool": "opencode",
+        "config_dir": data_dir,
+        "session_format": "opencode_storage",
+    }]
+
+
+def discover_kilo_accounts(home_dir):
+    """Findet Kilo Session-Daten"""
+    data_dir = os.path.join(home_dir, ".local", "share", "kilo")
+    db_path = os.path.join(data_dir, "kilo.db")
+    if not os.path.isfile(db_path):
+        return []
+
+    return [{
+        "name": "kilo",
+        "tool": "kilo",
+        "config_dir": data_dir,
+        "session_format": "kilo_sqlite",
+    }]
+
+
 def discover_copilot_accounts(home_dir):
     """Findet GitHub Copilot CLI Sessions"""
     copilot_dir = os.path.join(home_dir, ".copilot")
@@ -170,7 +211,8 @@ def discover_all_accounts():
 
     for home_dir in _get_home_dirs():
         for discover_fn in (discover_claude_accounts, discover_codex_accounts,
-                            discover_gemini_accounts, discover_copilot_accounts,
+                            discover_gemini_accounts, discover_opencode_accounts,
+                            discover_kilo_accounts, discover_copilot_accounts,
                             discover_amazonq_accounts):
             for acc in discover_fn(home_dir):
                 if acc["config_dir"] not in seen_dirs:

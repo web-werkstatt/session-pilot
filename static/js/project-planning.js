@@ -355,8 +355,8 @@ function renderSessionHistory(sessions, path) {
         return '<div class="planning-detail-muted">No sessions linked yet. Continue the work via Copilot to create execution history on the operative level.</div>';
     }
     return '<div class="planning-session-history">' + items.map(function(session) {
-        var sessionId = buildPlanningSessionNodeId(path, session.session_uuid);
-        return '<button type="button" class="planning-session-item planning-selectable' + (planningSelectionId === sessionId ? ' is-selected' : '') + '" onclick="selectPlanningNode(\'' + escapeJsValue(sessionId) + '\')"><span class="planning-session-main">' + escapeHtml(formatPlanningDate(session.started_at) || (session.session_uuid || 'Session')) + '</span><span class="planning-session-meta">' + escapeHtml(session.model || 'unknown model') + ' • ' + escapeHtml(session.duration_label || '-') + ' • ' + escapeHtml(session.outcome || 'unrated') + '</span></button>';
+        var sessionUrl = '/sessions/' + encodeURIComponent(session.session_uuid || '');
+        return '<a class="planning-session-item planning-session-link" href="' + sessionUrl + '"><span class="planning-session-main">' + escapeHtml(formatPlanningDate(session.started_at) || (session.session_uuid || 'Session')) + '</span><span class="planning-session-meta">' + escapeHtml(session.model || 'unknown model') + ' • ' + escapeHtml(session.duration_label || '-') + ' • ' + escapeHtml(session.outcome || 'unrated') + '</span></a>';
     }).join('') + '</div>';
 }
 

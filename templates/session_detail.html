@@ -2,7 +2,7 @@
 
 {% block title %}Session Detail - Dashboard{% endblock %}
 
-{% block breadcrumb %}<a href="/sessions" style="color:var(--accent-light);text-decoration:none">Activity</a> <span class="bc-sep">/</span> Detail{% endblock %}
+{% block breadcrumb %}<button type="button" onclick="goSessionBack()" style="background:none;border:none;color:var(--accent-light);padding:0;cursor:pointer;font:inherit">Zurueck</button> <span class="bc-sep">/</span> Detail{% endblock %}
 
 {% block head_extra %}
 <link rel="stylesheet" href="/static/css/sessions2.css?v={{ cache_bust }}">
@@ -17,7 +17,7 @@
         <div class="meta-bar" id="metaBar"></div>
         <div class="export-bar" id="outcomeBar">
         <div class="export-left">
-            <a class="sd-back-btn" href="/sessions"><i data-lucide="arrow-left" class="icon icon-sm"></i> Activity</a>
+            <button class="sd-back-btn" type="button" onclick="goSessionBack()"><i data-lucide="arrow-left" class="icon icon-sm"></i> Zurueck</button>
             <div class="export-sep"></div>
             <button class="sd-rate-btn" type="button" onclick="openBewertungModal()" id="rateBtn">
                 <i data-lucide="star" class="icon icon-sm"></i> <span id="rateBtnLabel">Rate</span>

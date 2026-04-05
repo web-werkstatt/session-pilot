@@ -1,6 +1,6 @@
 """
 JSONL-Parser und DB-Import fuer Claude Code Sessions.
-Codex/Gemini-Parser sind in session_import_multi.py ausgelagert.
+Weitere Tools werden ueber services.importers eingebunden.
 """
 import hashlib
 import json
@@ -10,12 +10,21 @@ from services.account_discovery import discover_all_accounts
 from services.session_import_utils import parse_ts, sanitize_content_json, create_session_meta, update_time_range
 from services.ai_scope_service import extract_ai_flags
 from services.file_touch_service import extract_file_touches, extract_file_touches_git, save_file_touches
-from services.session_import_multi import (
+from services.importers import (
     find_sessions_codex, import_codex_session,
     find_sessions_gemini, parse_gemini_json, import_gemini_session,
+    find_sessions_opencode, import_opencode_session,
+    import_kilo_sessions,
 )
 
 HASH_CACHE_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), ".sync_hashes.json")
+IMPORTER_CACHE_VERSIONS = {
+    "claude": "v1",
+    "codex": "v1",
+    "gemini": "v1",
+    "opencode": "v2",
+    "kilo": "v1",
+}
 
 IMPORT_TYPES = {"user", "assistant", "system"}
 IGNORE_TYPES = {"progress", "file-history-snapshot", "queue-operation", "last-prompt"}
@@ -29,9 +38,10 @@ def extract_project_name(project_hash):
         return "gemini_sessions"
     if len(project_hash) > 40 and all(c in '0123456789abcdef' for c in project_hash):
         return "gemini_sessions"
-    if project_hash.startswith("codex:"):
-        name = project_hash.replace("codex:", "")
-        return "home" if not name or name in ("joshko",) else _resolve_dir_name(name)
+    if ":" in project_hash:
+        tool, name = project_hash.split(":", 1)
+        if tool in ("codex", "opencode", "kilo"):
+            return "home" if not name or name in ("joshko",) else _resolve_dir_name(name)
     if project_hash in ("-mnt-projects", "-home-joshko"):
         return "home"
     if project_hash.startswith("-mnt-projects-"):
@@ -366,17 +376,23 @@ def sync_account(account, hash_cache=None):
     if hash_cache is None:
         hash_cache = _load_hash_cache()
 
+    importer_version = IMPORTER_CACHE_VERSIONS.get(tool, "v1")
+
+    def _cache_key(filepath):
+        return f"{tool}:{importer_version}:{filepath}"
+
     def _check_and_import(filepath, import_fn):
         """Prueft Hash und importiert nur bei Aenderung"""
         current_hash = _file_hash(filepath)
-        if current_hash and hash_cache.get(filepath) == current_hash:
+        key = _cache_key(filepath)
+        if current_hash and hash_cache.get(key) == current_hash:
             stats["unchanged"] += 1
             return
         try:
             result = import_fn()
             stats[result] += 1
             if current_hash:
-                hash_cache[filepath] = current_hash
+                hash_cache[key] = current_hash
         except Exception as e:
             print(f"Fehler bei {filepath}: {e}")
             stats["errors"] += 1
@@ -390,17 +406,25 @@ def sync_account(account, hash_cache=None):
     elif tool == "gemini":
         for filepath, project_hash in find_sessions_gemini(config_dir):
             current_hash = _file_hash(filepath)
-            if current_hash and hash_cache.get(filepath) == current_hash:
+            key = _cache_key(filepath)
+            if current_hash and hash_cache.get(key) == current_hash:
                 stats["unchanged"] += 1
                 continue
             try:
                 for meta, messages, phash in parse_gemini_json(filepath, project_hash):
                     stats[import_gemini_session(meta, messages, name, phash)] += 1
                 if current_hash:
-                    hash_cache[filepath] = current_hash
+                    hash_cache[key] = current_hash
             except Exception as e:
                 print(f"Fehler bei {filepath}: {e}")
                 stats["errors"] += 1
+    elif tool == "opencode":
+        for filepath in find_sessions_opencode(config_dir):
+            _check_and_import(filepath, lambda fp=filepath: import_opencode_session(fp, name))
+    elif tool == "kilo":
+        kilo_stats = import_kilo_sessions(config_dir, name)
+        for key, value in kilo_stats.items():
+            stats[key] = stats.get(key, 0) + value
 
     return stats
 

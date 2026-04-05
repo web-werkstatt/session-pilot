@@ -76,7 +76,7 @@ function showTab(tabName, triggerEl) {
         if (tabName === 'projects') activeLink = document.querySelector('#projectsSubmenu .nav-item[href="/?tab=projects"]');
         if (activeLink) activeLink.classList.add('active');
     }
-    if (tabName === 'widgets' && !window._widgetsLoaded) {
+    if (tabName === 'widgets' && !window._widgetsLoaded && typeof loadWidgets === 'function') {
         loadWidgets();
     }
 }

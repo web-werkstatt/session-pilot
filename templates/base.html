@@ -46,7 +46,7 @@
                 <div class="nav-section-body">
                     <div class="nav-subsection">
                         <div class="nav-subsection-head">
-                            <a href="/?tab=projects" class="nav-item nav-item--primary nav-subsection-link {% if active_page in ['dashboard', 'scaffold'] %}active{% endif %}" onclick="if(window.location.pathname==='/' && typeof showTab==='function'){event.preventDefault();showTab('projects', this);}">
+                            <a href="/?tab=projects" data-default-href="/?tab=projects" data-project-nav="projects" class="nav-item nav-item--primary nav-subsection-link {% if active_page in ['dashboard', 'scaffold'] %}active{% endif %}" onclick="if(window.location.pathname==='/' && typeof showTab==='function'){event.preventDefault();showTab('projects', this);}">
                                 <span class="nav-icon"><i data-lucide="folder-open" class="icon"></i></span><span class="nav-text">Projects</span>
                             </a>
                             <button class="nav-subsection-toggle-btn" type="button" onclick="toggleSidebarSubmenu('projectsSubmenu')" aria-expanded="{% if active_page in ['dashboard', 'scaffold'] %}true{% else %}false{% endif %}" aria-label="Toggle Projects submenu">
@@ -236,6 +236,7 @@
 
     <script src="/static/js/lucide.min.js"></script>
     <script src="/static/js/api.js"></script>
+    <script>window.DASHBOARD_SETTINGS = {{ dashboard_settings|tojson }};</script>
     <script src="/static/js/project-context.js"></script>
     <script src="/static/js/base.js"></script>
     <script src="/static/js/notifications.js"></script>

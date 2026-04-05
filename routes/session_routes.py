@@ -8,6 +8,7 @@ from flask import Blueprint, render_template, jsonify, request, Response
 from services.db_service import execute, ensure_session_review_schema
 from services.copilot_marker_service import get_marker_by_last_session
 from services.session_import import sync_all
+from services.session_validation_service import validate_session, validate_session_page
 from services.session_export import (
     export_json, export_markdown, export_html, export_xlsx, export_txt,
     format_duration, format_tokens
@@ -31,6 +32,7 @@ def sessions_page():
 
 
 @sessions_bp.route("/sessions/<uuid>")
+@validate_session_page
 def session_detail_page(uuid):
     return render_template("session_detail.html", session_uuid=uuid, active_page="sessions")
 
@@ -234,6 +236,7 @@ def _api_sessions_stats_inner():
 
 
 @sessions_bp.route("/api/sessions/<uuid>")
+@validate_session
 def api_session_detail(uuid):
     """Einzelne Session mit Messages"""
     try:

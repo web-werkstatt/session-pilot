@@ -92,7 +92,7 @@ Prefix: `feat:`, `fix:`, `docs:`, `refactor:`, `style:`, `chore:`
 ## Adding Support for a New AI Tool
 
 1. Add a discovery function in `services/account_discovery.py`
-2. Add a session parser in `services/session_import_multi.py`
+2. Add a tool-specific importer in `services/importers/` and export it via `services/importers/__init__.py`
 3. The rest (session browser, timesheets, analysis) works automatically
 
 ## Questions?

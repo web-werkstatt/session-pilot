@@ -274,13 +274,14 @@ async function extractSessions() {
             var dateStr = date ? date.toLocaleDateString('en-US', {month:'short',day:'numeric',year:'2-digit'}) : '-';
             var timeStr = date ? date.toLocaleTimeString('en-US', {hour:'2-digit',minute:'2-digit'}) : '';
             var acctClass = 'account-' + (s.account || '').replace(/[^a-z0-9]/g, '');
+            var acctStyle = typeof getAccountBadgeStyle === 'function' ? getAccountBadgeStyle(s.account, s.tool) : '';
             var durPct = Math.min(100, ((s.duration_ms || 0) / maxDur) * 100);
             var model = (s.model || '-').replace('claude-', '').replace('opus-4-6', 'Opus').replace('sonnet-4-6', 'Sonnet');
             var msgs = (s.user_message_count || 0) + (s.assistant_message_count || 0);
             var branch = s.git_branch || '';
 
             html += '<tr class="row" style="cursor:pointer" onclick="location.href=\'/sessions/' + s.session_uuid + '\'">';
-            html += '<td><span class="account-badge ' + acctClass + '">' + escapeHtml(s.account || '-') + '</span></td>';
+            html += '<td><span class="account-badge ' + acctClass + '" style="' + escapeHtml(acctStyle) + '">' + escapeHtml(s.account || '-') + '</span></td>';
             html += '<td><span style="color:#ccc">' + dateStr + '</span> <span style="color:#666;font-size:11px">' + timeStr + '</span></td>';
             html += '<td><div class="dur-wrap"><div class="dur-bar" style="width:' + durPct + '%"></div><span class="dur-text">' + (s.duration_formatted || '-') + '</span></div></td>';
             html += '<td>' + msgs + '</td>';
@@ -377,4 +378,6 @@ loadProjectInfo();
 loadProjectOverviewCards();
 initGitPanel(PROJECT_NAME);
 loadModelRecommendation();
-loadRiskRadarPanel();
+if (typeof loadRiskRadarPanel === 'function') {
+    loadRiskRadarPanel();
+}

@@ -6,6 +6,78 @@
 
 ---
 
+## Update 2026-04-05
+- Changed: Dashboard-Hotfix fuer den Widgets-Tab eingebaut; `loadWidgets` ist beim Initial-Render nicht mehr vorzeitig undefiniert, weil `widgets.js` jetzt vor `dashboard-core.js` geladen wird und `showTab()` den Aufruf zusaetzlich absichert.
+- Files: `templates/index.html`, `static/js/dashboard-core.js`
+- Verify: `node --check static/js/dashboard-core.js`, `node --check static/js/widgets.js`; Browser-Fehler `Uncaught ReferenceError: loadWidgets is not defined` sollte beim Tab `Overview` nicht mehr auftreten.
+- Next: Im Browser hart neu laden und pruefen, dass `/?tab=widgets` direkt ohne Console-Fehler rendert.
+
+## Update 2026-04-05
+- Changed: Der Sidebar-Link `Projects` nutzt ausserhalb des Dashboards jetzt das gespeicherte aktive Projekt aus `localStorage`, sodass der Wechsel `Projekt -> Activity -> Projects` wieder in das zuletzt geoeffnete Projekt fuehrt statt zur nackten Projektliste.
+- Files: `templates/base.html`, `static/js/base.js`
+- Verify: `node --check static/js/base.js`; im Browser `project_dashboard -> Activity -> Projects` klicken und pruefen, dass `/project/project_dashboard` geoeffnet wird.
+- Next: Weitere globale Navigationen auf dasselbe Projekt-Kontext-Verhalten pruefen, falls der gleiche Erwartungswert auch fuer Command Palette oder Breadcrumbs gelten soll.
+
+## Update 2026-04-05
+- Changed: Das sticky `Planning`-Detailpanel auf der Projektseite hat jetzt eine maximale Viewport-Hoehe und einen eigenen Vertikal-Scrollbereich, damit lange Task-Cards beim Herunterscrollen vollstaendig sichtbar bleiben.
+- Files: `static/css/project-planning.css`
+- Verify: Seite `/project/project_dashboard` im Tab `Planning` oeffnen, lange Task-/Detail-Card waehlen und pruefen, dass der komplette Inhalt im rechten Panel per internem Scroll sichtbar ist.
+- Next: Falls das Problem eher die linke Kartenliste betrifft, den konkreten betroffenen Kartentyp und Scrollpfad im Browser nachziehen.
+
+## Update 2026-04-05
+- Changed: Projekt-Detail-Hotfix fuer `loadRiskRadarPanel`; `file-heatmap.js` wird jetzt vor `project-detail.js` geladen und der Init-Aufruf ist zusaetzlich gegen fehlende Definition abgesichert.
+- Files: `templates/project_detail.html`, `static/js/project-detail.js`
+- Verify: `node --check static/js/project-detail.js`; Browser-Fehler `Uncaught ReferenceError: loadRiskRadarPanel is not defined` auf `/project/<name>` sollte nicht mehr auftreten.
+- Next: Weitere Projekt-Detail-Skripte auf implizite Abhaengigkeiten pruefen, falls noch weitere Globals ueber Script-Reihenfolge gekoppelt sind.
+
+## Update 2026-04-05
+- Changed: Session-Eintraege im `Planning`-Detailbereich haben jetzt neben der Auswahlflaeche eine echte `Open`-Aktion, damit verlinkte Sessions direkt auf `/sessions/<uuid>` geoeffnet werden koennen.
+- Files: `static/js/project-planning.js`, `static/css/project-planning.css`
+- Verify: Im Projekt-Tab `Planning` bei einer Session-Zeile auf `Open` klicken und pruefen, dass die Session-Detailseite geladen wird.
+- Next: Optional spaeter die gesamte Session-Zeile direkt navigierbar machen, falls die separate Auswahl im rechten Panel nicht mehr benoetigt wird.
+
+## Update 2026-04-05
+- Changed: Session-Eintraege im `Planning`-Detailbereich navigieren jetzt direkt beim Klick auf die gesamte Zeile zur Session-Detailseite; der separate `Open`-Button wurde wieder entfernt.
+- Files: `static/js/project-planning.js`, `static/css/project-planning.css`
+- Verify: Im Projekt-Tab `Planning` auf eine Session-Zeile klicken und pruefen, dass direkt `/sessions/<uuid>` geladen wird.
+- Next: Falls die Session-Auswahl im rechten Panel doch wieder benoetigt wird, ein separates Icon fuer Vorschau statt Vollklick einfuehren.
+
+## Update 2026-04-05
+- Changed: Die Session-Detailseite hat jetzt einen echten `Zurueck`-Button statt nur des statischen Links `Activity`; bei internem Verlauf geht er per Browser-History zur vorherigen Seite zurueck, sonst faellt er auf `/sessions` zurueck.
+- Files: `templates/session_detail.html`, `static/js/session-detail.js`
+- Verify: Session-Detail aus `Planning` oder `Activity` oeffnen und `Zurueck` pruefen; direkte URL-Oeffnung sollte auf `/sessions` fallen.
+- Next: Optional gleiche History-Back-Logik auch fuer weitere Detailseiten wie Plan-Detail vereinheitlichen.
+
+## Update 2026-04-05
+- Changed: Account-Badges in der Session-Tabelle farblich geschaerft; `Codex` ist jetzt deutlich warm/orange statt nah am `Claude`-Blau und damit in `Activity` und Projekt-Sessionlisten schneller unterscheidbar.
+- Files: `static/css/sessions-list.css`
+- Verify: `Activity` oder Projekt-Tab `Session History` oeffnen und `claude` gegen `codex` visuell vergleichen.
+- Next: Falls gewuenscht, die gleiche Farbsemantik auch in Session-Detail-Metabars und anderen toolbezogenen Badges vereinheitlichen.
+
+## Update 2026-04-05
+- Changed: Badge-Styling fuer AI-Accounts/Tools ist jetzt als persistente Settings-Konfiguration implementiert; `hermes`, `copilot`, `amazonq`, `opencode` und `kilo` sind als editierbare Defaults hinterlegt und koennen in `Settings -> General` ohne Codeaenderung angepasst oder erweitert werden.
+- Files: `services/dashboard_settings_service.py`, `app.py`, `templates/base.html`, `templates/settings.html`, `static/js/base.js`, `static/js/settings.js`, `static/js/sessions2.js`, `static/js/project-detail.js`, `static/js/session-detail.js`, `static/css/settings.css`
+- Verify: In `Settings -> General` einen Badge-Key wie `hermes` oder `codex` aendern, speichern und danach `Activity`, Projekt-Sessionliste und Session-Detail neu laden.
+- Next: Falls gewuenscht, dieselbe Settings-Mechanik spaeter auch fuer Provider- und Modell-Badges ausrollen.
+
+## Update 2026-04-05
+- Changed: Die wachsende Datei `services/session_import_multi.py` wurde in eine modulare Importer-Struktur unter `services/importers/` zerlegt; Codex, Gemini, OpenCode und Kilo haben jetzt jeweils eigene Module, waehrend `session_import.py` nur noch den Sync orchestriert und `session_import_multi.py` als Kompatibilitaets-Wrapper bestehen bleibt. Zusaetzlich wurde die Projektnamen-Extraktion fuer `opencode:`- und `kilo:`-Hashes vervollstaendigt.
+- Files: `services/session_import.py`, `services/session_import_multi.py`, `services/importers/__init__.py`, `services/importers/common.py`, `services/importers/codex_importer.py`, `services/importers/gemini_importer.py`, `services/importers/opencode_importer.py`, `services/importers/kilo_importer.py`, `tests/test_session_import.py`, `CLAUDE.md`, `CONTRIBUTING.md`
+- Verify: `python3 -m py_compile services/session_import.py services/session_import_multi.py services/importers/*.py` und `pytest tests/test_session_import.py -q`
+- Next: Live-Sync fuer `opencode` und `kilo` im laufenden Service ausloesen und pruefen, wie aussagekraeftig Kilo-Message-Inhalte aus den vorhandenen SQLite-Daten im UI erscheinen.
+
+## Update 2026-04-05
+- Changed: End-to-End-Validierung fuer die neuen `kilo`-/`opencode`-Importer abgeschlossen; Session-IDs wie `ses_...` werden jetzt von der Validierung akzeptiert, sodass Detailseiten und Exporte fuer diese Tools funktionieren. Dabei fiel ein echter OpenCode-Pfadfehler auf: der Importer suchte Messages relativ zu `storage/session/...` statt zu `storage/...`; der Pfad wurde korrigiert.
+- Files: `services/session_validation_service.py`, `services/importers/opencode_importer.py`, `tests/test_session_validation_service.py`
+- Verify: `pytest tests/test_session_import.py tests/test_session_validation_service.py -q`; danach `/api/sessions?account=kilo`, `/api/sessions?account=opencode` sowie Detail-APIs fuer `ses_...` gegen den laufenden Service pruefen.
+- Next: OpenCode nach dem Pfadfix erneut synchronisieren und bestaetigen, dass die bislang leere Session jetzt ihre Messages und Tokenwerte traegt.
+
+## Update 2026-04-05
+- Changed: Der Session-Hash-Cache ist jetzt importer-versioniert. Wenn sich ein Parser aendert, werden dessen Quelldateien beim naechsten Sync automatisch einmal neu importiert, statt am alten Hash-Cache haengenzubleiben. Fuer den OpenCode-Fix ist damit gezielt `opencode:v2` aktiv.
+- Files: `services/session_import.py`
+- Verify: Manuellen Sync ausloesen und pruefen, dass geaenderte Importer dieselben Quelldateien trotz unveraenderter Dateimtime erneut verarbeiten.
+- Next: Falls noetig das gleiche Muster spaeter auch fuer einzelne Parser-Migrationspfade oder DB-Backfills feiner granulieren.
+
 ## Was in dieser Session passiert ist (2026-04-04)
 
 ### Sprint QX: Dashboard-Self-Discovery konfigurierbar gemacht
@@ -864,3 +936,9 @@
 - Files: `static/js/session-detail.js`, `static/js/model_eval.js`, `templates/copilot_landing.html`, `next-session.md`
 - Verify: `node --check static/js/session-detail.js static/js/model_eval.js`; die `Cockpit`-Landing baut `project=` jetzt in aktive Plan-Links ein
 - Next: Live einmal quer pruefen, ob der Projektkontext nach `Project -> Planning -> Plan Detail -> Cockpit -> Sessions -> Model Eval` stabil gleich bleibt
+
+## Update 2026-04-05
+- Changed: Vollbackup des aktuellen Repo-Stands und ein echter Live-PostgreSQL-Dump wurden erstellt, nach `backups/` kopiert und mit SHA256 sowie Restore-Hinweisen versehen. Zusaetzlich gibt es jetzt ein kleines Restore-Script fuer Verify/Extract/DB-Restore.
+- Files: `next-session.md`, `backups/restore-project-dashboard-backup-20260405-220935.md`, `backups/restore-project-dashboard-backup-20260405-220935.sh`
+- Verify: Backup-Dateien liegen unter `backups/`; Checksummen in `backups/project-dashboard-backup-20260405-220935.sha256`; Vollbackup `project-dashboard-full-backup-20260405-220935.tar.gz` und echter DB-Dump `project-dashboard-db-real-20260405-220935.sql` wurden lokal erstellt und abgelegt.
+- Next: Falls noetig die Backup-Artefakte extern wegkopieren und den noch offenen OpenCode-Reimportpfad abschliessen, damit die bereits korrekt geparsten Messages auch im API-Datensatz sichtbar werden.

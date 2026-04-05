@@ -6,6 +6,30 @@ var _sidebarSectionDefaultCollapsed = {
     integrations: true
 };
 
+function _normalizeBadgeKey(value) {
+    return String(value || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
+function _getBadgeStyleConfig(accountName, toolName) {
+    var settings = window.DASHBOARD_SETTINGS || {};
+    var styles = settings.account_badge_styles || {};
+    var accountKey = _normalizeBadgeKey(accountName);
+    var toolKey = _normalizeBadgeKey(toolName);
+    return styles[accountKey] || styles[toolKey] || null;
+}
+
+function getAccountBadgeStyle(accountName, toolName) {
+    var config = _getBadgeStyleConfig(accountName, toolName);
+    if (!config) return '';
+    var parts = [];
+    if (config.background) parts.push('background:' + config.background);
+    if (config.text) parts.push('color:' + config.text);
+    if (config.border) parts.push('border-color:' + config.border);
+    return parts.join(';');
+}
+
+window.getAccountBadgeStyle = getAccountBadgeStyle;
+
 function _isMobileSidebar() {
     return window.innerWidth <= 1024;
 }
@@ -66,6 +90,7 @@ function syncSidebarLayout() {
 document.addEventListener('DOMContentLoaded', function() {
     syncSidebarLayout();
     syncSidebarSections();
+    syncProjectNavLinks();
 
     document.querySelectorAll('.sidebar .nav-item').forEach(function(item) {
         item.addEventListener('click', function() {
@@ -106,6 +131,23 @@ function syncSidebarSections() {
         section.classList.toggle('is-collapsed', shouldCollapse);
         var toggle = section.querySelector('.nav-section-toggle');
         if (toggle) toggle.setAttribute('aria-expanded', shouldCollapse ? 'false' : 'true');
+    });
+}
+
+function syncProjectNavLinks() {
+    var defaultHref = '/?tab=projects';
+    var activeProject = typeof getActiveProjectContext === 'function' ? getActiveProjectContext() : '';
+    document.querySelectorAll('[data-project-nav="projects"]').forEach(function(link) {
+        var fallback = link.getAttribute('data-default-href') || defaultHref;
+        if (window.location.pathname === '/') {
+            link.setAttribute('href', fallback);
+            return;
+        }
+        if (activeProject) {
+            link.setAttribute('href', '/project/' + encodeURIComponent(activeProject));
+            return;
+        }
+        link.setAttribute('href', fallback);
     });
 }
 

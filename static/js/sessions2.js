@@ -258,6 +258,7 @@ function renderSessionRow(s, i) {
     const dateStr = date ? date.toLocaleDateString('en-US', {month:'short',day:'numeric',year:'2-digit'}) : '-';
     const timeStr = date ? date.toLocaleTimeString('en-US', {hour:'2-digit',minute:'2-digit'}) : '';
     const acctClass = 'account-' + (s.account || '').replace(/[^a-z0-9]/g, '');
+    const acctStyle = typeof getAccountBadgeStyle === 'function' ? getAccountBadgeStyle(s.account, s.tool) : '';
     const durPct = Math.min(100, ((s.duration_ms || 0) / maxDuration) * 100);
     const model = (s.model || '-').replace('claude-', '').replace('opus-4-6', 'Opus').replace('sonnet-4-6', 'Sonnet');
     const msgCount = (s.user_message_count||0) + (s.assistant_message_count||0);
@@ -265,7 +266,7 @@ function renderSessionRow(s, i) {
 
     return `<tr class="row" onclick="location.href='/sessions/${s.session_uuid}'" onmouseenter="showPreview(event,${i})" onmouseleave="hidePreview()">
             <td><a href="/sessions/${s.session_uuid}" class="project-name">${s.project_name || s.project_hash || '-'}</a></td>
-            <td><span class="account-badge ${acctClass}">${s.account}</span></td>
+            <td><span class="account-badge ${acctClass}" style="${acctStyle}">${s.account}</span></td>
             <td><span style="color:#ccc">${dateStr}</span> <span style="color:#666;font-size:11px">${timeStr}</span></td>
             <td><div class="dur-wrap"><div class="dur-bar" style="width:${durPct}%"></div><span class="dur-text">${s.duration_formatted}</span></div></td>
             <td>${msgCount}</td>
@@ -427,12 +428,13 @@ function renderFulltextResults(results, query, ftTotal) {
             const date = r.started_at ? new Date(r.started_at).toLocaleDateString('en-US', {month:'short',day:'numeric',year:'2-digit'}) : '-';
             const snippet = (r.snippet || '').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(re, '<mark>$1</mark>');
             const acctClass = 'account-' + (r.account || '').replace(/[^a-z0-9]/g, '');
+            const acctStyle = typeof getAccountBadgeStyle === 'function' ? getAccountBadgeStyle(r.account, r.tool) : '';
             const msgType = r.match_type === 'human' ? 'User' : 'Assistant';
 
             return `<a href="/sessions/${r.session_uuid}" class="fulltext-result">
                 <div class="ft-header">
                     <span class="project-name">${r.project_name || '-'}</span>
-                    <span class="account-badge ${acctClass}">${r.account}</span>
+                    <span class="account-badge ${acctClass}" style="${acctStyle}">${r.account}</span>
                     <span class="ft-date">${date}</span>
                     <span class="ft-duration">${r.duration_formatted}</span>
                     <span class="ft-type">${msgType}</span>

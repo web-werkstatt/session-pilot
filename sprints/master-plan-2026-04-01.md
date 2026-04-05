@@ -103,6 +103,215 @@ Referenz:
 
 ## Completed Sprints (diese Session)
 
+### Hotfix DW — Dashboard Widgets Initial Load
+
+**Ziel:** Den Laufzeitfehler `Uncaught ReferenceError: loadWidgets is not defined` beim direkten Oeffnen des Overview-/Widgets-Tabs beheben.
+
+**Umgesetzt:**
+- Script-Reihenfolge in `templates/index.html` korrigiert, sodass `static/js/widgets.js` vor `static/js/dashboard-core.js` geladen wird
+- `showTab()` in `static/js/dashboard-core.js` zusaetzlich gegen fehlende `loadWidgets`-Initialisierung abgesichert
+- Damit bricht der Initial-Render von `/?tab=widgets` nicht mehr ab, auch wenn die Widgets-Funktion unerwartet nicht verfuegbar waere
+
+**Geaenderte Dateien:**
+- `templates/index.html`
+- `static/js/dashboard-core.js`
+- `next-session.md`
+- `sprints/master-plan-2026-04-01.md`
+
+**Commit-Hash:** `n/a`
+
+### Hotfix DX — Persistente Projekt-Navigation
+
+**Ziel:** Das zuletzt geoeffnete Projekt beim Seitenwechsel ueber globale Navigation erhalten, konkret fuer den Wechsel `Project -> Activity -> Projects`.
+
+**Umgesetzt:**
+- Den primären Sidebar-Link `Projects` mit einer expliziten Projekt-Navigation-Markierung versehen
+- `static/js/base.js` erweitert, sodass der Link ausserhalb des Root-Dashboards auf `/project/<active-project>` zeigt, wenn ein aktiver Projektkontext in `localStorage` vorhanden ist
+- Auf der Root-Seite bleibt das bisherige Verhalten `/?tab=projects` unveraendert
+
+**Geaenderte Dateien:**
+- `templates/base.html`
+- `static/js/base.js`
+- `next-session.md`
+- `sprints/master-plan-2026-04-01.md`
+
+**Commit-Hash:** `n/a`
+
+### Hotfix DY — Planning Detail Panel Scrollbarkeit
+
+**Ziel:** Lange Task-/Detail-Cards im `Planning`-Tab einer Projektseite beim Scrollen vollstaendig sichtbar halten.
+
+**Umgesetzt:**
+- Das sticky Detailpanel in `static/css/project-planning.css` um `max-height` relativ zum Viewport erweitert
+- Dem Panel einen eigenen `overflow-y: auto` Scrollbereich gegeben
+- Dadurch bleibt die rechte Detailkarte sichtbar, ohne unter dem unteren Viewport-Rand abgeschnitten zu wirken
+
+**Geaenderte Dateien:**
+- `static/css/project-planning.css`
+- `next-session.md`
+- `sprints/master-plan-2026-04-01.md`
+
+**Commit-Hash:** `n/a`
+
+### Hotfix DZ — Projekt-Detail Script-Reihenfolge
+
+**Ziel:** Den Laufzeitfehler `Uncaught ReferenceError: loadRiskRadarPanel is not defined` auf der Projekt-Detailseite beseitigen.
+
+**Umgesetzt:**
+- `static/js/file-heatmap.js` in `templates/project_detail.html` vor `static/js/project-detail.js` verschoben
+- Den Initialaufruf in `static/js/project-detail.js` zusaetzlich mit `typeof loadRiskRadarPanel === 'function'` abgesichert
+- Damit bricht die Projektseite auch bei spaeteren Script-Aenderungen nicht mehr an dieser Stelle ab
+
+**Geaenderte Dateien:**
+- `templates/project_detail.html`
+- `static/js/project-detail.js`
+- `next-session.md`
+- `sprints/master-plan-2026-04-01.md`
+
+**Commit-Hash:** `n/a`
+
+### Hotfix EA — Direktes Oeffnen verlinkter Planning-Sessions
+
+**Ziel:** Verlinkte Sessions im Projekt-Tab `Planning` nicht nur selektieren, sondern direkt oeffnen koennen.
+
+**Umgesetzt:**
+- Session-Zeilen im Planning-Detailbereich um eine explizite `Open`-Aktion erweitert
+- Bestehendes Verhalten bleibt erhalten: Klick auf die Zeile selektiert weiter den Session-Knoten fuer das rechte Detailpanel
+- `Open` navigiert direkt auf `/sessions/<uuid>`
+
+**Geaenderte Dateien:**
+- `static/js/project-planning.js`
+- `static/css/project-planning.css`
+- `next-session.md`
+- `sprints/master-plan-2026-04-01.md`
+
+**Commit-Hash:** `n/a`
+
+### Hotfix EB — Session-Zeile statt Extra-Button
+
+**Ziel:** Die UX fuer verlinkte Sessions im Projekt-Tab `Planning` vereinfachen und den unnoetigen Extra-Button entfernen.
+
+**Umgesetzt:**
+- Den separaten `Open`-Button wieder entfernt
+- Die komplette Session-Zeile im Planning-Detailbereich als direkten Link auf `/sessions/<uuid>` umgesetzt
+- Damit ist das Session-Verhalten klarer und konsistent mit der Erwartung, dass ein Session-Eintrag direkt oeffnet
+
+**Geaenderte Dateien:**
+- `static/js/project-planning.js`
+- `static/css/project-planning.css`
+- `next-session.md`
+- `sprints/master-plan-2026-04-01.md`
+
+**Commit-Hash:** `n/a`
+
+### Hotfix EC — Session Detail Zurueck-Navigation
+
+**Ziel:** Auf der Session-Detailseite statt eines starren `Activity`-Links eine echte Ruecknavigation bereitstellen.
+
+**Umgesetzt:**
+- Breadcrumb und Header-Button auf `Zurueck` umgestellt
+- Neue Funktion `goSessionBack()` eingebaut
+- Bei passendem internem Referrer wird `history.back()` genutzt, sonst faellt die Navigation auf `/sessions` zurueck
+
+**Geaenderte Dateien:**
+- `templates/session_detail.html`
+- `static/js/session-detail.js`
+- `next-session.md`
+- `sprints/master-plan-2026-04-01.md`
+
+**Commit-Hash:** `n/a`
+
+### Refactoring ED — Modulare Session-Importer
+
+**Ziel:** Den weiter anwachsenden Multi-Tool-Session-Import von einer Sammeldatei in eine modulare Struktur ueberfuehren, damit neue Tools wie OpenCode und Kilo sauber pro Quelle gepflegt werden koennen.
+
+**Umgesetzt:**
+- Neues Paket `services/importers/` eingefuehrt und die Importlogik pro Tool getrennt in `codex_importer.py`, `gemini_importer.py`, `opencode_importer.py` und `kilo_importer.py` abgelegt
+- Gemeinsame DB-/Projekt-Helfer in `services/importers/common.py` gebuendelt
+- `services/session_import.py` auf die neue Struktur umgestellt, sodass dort nur noch Discovery, Hash-Cache und Sync-Orchestrierung verbleiben
+- `services/session_import_multi.py` auf einen schlanken Kompatibilitaets-Wrapper reduziert, damit alte Importe nicht brechen
+- Projektnamen-Extraktion fuer `opencode:`- und `kilo:`-Praefixe vervollstaendigt
+
+**Geaenderte Dateien:**
+- `services/session_import.py`
+- `services/session_import_multi.py`
+- `services/importers/__init__.py`
+- `services/importers/common.py`
+- `services/importers/codex_importer.py`
+- `services/importers/gemini_importer.py`
+- `services/importers/opencode_importer.py`
+- `services/importers/kilo_importer.py`
+- `tests/test_session_import.py`
+- `CLAUDE.md`
+- `CONTRIBUTING.md`
+- `next-session.md`
+- `sprints/master-plan-2026-04-01.md`
+
+**Commit-Hash:** `n/a`
+
+### Hotfix EE — Session-ID-Validierung und OpenCode-Message-Pfad
+
+**Ziel:** Die neu importierten `kilo`- und `opencode`-Sessions auch in Detailansicht und Export wirklich benutzbar machen und einen gefundenen OpenCode-Importfehler im Live-Test beheben.
+
+**Umgesetzt:**
+- Session-UUID-Validierung erweitert, sodass neben klassischen UUIDs auch Formate wie `sess-123` und `ses_...` akzeptiert werden
+- Damit funktionieren Detailrouten fuer Kilo/OpenCode-Sessions, die alphanumerische IDs mit Unterstrich verwenden
+- Beim OpenCode-Live-Test einen Pfadfehler im Importer gefunden und korrigiert: Messages werden jetzt relativ zum echten `storage/`-Root statt relativ zu `storage/session/` gesucht
+
+**Geaenderte Dateien:**
+- `services/session_validation_service.py`
+- `services/importers/opencode_importer.py`
+- `services/session_import.py`
+- `tests/test_session_validation_service.py`
+- `next-session.md`
+- `sprints/master-plan-2026-04-01.md`
+
+**Commit-Hash:** `n/a`
+
+### Hotfix ED — Session Account Badge Contrast
+
+**Ziel:** `Claude` und `Codex` in Session-Tabellen visuell klarer unterscheiden.
+
+**Umgesetzt:**
+- Account-Badges in `static/css/sessions-list.css` um explizite Border-Farben erweitert
+- `Claude` bleibt blau
+- `Codex` auf einen deutlich warmen Orange-/Amber-Ton umgestellt
+- Dadurch sind die Accounts sowohl in `Activity` als auch in projektbezogenen Session-Listen schneller erkennbar
+
+**Geaenderte Dateien:**
+- `static/css/sessions-list.css`
+- `next-session.md`
+- `sprints/master-plan-2026-04-01.md`
+
+**Commit-Hash:** `n/a`
+
+### Hotfix EE — Konfigurierbare Account-/Tool-Badges
+
+**Ziel:** Neue oder seltene Tools wie `hermes`, `opencode`, `kilo`, `copilot` oder `amazonq` ohne weitere CSS-Patches im Dashboard visuell pflegbar machen.
+
+**Umgesetzt:**
+- Persistentes Settings-Feld `account_badge_styles` eingefuehrt
+- Default-Styles fuer bestehende und weitere bekannte Tools/Accounts hinterlegt, inklusive `hermes`
+- Globale Settings per Context-Processor ins Base-Template injiziert
+- Badge-Styling in Session-Listen, Projekt-Sessionliste, Session-Detail und Settings-Accountcards auf Settings-basierte Inline-Styles umgestellt
+- In `Settings -> General` eine editierbare Tabelle fuer Key, Background, Text und Border ergaenzt
+
+**Geaenderte Dateien:**
+- `services/dashboard_settings_service.py`
+- `app.py`
+- `templates/base.html`
+- `templates/settings.html`
+- `static/js/base.js`
+- `static/js/settings.js`
+- `static/js/sessions2.js`
+- `static/js/project-detail.js`
+- `static/js/session-detail.js`
+- `static/css/settings.css`
+- `next-session.md`
+- `sprints/master-plan-2026-04-01.md`
+
+**Commit-Hash:** `n/a`
+
 ### Sprint QX — Dashboard Self-Discovery konfigurierbar
 
 **Ziel:** `project_dashboard` nicht mehr hart aus der Projekt-Discovery ausfiltern, sondern das Verhalten direkt im Dashboard unter Settings steuerbar machen.

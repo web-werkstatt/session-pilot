@@ -33,6 +33,16 @@ class TestExtractProjectName:
         result = extract_project_name("codex:/some/path/my-project")
         assert "codex:" not in result
 
+    def test_opencode_prefix_strips_prefix(self):
+        from services.session_import import extract_project_name
+        result = extract_project_name("opencode:project_dashboard")
+        assert "opencode:" not in result
+
+    def test_kilo_prefix_strips_prefix(self):
+        from services.session_import import extract_project_name
+        result = extract_project_name("kilo:project_dashboard")
+        assert "kilo:" not in result
+
     def test_raw_hash_fallback(self):
         from services.session_import import extract_project_name
         result = extract_project_name("random-hash-value")

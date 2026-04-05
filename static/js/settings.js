@@ -3,6 +3,7 @@
 let pricingData = [];
 let currentProvider = 'all';
 let generalSettingsLoaded = false;
+let badgeStylesData = {};
 
 // === Tab Navigation ===
 function switchTab(tab, btn) {
@@ -23,6 +24,8 @@ async function loadGeneralSettings() {
     try {
         const data = await api.get('/api/settings/general');
         document.getElementById('includeSelfProjectToggle').checked = !!data.include_self_project;
+        badgeStylesData = Object.assign({}, data.account_badge_styles || {});
+        renderBadgeStyles();
         document.getElementById('generalSettingsStatus').textContent = '';
         generalSettingsLoaded = true;
     } catch (e) {
@@ -33,17 +36,108 @@ async function loadGeneralSettings() {
 async function saveGeneralSettings() {
     const status = document.getElementById('generalSettingsStatus');
     const data = {
-        include_self_project: document.getElementById('includeSelfProjectToggle').checked
+        include_self_project: document.getElementById('includeSelfProjectToggle').checked,
+        account_badge_styles: collectBadgeStyles()
     };
 
     try {
-        await api.post('/api/settings/general', data);
+        const response = await api.post('/api/settings/general', data);
+        window.DASHBOARD_SETTINGS = response.settings || window.DASHBOARD_SETTINGS;
+        badgeStylesData = Object.assign({}, (response.settings || {}).account_badge_styles || {});
+        renderBadgeStyles();
         status.textContent = 'Saved';
         setTimeout(() => { status.textContent = ''; }, 1500);
     } catch (e) {
         console.error(e);
         status.textContent = 'Save failed';
     }
+}
+
+function renderBadgeStyles() {
+    const tbody = document.getElementById('badgeStylesBody');
+    if (!tbody) return;
+    const keys = Object.keys(badgeStylesData).sort();
+    if (!keys.length) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#666;padding:20px">No badge styles configured.</td></tr>';
+        return;
+    }
+    tbody.innerHTML = keys.map(key => {
+        const style = badgeStylesData[key] || {};
+        return `<tr>
+            <td><input type="text" data-field="key" value="${esc(key)}" oninput="updateBadgeStylePreview(this)"></td>
+            <td><input type="text" data-field="background" value="${esc(style.background || '')}" placeholder="rgba(...)" oninput="updateBadgeStylePreview(this)"></td>
+            <td><input type="text" data-field="text" value="${esc(style.text || '')}" placeholder="#fff" oninput="updateBadgeStylePreview(this)"></td>
+            <td><input type="text" data-field="border" value="${esc(style.border || '')}" placeholder="rgba(...)" oninput="updateBadgeStylePreview(this)"></td>
+            <td><span class="account-badge" data-preview="1" style="${buildBadgeStyleInline(style)}">${esc(key)}</span></td>
+            <td class="s-btn-group"><button class="s-btn s-btn-sm s-btn-del" onclick="deleteBadgeStyleRow(this)">&#10005;</button></td>
+        </tr>`;
+    }).join('');
+}
+
+function addBadgeStyleRow() {
+    const tbody = document.getElementById('badgeStylesBody');
+    if (!tbody) return;
+    if (tbody.querySelector('td[colspan]')) tbody.innerHTML = '';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+        <td><input type="text" data-field="key" placeholder="hermes" oninput="updateBadgeStylePreview(this)"></td>
+        <td><input type="text" data-field="background" placeholder="rgba(...)" oninput="updateBadgeStylePreview(this)"></td>
+        <td><input type="text" data-field="text" placeholder="#fbbf24" oninput="updateBadgeStylePreview(this)"></td>
+        <td><input type="text" data-field="border" placeholder="rgba(...)" oninput="updateBadgeStylePreview(this)"></td>
+        <td><span class="account-badge" data-preview="1">preview</span></td>
+        <td class="s-btn-group"><button class="s-btn s-btn-sm s-btn-del" onclick="deleteBadgeStyleRow(this)">&#10005;</button></td>`;
+    tbody.prepend(tr);
+    tr.querySelector('input').focus();
+}
+
+function deleteBadgeStyleRow(btn) {
+    const tr = btn.closest('tr');
+    if (tr) tr.remove();
+    const tbody = document.getElementById('badgeStylesBody');
+    if (tbody && !tbody.children.length) renderBadgeStyles();
+}
+
+function updateBadgeStylePreview(input) {
+    const tr = input.closest('tr');
+    if (!tr) return;
+    const preview = tr.querySelector('[data-preview="1"]');
+    if (!preview) return;
+    const key = tr.querySelector('[data-field="key"]').value || 'preview';
+    preview.textContent = key;
+    preview.setAttribute('style', buildBadgeStyleInline({
+        background: tr.querySelector('[data-field="background"]').value.trim(),
+        text: tr.querySelector('[data-field="text"]').value.trim(),
+        border: tr.querySelector('[data-field="border"]').value.trim()
+    }));
+}
+
+function buildBadgeStyleInline(style) {
+    const parts = [];
+    if (style.background) parts.push('background:' + style.background);
+    if (style.text) parts.push('color:' + style.text);
+    if (style.border) parts.push('border-color:' + style.border);
+    return parts.join(';');
+}
+
+function normalizeBadgeKey(value) {
+    return String(value || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
+function collectBadgeStyles() {
+    const rows = document.querySelectorAll('#badgeStylesBody tr');
+    const result = {};
+    rows.forEach(function(tr) {
+        const keyInput = tr.querySelector('[data-field="key"]');
+        if (!keyInput) return;
+        const key = normalizeBadgeKey(keyInput.value);
+        if (!key) return;
+        result[key] = {
+            background: tr.querySelector('[data-field="background"]').value.trim(),
+            text: tr.querySelector('[data-field="text"]').value.trim(),
+            border: tr.querySelector('[data-field="border"]').value.trim()
+        };
+    });
+    return result;
 }
 
 // === Pricing ===
@@ -144,14 +238,14 @@ async function loadAccounts() {
         const data = await api.get('/api/settings/accounts');
 
         document.getElementById('accountCards').innerHTML = data.map(a => {
-            const toolClass = 's-tool-' + a.tool;
+            const badgeStyle = typeof getAccountBadgeStyle === 'function' ? getAccountBadgeStyle(a.name, a.tool) : '';
             const lastSession = a.last_session
                 ? new Date(a.last_session).toLocaleDateString('en-US', {day:'2-digit',month:'2-digit',year:'numeric'})
                 : 'Never';
             return `<div class="s-card">
                 <div class="s-card-header">
                     <span class="s-card-name">${esc(a.name)}</span>
-                    <span class="s-card-tool ${toolClass}">${a.tool}</span>
+                    <span class="s-card-tool" style="${badgeStyle}">${a.tool}</span>
                 </div>
                 <div class="s-card-detail">${esc(a.config_dir)}</div>
                 <div class="s-card-stat">

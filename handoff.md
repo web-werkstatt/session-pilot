@@ -16,8 +16,8 @@ handoff:
   "titel": "Auto-Coder Quality Pipeline (Final)",
   "plan_id": "142",
   "status": "in_progress",
-  "ziel": "Plan: Auto-Coder Quality Pipeline (Final)",
-  "naechster_schritt": "Plan im Detail ausarbeiten",
+  "ziel": "Auto-Coder Quality Pipeline (Final)",
+  "naechster_schritt": "Noch nicht definiert",
   "prompt": "",
   "prompt_suggestion": "Arbeite an: Auto-Coder Quality Pipeline (Final). Kontext: Plan: Auto-Coder Quality Pipeline (Final) Naechster Schritt: Plan im Detail ausarbeiten. Quelle: iterative-jumping-cocoa.md.",
   "risiko": "",
@@ -38,8 +38,8 @@ handoff:
 
 ## Auto-Coder Quality Pipeline (Final) · in_progress
 
-**Ziel:** Plan: Auto-Coder Quality Pipeline (Final)
-**Naechster Schritt:** Plan im Detail ausarbeiten
+**Ziel:** Auto-Coder Quality Pipeline (Final)
+**Naechster Schritt:** Noch nicht definiert
 **Risiko:** -
 **Execution Score:** -
 **Execution Comment:** -
@@ -201,13 +201,13 @@ _(noch nicht gesetzt)_
   "ziel": "Week-Daten fixen + Usage Reports Seite",
   "naechster_schritt": "Noch nicht definiert",
   "prompt": "",
-  "prompt_suggestion": "Arbeite an: Week-Daten fixen + Usage Reports Seite.",
+  "prompt_suggestion": "Arbeite an: Week-Daten fixen + Usage Reports Seite. Kontext: Plan: Week-Daten fixen + Usage Reports Seite Naechster Schritt: Plan im Detail ausarbeiten. Quelle: curried-doodling-bubble.md.",
   "risiko": "",
   "checks": [
     "Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen"
   ],
   "last_session": "e91095ab-2cce-4d7d-85e4-ab3a1200d7c1",
-  "updated_at": "2026-04-05T11:24:03.597936+00:00",
+  "updated_at": "2026-04-05T19:06:05.387739+00:00",
   "execution_score": null,
   "execution_comment": "",
   "last_execution_at": "",
@@ -369,54 +369,5 @@ _(noch nicht gesetzt)_
 
 **Checks:**
 - Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen
-
----
-
-<!-- MARKER:test-cockpit-2026-04-05
-{
-  "marker_id": "test-cockpit-2026-04-05",
-  "titel": "TESTMARKER: Copilot-Kontrolle",
-  "plan_id": "142",
-  "status": "in_progress",
-  "ziel": "Testmarker fuer die Kontrolle des Cockpit-Verhaltens im Projekt project_dashboard",
-  "naechster_schritt": "Im Cockpit Plan 142 oeffnen und pruefen, wie Marker-Aktivierung, Prompt und Status reagieren",
-  "prompt": "Dies ist ein bewusst gesetzter Testmarker fuer project_dashboard. Keine Produktlogik umbauen. Ziel ist nur, das Verhalten im Cockpit kontrolliert nachzuvollziehen.",
-  "prompt_suggestion": "Oeffne den Testmarker im Cockpit und pruefe Aktivierung, Sichtbarkeit und Statusfluss.",
-  "risiko": "Nur Testmarker, nach Kontrolle wieder loeschbar",
-  "checks": [
-    "Marker ist im Cockpit fuer Plan 142 sichtbar",
-    "Marker laesst sich aktivieren, weil Prompt gesetzt ist",
-    "Statuswechsel und Kontextverhalten sind nachvollziehbar"
-  ],
-  "last_session": "",
-  "updated_at": "2026-04-05T13:06:40.366080+00:00",
-  "execution_score": null,
-  "execution_comment": "",
-  "last_execution_at": "",
-  "sprint_tag": "",
-  "spec_tag": "",
-  "sprint_plan_id": null,
-  "spec_id": null
-}
--->
-
-## TESTMARKER: Copilot-Kontrolle · in_progress
-
-**Ziel:** Testmarker fuer die Kontrolle des Cockpit-Verhaltens im Projekt project_dashboard
-**Naechster Schritt:** Im Cockpit Plan 142 oeffnen und pruefen, wie Marker-Aktivierung, Prompt und Status reagieren
-**Risiko:** Nur Testmarker, nach Kontrolle wieder loeschbar
-**Execution Score:** -
-**Execution Comment:** -
-**Last Execution:** -
-**Sprint Tag:** -
-**Spec Tag:** -
-
-**Prompt:**
-Dies ist ein bewusst gesetzter Testmarker fuer project_dashboard. Keine Produktlogik umbauen. Ziel ist nur, das Verhalten im Cockpit kontrolliert nachzuvollziehen.
-
-**Checks:**
-- Marker ist im Cockpit fuer Plan 142 sichtbar
-- Marker laesst sich aktivieren, weil Prompt gesetzt ist
-- Statuswechsel und Kontextverhalten sind nachvollziehbar
 
 ---

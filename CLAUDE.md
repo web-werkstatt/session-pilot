@@ -66,8 +66,9 @@ Kein Build-Schritt, keine Tests, kein Linting konfiguriert. Abhaengigkeiten in `
 - `git_service.py` - Lokale Git-Infos via Subprocess
 - `cache_service.py` - JSON-Datei-basierter Cache (120s TTL)
 - `db_service.py` - PostgreSQL Connection-Pool (psycopg2)
-- `session_import.py` - JSONL-Parser fuer Claude Sessions (Hash-basierter Cache)
-- `session_import_multi.py` - Parser fuer Codex CLI (JSONL) und Gemini CLI (JSON)
+- `session_import.py` - JSONL-Parser fuer Claude Sessions und zentraler Sync-Orchestrator (Hash-basierter Cache)
+- `services/importers/` - Modulare Tool-Importer fuer Codex, Gemini, OpenCode und Kilo
+- `session_import_multi.py` - Kompatibilitaetsmodul, re-exportiert die modularen Importer
 - `session_import_utils.py` - Shared Helpers: `parse_ts()`, `sanitize_content_json()`
 - `session_export.py` - Export: JSON, MD, HTML, XLSX, TXT
 - `account_discovery.py` - Erkennt AI-Assistenten-Accounts (Claude, Codex, Gemini)
@@ -102,7 +103,7 @@ Kein Build-Schritt, keine Tests, kein Linting konfiguriert. Abhaengigkeiten in `
 - **Dashboard-Widgets:** Chart.js via CDN, Lazy-Loading beim Tab-Wechsel.
 - **Plans-Import:** Scannt `~/.claude/plans/*.md`, erkennt Projekt aus `/mnt/projects/XXX`-Pfaden im Inhalt, verknuepft mit Sessions via Zeitstempel-Korrelation.
 - **Session-Sync:** Hash-basierter Cache (`.sync_hashes.json`), kein Timer. Auto-Sync beim Oeffnen der Sessions-Seite, max 1x/Stunde. Bei unveraenderten Dateien null DB-Zugriffe (<1s).
-- **Shared Helpers:** `session_import_utils.py` enthaelt `parse_ts()`, `sanitize_content_json()`, `create_session_meta()`, `update_time_range()` - werden von `session_import.py` und `session_import_multi.py` gemeinsam genutzt (vermeidet Circular Import). Neue Session-Meta-Felder oder Timestamp-Logik IMMER hier aendern, nicht in den Import-Modulen.
+- **Shared Helpers:** `session_import_utils.py` enthaelt `parse_ts()`, `sanitize_content_json()`, `create_session_meta()`, `update_time_range()` - werden von `session_import.py` und den Modulen unter `services/importers/` gemeinsam genutzt (vermeidet Circular Import). Neue Session-Meta-Felder oder Timestamp-Logik IMMER hier aendern, nicht in den Import-Modulen.
 - **Tag-Erkennung:** `project_detector.py:detect_tags()` ist die zentrale Funktion fuer Technologie-Tags (nodejs, python, rust, go, docker, php + Frameworks). NICHT in project_scanner.py oder anderswo duplizieren.
 - **Fetch-Wrapper `api.js`:** Zentraler HTTP-Client, eingebunden in base.html vor base.js. Alle API-Aufrufe ueber `api.get(url)`, `api.post(url, body)`, `api.put()`, `api.del()`, `api.request(url, opts)`. Automatisches JSON-Parsing, Content-Type, Status-Check. Fuer Downloads: `api.request(url, {raw: true})`. Wirft `api.ApiError` bei Fehlern. KEIN rohes `fetch()` in Seiten-JS verwenden.
 - **Globale JS-Utilities:** `base.js` enthaelt `formatTokens()`, `formatDate()`, `formatDateTime()`, `escapeHtml()`, `formatTimeAgo()` - auf allen Seiten verfuegbar, nicht in einzelnen JS-Dateien duplizieren. Neue Utility-Funktionen die in >1 Seite gebraucht werden gehoeren hierher.
