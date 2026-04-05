@@ -115,6 +115,38 @@ Audit v1 ist funktional, aber isoliert. Offene Verbindungen:
 
 **Commit-Hash:** noch nicht committed
 
+### Sprint PX — Hashtag-First Markdown Routine — MODULARER REPO-ABSCHLUSS
+
+**Ziel:** Den verbleibenden Copilot-/Markdown-Block so modularisieren, dass die Repo-Regeln fuer kleine Dateien eingehalten werden und der gesamte PX-Stand sauber commitbar bleibt.
+
+**Umgesetzt:**
+- Marker-Endpoints aus `routes/copilot_routes.py` in ein eigenes Blueprint `routes/copilot_marker_routes.py` verschoben und in `routes/__init__.py` registriert
+- `services/copilot_marker_service.py` in kleinere Verantwortlichkeiten aufgeteilt: Format/Parser in `services/copilot_marker_format.py`, Import-/Generator-Flow in `services/copilot_marker_import_flow.py`, Runtime-Fassade im bestehenden Service
+- Das Copilot-Board-Frontend in `static/js/copilot-board-shared.js`, `static/js/copilot_board.js` und `static/js/copilot-board-panel.js` zerlegt; `templates/copilot_board.html` bindet die neuen Assets jetzt explizit ein
+- Die grossen Testmonolithe `tests/test_copilot.py` und `tests/test_copilot_marker_service.py` in mehrere kleinere Suites zerlegt, damit jede geaenderte Datei unter der 500-Zeilen-Grenze bleibt
+- Den modularisierten PX-Block lokal geprueft mit Python-Syntaxcheck, JS-Syntaxcheck und einer gebuendelten Pytest-Suite ueber Copilot-, Marker- und Markdown-Routine-Tests
+
+**Geaenderte Dateien:**
+- `routes/__init__.py`
+- `routes/copilot_routes.py`
+- `routes/copilot_marker_routes.py`
+- `services/copilot_marker_service.py`
+- `services/copilot_marker_format.py`
+- `services/copilot_marker_import_flow.py`
+- `templates/copilot_board.html`
+- `static/js/copilot-board-shared.js`
+- `static/js/copilot_board.js`
+- `static/js/copilot-board-panel.js`
+- `tests/test_copilot_core.py`
+- `tests/test_copilot_marker_activation_routes.py`
+- `tests/test_copilot_marker_api_routes.py`
+- `tests/test_copilot_marker_service_core.py`
+- `tests/test_copilot_marker_service_flow.py`
+- `next-session.md`
+- `sprints/master-plan-2026-04-01.md`
+
+**Commit-Hash:** noch nicht committed
+
 ### Sprint QY — Plans-Detail gegen Legacy-DB-Schema gehaertet
 
 **Ziel:** Den HTTP-500 beim Oeffnen von Plan-Details auf Systemen mit aelterer `specs`-Tabelle beheben.

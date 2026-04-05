@@ -7,6 +7,7 @@
 {% block head_extra %}
 <link rel="stylesheet" href="/static/css/sessions2.css?v={{ cache_bust }}">
 <link rel="stylesheet" href="/static/css/session-detail.css?v={{ cache_bust }}">
+<link rel="stylesheet" href="/static/css/session-execution-panel.css?v={{ cache_bust }}">
 {% endblock %}
 
 {% block topbar_actions %}{% endblock %}
@@ -37,6 +38,29 @@
             <span id="widthLabel"></span>
         </div>
     </div>
+    </div>
+
+    <div class="session-execution-panel" id="sessionExecutionPanel" style="display:none;">
+        <div class="session-execution-head">
+            <div>
+                <div class="session-execution-kicker">Execution Rating</div>
+                <div class="session-execution-title" id="sessionExecutionTitle">Marker</div>
+            </div>
+            <div class="session-execution-meta" id="sessionExecutionMeta"></div>
+        </div>
+        <div class="session-execution-form">
+            <select id="sessionExecutionScore" class="session-execution-score">
+                <option value="">Score</option>
+                <option value="0">0</option>
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+            </select>
+            <input id="sessionExecutionComment" class="session-execution-comment" type="text" placeholder="Kurzer Kommentar">
+            <button class="sd-rate-btn" type="button" onclick="saveExecutionRating()">Speichern</button>
+        </div>
     </div>
 
     <div class="session-layout">

@@ -26,6 +26,45 @@ let projectThreads = [];
 let relatedThreadSessions = [];
 let reviewPrefill = '';
 
+function renderExecutionPanel(session) {
+    var panel = document.getElementById('sessionExecutionPanel');
+    if (!panel) return;
+    var marker = session && session.marker ? session.marker : null;
+    if (!marker || !marker.marker_id) {
+        panel.style.display = 'none';
+        return;
+    }
+
+    panel.style.display = 'block';
+    document.getElementById('sessionExecutionTitle').textContent = marker.titel || marker.marker_id;
+    document.getElementById('sessionExecutionMeta').textContent = 'Marker ' + marker.marker_id + (marker.last_execution_at ? ' · ' + marker.last_execution_at : '');
+    document.getElementById('sessionExecutionScore').value = marker.execution_score == null ? '' : String(marker.execution_score);
+    document.getElementById('sessionExecutionComment').value = marker.execution_comment || '';
+}
+
+async function saveExecutionRating() {
+    if (!sessionData || !sessionData.marker || !sessionData.marker.marker_id) return;
+    var score = document.getElementById('sessionExecutionScore').value;
+    var comment = document.getElementById('sessionExecutionComment').value.trim();
+    if (score === '') return;
+
+    try {
+        const rating = await api.post('/api/marker/' + encodeURIComponent(sessionData.marker.marker_id) + '/execution-rating', {
+            project_id: sessionData.project_name,
+            execution_score: Number(score),
+            execution_comment: comment,
+            sessionid: SESSION_UUID
+        });
+        sessionData.marker.execution_score = rating.execution_score;
+        sessionData.marker.execution_comment = rating.execution_comment || '';
+        sessionData.marker.last_execution_at = rating.last_execution_at || '';
+        renderExecutionPanel(sessionData);
+        showSaved();
+    } catch (e) {
+        console.error(e);
+    }
+}
+
 function escapeHtml(text) {
     const d = document.createElement('div');
     d.textContent = text == null ? '' : text;
@@ -370,6 +409,7 @@ async function reloadReviewData() {
     if (sessionData.outcome) highlightOutcome(sessionData.outcome);
     if (document.getElementById('outcomeNote')) document.getElementById('outcomeNote').value = sessionData.outcome_note || '';
     renderMeta(sessionData);
+    renderExecutionPanel(sessionData);
     renderReviewSummary(sessionData, sessionReviews);
     renderLinkedThreads();
     renderRelatedThreadSessions();
@@ -432,6 +472,7 @@ async function loadSession() {
 
         document.title = `${sessionData.project_name || 'Session'} - Dashboard`;
         renderMeta(sessionData);
+        renderExecutionPanel(sessionData);
         renderReviewSummary(sessionData, sessionReviews);
         renderLinkedThreads();
         renderRelatedThreadSessions();

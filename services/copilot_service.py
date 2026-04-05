@@ -55,6 +55,8 @@ def _compact_marker_context(data):
         "marker_id": _first_non_empty(data.get("marker_id")),
         "plan_id": _first_non_empty(data.get("plan_id")),
         "plan_title": _first_non_empty(data.get("plan_title")),
+        "sprint_tag": _first_non_empty(data.get("sprint_tag")),
+        "spec_tag": _first_non_empty(data.get("spec_tag")),
         "titel": _first_non_empty(data.get("titel")),
         "status": _first_non_empty(data.get("status")),
         "ziel": _first_non_empty(data.get("ziel")),
@@ -129,6 +131,8 @@ def build_marker_chat_context(project_id=None, marker_id=None, handoff_path=None
                         handoff_marker = {
                             "marker_id": candidate.marker_id,
                             "plan_id": candidate.plan_id,
+                            "sprint_tag": candidate.sprint_tag,
+                            "spec_tag": candidate.spec_tag,
                             "titel": candidate.titel,
                             "status": candidate.status,
                             "ziel": candidate.ziel,

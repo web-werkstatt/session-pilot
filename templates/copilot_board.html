@@ -1,19 +1,15 @@
 {% extends "base.html" %}
-
 {% block title %}Copilot Workspace{% endblock %}
 {% block breadcrumb %}Copilot{% endblock %}
-
 {% block topbar_actions %}{% endblock %}
-
 {% block head_extra %}
 <link rel="stylesheet" href="/static/css/design-tokens.css?v={{ cache_bust }}">
 <link rel="stylesheet" href="/static/css/components.css?v={{ cache_bust }}">
 <link rel="stylesheet" href="/static/css/plans.css?v={{ cache_bust }}">
 <link rel="stylesheet" href="/static/css/copilot.css?v={{ cache_bust }}">
+<link rel="stylesheet" href="/static/css/copilot-board.css?v={{ cache_bust }}">
 {% endblock %}
-
 {% block content %}
-    <!-- Workspace Header -->
     <div class="copilot-ws-header ui-panel">
         <div class="copilot-ws-header-main">
             <div class="copilot-ws-nav">
@@ -43,7 +39,6 @@
         </div>
     </div>
 
-    <!-- Progress -->
     <div class="copilot-progress ui-panel" id="copilotProgress">
         <div class="copilot-progress-label-group">
             <span class="copilot-progress-kicker">Progress</span>
@@ -63,10 +58,18 @@
         </div>
     </div>
 
-    <!-- Split View -->
     <div class="board-split-view">
-        <!-- Board (links) -->
         <div class="board-main">
+            <div class="sprint-sections-panel ui-panel" id="sprintSectionsPanel" style="display:none;">
+                <div class="sprint-sections-head">
+                    <div>
+                        <div class="sprint-sections-kicker">Sprint Sections</div>
+                        <div class="sprint-sections-title">Quellabschnitte aus dem Plan und ihre Marker</div>
+                    </div>
+                    <div class="sprint-sections-meta" id="sprintSectionsMeta"></div>
+                </div>
+                <div class="sprint-sections-strip" id="sprintSectionsStrip"></div>
+            </div>
             <div id="sectionsBoard" class="plans-board" style="display:none;"></div>
 
             <div id="loading" class="loading">
@@ -80,8 +83,6 @@
                 <p>Klicke <strong>+ AI Task</strong> um loszulegen.</p>
             </div>
         </div>
-
-        <!-- Detail Panel (rechts, permanent) -->
         <div class="board-panel ui-panel" id="sectionPanel">
             <div class="panel-empty-state" id="panelEmptyState">
                 <i data-lucide="mouse-pointer-click" style="width:36px;height:36px;opacity:0.25"></i>
@@ -109,6 +110,9 @@
                     </button>
                     <button class="panel-tab ui-button ui-button--ghost" data-tab="history" onclick="switchPanelTab('history')">
                         <i data-lucide="clock" class="icon icon-xs"></i> History
+                    </button>
+                    <button class="panel-tab ui-button ui-button--ghost" data-tab="source" onclick="switchPanelTab('source')">
+                        <i data-lucide="scroll-text" class="icon icon-xs"></i> Source
                     </button>
                 </div>
 
@@ -191,6 +195,61 @@
                                 <div class="panel-field-label">Gate</div>
                                 <div class="panel-field-value" id="panelMarkerGate"></div>
                             </div>
+                            <div class="panel-field">
+                                <div class="panel-field-label">Execution Rating</div>
+                                <div class="panel-field-value" id="panelMarkerExecutionSummary"></div>
+                            </div>
+                            <div class="panel-field">
+                                <div class="panel-field-label">Kommentar</div>
+                                <div class="panel-field-value" id="panelMarkerExecutionComment"></div>
+                            </div>
+                            <div class="panel-field">
+                                <div class="panel-field-label">Bewertung aendern</div>
+                                <div class="panel-rating-editor">
+                                    <select class="ui-input panel-rating-select" id="panelExecutionScore">
+                                        <option value="">Score</option>
+                                        <option value="0">0</option>
+                                        <option value="1">1</option>
+                                        <option value="2">2</option>
+                                        <option value="3">3</option>
+                                        <option value="4">4</option>
+                                        <option value="5">5</option>
+                                    </select>
+                                    <input class="ui-input panel-rating-input" id="panelExecutionCommentInput" type="text" placeholder="Kurzer Kommentar">
+                                    <button class="ui-button ui-button--primary" type="button" onclick="saveMarkerExecutionRating()">Speichern</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel-tab-body" id="tabSource">
+                    <div class="panel-source" id="panelSource">
+                        <div class="panel-source-empty" id="panelSourceEmpty">
+                            <i data-lucide="scroll-text" style="width:28px;height:28px;opacity:0.25"></i>
+                            <div>Kein Sprint-Abschnitt ausgewaehlt</div>
+                        </div>
+                        <div class="panel-source-fields" id="panelSourceFields" style="display:none;">
+                            <div class="panel-field">
+                                <div class="panel-field-label">Abschnitt</div>
+                                <div class="panel-field-value" id="panelSourceSectionTitle"></div>
+                            </div>
+                            <div class="panel-field">
+                                <div class="panel-field-label">Summary</div>
+                                <div class="panel-field-value" id="panelSourceSectionSummary"></div>
+                            </div>
+                            <div class="panel-field">
+                                <div class="panel-field-label">Tasks</div>
+                                <div class="panel-checks" id="panelSourceTasks"></div>
+                            </div>
+                            <div class="panel-field">
+                                <div class="panel-field-label">Zugeordnete Marker</div>
+                                <div class="panel-checks" id="panelSourceMarkers"></div>
+                            </div>
+                            <div class="panel-field">
+                                <div class="panel-field-label">Rohinhalt</div>
+                                <div class="panel-source-body" id="panelSourceBody"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -200,7 +259,6 @@
 
     <div class="toast" id="syncToast"></div>
 
-    <!-- Add Section Modal -->
     <div class="modal-overlay" id="addSectionModal">
         <div class="modal-content" style="max-width:500px;">
             <div class="modal-header">
@@ -232,9 +290,10 @@
         </div>
     </div>
 {% endblock %}
-
 {% block scripts %}
 <script src="/static/js/marked.min.js"></script>
 <script>var PLAN_ID = {{ plan_id }};</script>
+<script src="/static/js/copilot-board-shared.js?v={{ cache_bust }}"></script>
 <script src="/static/js/copilot_board.js?v={{ cache_bust }}"></script>
+<script src="/static/js/copilot-board-panel.js?v={{ cache_bust }}"></script>
 {% endblock %}

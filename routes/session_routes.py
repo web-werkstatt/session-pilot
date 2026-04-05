@@ -6,6 +6,7 @@ import time
 import threading
 from flask import Blueprint, render_template, jsonify, request, Response
 from services.db_service import execute, ensure_session_review_schema
+from services.copilot_marker_service import get_marker_by_last_session
 from services.session_import import sync_all
 from services.session_export import (
     export_json, export_markdown, export_html, export_xlsx, export_txt,
@@ -270,6 +271,10 @@ def _api_session_detail_inner(uuid):
     s["imported_at"] = s["imported_at"].isoformat() if s.get("imported_at") else None
     s["updated_at"] = s["updated_at"].isoformat() if s.get("updated_at") else None
     s["duration_formatted"] = format_duration(s.get("duration_ms"))
+    try:
+        s["marker"] = get_marker_by_last_session(s.get("project_name"), uuid) if s.get("project_name") else None
+    except Exception:
+        s["marker"] = None
 
     msgs = []
     for m in (messages or []):
