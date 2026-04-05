@@ -297,6 +297,29 @@
 /* ===== CONTAINER ===== */
 .container { padding: 0 0 30px; }
 
+.dashboard-view-header {
+    padding: 18px 24px 14px;
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), transparent);
+}
+.dashboard-view-kicker {
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+.dashboard-view-title {
+    margin-top: 4px;
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+.dashboard-view-subtitle {
+    margin-top: 6px;
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
 @media (max-width: 1024px) {
     .sidebar {
         width: min(86vw, 320px);
@@ -308,6 +331,10 @@
     .nav-item {
         min-height: 36px;
         font-size: 13px;
+    }
+    .nav-item--sub {
+        margin-left: 20px;
+        font-size: 12px;
     }
     .nav-section > .nav-label,
     .nav-section-toggle {

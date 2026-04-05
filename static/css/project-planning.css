@@ -126,6 +126,11 @@
     line-height: 1.5;
     color: var(--text-secondary);
 }
+.planning-session-summary {
+    margin-top: 8px;
+    font-size: 11px;
+    color: var(--accent-light);
+}
 .planning-spec-list,
 .planning-direct-block {
     margin-top: 12px;
@@ -153,6 +158,14 @@
     text-transform: uppercase;
     letter-spacing: 0.06em;
     color: var(--text-muted);
+}
+.planning-session-chip {
+    margin-left: auto;
+    padding: 3px 7px;
+    border-radius: 999px;
+    border: 1px solid var(--border-muted);
+    font-size: 10px;
+    color: var(--accent-light);
 }
 .planning-marker-status { margin-left: auto; }
 .planning-empty {
@@ -240,6 +253,31 @@
     gap: 8px;
     flex-wrap: wrap;
     margin-top: 18px;
+}
+.planning-session-history {
+    display: grid;
+    gap: 8px;
+}
+.planning-session-item {
+    width: 100%;
+    text-align: left;
+    border: 1px solid var(--border-muted);
+    background: rgba(255,255,255,0.03);
+    border-radius: 10px;
+    padding: 10px 12px;
+    color: var(--text-primary);
+    cursor: pointer;
+}
+.planning-session-main {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+}
+.planning-session-meta {
+    display: block;
+    margin-top: 4px;
+    font-size: 11px;
+    color: var(--text-secondary);
 }
 .planning-detail-btn {
     display: inline-flex;

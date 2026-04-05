@@ -1,6 +1,21 @@
 // === DASHBOARD CORE ===
 // loadData, renderData, showTab, init block
 
+var _dashboardViewMeta = {
+    projects: {
+        title: 'Project List',
+        subtitle: 'Primaere Arbeitsliste fuer Projekte und Projekteinstieg.'
+    },
+    widgets: {
+        title: 'Project Overview',
+        subtitle: 'Verdichtete Projekt-Signale, Aktivitaet und operative Uebersicht.'
+    },
+    gitea: {
+        title: 'Repository Sources',
+        subtitle: 'Externe Repository-Quellen als Projekt- und Integrationssicht.'
+    }
+};
+
 function loadData() {
     // Nur beim ersten Laden den Spinner zeigen
     if (firstLoad) {
@@ -39,11 +54,28 @@ function loadData() {
 }
 
 // Tab-Funktion
-function showTab(tabName) {
+function showTab(tabName, triggerEl) {
+    if (!document.getElementById(tabName + 'Tab')) tabName = 'projects';
     document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     document.getElementById(tabName + 'Tab').classList.add('active');
-    event.target.classList.add('active');
+    var titleEl = document.getElementById('dashboardViewTitle');
+    var subtitleEl = document.getElementById('dashboardViewSubtitle');
+    var filterBar = document.getElementById('filterBar');
+    var meta = _dashboardViewMeta[tabName] || _dashboardViewMeta.projects;
+    if (titleEl) titleEl.textContent = meta.title;
+    if (subtitleEl) subtitleEl.textContent = meta.subtitle;
+    if (filterBar) filterBar.style.display = tabName === 'projects' ? '' : 'none';
+    if (window.history && window.history.replaceState) {
+        var url = tabName === 'projects' ? '/' : ('/?tab=' + encodeURIComponent(tabName));
+        window.history.replaceState(null, '', url);
+    }
+    document.querySelectorAll('#projectsSubmenu .nav-item').forEach(function(item) { item.classList.remove('active'); });
+    if (triggerEl && triggerEl.classList) triggerEl.classList.add('active');
+    else {
+        var activeLink = document.querySelector('#projectsSubmenu .nav-item[href="/?tab=' + tabName + '"]');
+        if (tabName === 'projects') activeLink = document.querySelector('#projectsSubmenu .nav-item[href="/?tab=projects"]');
+        if (activeLink) activeLink.classList.add('active');
+    }
     if (tabName === 'widgets' && !window._widgetsLoaded) {
         loadWidgets();
     }
@@ -97,6 +129,7 @@ function renderData(data) {
 
 // === INIT BLOCK ===
 showFunnyQuote();
+showTab(window.INITIAL_DASHBOARD_TAB || 'projects');
 // Gruppen + Favoriten laden, dann Projektdaten
 Promise.all([loadGroups(), loadFavorites()]).then(() => {
     loadData();

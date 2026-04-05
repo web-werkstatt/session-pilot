@@ -1,4 +1,3 @@
-// Sidebar Toggle
 var _lastSidebarTrigger = null;
 var _sidebarSectionDefaultCollapsed = {
     analysis: true,
@@ -110,7 +109,15 @@ function syncSidebarSections() {
     });
 }
 
-// Lightbox mit Navigation
+function toggleSidebarSubmenu(submenuId) {
+    var submenu = document.getElementById(submenuId);
+    if (!submenu) return;
+    var isOpen = submenu.classList.contains('is-open');
+    submenu.classList.toggle('is-open', !isOpen);
+    var toggle = document.querySelector('[onclick*="' + submenuId + '"]');
+    if (toggle) toggle.setAttribute('aria-expanded', isOpen ? 'false' : 'true');
+}
+
 var lbImages = [];
 var lbIndex = 0;
 
@@ -201,7 +208,6 @@ document.addEventListener('keydown', function(e) {
     else if (e.key === 'ArrowRight') { lightboxNav(1); e.preventDefault(); }
 });
 
-// Command Palette
 function openCommandPalette() {
     document.getElementById('cmdOverlay').classList.add('show');
     document.getElementById('cmdInput').value = '';
@@ -213,7 +219,7 @@ function resetCmdResults() {
     document.getElementById('cmdResults').innerHTML =
         '<div class="cmd-group"><div class="cmd-group-label">Quick Access</div>' +
         '<div class="cmd-item" onclick="location.href=\'/\'">&#128202; Dashboard</div>' +
-        '<div class="cmd-item" onclick="location.href=\'/sessions\'">&#129302; Claude Sessions</div>' +
+        '<div class="cmd-item" onclick="location.href=\'/sessions\'">&#129302; Activity</div>' +
         '<div class="cmd-item" onclick="location.href=\'/sessions/analysis\'">&#128200; Session Analysis</div>' +
         '<div class="cmd-item" onclick="location.href=\'/containers\'">&#128051; Containers</div>' +
         '<div class="cmd-item" onclick="location.href=\'/dependencies\'">&#128279; Dependencies</div>' +
@@ -263,7 +269,7 @@ function doProjectSearch(q) {
 
         var statics = [
             {label:'Dashboard', icon:'&#128202;', url:'/'},
-            {label:'Claude Sessions', icon:'&#129302;', url:'/sessions'},
+            {label:'Activity', icon:'&#129302;', url:'/sessions'},
             {label:'Session Analysis', icon:'&#128200;', url:'/sessions/analysis'},
             {label:'Containers', icon:'&#128051;', url:'/containers'},
             {label:'Dependencies', icon:'&#128279;', url:'/dependencies'},
@@ -352,7 +358,6 @@ function doFulltextSearch(q) {
         });
 }
 
-// === Generisches Modal-System ===
 var _modalStack = [];
 
 function openModal(id) {
@@ -376,14 +381,12 @@ function closeModal(id) {
     if (el) el.classList.remove('show');
 }
 
-// Overlay-Click: Klick auf modal-overlay (nicht auf Inhalt) schliesst Modal
 document.addEventListener('click', function(e) {
     if (e.target.classList.contains('modal-overlay') && e.target.classList.contains('show')) {
         closeModal(e.target.id);
     }
 });
 
-// Keyboard shortcuts
 document.addEventListener('keydown', function(e) {
     if ((e.key === 'k' && (e.ctrlKey || e.metaKey)) || (e.key === '/' && !['INPUT','TEXTAREA'].includes(document.activeElement.tagName))) {
         e.preventDefault();
@@ -397,7 +400,6 @@ document.addEventListener('keydown', function(e) {
     }
 }, true);
 
-// Global: Sticky thead Position dynamisch berechnen
 function updateStickyPositions() {
     var topbar = document.querySelector('.topbar');
     if (!topbar) return;
@@ -421,7 +423,6 @@ function updateStickyPositions() {
 window.addEventListener('resize', updateStickyPositions);
 setInterval(updateStickyPositions, 500);
 
-// Globale Utility-Funktionen (werden von mehreren Seiten genutzt)
 function formatTokens(n) {
     if (!n) return '0';
     if (n >= 1e9) return (n/1e9).toFixed(1) + 'B';
@@ -452,7 +453,6 @@ function formatTimeAgo(isoStr) {
     return formatDate(isoStr);
 }
 
-// External Links in Sidebar
 (async function loadExternalLinks() {
     try {
         var links = await api.get('/api/settings/external-links');
@@ -469,7 +469,6 @@ function formatTimeAgo(isoStr) {
     } catch(e) { /* silent */ }
 })();
 
-// Dynamic sticky stacking: compute top for all sticky elements in order
 (function() {
     var STICKY_SELECTORS = '.topbar, .news-ticker-bar, .tab-bar, .kpi-row, .kpi-grid, .quality-stats, .gov-tabs, .filter-bar';
 

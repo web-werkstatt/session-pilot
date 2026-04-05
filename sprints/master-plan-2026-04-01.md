@@ -85,6 +85,20 @@ Audit v1 ist funktional, aber isoliert. Offene Verbindungen:
 - Audit kennt noch keine Governance-Policies (kein Gate-Endpoint).
 - Kein automatischer Trigger (nur manuell via UI oder API).
 
+### Data Persistence Consolidation
+
+Das Repo nutzt aktuell parallel DB, Root-JSON-Dateien und Markdown-Artefakte.
+Fuer kleine Konfig- und Seed-Faelle ist das akzeptabel, fuer operative Produktdaten aber zunehmend zu teuer.
+
+Neuer geplanter Architekturpfad:
+- Sprint `QS` legt die DB-first Zielarchitektur fuer operative Zustandsdaten fest
+- Root-JSON-Stores wie Notifications, Favorites, Relations, Ideas und Settings sollen schrittweise in die DB wandern
+- Markdown-Artefakte wie `next-session.md`, `handoff.md` und Sprint-Plaene bleiben bewusst dateibasiert, aber nicht als einzige schwer abfragbare Runtime-Wahrheit
+- Marker-Runtime-State wird als eigener Migrationspfad nach den einfachen JSON-Stores behandelt
+
+Referenz:
+- `sprints/sprint-qs-db-first-state-consolidation.md`
+
 ---
 
 ## Completed Sprints (diese Session)
@@ -279,6 +293,50 @@ Audit v1 ist funktional, aber isoliert. Offene Verbindungen:
 - `sprints/master-plan-2026-04-01.md`
 
 **Commit-Hash:** `04f96b7`
+
+### Sprint QR — Session 4 Session-Historie an Task und Spec gehaengt
+
+**Ziel:** Sessions fachlich korrekt als Ausfuehrungshistorie der operativen Ebene sichtbar machen.
+
+**Umgesetzt:**
+- `services/plan_structure_service.py` erweitert die Projekt-Planning-Hierarchie jetzt um Session-Summaries aus `last_session`, inklusive Startzeit, Dauer, Modell und Outcome
+- Marker tragen ihre verknuepfte Session jetzt direkt im Hierarchie-Read-Model; `Spec` und `Sprint` aggregieren diese Session-Historie read-only nach oben
+- plain Markdown-Tasks werden best-effort ueber gleichnamige Marker an Sessions angebunden, damit operative Eintraege im Planning nicht leer bleiben
+- `static/js/project-planning.js` kennt jetzt zusaetzlich den Knotentyp `session`, zeigt Session-Historie im Detailpanel fuer `Task`, `Spec`, `Sprint` und Marker und verlinkt auf die Session-Detailseite
+- `static/css/project-planning.css` um Session-Badges und eine kleine History-Darstellung im Detailpanel erweitert
+- `tests/test_plan_structure_service.py` deckt die Session-Anreicherung im Planning-Service jetzt mit ab
+
+**Geaenderte Dateien:**
+- `services/plan_structure_service.py`
+- `static/js/project-planning.js`
+- `static/css/project-planning.css`
+- `tests/test_plan_structure_service.py`
+- `next-session.md`
+- `sprints/master-plan-2026-04-01.md`
+
+**Commit-Hash:** `noch nicht committed`
+
+### Sprint QR — Session 4 Follow-up: last_session Preservation und Backfill
+
+**Ziel:** Die neue Session-Historie nicht nur im Code, sondern auch im echten Bestand wirksam machen.
+
+**Umgesetzt:**
+- `services/project_handoff_service.py` bewahrt bei Handoff-Regeneration jetzt bestehende Runtime-Felder wie `last_session`, Status und Execution-Metadaten pro Marker, statt sie wieder auf Default zurueckzusetzen
+- `services/copilot_marker_service.py` um einen idempotenten Backfill fuer leere `last_session`-Felder erweitert
+- neues Script `scripts/backfill_marker_last_sessions.py` angelegt
+- den Backfill fuer `project_dashboard` direkt ausgefuehrt; dabei wurden 7 von 8 Markern mit echter `session_uuid` aus `project_plans.session_uuid` angereichert
+- Tests fuer Handoff-Preservation und Marker-Backfill ergaenzt
+
+**Geaenderte Dateien:**
+- `services/project_handoff_service.py`
+- `services/copilot_marker_service.py`
+- `scripts/backfill_marker_last_sessions.py`
+- `tests/test_project_handoff.py`
+- `tests/test_copilot_marker_service_flow.py`
+- `next-session.md`
+- `sprints/master-plan-2026-04-01.md`
+
+**Commit-Hash:** `noch nicht committed`
 
 ### Sprint PX — Hashtag-First Markdown Routine — MODUL 1 START
 
@@ -878,6 +936,124 @@ aber nicht verschachteltes `.kilo/node_modules/`.
 
 **Dateien:**
 - `templates/base.html`
+
+**Commit:** uncommitted
+
+### Sprint P3.13 — Hauptnavigation fachlogisch vereinheitlicht — DONE (2026-04-05)
+**Ziel:** Die primaeren Menuepunkte sprachlich von technischen Systembegriffen auf fachlich lesbare Arbeitsbegriffe umstellen.
+
+**Aenderungen:**
+- `templates/base.html` benennt die Hauptnavigation auf `Planning`, `AI Workspace` und `Activity` um
+- Breadcrumbs und Seitentitel fuer Planning-, Copilot-/Workspace- und Sessions-Seiten an die neue Navigationssprache angepasst
+- `templates/plan_detail.html` Backlink von `Back to Plan Index` auf `Back to Planning` umgestellt
+- `static/js/base.js` Command-Palette-Eintraege auf `Activity` angeglichen
+- Technische Pfade und Query-Parameter wie `/copilot`, `/sessions` und `?tab=gitea` bewusst unveraendert gelassen
+
+**Dateien:**
+- `templates/base.html`
+- `templates/plans.html`
+- `templates/plan_detail.html`
+- `templates/copilot_landing.html`
+- `templates/copilot_board.html`
+- `templates/copilot.html`
+- `templates/sessions.html`
+- `templates/session_detail.html`
+- `templates/partials/index_modals.html`
+- `static/js/base.js`
+- `next-session.md`
+- `sprints/master-plan-2026-04-01.md`
+
+**Commit:** uncommitted
+
+### Sprint P3.14 — Projects-Header als direkter Einstieg — DONE (2026-04-05)
+**Ziel:** Den redundanten Unterpunkt `Projects` aus der Sidebar entfernen, ohne den direkten Rueckweg zur Hauptansicht zu verlieren.
+
+**Aenderungen:**
+- `templates/base.html` trennt den Bereich `Projects` in einen klickbaren Header-Link und einen separaten Chevron-Button fuer das Submenue
+- Der Unterpunkt `Projects` entfällt; sichtbar bleiben nur `New Project`, `Overview` und `Repository Sources`
+- `static/css/layout.css` ergaenzt die minimale Layout-Unterstuetzung fuer Link + Toggle innerhalb desselben Sidebar-Headers
+- Bestehende Tab-Logik fuer `showTab('projects')` und die technischen URLs bleiben unveraendert
+
+**Dateien:**
+- `templates/base.html`
+- `static/css/layout.css`
+- `next-session.md`
+- `sprints/master-plan-2026-04-01.md`
+
+**Commit:** uncommitted
+
+### Sprint P3.15 — Projektseite von Overview zu Details geschaerft — DONE (2026-04-05)
+**Ziel:** Die Projektseite sprachlich und visuell klarer strukturieren: Detailinformationen als eigener Tab, die eigentliche Uebersicht als Karten-Summary im Seitenkopf.
+
+**Aenderungen:**
+- `templates/project_detail.html` benennt den Tab `Overview` in `Details` um
+- Oberhalb der Tabs wurde eine neue kartenbasierte Projektuebersicht eingefuegt
+- `static/js/project-detail.js` laedt dafuer bestehende Planning-, Quality- und Session-Daten parallel und verdichtet sie zu Karten fuer Fortschritt, Sprint-Plans, Issues und Activity
+- `static/css/project-detail.css` ergaenzt das responsive Kartenlayout fuer die neue Projektuebersicht
+- Bestehende Detailinhalte im bisherigen Overview-Bereich bleiben als `Details` erhalten
+
+**Dateien:**
+- `templates/project_detail.html`
+- `static/js/project-detail.js`
+- `static/css/project-detail.css`
+- `next-session.md`
+- `sprints/master-plan-2026-04-01.md`
+
+**Commit:** uncommitted
+
+### Sprint P3.16 — Projektuebersicht als handlungsfuehrende Karten — DONE (2026-04-05)
+**Ziel:** Die neue Projektuebersicht nicht als reine KPI-Flaeche, sondern als fachliche `Was jetzt?`-Navigation nutzbar machen.
+
+**Aenderungen:**
+- `static/js/project-detail.js` leitet aus Planning-, Quality- und Activity-Signalen jetzt konkrete Empfehlungen und CTA-Ziele ab
+- Die primaere Karte formuliert eine priorisierte naechste Aktion statt nur einen Zustandswert
+- Die Fachkarten fuer `Planning`, `Delivery`, `Issues` und `Activity` fuehren direkt in die passende Arbeitsflaeche
+- `static/css/project-detail.css` ergaenzt CTA-Styling fuer die neue handlungsfuehrende Kartenlogik
+
+**Dateien:**
+- `static/js/project-detail.js`
+- `static/css/project-detail.css`
+- `next-session.md`
+- `sprints/master-plan-2026-04-01.md`
+
+**Commit:** uncommitted
+
+### Sprint P3.17 — AI Workspace wieder zu Cockpit vereinheitlicht — DONE (2026-04-05)
+**Ziel:** Den primaeren KI-Arbeitsbereich wieder mit dem etablierten Fachbegriff `Cockpit` fuehren statt mit dem generischen Begriff `AI Workspace`.
+
+**Aenderungen:**
+- Sidebar-Eintrag in `templates/base.html` von `AI Workspace` auf `Cockpit` umgestellt
+- Seitentitel und Breadcrumbs der Copilot-/Cockpit-Seiten in `templates/copilot_landing.html`, `templates/copilot_board.html` und `templates/copilot.html` auf `Cockpit` vereinheitlicht
+- Technische Route `/copilot` bewusst unveraendert gelassen
+
+**Dateien:**
+- `templates/base.html`
+- `templates/copilot_landing.html`
+- `templates/copilot_board.html`
+- `templates/copilot.html`
+- `next-session.md`
+- `sprints/master-plan-2026-04-01.md`
+
+**Commit:** uncommitted
+
+### Sprint P3.18 — Projektkontext zwischen Screens persistent gemacht — DONE (2026-04-05)
+**Ziel:** Das aktuell bearbeitete Projekt nicht bei jedem Wechsel in das `Cockpit` oder zwischen Plan-/Projektansichten neu auswaehlen muessen.
+
+**Aenderungen:**
+- `static/js/base.js` fuehrt einen kleinen globalen Browser-Speicher fuer den aktiven Projektkontext ein
+- `static/js/project-detail.js` und `static/js/plan-detail.js` setzen das aktuelle Projekt beim Oeffnen der jeweiligen Arbeitsflaeche
+- `static/js/project-planning.js` und `static/js/plans.js` geben den Projektkontext zusaetzlich in `Cockpit`-Links als `project=` weiter
+- `static/js/copilot.js` liest zuerst `project`/`project_id` aus der URL und faellt dann auf den zuletzt gespeicherten Projektkontext zurueck
+
+**Dateien:**
+- `static/js/base.js`
+- `static/js/copilot.js`
+- `static/js/project-detail.js`
+- `static/js/project-planning.js`
+- `static/js/plan-detail.js`
+- `static/js/plans.js`
+- `next-session.md`
+- `sprints/master-plan-2026-04-01.md`
 
 **Commit:** uncommitted
 - `templates/copilot_board.html`

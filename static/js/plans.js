@@ -27,6 +27,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     if (params.get('project')) {
         filters.project = params.get('project');
+    } else if (typeof getActiveProjectContext === 'function') {
+        filters.project = getActiveProjectContext() || '';
     }
     if (params.get('status')) {
         filters.status = params.get('status');
@@ -102,6 +104,7 @@ function loadProjects() {
                 opt.textContent = `${p.name} (${p.count})`;
                 sel.appendChild(opt);
             });
+            if (filters.project) sel.value = filters.project;
         })
         .catch(() => {});
 }
@@ -145,7 +148,7 @@ function _buildCardHtml(plan, draggable) {
     const projectBadge = plan.project_name
         ? `<span class="card-project"><i data-lucide="folder" class="icon icon-xs"></i> ${escapeHtml(plan.project_name)}</span>`
         : '';
-    const cockpitUrl = buildCopilotUrl(plan.id, plan.title);
+    const cockpitUrl = buildCopilotUrl(plan.id, plan.title, plan.project_name || filters.project || '');
     const detailUrl = buildPlanDetailUrl(plan);
     const projectWorkspaceUrl = plan.project_name
         ? `/project/${encodeURIComponent(plan.project_name)}`
@@ -373,6 +376,9 @@ function statusLabel(status) {
 // === Filter ===
 function setFilter(key, value) {
     filters[key] = value;
+    if (key === 'project' && value && typeof setActiveProjectContext === 'function') {
+        setActiveProjectContext(value);
+    }
 
     if (key === 'status') {
         document.querySelectorAll('.filter-btn[data-filter="status"]').forEach(btn => {
@@ -395,8 +401,12 @@ function slugifyPlanTitle(text) {
         .replace(/^-+|-+$/g, '') || 'plan';
 }
 
-function buildCopilotUrl(planId, planTitle) {
-    return `/copilot?plan_id=${encodeURIComponent(planId)}&plan=${encodeURIComponent(slugifyPlanTitle(planTitle))}`;
+function buildCopilotUrl(planId, planTitle, projectName) {
+    var url = `/copilot?plan_id=${encodeURIComponent(planId)}&plan=${encodeURIComponent(slugifyPlanTitle(planTitle))}`;
+    if (projectName) {
+        url += `&project=${encodeURIComponent(projectName)}`;
+    }
+    return url;
 }
 
 // === Sync ===

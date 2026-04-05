@@ -10,6 +10,20 @@ let _activeRunId = null;
 // --- Init ---
 
 document.addEventListener('DOMContentLoaded', async () => {
+    const activeProject = typeof getActiveProjectContext === 'function' ? getActiveProjectContext() : '';
+    const projectFilter = document.getElementById('evalFilterProject');
+    const projectInput = document.getElementById('evalProjectId');
+    if (activeProject) {
+        if (projectFilter) projectFilter.value = activeProject;
+        if (projectInput && !projectInput.value) projectInput.value = activeProject;
+    }
+    if (projectFilter) {
+        projectFilter.addEventListener('change', function() {
+            if (projectFilter.value && typeof setActiveProjectContext === 'function') {
+                setActiveProjectContext(projectFilter.value);
+            }
+        });
+    }
     await loadCriteria();
     await loadRuns();
 
@@ -54,6 +68,9 @@ function renderScoreInputs(containerId, criteria) {
 async function loadRuns() {
     const projectFilter = document.getElementById('evalFilterProject');
     const projectId = projectFilter ? projectFilter.value : '';
+    if (projectId && typeof setActiveProjectContext === 'function') {
+        setActiveProjectContext(projectId);
+    }
     const url = projectId ? `/api/eval/runs?project_id=${encodeURIComponent(projectId)}` : '/api/eval/runs';
 
     try {
@@ -134,7 +151,7 @@ function updateKPIs(runs) {
 function populateProjectFilter(runs) {
     const select = document.getElementById('evalFilterProject');
     if (!select) return;
-    const current = select.value;
+    const current = select.value || (typeof getActiveProjectContext === 'function' ? getActiveProjectContext() : '');
     const projects = [...new Set(runs.map(r => r.project_id).filter(Boolean))].sort();
     select.innerHTML = '<option value="">Alle Projekte</option>' +
         projects.map(p => `<option value="${escapeHtml(p)}" ${p === current ? 'selected' : ''}>${escapeHtml(p)}</option>`).join('');
@@ -176,6 +193,9 @@ async function submitEvalRun() {
         if (!scoresB.length) { alert('Scores fuer Model B erforderlich.'); return; }
         body.model_b = modelB;
         body.scores_b = scoresB;
+    }
+    if (body.project_id && typeof setActiveProjectContext === 'function') {
+        setActiveProjectContext(body.project_id);
     }
 
     try {

@@ -15,6 +15,7 @@
 {% block head_extra %}
 <link rel="stylesheet" href="/static/css/documents.css">
 <link rel="stylesheet" href="/static/css/documents-extras.css">
+<link rel="stylesheet" href="/static/css/project-overview.css">
 <link rel="stylesheet" href="/static/css/project-detail.css">
 <link rel="stylesheet" href="/static/css/project-planning.css">
 <link rel="stylesheet" href="/static/css/sessions-list.css">
@@ -28,13 +29,20 @@
         <div class="subtitle" id="projectSubtitle">Loading project information...</div>
     </div>
 
+    <section class="project-overview-cards" id="projectOverviewCards">
+        <div class="project-overview-loading">
+            <div class="spinner"></div>
+            <span>Loading project overview...</span>
+        </div>
+    </section>
+
     <!-- Risk Radar Panel (Sprint 10.5 - vor den Tabs) -->
     <div class="risk-radar-panel" id="riskRadarPanel" style="display:none"></div>
 
     <!-- Main Tabs -->
     <div class="project-tabs">
         <button class="project-tab active" onclick="switchProjectTab('overview')">
-            <i data-lucide="layout-dashboard" class="icon icon-sm"></i> Overview
+            <i data-lucide="layout-dashboard" class="icon icon-sm"></i> Details
         </button>
         <button class="project-tab" onclick="switchProjectTab('plans')">
             <i data-lucide="clipboard-list" class="icon icon-sm"></i> Planning
@@ -61,7 +69,7 @@
     </div>
 
     <div class="project-body">
-        <!-- Tab: Overview -->
+        <!-- Tab: Details -->
         <div class="project-tab-content active" id="ptab_overview">
             <div class="overview-layout">
                 <div class="project-info-section" id="projectBody">
@@ -220,6 +228,7 @@
 <script>const PROJECT_NAME = "{{ project_name }}";</script>
 <script src="/static/js/project-planning.js"></script>
 <script src="/static/js/project-governance.js"></script>
+<script src="/static/js/project-overview-cards.js"></script>
 <script src="/static/js/project-detail.js"></script>
 <script src="/static/js/file-heatmap.js"></script>
 

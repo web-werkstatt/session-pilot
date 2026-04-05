@@ -58,6 +58,14 @@ function getRelationBadges(projectName) {
     return `<span class="relation-badges">${badges}</span>`;
 }
 
+function renderProjectFunctionText(value) {
+    if (value === null || value === undefined || value === '') return '-';
+    var div = document.createElement('div');
+    div.innerHTML = String(value);
+    var text = (div.textContent || div.innerText || '').replace(/\s+/g, ' ').trim();
+    return text || '-';
+}
+
 function renderProject(proj, isNew) {
     const tr = document.createElement('tr');
     tr.dataset.group = proj.group || '';
@@ -242,7 +250,7 @@ function renderProject(proj, isNew) {
 
     tr.innerHTML = `
         <td class="project-name"><span class="pn-icons">${favBtn}</span><span class="pn-text">${activityDot}${namePrefix}${isNew ? '<span class="badge badge-new">NEU</span> ' : ''}${displayName}${typeBadge}${versionBadge}${policyBadge}${branchBadge}${portWarnBadge}${githubBadge}${ciBadge}${healthBadge}${relationBadges}</span></td>
-        <td class="project-function">${proj.function || '-'}${metaInfo}</td>
+        <td class="project-function">${renderProjectFunctionText(proj.function)}${metaInfo}</td>
         <td>${getGroupBadge(proj.group)}</td>
         <td>${getPriorityBadge(proj.priority)}</td>
         <td>${getDeadlineBadge(proj.deadline)}</td>

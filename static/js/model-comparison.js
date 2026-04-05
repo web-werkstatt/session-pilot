@@ -263,6 +263,9 @@ function setPeriod(period) {
 
 function setProject(project) {
     _project = project;
+    if (_project && typeof setActiveProjectContext === 'function') {
+        setActiveProjectContext(_project);
+    }
     loadModelComparison();
 }
 
@@ -284,10 +287,14 @@ async function populateProjectFilter() {
             opt.textContent = name;
             sel.appendChild(opt);
         });
+        if (_project) sel.value = _project;
     } catch (e) { /* ignore */ }
 }
 
 document.addEventListener('DOMContentLoaded', function() {
+    if (typeof getActiveProjectContext === 'function') {
+        _project = getActiveProjectContext() || '';
+    }
     populateProjectFilter();
     loadModelComparison();
 });

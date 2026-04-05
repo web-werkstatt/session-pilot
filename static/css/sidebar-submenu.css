@@ -1,0 +1,59 @@
+.nav-subsection { margin-bottom: 4px; }
+
+.nav-subsection-head {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.nav-subsection-link {
+    flex: 1;
+}
+
+.nav-subsection-toggle-btn {
+    width: 32px;
+    min-width: 32px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-md);
+    color: rgba(255, 255, 255, 0.58);
+    cursor: pointer;
+    transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.nav-subsection-toggle-btn:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-secondary);
+}
+
+.nav-subsection-chevron {
+    transition: transform var(--transition-fast), color var(--transition-fast);
+}
+
+.nav-subsection-toggle-btn[aria-expanded="true"] .nav-subsection-chevron {
+    transform: rotate(180deg);
+    color: rgba(255, 255, 255, 0.72);
+}
+
+.nav-submenu {
+    display: none;
+    padding: 2px 0 4px;
+}
+
+.nav-submenu.is-open {
+    display: block;
+}
+
+.nav-item--sub {
+    margin-left: 24px;
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.62);
+}
+
+.nav-item--sub.active {
+    color: #f4f8ff;
+}

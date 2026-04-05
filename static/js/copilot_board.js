@@ -95,7 +95,7 @@ function switchPlan(planId, planTitle) {
 function _loadSections() {
     api.get(_buildMarkerApiUrl())
         .then(function(data) {
-            allSections = (data.markers || []).map(_normalizeMarker);
+            allSections = _filterMarkersForWorkspace((data.markers || []).map(_normalizeMarker));
             document.getElementById('loading').style.display = 'none';
             if (allSections.length === 0) {
                 document.getElementById('sectionsBoard').style.display = 'none';
@@ -111,6 +111,23 @@ function _loadSections() {
         .catch(function() {
             document.getElementById('loading').innerHTML = '<div class="error">Fehler beim Laden</div>';
         });
+}
+
+function _filterMarkersForWorkspace(markers) {
+    var items = Array.isArray(markers) ? markers.slice() : [];
+    if (!_planSections.length || !_planInfo) return items;
+
+    var planTitle = _normalizeCompareText(_planInfo.title || '');
+    return items.filter(function(marker) {
+        var hasStructureTag = !!((marker.sprint_tag || '').trim() || (marker.spec_tag || '').trim());
+        if (hasStructureTag) return true;
+
+        var markerTitle = _normalizeCompareText(marker.titel || '');
+        var markerPlanId = String(marker.plan_id || '');
+        var currentPlanId = String(_currentMarkerPlanId || PLAN_ID || '');
+        var looksLikeGenericPlanMarker = markerPlanId === currentPlanId && markerTitle && planTitle && markerTitle === planTitle;
+        return !looksLikeGenericPlanMarker;
+    });
 }
 
 /* === Progress Bar === */

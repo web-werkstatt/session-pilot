@@ -1,8 +1,8 @@
 # Projekt-Dashboard - Naechste Session
 
 > **Letzte Aktualisierung:** 2026-04-05
-> **Status:** Sprint PX ist im Repo funktional fertig umgesetzt; zusaetzlich ist die Projekt-Discovery fuer `project_dashboard` jetzt als persistente Settings-Option im Dashboard steuerbar, der Plans-Detail-500er auf aelteren DB-Schemas ist serverseitig behoben, Plan-Details koennen jetzt ueber eine eigene Seite mit Tabs statt nur per Modal geoeffnet werden, und Sprint QR ist mit Session 1 bis 3 im UI umgesetzt: `Planning` ist der Projekteinstieg, die Hierarchie `Plan -> Sprint -> Task/Spec` wird im Projekt gerendert und ein operatives Detailpanel fuer `Spec` und `Task` ist angebunden
-> **Naechste Aufgabe:** Session 4 von Sprint QR umsetzen: Session-Zuordnung technisch und visuell an die operative Ebene haengen
+> **Status:** Sprint PX ist im Repo funktional fertig umgesetzt; zusaetzlich ist die Projekt-Discovery fuer `project_dashboard` jetzt als persistente Settings-Option im Dashboard steuerbar, der Plans-Detail-500er auf aelteren DB-Schemas ist serverseitig behoben, Plan-Details koennen jetzt ueber eine eigene Seite mit Tabs statt nur per Modal geoeffnet werden, und Sprint QR ist mit Session 1 bis 4 im UI umgesetzt: `Planning` ist der Projekteinstieg, die Hierarchie `Plan -> Sprint -> Task/Spec` wird im Projekt gerendert, das operative Detailpanel ist angebunden, und Sessions haengen jetzt sichtbar an Marker-, Task-, Spec- und Sprint-Kontexten; ausserdem ist mit Sprint QS jetzt ein separater Architekturpfad fuer die DB-first Ablosung verteilter JSON-Zustandsdaten dokumentiert
+> **Naechste Aufgabe:** Den neuen QR-Session-Pfad im Browser gegen echte Projektdaten validieren und danach entscheiden, ob Phase 1 von Sprint QS oder die Reduktion des separaten Session-Tabs als naechster Schritt folgt
 
 ---
 
@@ -771,38 +771,96 @@
 
 ---
 
-## Naechste Session — Empfohlene Vorgehensweise
+## Naechste Session
+- Live-Validierung des modularisierten Copilot-Flows gegen echte Plaene: Plan-Switcher, `Sprint -> Marker`, Panel-Tabs, Execution-Rating, Marker-Aktivierung, Close-/Write-back
+- Die neue QR-Session-Historie im Projekt-Planning gegen echte Daten pruefen: Marker, gleichnamige Markdown-Tasks, Spec-Aggregation, Session-Detail-Link
+- Alternativ oder direkt danach Phase 1 von Sprint QS beginnen: DB-Zielstruktur fuer `notifications`, `favorites`, `relations`, `ideas` und `dashboard_settings` anlegen und Root-JSON-Stores schrittweise DB-first machen
+- Optional danach den separaten Projekt-Tab `Session History` im Sinne von Sprint QR weiter reduzieren oder sekundarer rahmen
 
-### OPTION A: Copilot UI gezielt verbessern
-1. Referenzbild nochmal studieren: `upload/ChatGPT Image 3. Apr. 2026, 11_49_55.png`
-2. Marker-Board im Browser gegen echte `handoff.md` eines Projekts pruefen
-3. Drag-&-Drop-Write-back und `Vorschlag uebernehmen` einmal live auf Port 5055 gegenchecken
-4. AI-Task-Button fachlich auf Marker-Modell ausrichten oder bewusst deaktivieren
-5. Weitere Copilot-Bausteine nur selektiv auf `ui-*` Komponenten migrieren
-6. Gesamteindruck auf Linear/Vercel-Niveau bringen
+## Kontext
+- letzter Feature-Commit: `bbaf112` `Feature: modularize copilot markdown workflow and session detail`
+- letzter Doku-Commit: `372720d` `Dokumentation: update sprint commit hashes`
+- `origin/main` ist aktuell, `project-dashboard` lief beim Abschluss sauber
 
-### OPTION B: Auf letzten stabilen Stand zuruecksetzen
-- `git diff HEAD` zeigt alle ungestagten Aenderungen
-- Betroffene Dateien: copilot_board.html, copilot.css, copilot_board.js, copilot_routes.py, copilot_landing.html, copilot_landing.css
-- Zuruecksetzen und dann sauber neu anfangen
-
-### Offene Aufgaben (aus vorheriger Session)
-- [ ] Copilot-Workflow: Perplexity als Copilot einsetzen
-- [ ] LLM-agnostischer Connector (llm_connector.py)
-- [ ] Pre-Commit Zeilenlimits fixen (db_service.py 526Z, governance_service.py 519Z)
-- [ ] 6x bare except fixen
-- [ ] 5x f-strings ohne Platzhalter (F541)
-- [ ] 7x unused global Declarations (F824)
-
-### Nicht vergessen
-- **Referenzbild:** `upload/ChatGPT Image 3. Apr. 2026, 11_49_55.png`
-- **Release-Skill:** `sessionpilot-release`
-- **Level-Architektur:** /plans = Level 1, /copilot?plan_id=X = Level 2
-- **Handoff-Service:** project_handoff_service.py
-- **User-Erwartung:** Professionell, reduziert, dark, elegant — KEINE Marketing-UI, KEINE generische Kanban-Optik
+## Lokal offen
+- `handoff.md`
+- `.codex`
+- `static/uploads/`
 
 ## Update 2026-04-05
-- Changed: Den restlichen Copilot-/Markdown-Block modular repo-faehig gemacht; Marker-APIs aus `routes/copilot_routes.py` in `routes/copilot_marker_routes.py` ausgelagert, `services/copilot_marker_service.py` in Format-/Import-/Runtime-Module getrennt, das Copilot-Board in `shared + board + panel` JS-Dateien aufgeteilt und die grossen Copilot-Tests in mehrere kleinere Suites zerlegt, damit alle geaenderten Dateien unter der 500-Zeilen-Grenze bleiben.
-- Files: `routes/__init__.py`, `routes/copilot_routes.py`, `routes/copilot_marker_routes.py`, `services/copilot_marker_service.py`, `services/copilot_marker_format.py`, `services/copilot_marker_import_flow.py`, `templates/copilot_board.html`, `static/js/copilot-board-shared.js`, `static/js/copilot_board.js`, `static/js/copilot-board-panel.js`, `tests/test_copilot_core.py`, `tests/test_copilot_marker_activation_routes.py`, `tests/test_copilot_marker_api_routes.py`, `tests/test_copilot_marker_service_core.py`, `tests/test_copilot_marker_service_flow.py`
-- Verify: `python3 -m py_compile routes/copilot_routes.py routes/copilot_marker_routes.py services/copilot_marker_service.py services/copilot_marker_format.py services/copilot_marker_import_flow.py tests/test_copilot_core.py tests/test_copilot_marker_activation_routes.py tests/test_copilot_marker_api_routes.py tests/test_copilot_marker_service_core.py tests/test_copilot_marker_service_flow.py`, `node --check static/js/copilot-board-shared.js`, `node --check static/js/copilot_board.js`, `node --check static/js/copilot-board-panel.js`, `pytest tests/test_copilot_core.py tests/test_copilot_marker_activation_routes.py tests/test_copilot_marker_api_routes.py tests/test_copilot_marker_service_core.py tests/test_copilot_marker_service_flow.py tests/test_markdown_routine_service.py tests/test_markdown_tag_migration.py tests/test_marker_workflow_consistency.py -q`
-- Next: Browser-/Live-Validierung fuer den modularisierten Copilot-Flow gegen echte Plaene und danach Session 4 von Sprint QR fuer die Session-Zuordnung an `Task`/`Spec`
+- Changed: Neuen Architektur-Sprint fuer DB-first Konsolidierung verteilter JSON-Zustandsdaten geplant und im Master-Plan verankert
+- Files: `sprints/sprint-qs-db-first-state-consolidation.md`, `sprints/master-plan-2026-04-01.md`, `next-session.md`
+- Verify: Inhaltlich gegen aktuelle Repo-Aufteilung `DB + Root-JSON + Markdown` geprueft und Migrationsreihenfolge fuer einfache JSON-Stores vor Marker-Runtime-State festgelegt
+- Next: Entscheiden, ob zuerst QR Session 4 oder QS Phase 1 umgesetzt wird
+
+## Update 2026-04-05
+- Changed: Sprint QR Session 4 umgesetzt; der Planning-Service liefert jetzt Session-Summaries aus `last_session`, Marker/Tasks/Specs/Sprints zeigen ihre Session-Historie im Detailpanel, und Sessions koennen direkt aus dem Projekt-Planning geoeffnet werden
+- Files: `services/plan_structure_service.py`, `static/js/project-planning.js`, `static/css/project-planning.css`, `tests/test_plan_structure_service.py`, `next-session.md`, `sprints/master-plan-2026-04-01.md`
+- Verify: `python3 -m py_compile services/plan_structure_service.py`, `node --check static/js/project-planning.js`, `pytest tests/test_plan_structure_service.py -q`
+- Next: Im Browser mit echten Projekt-/Marker-Daten pruefen, ob die best-effort Task-Zuordnung ueber Markertitel robust genug ist oder spaeter eine explizitere Task-ID braucht
+
+## Update 2026-04-05
+- Changed: Live-Validierung fuer QR Session 4 nachgezogen und den Planning-Read-Pfad um einen klar gekennzeichneten Fallback auf echte Projektsessions erweitert, damit das Detailpanel auch bei leeren `last_session`-Feldern im aktuellen `handoff.md` nutzbaren Session-Kontext zeigt
+- Files: `services/plan_structure_service.py`, `static/js/project-planning.js`, `tests/test_plan_structure_service.py`, `next-session.md`
+- Verify: lokaler Restart `sudo systemctl restart project-dashboard`; Live-API `GET /api/projects/project_dashboard/planning` liefert jetzt `recent_sessions`; Bestand geprueft: `handoff.md` hat aktuell 8 Marker und 0 gesetzte `last_session`
+- Next: Entweder Marker-Write-back kuenftig konsequent mit `last_session` fuellen oder einen expliziten Backfill fuer bestehende Marker planen, damit die Session-Historie von Fallback auf echte Task-Verknuepfung wechselt
+
+## Update 2026-04-05
+- Changed: `last_session`-Kontinuitaet umgesetzt; Handoff-Regeneration bewahrt jetzt bestehende Marker-Runtime-Felder, und ein neuer Backfill zieht leere `last_session`-Felder aus `project_plans.session_uuid` nach
+- Files: `services/project_handoff_service.py`, `services/copilot_marker_service.py`, `scripts/backfill_marker_last_sessions.py`, `tests/test_project_handoff.py`, `tests/test_copilot_marker_service_flow.py`, `handoff.md`, `next-session.md`, `sprints/master-plan-2026-04-01.md`
+- Verify: `python3 -m py_compile services/copilot_marker_service.py services/project_handoff_service.py scripts/backfill_marker_last_sessions.py`, `pytest tests/test_copilot_marker_service_flow.py tests/test_project_handoff.py -q`; echter Backfill `python3 scripts/backfill_marker_last_sessions.py --project project_dashboard` ergab `updated: 7` bei `8` Markern
+- Next: Den verbleibenden Marker ohne `last_session` pruefen und entscheiden, ob dafuer bewusst kein Session-Link existiert oder ein spezieller Fallback gebraucht wird
+
+## Update 2026-04-05
+- Changed: Hauptnavigation fachlogisch weiter vereinheitlicht; `Plan Index` heisst jetzt `Planning`, `Copilot` wird in der primaeren Navigation als `AI Workspace` gefuehrt, und `Sessions` wurde auf `Activity` umbenannt
+- Files: `templates/base.html`, `templates/plans.html`, `templates/plan_detail.html`, `templates/copilot_landing.html`, `templates/copilot_board.html`, `templates/copilot.html`, `templates/sessions.html`, `templates/session_detail.html`, `templates/partials/index_modals.html`, `static/js/base.js`, `next-session.md`, `sprints/master-plan-2026-04-01.md`
+- Verify: `node --check static/js/base.js`; Sichttexte in Sidebar, Breadcrumbs, Plan-Backlink und Command Palette vereinheitlicht; technische Routen wie `/copilot`, `/sessions` und `?tab=gitea` bleiben unveraendert
+- Next: Restliche sichtbare Fachbegriffe rund um `Claude Sessions` und `Copilot` in Widgets, Landing-Texte und Detailmodule angleichen, falls die neue Navigationssprache durchgaengig ueber alle Screens gelten soll
+
+## Update 2026-04-05
+- Changed: Den redundanten Unterpunkt `Projects` entfernt; der Bereichsheader `Projects` oeffnet jetzt direkt die Hauptansicht, waehrend der Chevron separat nur das Submenue fuer `New Project`, `Overview` und `Repository Sources` schaltet
+- Files: `templates/base.html`, `static/css/layout.css`, `next-session.md`, `sprints/master-plan-2026-04-01.md`
+- Verify: Sidebar-Markup und CSS gegen bestehende `showTab('projects')`-Logik geprueft; keine Routen- oder JS-Logik fuer Tabs geaendert
+- Next: Im Browser kurz pruefen, ob sich Klick auf `Projects` und Klick auf den Chevron im Desktop- und Mobile-Sidebar-Verhalten klar getrennt anfuehlen
+
+## Update 2026-04-05
+- Changed: Projektseite fachlich geschaerft; der Projekt-Tab `Overview` heisst jetzt `Details`, und oberhalb der Tabs rendert die Seite jetzt eine kartenbasierte Projektuebersicht fuer Plan-Fortschritt, Sprint-Plans, Quality-Issues und aktuelle Activity
+- Files: `templates/project_detail.html`, `static/js/project-detail.js`, `static/css/project-detail.css`, `next-session.md`, `sprints/master-plan-2026-04-01.md`
+- Verify: `node --check static/js/project-detail.js`; die neuen Cards lesen vorhandene Daten nur aus bestehenden APIs fuer Planning, Quality und Sessions, ohne neue Backend-Endpunkte
+- Next: Im Browser auf echten Projekten pruefen, ob die Kartenreihenfolge und die Auswahl der Kennzahlen fachlich passen oder ob statt Quality-Issues eher Repo-Issues/GitHub-Issues prominenter gezeigt werden sollen
+
+## Update 2026-04-05
+- Changed: Die neue Projektuebersicht von reiner Statistik auf handlungsfuehrende `What Now`-Karten umgebaut; jede Karte formuliert jetzt eine Empfehlung und fuehrt direkt nach `Details`, `Planning`, `Quality` oder `Activity`
+- Files: `static/js/project-detail.js`, `static/css/project-detail.css`, `next-session.md`, `sprints/master-plan-2026-04-01.md`
+- Verify: `node --check static/js/project-detail.js`; die Karten nutzen weiter nur bestehende APIs, aber priorisieren jetzt naechste Aktionen statt nackter KPI-Ansammlung
+- Next: Im laufenden UI pruefen, ob die Hauptkarte fachlich die richtige Prioritaet waehlt oder ob `Planning` immer der Default-Einstieg bleiben soll
+
+## Update 2026-04-05
+- Changed: Den primaeren KI-Arbeitsbereich sprachlich wieder auf `Cockpit` zurueckgezogen; Sidebar, Breadcrumbs und Seitentitel zeigen jetzt wieder denselben Fachbegriff statt `AI Workspace`
+- Files: `templates/base.html`, `templates/copilot_landing.html`, `templates/copilot_board.html`, `templates/copilot.html`, `next-session.md`, `sprints/master-plan-2026-04-01.md`
+- Verify: Reststellen auf sichtbares `AI Workspace` in Templates und ausgelieferten UI-Texten geprueft; technische Route `/copilot` bleibt unveraendert
+- Next: Nach dem Restart kurz live pruefen, ob `Cockpit` in Sidebar und auf allen Copilot-Seiten konsistent erscheint
+
+## Update 2026-04-05
+- Changed: Projektkontext im Browser persistierbar gemacht; Projektseiten und projektbezogene Plan-/Cockpit-Einstiege speichern jetzt das aktive Projekt, und das `Cockpit` befuellt das Projektfeld beim Oeffnen automatisch wieder
+- Files: `static/js/base.js`, `static/js/copilot.js`, `static/js/project-detail.js`, `static/js/project-planning.js`, `static/js/plan-detail.js`, `static/js/plans.js`, `next-session.md`, `sprints/master-plan-2026-04-01.md`
+- Verify: `node --check static/js/base.js static/js/copilot.js static/js/project-detail.js static/js/project-planning.js static/js/plan-detail.js static/js/plans.js`; projektbezogene `Cockpit`-Links tragen jetzt zusaetzlich `project=` im Query-String mit
+- Next: Live pruefen, ob das Projektfeld im `Cockpit` nach Wechseln zwischen Projektseite, Plan-Detail und globalem Plans-Index stabil auf dem letzten aktiven Projekt bleibt
+
+## Update 2026-04-05
+- Changed: Bewussten Testmarker fuer die Cockpit-Kontrolle in `project_dashboard` gesetzt
+- Files: `handoff.md`, `next-session.md`
+- Verify: Marker `test-cockpit-2026-04-05` mit Titel `TESTMARKER: Copilot-Kontrolle` auf `plan_id=142` angelegt; Gate ist offen (`is_activatable: true`)
+- Next: Im Cockpit Plan `142` oeffnen und pruefen, wie Sichtbarkeit, Aktivierung, Marker-Kontext und Statuswechsel auf diesem Testmarker reagieren
+
+## Update 2026-04-05
+- Changed: Den aktiven Projektkontext jetzt auch auf globalen Filterseiten als Default eingezogen; `Planning`, `Sessions`, `Timesheets` und `Model Comparison` uebernehmen jetzt das zuletzt aktive Projekt, solange kein expliziter URL-Parameter gesetzt ist
+- Files: `static/js/plans.js`, `static/js/sessions2.js`, `static/js/timesheets.js`, `static/js/model-comparison.js`, `next-session.md`
+- Verify: `node --check static/js/plans.js static/js/sessions2.js static/js/timesheets.js static/js/model-comparison.js`; `Planning` liest jetzt `filters.project` aus dem aktiven Projektkontext, die anderen Seiten setzen bzw. lesen ihre Projektfilter entsprechend
+- Next: Live pruefen, ob sich die Default-Filter fachlich richtig anfuehlen oder ob einzelne globale Seiten bewusst immer ungefiltert starten sollen
+
+## Update 2026-04-05
+- Changed: Rest-Audit fuer projektbezogenen Kontext nachgezogen; `Session Detail` setzt jetzt das Session-Projekt als aktiven Kontext, `Model Eval` uebernimmt und speichert den Projektkontext, und die `Cockpit`-Landing fuehrt aktive Plans projektbezogen ins Cockpit
+- Files: `static/js/session-detail.js`, `static/js/model_eval.js`, `templates/copilot_landing.html`, `next-session.md`
+- Verify: `node --check static/js/session-detail.js static/js/model_eval.js`; die `Cockpit`-Landing baut `project=` jetzt in aktive Plan-Links ein
+- Next: Live einmal quer pruefen, ob der Projektkontext nach `Project -> Planning -> Plan Detail -> Cockpit -> Sessions -> Model Eval` stabil gleich bleibt

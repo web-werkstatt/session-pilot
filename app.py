@@ -82,7 +82,10 @@ def toggle_favorite():
 
 @app.route('/')
 def index():
-    return render_template('index.html', active_page='dashboard')
+    dashboard_tab = request.args.get('tab', 'projects').strip().lower()
+    if dashboard_tab not in ('projects', 'widgets', 'gitea'):
+        dashboard_tab = 'projects'
+    return render_template('index.html', active_page='dashboard', dashboard_tab=dashboard_tab)
 
 
 @app.route('/containers')

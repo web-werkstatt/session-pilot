@@ -3,6 +3,7 @@ from services.copilot_marker_service import (
     Marker,
     MarkerActivationError,
     activate_marker,
+    backfill_marker_last_sessions,
     buildsuggestion,
     close_marker,
     is_activatable,
@@ -164,3 +165,31 @@ class TestCopilotMarkerServiceFlow:
         marker = close_marker(str(handoff_path), "002", project_id="demo", status="done")
         assert marker.status == "done"
         assert context_path.exists()
+
+    def test_backfill_marker_last_sessions_uses_project_plan_session_uuid(self, tmp_path, monkeypatch):
+        project_dir = tmp_path / "demo"
+        project_dir.mkdir()
+        handoff_path = project_dir / "handoff.md"
+        monkeypatch.setattr(copilot_marker_service, "PROJECTS_DIR", str(tmp_path))
+        _write_marker(str(handoff_path), Marker(
+            marker_id="145",
+            titel="Plan Marker",
+            plan_id="145",
+            status="todo",
+            ziel="Ziel",
+            naechster_schritt="Schritt",
+            prompt="Prompt",
+            checks=["Check eins"],
+        ))
+
+        def fake_execute(sql, params=None, fetch=False, fetchone=False):
+            if "FROM project_plans" in sql:
+                return [{"id": 145, "session_uuid": "sess_plan_145"}]
+            return []
+
+        monkeypatch.setattr("services.copilot_marker_service.execute", fake_execute)
+
+        result = backfill_marker_last_sessions("demo")
+
+        assert result["updated"] == 1
+        assert parse_markers(str(handoff_path))[0].last_session == "sess_plan_145"

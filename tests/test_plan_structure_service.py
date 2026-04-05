@@ -54,6 +54,7 @@ class TestPlanStructureService:
         assert sprint["specs"][0]["spec_tag"] == "#spec-usage-reports"
         assert len(sprint["specs"][0]["markers"]) == 1
         assert sprint["specs"][0]["markers"][0]["marker_id"] == "m2"
+        assert sprint["specs"][0]["tasks"][0]["title"] == "Report Task"
 
     def test_derive_tagged_plan_sections_falls_back_to_plan_id_when_marker_has_no_sprint_tag(self):
         content = (
@@ -127,6 +128,7 @@ class TestPlanStructureService:
             '  "naechster_schritt": "Schritt",\n'
             '  "prompt": "Prompt",\n'
             '  "checks": ["Check"],\n'
+            '  "last_session": "sess-123",\n'
             '  "sprint_tag": "#sprint-p3",\n'
             '  "spec_tag": "#spec-usage-reports"\n'
             "}\n"
@@ -168,20 +170,35 @@ class TestPlanStructureService:
             "created_at": None,
             "updated_at": None,
         }]
+        session_rows = [{
+            "session_uuid": "sess-123",
+            "started_at": None,
+            "duration_ms": 120000,
+            "model": "gpt-5.4",
+            "outcome": "ok",
+            "slug": "demo-run",
+        }]
 
         def fake_execute(sql, params=None, fetch=False, fetchone=False):
             if "FROM project_plans" in sql:
                 return rows
+            if "FROM sessions" in sql:
+                return session_rows
             return []
 
         monkeypatch.setattr("services.plan_structure_service.ensure_plan_structure_schema", lambda: None)
+        monkeypatch.setattr("services.plan_structure_service.ensure_session_review_schema", lambda: None)
         monkeypatch.setattr("services.plan_structure_service.execute", fake_execute)
 
         result = get_project_planning_hierarchy("demo", str(handoff_path))
 
         assert len(result) == 1
         assert result[0]["plan"]["title"] == "Master Plan"
+        assert result[0]["recent_sessions"][0]["session_uuid"] == "sess-123"
         assert result[0]["stats"]["sprint_count"] == 1
         assert result[0]["sprints"][0]["title"] == "Sprint P3 - Prompt Chain"
         assert result[0]["sprints"][0]["specs"][0]["markers"][0]["marker_id"] == "m1"
         assert result[0]["sprints"][0]["specs"][0]["markers"][0]["ziel"] == "Ziel"
+        assert result[0]["sprints"][0]["specs"][0]["markers"][0]["sessions"][0]["session_uuid"] == "sess-123"
+        assert result[0]["sprints"][0]["specs"][0]["sessions"][0]["model"] == "gpt-5.4"
+        assert result[0]["sprints"][0]["specs"][0]["tasks"][0]["sessions"][0]["session_uuid"] == "sess-123"

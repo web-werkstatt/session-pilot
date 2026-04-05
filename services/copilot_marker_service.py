@@ -231,3 +231,50 @@ def close_marker(handoff_path, marker_id, *, project_id=None, status=None, naech
                 os.remove(resolved_context_path)
         return marker
     raise MarkerCloseError("marker_not_found")
+
+
+def backfill_marker_last_sessions(project_id):
+    project_id = str(project_id or "").strip()
+    if not project_id:
+        raise ValueError("project_id ist erforderlich")
+    handoff_path = _get_handoff_path(project_id)
+    if not os.path.exists(handoff_path):
+        raise FileNotFoundError("handoff_missing")
+
+    markers = parse_markers(handoff_path)
+    if not markers:
+        return {"project_id": project_id, "handoff_path": handoff_path, "updated": 0, "markers_total": 0}
+
+    plan_rows = execute(
+        """SELECT id, session_uuid
+           FROM project_plans
+           WHERE project_name = %s
+             AND session_uuid IS NOT NULL
+             AND TRIM(session_uuid) != ''""",
+        (project_id,),
+        fetch=True,
+    ) or []
+    session_by_plan_id = {
+        str(row.get("id")): str(row.get("session_uuid") or "").strip()
+        for row in plan_rows
+        if str(row.get("session_uuid") or "").strip()
+    }
+
+    updated = 0
+    for marker in markers:
+        if str(marker.last_session or "").strip():
+            continue
+        inferred_session = session_by_plan_id.get(str(marker.plan_id or "").strip())
+        if not inferred_session:
+            continue
+        marker.last_session = inferred_session
+        marker.updated_at = datetime.now(timezone.utc).isoformat()
+        _write_marker(handoff_path, marker)
+        updated += 1
+
+    return {
+        "project_id": project_id,
+        "handoff_path": handoff_path,
+        "updated": updated,
+        "markers_total": len(markers),
+    }

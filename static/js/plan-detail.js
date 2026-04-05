@@ -37,6 +37,9 @@ function loadPlanDetailPage() {
 function renderPlanDetailPage() {
     var plan = PLAN_DETAIL_DATA || {};
     var wf = PLAN_WORKFLOW_DATA || {};
+    if (plan.project_name && typeof setActiveProjectContext === 'function') {
+        setActiveProjectContext(plan.project_name);
+    }
     document.getElementById('planDetailLoading').style.display = 'none';
     document.getElementById('planDetailShell').style.display = 'block';
 
@@ -159,7 +162,12 @@ function downloadPlanHandoff() {
 }
 
 function buildPlanDetailCopilotUrl(planId, planTitle) {
-    return '/copilot?plan_id=' + encodeURIComponent(planId) + '&plan=' + encodeURIComponent(slugifyPlanDetailTitle(planTitle));
+    var url = '/copilot?plan_id=' + encodeURIComponent(planId) + '&plan=' + encodeURIComponent(slugifyPlanDetailTitle(planTitle));
+    var projectName = (PLAN_DETAIL_QUERY && PLAN_DETAIL_QUERY.get('project')) || (PLAN_DETAIL_DATA && PLAN_DETAIL_DATA.project_name) || '';
+    if (projectName) {
+        url += '&project=' + encodeURIComponent(projectName);
+    }
+    return url;
 }
 
 function updateContextNavigation(plan) {

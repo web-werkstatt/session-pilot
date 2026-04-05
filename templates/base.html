@@ -44,20 +44,35 @@
             <div class="nav-section">
                 <div class="nav-label">Arbeiten</div>
                 <div class="nav-section-body">
-                    <a href="/" class="nav-item nav-item--primary {% if active_page in ['dashboard', 'projects'] %}active{% endif %}" onclick="if(window.location.pathname==='/'){event.preventDefault();if(typeof showTab==='function')showTab('projects');}">
-                        <span class="nav-icon"><i data-lucide="folder-open" class="icon"></i></span><span class="nav-text">Projects</span>
-                    </a>
+                    <div class="nav-subsection">
+                        <div class="nav-subsection-head">
+                            <a href="/?tab=projects" class="nav-item nav-item--primary nav-subsection-link {% if active_page in ['dashboard', 'scaffold'] %}active{% endif %}" onclick="if(window.location.pathname==='/' && typeof showTab==='function'){event.preventDefault();showTab('projects', this);}">
+                                <span class="nav-icon"><i data-lucide="folder-open" class="icon"></i></span><span class="nav-text">Projects</span>
+                            </a>
+                            <button class="nav-subsection-toggle-btn" type="button" onclick="toggleSidebarSubmenu('projectsSubmenu')" aria-expanded="{% if active_page in ['dashboard', 'scaffold'] %}true{% else %}false{% endif %}" aria-label="Toggle Projects submenu">
+                                <span class="nav-subsection-chevron"><i data-lucide="chevron-down" class="icon icon-xs"></i></span>
+                            </button>
+                        </div>
+                        <div class="nav-submenu {% if active_page in ['dashboard', 'scaffold'] %}is-open{% endif %}" id="projectsSubmenu">
+                            <a href="/scaffold" class="nav-item nav-item--sub {% if active_page == 'scaffold' %}active{% endif %}">
+                                <span class="nav-icon"><i data-lucide="plus-circle" class="icon"></i></span><span class="nav-text">New Project</span>
+                            </a>
+                            <a href="/?tab=widgets" class="nav-item nav-item--sub {% if active_page == 'dashboard' and dashboard_tab == 'widgets' %}active{% endif %}" onclick="if(window.location.pathname==='/' && typeof showTab==='function'){event.preventDefault();showTab('widgets', this);}">
+                                <span class="nav-icon"><i data-lucide="layout-grid" class="icon"></i></span><span class="nav-text">Overview</span>
+                            </a>
+                            <a href="/?tab=gitea" class="nav-item nav-item--sub {% if active_page == 'dashboard' and dashboard_tab == 'gitea' %}active{% endif %}" onclick="if(window.location.pathname==='/' && typeof showTab==='function'){event.preventDefault();showTab('gitea', this);}">
+                                <span class="nav-icon"><i data-lucide="git-branch" class="icon"></i></span><span class="nav-text">Repository Sources</span>
+                            </a>
+                        </div>
+                    </div>
                     <a href="/plans" class="nav-item {% if active_page == 'plans' %}active{% endif %}">
-                        <span class="nav-icon"><i data-lucide="clipboard-list" class="icon"></i></span><span class="nav-text">Plan Index</span>
+                        <span class="nav-icon"><i data-lucide="clipboard-list" class="icon"></i></span><span class="nav-text">Planning</span>
                     </a>
                     <a href="/copilot" class="nav-item nav-item--primary nav-item--copilot {% if active_page == 'copilot' %}active{% endif %}">
-                        <span class="nav-icon"><i data-lucide="message-circle" class="icon"></i></span><span class="nav-text">Copilot</span>
+                        <span class="nav-icon"><i data-lucide="message-circle" class="icon"></i></span><span class="nav-text">Cockpit</span>
                     </a>
                     <a href="/sessions" class="nav-item nav-item--primary {% if active_page == 'sessions' %}active{% endif %}">
-                        <span class="nav-icon"><i data-lucide="bot" class="icon"></i></span><span class="nav-text">Sessions</span>
-                    </a>
-                    <a href="/scaffold" class="nav-item {% if active_page == 'scaffold' %}active{% endif %}">
-                        <span class="nav-icon"><i data-lucide="plus-circle" class="icon"></i></span><span class="nav-text">New Project</span>
+                        <span class="nav-icon"><i data-lucide="bot" class="icon"></i></span><span class="nav-text">Activity</span>
                     </a>
                 </div>
             </div>
@@ -221,6 +236,7 @@
 
     <script src="/static/js/lucide.min.js"></script>
     <script src="/static/js/api.js"></script>
+    <script src="/static/js/project-context.js"></script>
     <script src="/static/js/base.js"></script>
     <script src="/static/js/notifications.js"></script>
     <script>if (typeof lucide !== 'undefined') lucide.createIcons();</script>

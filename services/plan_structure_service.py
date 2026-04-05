@@ -1,9 +1,4 @@
-"""
-Explizite Struktur fuer Plan -> Sprint-Plan -> Spec -> Marker.
-
-Markdown bleibt fuehrende Quelle, diese Services synchronisieren strukturierte
-Eintraege idempotent in sprint_plans/specs und reichern Marker-Referenzen an.
-"""
+"""Explizite Struktur fuer Plan -> Sprint-Plan -> Spec -> Marker."""
 import os
 import re
 
@@ -11,18 +6,22 @@ from services.copilot_marker_service import parse_markers
 from services.db_service import ensure_plan_structure_schema, execute
 from services.markdown_routine_service import scan_markdown_structure
 from services.path_resolver import resolve_project_path
-
+from services.plan_structure_helpers import (
+    attach_session_refs_to_markers,
+    build_task_items,
+    collect_session_summaries,
+    load_recent_project_sessions,
+    marker_summary,
+)
 def _slugify(value):
     slug = re.sub(r"[^a-z0-9]+", "-", str(value or "").strip().lower()).strip("-")
     return slug or "item"
-
 
 def _normalize_sprint_plan_id(title):
     title = str(title or "").strip()
     match = re.match(r"^Sprint\s+([A-Za-z0-9.\-]+)", title, re.IGNORECASE)
     token = match.group(1) if match else title
     return f"sprint-{_slugify(token)}"
-
 
 def _extract_heading_title(raw_title):
     parts = [part.strip() for part in re.split(r"\s+[—-]\s+", str(raw_title or "").strip()) if part.strip()]
@@ -35,7 +34,6 @@ def _extract_heading_title(raw_title):
         parts = parts[:-1]
     title = " - ".join(parts[1:]).strip() if len(parts) > 1 else sprint_label
     return sprint_label, title or sprint_label, status
-
 
 def _find_master_plan_path(project_id, master_plan_path=None):
     if master_plan_path:
@@ -53,7 +51,6 @@ def _find_master_plan_path(project_id, master_plan_path=None):
         raise FileNotFoundError("master_plan_missing")
     return candidates[-1]
 
-
 def _first_description_line(lines):
     for line in lines:
         stripped = line.strip()
@@ -63,28 +60,10 @@ def _first_description_line(lines):
     return ""
 
 
-def _marker_summary(marker):
-    return {
-        "marker_id": marker.marker_id,
-        "titel": marker.titel,
-        "status": marker.status,
-        "ziel": getattr(marker, "ziel", "") or "",
-        "naechster_schritt": getattr(marker, "naechster_schritt", "") or "",
-        "prompt": getattr(marker, "prompt", "") or "",
-        "prompt_suggestion": getattr(marker, "prompt_suggestion", "") or "",
-        "risiko": getattr(marker, "risiko", "") or "",
-        "checks": list(getattr(marker, "checks", []) or []),
-        "last_session": getattr(marker, "last_session", "") or "",
-        "execution_score": marker.execution_score,
-        "sprint_tag": getattr(marker, "sprint_tag", "") or "",
-        "spec_tag": getattr(marker, "spec_tag", "") or "",
-    }
-
-
-def derive_tagged_plan_sections(content, markers=None, source_path=""):
+def derive_tagged_plan_sections(content, markers=None, source_path="", project_id=""):
     """Leitet Plan -> Sprint -> Spec -> Marker direkt aus Markdown + Marker-Tags ab."""
     structure = scan_markdown_structure(content or "", source_path)
-    markers = markers or []
+    markers = attach_session_refs_to_markers(project_id, markers or [])
     sections = []
 
     for sprint in structure.get("sprints") or []:
@@ -104,23 +83,37 @@ def derive_tagged_plan_sections(content, markers=None, source_path=""):
         for marker in sprint_markers:
             marker_spec_tag = str(getattr(marker, "spec_tag", "") or "").strip()
             if not marker_spec_tag:
-                direct_markers.append(_marker_summary(marker))
+                direct_markers.append(marker_summary(marker))
 
         for spec in sprint.get("specs") or []:
             spec_tag = str(spec.get("spec_tag") or "").strip()
-            spec_markers = [
-                _marker_summary(marker)
+            matched_spec_markers = [
+                marker
                 for marker in sprint_markers
                 if spec_tag and str(getattr(marker, "spec_tag", "") or "").strip() == spec_tag
             ]
+            spec_markers = [
+                marker_summary(marker)
+                for marker in matched_spec_markers
+            ]
+            task_items = build_task_items(spec.get("tasks") or [], matched_spec_markers)
             specs.append({
                 "id": spec_tag or ("spec:" + re.sub(r"[^a-z0-9]+", "-", str(spec.get("title") or "").lower()).strip("-")),
                 "title": spec.get("title") or "",
                 "summary": spec.get("description") or "",
                 "spec_tag": spec_tag,
-                "tasks": list(spec.get("tasks") or []),
+                "tasks": task_items,
                 "markers": spec_markers,
+                "sessions": collect_session_summaries(
+                    [session for marker in spec_markers for session in list(marker.get("sessions") or [])],
+                    [session for task in task_items for session in list(task.get("sessions") or [])],
+                ),
             })
+        direct_task_items = build_task_items(sprint.get("tasks") or [], [
+            marker
+            for marker in sprint_markers
+            if not str(getattr(marker, "spec_tag", "") or "").strip()
+        ])
 
         sections.append({
             "id": sprint_tag or ("sprint:" + sprint_plan_id) or ("sprint-line-" + str(sprint.get("line") or len(sections) + 1)),
@@ -129,10 +122,15 @@ def derive_tagged_plan_sections(content, markers=None, source_path=""):
             "body": "\n".join(sprint.get("lines") or []).strip(),
             "plan_id": sprint_plan_id,
             "sprint_tag": sprint_tag,
-            "tasks": list(sprint.get("tasks") or []),
-            "markers": [_marker_summary(marker) for marker in sprint_markers],
+            "tasks": direct_task_items,
+            "markers": [marker_summary(marker) for marker in sprint_markers],
             "direct_markers": direct_markers,
             "specs": specs,
+            "sessions": collect_session_summaries(
+                [session for marker in direct_markers for session in list(marker.get("sessions") or [])],
+                [session for task in direct_task_items for session in list(task.get("sessions") or [])],
+                [session for spec in specs for session in list(spec.get("sessions") or [])],
+            ),
         })
 
     return sections
@@ -371,7 +369,10 @@ def get_plan_structure(project_id, handoff_path=None):
 
 def get_tagged_plan_structure(content, handoff_path=None, source_path=""):
     markers = parse_markers(handoff_path) if handoff_path and os.path.exists(handoff_path) else []
-    return derive_tagged_plan_sections(content, markers, source_path=source_path)
+    project_id = ""
+    if handoff_path and os.path.exists(handoff_path):
+        project_id = os.path.basename(os.path.dirname(handoff_path))
+    return derive_tagged_plan_sections(content, markers, source_path=source_path, project_id=project_id)
 
 
 def get_sprint_plan_detail(sprint_plan_id, handoff_path=None):
@@ -462,6 +463,7 @@ def get_project_planning_hierarchy(project_id, handoff_path=None):
         fetch=True,
     ) or []
 
+    recent_project_sessions = load_recent_project_sessions(project_id, limit=6)
     hierarchy = []
     for row in rows:
         sections = get_tagged_plan_structure(
@@ -485,6 +487,7 @@ def get_project_planning_hierarchy(project_id, handoff_path=None):
                 "updated_at": row["updated_at"].isoformat() if row.get("updated_at") else None,
             },
             "sprints": sections,
+            "recent_sessions": recent_project_sessions,
             "stats": {
                 "sprint_count": len(sections),
                 "spec_count": sum(len(section.get("specs") or []) for section in sections),

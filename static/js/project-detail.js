@@ -1,5 +1,5 @@
 /**
- * Project Detail Page - Overview, Planning, README, Session History
+ * Project Detail Page - Details, Planning, README, Session History
  * Erwartet globale Variable: PROJECT_NAME (gesetzt im Template)
  */
 let readmeFilename = 'README.md';
@@ -22,7 +22,7 @@ function switchProjectTab(tab) {
     if (tab === 'governance' && !governanceTabLoaded) loadGovernanceTab();
 }
 
-// === Overview ===
+// === Details ===
 async function loadProjectInfo() {
     try {
         const d = await api.get('/api/info?name=' + encodeURIComponent(PROJECT_NAME));
@@ -370,7 +370,11 @@ async function loadModelRecommendation() {
 }
 
 // === Init ===
+if (typeof setActiveProjectContext === 'function') {
+    setActiveProjectContext(PROJECT_NAME);
+}
 loadProjectInfo();
+loadProjectOverviewCards();
 initGitPanel(PROJECT_NAME);
 loadModelRecommendation();
 loadRiskRadarPanel();

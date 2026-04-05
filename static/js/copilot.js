@@ -5,6 +5,23 @@
 let _threadId = null;
 
 document.addEventListener('DOMContentLoaded', function() {
+    var projectInput = document.getElementById('copilotProject');
+    var params = new URLSearchParams(window.location.search);
+    var projectFromUrl = params.get('project') || params.get('project_id') || '';
+    var projectFromStorage = typeof getActiveProjectContext === 'function' ? getActiveProjectContext() : '';
+    var initialProject = projectFromUrl || projectFromStorage;
+    if (projectInput && initialProject) {
+        projectInput.value = initialProject;
+        if (typeof setActiveProjectContext === 'function') setActiveProjectContext(initialProject);
+    }
+    if (projectInput) {
+        projectInput.addEventListener('change', function() {
+            if (typeof setActiveProjectContext === 'function') setActiveProjectContext(projectInput.value);
+        });
+        projectInput.addEventListener('blur', function() {
+            if (typeof setActiveProjectContext === 'function') setActiveProjectContext(projectInput.value);
+        });
+    }
     document.getElementById('chatInput').focus();
 });
 
@@ -18,6 +35,10 @@ function newThread() {
 async function loadHistory() {
     var projectId = document.getElementById('copilotProject').value.trim() || null;
     var threadId = _threadId;
+
+    if (projectId && typeof setActiveProjectContext === 'function') {
+        setActiveProjectContext(projectId);
+    }
 
     if (!projectId && !threadId) {
         _showChatError('Projekt oder Thread angeben um Verlauf zu laden.');
@@ -66,6 +87,9 @@ async function sendMessage() {
     if (!message) return;
 
     var projectId = document.getElementById('copilotProject').value.trim() || null;
+    if (projectId && typeof setActiveProjectContext === 'function') {
+        setActiveProjectContext(projectId);
+    }
 
     _hideChatError();
     _appendMessage('user', message);

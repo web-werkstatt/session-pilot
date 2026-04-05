@@ -16,24 +16,36 @@ handoff:
   "titel": "Auto-Coder Quality Pipeline (Final)",
   "plan_id": "142",
   "status": "in_progress",
-  "ziel": "Auto-Coder Quality Pipeline (Final)",
-  "naechster_schritt": "Noch nicht definiert",
+  "ziel": "Plan: Auto-Coder Quality Pipeline (Final)",
+  "naechster_schritt": "Plan im Detail ausarbeiten",
   "prompt": "",
-  "prompt_suggestion": "Arbeite an: Auto-Coder Quality Pipeline (Final).",
+  "prompt_suggestion": "Arbeite an: Auto-Coder Quality Pipeline (Final). Kontext: Plan: Auto-Coder Quality Pipeline (Final) Naechster Schritt: Plan im Detail ausarbeiten. Quelle: iterative-jumping-cocoa.md.",
   "risiko": "",
   "checks": [
     "Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen"
   ],
-  "last_session": "",
-  "updated_at": "2026-03-28T09:32:06.934064+00:00"
+  "last_session": "12816c3e-ddd3-4910-b5fe-79d53b2e0b68",
+  "updated_at": "2026-04-05T13:08:16.877338+00:00",
+  "execution_score": null,
+  "execution_comment": "",
+  "last_execution_at": "",
+  "sprint_tag": "",
+  "spec_tag": "",
+  "sprint_plan_id": null,
+  "spec_id": null
 }
 -->
 
 ## Auto-Coder Quality Pipeline (Final) · in_progress
 
-**Ziel:** Auto-Coder Quality Pipeline (Final)
-**Naechster Schritt:** Noch nicht definiert
+**Ziel:** Plan: Auto-Coder Quality Pipeline (Final)
+**Naechster Schritt:** Plan im Detail ausarbeiten
 **Risiko:** -
+**Execution Score:** -
+**Execution Comment:** -
+**Last Execution:** -
+**Sprint Tag:** -
+**Spec Tag:** -
 
 **Prompt:**
 _(noch nicht gesetzt)_
@@ -57,8 +69,15 @@ _(noch nicht gesetzt)_
   "checks": [
     "Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen"
   ],
-  "last_session": "",
-  "updated_at": "2026-03-27T15:12:02.053229+00:00"
+  "last_session": "032e4f9f-7ff4-4980-94cc-10a8e13b04c4",
+  "updated_at": "2026-04-05T11:24:03.593841+00:00",
+  "execution_score": null,
+  "execution_comment": "",
+  "last_execution_at": "",
+  "sprint_tag": "",
+  "spec_tag": "",
+  "sprint_plan_id": null,
+  "spec_id": null
 }
 -->
 
@@ -67,6 +86,11 @@ _(noch nicht gesetzt)_
 **Ziel:** Sprint-Plan: Projekt-Metadaten Erweiterung
 **Naechster Schritt:** Noch nicht definiert
 **Risiko:** -
+**Execution Score:** -
+**Execution Comment:** -
+**Last Execution:** -
+**Sprint Tag:** -
+**Spec Tag:** -
 
 **Prompt:**
 _(noch nicht gesetzt)_
@@ -90,8 +114,15 @@ _(noch nicht gesetzt)_
   "checks": [
     "Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen"
   ],
-  "last_session": "",
-  "updated_at": "2026-03-27T14:25:55.664975+00:00"
+  "last_session": "d1de6645-7b0d-44e7-a872-3d671ab5412d",
+  "updated_at": "2026-04-05T11:24:03.596976+00:00",
+  "execution_score": null,
+  "execution_comment": "",
+  "last_execution_at": "",
+  "sprint_tag": "",
+  "spec_tag": "",
+  "sprint_plan_id": null,
+  "spec_id": null
 }
 -->
 
@@ -100,6 +131,11 @@ _(noch nicht gesetzt)_
 **Ziel:** Scheduled Tasks - Dashboard-Seite + RemoteTrigger
 **Naechster Schritt:** Noch nicht definiert
 **Risiko:** -
+**Execution Score:** -
+**Execution Comment:** -
+**Last Execution:** -
+**Sprint Tag:** -
+**Spec Tag:** -
 
 **Prompt:**
 _(noch nicht gesetzt)_
@@ -124,8 +160,15 @@ _(noch nicht gesetzt)_
     "Soll-Zustand ist im Prompt beruecksichtigt",
     "Naechster Schritt ist konkret benannt"
   ],
-  "last_session": "",
-  "updated_at": "2026-04-04T11:31:46.592525+00:00"
+  "last_session": "b6dd45cd-96fb-4ca0-a019-3326f86baa03",
+  "updated_at": "2026-04-05T11:24:03.597548+00:00",
+  "execution_score": null,
+  "execution_comment": "",
+  "last_execution_at": "",
+  "sprint_tag": "",
+  "spec_tag": "",
+  "sprint_plan_id": null,
+  "spec_id": null
 }
 -->
 
@@ -134,6 +177,11 @@ _(noch nicht gesetzt)_
 **Ziel:** Einheitliche Governance-UI mit allen Features integriert
 **Naechster Schritt:** Spec schreiben lassen von Perplexity
 **Risiko:** -
+**Execution Score:** -
+**Execution Comment:** -
+**Last Execution:** -
+**Sprint Tag:** -
+**Spec Tag:** -
 
 **Prompt:**
 _(noch nicht gesetzt)_
@@ -158,8 +206,15 @@ _(noch nicht gesetzt)_
   "checks": [
     "Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen"
   ],
-  "last_session": "",
-  "updated_at": "2026-03-31T07:25:14.600491+00:00"
+  "last_session": "e91095ab-2cce-4d7d-85e4-ab3a1200d7c1",
+  "updated_at": "2026-04-05T11:24:03.597936+00:00",
+  "execution_score": null,
+  "execution_comment": "",
+  "last_execution_at": "",
+  "sprint_tag": "",
+  "spec_tag": "",
+  "sprint_plan_id": null,
+  "spec_id": null
 }
 -->
 
@@ -168,6 +223,11 @@ _(noch nicht gesetzt)_
 **Ziel:** Week-Daten fixen + Usage Reports Seite
 **Naechster Schritt:** Noch nicht definiert
 **Risiko:** -
+**Execution Score:** -
+**Execution Comment:** -
+**Last Execution:** -
+**Sprint Tag:** -
+**Spec Tag:** -
 
 **Prompt:**
 _(noch nicht gesetzt)_
@@ -191,8 +251,15 @@ _(noch nicht gesetzt)_
   "checks": [
     "Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen"
   ],
-  "last_session": "",
-  "updated_at": ""
+  "last_session": "b93370a6-b1b6-4c4b-b3fd-37d4720e7f2f",
+  "updated_at": "2026-04-05T11:24:03.599254+00:00",
+  "execution_score": null,
+  "execution_comment": "",
+  "last_execution_at": "",
+  "sprint_tag": "",
+  "spec_tag": "",
+  "sprint_plan_id": null,
+  "spec_id": null
 }
 -->
 
@@ -201,6 +268,11 @@ _(noch nicht gesetzt)_
 **Ziel:** Session-Analyse: Inhalt visuell verbessern
 **Naechster Schritt:** Noch nicht definiert
 **Risiko:** -
+**Execution Score:** -
+**Execution Comment:** -
+**Last Execution:** -
+**Sprint Tag:** -
+**Spec Tag:** -
 
 **Prompt:**
 _(noch nicht gesetzt)_
@@ -224,8 +296,15 @@ _(noch nicht gesetzt)_
   "checks": [
     "Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen"
   ],
-  "last_session": "",
-  "updated_at": ""
+  "last_session": "7921fa7a-eba6-438f-8d57-6d74146dd409",
+  "updated_at": "2026-04-05T11:24:03.602987+00:00",
+  "execution_score": null,
+  "execution_comment": "",
+  "last_execution_at": "",
+  "sprint_tag": "",
+  "spec_tag": "",
+  "sprint_plan_id": null,
+  "spec_id": null
 }
 -->
 
@@ -234,6 +313,11 @@ _(noch nicht gesetzt)_
 **Ziel:** Claude Code Sessions im Dashboard
 **Naechster Schritt:** Noch nicht definiert
 **Risiko:** -
+**Execution Score:** -
+**Execution Comment:** -
+**Last Execution:** -
+**Sprint Tag:** -
+**Spec Tag:** -
 
 **Prompt:**
 _(noch nicht gesetzt)_
@@ -258,7 +342,14 @@ _(noch nicht gesetzt)_
     "Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen"
   ],
   "last_session": "",
-  "updated_at": ""
+  "updated_at": "",
+  "execution_score": null,
+  "execution_comment": "",
+  "last_execution_at": "",
+  "sprint_tag": "",
+  "spec_tag": "",
+  "sprint_plan_id": null,
+  "spec_id": null
 }
 -->
 
@@ -267,11 +358,65 @@ _(noch nicht gesetzt)_
 **Ziel:** Preview CSS-Sync + CMS-eigene CSS-Infrastruktur
 **Naechster Schritt:** Noch nicht definiert
 **Risiko:** -
+**Execution Score:** -
+**Execution Comment:** -
+**Last Execution:** -
+**Sprint Tag:** -
+**Spec Tag:** -
 
 **Prompt:**
 _(noch nicht gesetzt)_
 
 **Checks:**
 - Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen
+
+---
+
+<!-- MARKER:test-cockpit-2026-04-05
+{
+  "marker_id": "test-cockpit-2026-04-05",
+  "titel": "TESTMARKER: Copilot-Kontrolle",
+  "plan_id": "142",
+  "status": "in_progress",
+  "ziel": "Testmarker fuer die Kontrolle des Cockpit-Verhaltens im Projekt project_dashboard",
+  "naechster_schritt": "Im Cockpit Plan 142 oeffnen und pruefen, wie Marker-Aktivierung, Prompt und Status reagieren",
+  "prompt": "Dies ist ein bewusst gesetzter Testmarker fuer project_dashboard. Keine Produktlogik umbauen. Ziel ist nur, das Verhalten im Cockpit kontrolliert nachzuvollziehen.",
+  "prompt_suggestion": "Oeffne den Testmarker im Cockpit und pruefe Aktivierung, Sichtbarkeit und Statusfluss.",
+  "risiko": "Nur Testmarker, nach Kontrolle wieder loeschbar",
+  "checks": [
+    "Marker ist im Cockpit fuer Plan 142 sichtbar",
+    "Marker laesst sich aktivieren, weil Prompt gesetzt ist",
+    "Statuswechsel und Kontextverhalten sind nachvollziehbar"
+  ],
+  "last_session": "",
+  "updated_at": "2026-04-05T13:06:40.366080+00:00",
+  "execution_score": null,
+  "execution_comment": "",
+  "last_execution_at": "",
+  "sprint_tag": "",
+  "spec_tag": "",
+  "sprint_plan_id": null,
+  "spec_id": null
+}
+-->
+
+## TESTMARKER: Copilot-Kontrolle · in_progress
+
+**Ziel:** Testmarker fuer die Kontrolle des Cockpit-Verhaltens im Projekt project_dashboard
+**Naechster Schritt:** Im Cockpit Plan 142 oeffnen und pruefen, wie Marker-Aktivierung, Prompt und Status reagieren
+**Risiko:** Nur Testmarker, nach Kontrolle wieder loeschbar
+**Execution Score:** -
+**Execution Comment:** -
+**Last Execution:** -
+**Sprint Tag:** -
+**Spec Tag:** -
+
+**Prompt:**
+Dies ist ein bewusst gesetzter Testmarker fuer project_dashboard. Keine Produktlogik umbauen. Ziel ist nur, das Verhalten im Cockpit kontrolliert nachzuvollziehen.
+
+**Checks:**
+- Marker ist im Cockpit fuer Plan 142 sichtbar
+- Marker laesst sich aktivieren, weil Prompt gesetzt ist
+- Statuswechsel und Kontextverhalten sind nachvollziehbar
 
 ---

@@ -70,7 +70,9 @@ class TestBuildHandoffMarkdown:
 
     @patch("services.project_handoff_service.ensure_plans_schema")
     @patch("services.project_handoff_service.execute")
-    def test_generated_markers_are_parseable(self, mock_execute, _mock_schema, mock_plan_rows, tmp_path):
+    @patch("services.project_handoff_service.get_handoff_path")
+    def test_generated_markers_are_parseable(self, mock_path, mock_execute, _mock_schema, mock_plan_rows, tmp_path):
+        mock_path.return_value = str(tmp_path / "source-handoff.md")
         mock_execute.return_value = mock_plan_rows
         md = build_handoff_markdown("project_dashboard")
         handoff_path = tmp_path / "handoff.md"
@@ -88,6 +90,55 @@ class TestBuildHandoffMarkdown:
         mock_execute.return_value = []
         md = build_handoff_markdown("nonexistent_project_xyz_999")
         assert md is None
+
+    @patch("services.project_handoff_service.ensure_plans_schema")
+    @patch("services.project_handoff_service.execute")
+    @patch("services.project_handoff_service.get_handoff_path")
+    def test_preserves_last_session_from_existing_handoff(self, mock_path, mock_execute, _mock_schema, mock_plan_rows, tmp_path):
+        handoff_path = tmp_path / "handoff.md"
+        handoff_path.write_text(
+            "<!-- MARKER:145\n"
+            "{\n"
+            '  "marker_id": "145",\n'
+            '  "titel": "[TEST] Handoff Plan",\n'
+            '  "plan_id": "145",\n'
+            '  "status": "done",\n'
+            '  "ziel": "Soll-Zustand definiert",\n'
+            '  "naechster_schritt": "Naechsten Schritt umsetzen",\n'
+            '  "prompt": "",\n'
+            '  "prompt_suggestion": "",\n'
+            '  "risiko": "",\n'
+            '  "checks": ["Check"],\n'
+            '  "last_session": "sess_keep",\n'
+            '  "updated_at": "2026-04-05T10:00:00+00:00",\n'
+            '  "execution_score": null,\n'
+            '  "execution_comment": "",\n'
+            '  "last_execution_at": "",\n'
+            '  "sprint_tag": "",\n'
+            '  "spec_tag": "",\n'
+            '  "sprint_plan_id": null,\n'
+            '  "spec_id": null\n'
+            "}\n"
+            "-->\n\n"
+            "## [TEST] Handoff Plan · done\n\n"
+            "**Ziel:** Soll-Zustand definiert\n"
+            "**Naechster Schritt:** Naechsten Schritt umsetzen\n"
+            "**Risiko:** -\n"
+            "**Execution Score:** -\n"
+            "**Execution Comment:** -\n"
+            "**Last Execution:** -\n"
+            "**Sprint Tag:** -\n"
+            "**Spec Tag:** -\n\n"
+            "**Prompt:**\n_(noch nicht gesetzt)_\n\n"
+            "**Checks:**\n- Check\n\n---\n",
+            encoding="utf-8",
+        )
+        mock_path.return_value = str(handoff_path)
+        mock_execute.return_value = mock_plan_rows
+
+        md = build_handoff_markdown("project_dashboard")
+
+        assert '"last_session": "sess_keep"' in md
 
     def test_builds_empty_marker_handoff(self):
         md = build_empty_handoff_markdown("empty_project")

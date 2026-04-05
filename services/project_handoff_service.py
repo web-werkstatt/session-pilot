@@ -12,6 +12,7 @@ import os
 from datetime import timezone
 
 from config import PROJECTS_DIR
+from services.copilot_marker_format import parse_markers
 from services.copilot_marker_service import Marker, _serialize_marker
 from services.db_service import execute, ensure_plans_schema
 from services.path_resolver import resolve_project_path
@@ -72,6 +73,12 @@ handoff:
 ## Copilot Markers
 """
 
+    existing_markers = {}
+    handoff_path = get_handoff_path(project_id)
+    if os.path.exists(handoff_path):
+        for existing in parse_markers(handoff_path):
+            existing_markers[str(existing.marker_id).strip()] = existing
+
     blocks = []
     for plan in plans:
         updated_at = plan.get("updated_at")
@@ -89,6 +96,18 @@ handoff:
             last_session="",
             updated_at=updated_at.astimezone(timezone.utc).isoformat() if updated_at else "",
         )
+        existing = existing_markers.get(marker.marker_id)
+        if existing:
+            marker.status = existing.status or marker.status
+            marker.prompt = existing.prompt if existing.prompt is not None else marker.prompt
+            marker.prompt_suggestion = existing.prompt_suggestion or marker.prompt_suggestion
+            marker.risiko = existing.risiko or marker.risiko
+            marker.checks = list(existing.checks or []) or marker.checks
+            marker.last_session = existing.last_session or marker.last_session
+            marker.updated_at = existing.updated_at or marker.updated_at
+            marker.execution_score = existing.execution_score
+            marker.execution_comment = existing.execution_comment or ""
+            marker.last_execution_at = existing.last_execution_at or ""
         blocks.append(_serialize_marker(marker).rstrip())
 
     return header.strip() + "\n\n" + "\n\n".join(blocks) + "\n"

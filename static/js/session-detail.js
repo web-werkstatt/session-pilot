@@ -25,7 +25,6 @@ let sessionReviews = [];
 let projectThreads = [];
 let relatedThreadSessions = [];
 let reviewPrefill = '';
-
 function renderExecutionPanel(session) {
     var panel = document.getElementById('sessionExecutionPanel');
     if (!panel) return;
@@ -71,8 +70,6 @@ function escapeHtml(text) {
     return d.innerHTML;
 }
 
-// formatTokens, formatDateTime: in base.js (global)
-
 function formatDateShort(value) {
     return value ? new Date(value).toLocaleDateString('en-US') : '-';
 }
@@ -80,7 +77,6 @@ function formatDateShort(value) {
 function formatModel(model) {
     return (model || '-').replace('claude-', '');
 }
-
 function formatOutcomeLabel(outcome) {
     if (!outcome) return 'Open';
     return outcome.replace('_', ' ');
@@ -403,6 +399,9 @@ async function addReviewNote() {
 async function reloadReviewData() {
     const d = await api.get(`/api/sessions/${SESSION_UUID}`);
     sessionData = d.session;
+    if (sessionData && sessionData.project_name && typeof setActiveProjectContext === 'function') {
+        setActiveProjectContext(sessionData.project_name);
+    }
     sessionReviews = d.reviews || [];
     projectThreads = d.threads || [];
     relatedThreadSessions = d.related_sessions || [];
@@ -449,7 +448,6 @@ function renderMessages(messages) {
     conv.innerHTML = html;
     window._messages = messages;
     buildToc(messages);
-    // Lucide Icons nach grossem DOM-Rendering wiederherstellen
     requestAnimationFrame(() => { if (typeof lucide !== 'undefined') lucide.createIcons(); });
 }
 
@@ -466,6 +464,9 @@ async function loadSession() {
     try {
         const d = await api.get(`/api/sessions/${SESSION_UUID}`);
         sessionData = d.session;
+        if (sessionData && sessionData.project_name && typeof setActiveProjectContext === 'function') {
+            setActiveProjectContext(sessionData.project_name);
+        }
         sessionReviews = d.reviews || [];
         projectThreads = d.threads || [];
         relatedThreadSessions = d.related_sessions || [];

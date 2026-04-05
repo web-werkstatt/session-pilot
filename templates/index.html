@@ -2,7 +2,9 @@
 
 {% block title %}Project Dashboard{% endblock %}
 
-{% block breadcrumb %}Projects{% endblock %}
+{% block breadcrumb %}
+{% if dashboard_tab == 'widgets' %}Project Overview{% elif dashboard_tab == 'gitea' %}Repository Sources{% else %}Projects{% endif %}
+{% endblock %}
 
 {% block head_extra %}
 <link rel="stylesheet" href="/static/css/widgets.css">
@@ -46,15 +48,24 @@
         <span id="giteaRepos">-</span>
     </div>
 
-    <!-- Tab Navigation -->
-    <div class="tab-bar">
-        <button class="tab-btn active" onclick="showTab('projects')">Projects</button>
-        <button class="tab-btn" onclick="showTab('widgets')">Widgets</button>
-        <button class="tab-btn" onclick="showTab('gitea')">Gitea Repositories</button>
+    <div class="dashboard-view-header">
+        <div class="dashboard-view-kicker">Projects</div>
+        <div class="dashboard-view-title" id="dashboardViewTitle">
+            {% if dashboard_tab == 'widgets' %}Project Overview{% elif dashboard_tab == 'gitea' %}Repository Sources{% else %}Project List{% endif %}
+        </div>
+        <div class="dashboard-view-subtitle" id="dashboardViewSubtitle">
+            {% if dashboard_tab == 'widgets' %}
+            Verdichtete Projekt-Signale, Aktivitaet und operative Uebersicht.
+            {% elif dashboard_tab == 'gitea' %}
+            Externe Repository-Quellen als Projekt- und Integrationssicht.
+            {% else %}
+            Primaere Arbeitsliste fuer Projekte und Projekteinstieg.
+            {% endif %}
+        </div>
     </div>
 
     <!-- Filter-Bar -->
-    <div class="filter-bar" id="filterBar">
+    <div class="filter-bar" id="filterBar" {% if dashboard_tab != 'projects' %}style="display:none"{% endif %}>
         <div class="search-box">
             <i data-lucide="search" class="icon icon-sm" style="color:var(--text-ghost);margin-right:8px"></i>
             <input type="text" id="searchInput" placeholder="Search projects..." oninput="handleSearch()" autocomplete="off">
@@ -82,7 +93,7 @@
         </div>
 
         <!-- Projects Tab -->
-        <div id="projectsTab" class="tab-content active">
+        <div id="projectsTab" class="tab-content {% if dashboard_tab == 'projects' %}active{% endif %}">
             <table id="projectTable" style="display:none">
                 <thead>
                     <tr>
@@ -103,7 +114,7 @@
         </div>
 
         <!-- Widgets Tab -->
-        <div id="widgetsTab" class="tab-content">
+        <div id="widgetsTab" class="tab-content {% if dashboard_tab == 'widgets' %}active{% endif %}">
             <div class="widget-grid">
                 <div class="widget-card widget-sm" id="wTotalProjects">
                     <div class="widget-card-label">Projects</div>
@@ -163,7 +174,7 @@
         </div>
 
         <!-- Gitea Tab -->
-        <div id="giteaTab" class="tab-content">
+        <div id="giteaTab" class="tab-content {% if dashboard_tab == 'gitea' %}active{% endif %}">
             <table id="giteaTable">
                 <thead>
                     <tr>
@@ -183,6 +194,7 @@
 {% block scripts %}
     {% include 'partials/index_modals.html' %}
 
+    <script>window.INITIAL_DASHBOARD_TAB = "{{ dashboard_tab or 'projects' }}";</script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
     <script src="/static/js/dashboard-state.js"></script>
     <script src="/static/js/dashboard-misc.js"></script>

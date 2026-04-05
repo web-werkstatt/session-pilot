@@ -1,5 +1,3 @@
-/* AI Timesheets - Charts & Interaktion */
-
 let currentDays = 30;
 let dailyChart, projectDonut, toolChart, modelChart;
 let dailyMetric = 'cost';
@@ -12,6 +10,20 @@ function getDays() { return parseInt(document.getElementById('periodSelect').val
 function getAccount() { return document.getElementById('filterAccount').value; }
 function getProject() { return document.getElementById('filterProject').value; }
 
+document.addEventListener('DOMContentLoaded', function() {
+    const sel = document.getElementById('filterProject');
+    if (!sel) return;
+    if (!sel.value && typeof getActiveProjectContext === 'function') {
+        const activeProject = getActiveProjectContext();
+        if (activeProject) sel.value = activeProject;
+    }
+    sel.addEventListener('change', function() {
+        if (sel.value && typeof setActiveProjectContext === 'function') {
+            setActiveProjectContext(sel.value);
+        }
+    });
+});
+
 function changePeriod() {
     currentDays = getDays();
     const labels = {7:'7 days',14:'14 days',30:'30 days',90:'Quarter',180:'Half year',365:'Year'};
@@ -20,6 +32,9 @@ function changePeriod() {
 }
 
 async function reloadAll() {
+    if (getProject() && typeof setActiveProjectContext === 'function') {
+        setActiveProjectContext(getProject());
+    }
     const loader = document.getElementById('tsLoading');
     if (loader) loader.style.display = '';
     try {
@@ -29,18 +44,14 @@ async function reloadAll() {
     }
 }
 
-// formatTokens: in base.js (global)
-
 function trendHtml(val, invert) {
     if (val === null || val === undefined) return '';
     const isUp = val > 0;
-    // For cost/tokens: up=bad(red), down=good(green). invert for sessions/duration
     const cls = val === 0 ? 'neutral' : (invert ? (isUp ? 'down' : 'up') : (isUp ? 'up' : 'down'));
     const arrow = val > 0 ? '&#9650;' : val < 0 ? '&#9660;' : '&#8211;';
     return `<span class="ts-kpi-trend ${cls}">${arrow} ${Math.abs(val)}% vs. prev. period</span>`;
 }
 
-// === Summary KPIs ===
 async function loadSummary() {
     const params = new URLSearchParams({days: getDays()});
     if (getAccount()) params.set('account', getAccount());
@@ -63,7 +74,6 @@ async function loadSummary() {
     } catch(e) { console.error('Summary error:', e); }
 }
 
-// === Daily Chart ===
 async function loadDaily() {
     const params = new URLSearchParams({days: getDays()});
     if (getAccount()) params.set('account', getAccount());
@@ -118,7 +128,6 @@ function setDailyMetric(metric) {
     loadDaily();
 }
 
-// === Project Donut ===
 async function loadProjects() {
     const params = new URLSearchParams({days: getDays()});
     if (getAccount()) params.set('account', getAccount());
@@ -126,7 +135,6 @@ async function loadProjects() {
     try {
         projectsData = await api.get('/api/timesheets/projects?' + params);
 
-        // Donut: Top 8 + Rest
         const top = projectsData.slice(0, 8);
         const rest = projectsData.slice(8);
         const donutLabels = top.map(p => p.project || 'unknown');
@@ -159,7 +167,6 @@ async function loadProjects() {
             }
         });
 
-        // Populate filter
         const sel = document.getElementById('filterProject');
         if (sel.options.length <= 1) {
             projectsData.forEach(p => {
@@ -170,6 +177,10 @@ async function loadProjects() {
                     sel.appendChild(opt);
                 }
             });
+            if (!sel.value && typeof getActiveProjectContext === 'function') {
+                const activeProject = getActiveProjectContext();
+                if (activeProject) sel.value = activeProject;
+            }
         }
 
         renderProjectTable();
@@ -237,12 +248,10 @@ function sortProjects(key) {
     renderProjectTable();
 }
 
-// === Tool Chart ===
 async function loadTools() {
     try {
         const data = await api.get('/api/timesheets/tools?days=' + getDays());
 
-        // Populate account filter
         const sel = document.getElementById('filterAccount');
         if (sel.options.length <= 1) {
             data.forEach(t => {
@@ -283,7 +292,6 @@ async function loadTools() {
     } catch(e) { console.error('Tools error:', e); }
 }
 
-// === Model Chart ===
 async function loadModels() {
     try {
         const data = await api.get('/api/timesheets/models?days=' + getDays());
@@ -322,7 +330,6 @@ async function loadModels() {
     } catch(e) { console.error('Models error:', e); }
 }
 
-// === Rework ===
 let outcomeDonut, reworkTrend;
 const OUTCOME_COLORS = {ok:'#66bb6a', needs_fix:'#ff9800', reverted:'#ef5350', partial:'#f9a825', unrated:'#444'};
 const OUTCOME_LABELS = {ok:'OK', needs_fix:'Needs Fix', reverted:'Reverted', partial:'Partial', unrated:'Unrated'};
@@ -335,12 +342,10 @@ async function loadRework() {
     try {
         const d = await api.get('/api/timesheets/rework?' + params);
 
-        // KPIs
         document.getElementById('reworkRate').textContent = d.rework_rate + '%';
         document.getElementById('reworkRated').textContent = d.rated_sessions + '/' + d.total_sessions;
         document.getElementById('reworkWasted').textContent = d.costs.wasted_formatted;
 
-        // Outcome Donut
         const dist = d.distribution;
         const donutLabels = [];
         const donutData = [];
@@ -363,7 +368,6 @@ async function loadRework() {
             }
         });
 
-        // Trend Line
         const weeks = d.trend;
         if (reworkTrend) reworkTrend.destroy();
         reworkTrend = new Chart(document.getElementById('reworkTrend'), {
@@ -392,7 +396,6 @@ async function loadRework() {
                 }
             }
         });
-        // Rework by Project table with drill-down links
         const projBody = document.getElementById('reworkProjectBody');
         if (projBody && d.by_project && d.by_project.length) {
             projBody.innerHTML = d.by_project.filter(p => p.rework > 0).map(p =>
@@ -406,7 +409,6 @@ async function loadRework() {
             ).join('') || '<tr><td colspan="5" style="text-align:center;color:var(--text-muted)">No rework</td></tr>';
         }
 
-        // Top Reasons with drill-down links
         const reasonsBody = document.getElementById('reworkReasonsBody');
         if (reasonsBody && d.reason_distribution) {
             if (!d.reason_distribution.length) {
@@ -423,7 +425,6 @@ async function loadRework() {
     } catch(e) { console.error('Rework error:', e); }
 }
 
-// === Context Effectiveness ===
 async function loadContext() {
     const params = new URLSearchParams();
     if (getProject()) params.set('project', getProject());
@@ -444,7 +445,6 @@ async function loadContext() {
         document.getElementById('contextDesc').textContent =
             `${changes.length} changes in ${d.summary?.length || 0} projects analyzed.`;
 
-        // Nur die letzten 10 anzeigen
         container.innerHTML = changes.slice(0, 10).map(ch => {
             const date = new Date(ch.date).toLocaleDateString('en-US', {day:'2-digit',month:'2-digit',year:'numeric'});
             const b = ch.before;
@@ -496,5 +496,4 @@ function ctxMetric(label, before, after, delta, lowerIsBetter) {
     </div>`;
 }
 
-// Init
 reloadAll();

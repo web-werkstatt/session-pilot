@@ -463,6 +463,10 @@ function applyUrlParams() {
     if (p.get('account')) document.getElementById('filterAccount').value = p.get('account');
     if (p.get('model') && document.getElementById('filterModel')) document.getElementById('filterModel').value = p.get('model');
     if (p.get('project')) document.getElementById('filterProject').value = p.get('project');
+    else if (typeof getActiveProjectContext === 'function') {
+        var activeProject = getActiveProjectContext();
+        if (activeProject) document.getElementById('filterProject').value = activeProject;
+    }
     if (p.get('outcome') && document.getElementById('filterOutcome')) document.getElementById('filterOutcome').value = p.get('outcome');
     if (p.get('date_from')) document.getElementById('filterDateFrom').value = p.get('date_from');
     if (p.get('date_to')) document.getElementById('filterDateTo').value = p.get('date_to');
@@ -471,6 +475,14 @@ function applyUrlParams() {
 loadStats();
 (async () => {
     await loadFilterOptions();
+    var projectSel = document.getElementById('filterProject');
+    if (projectSel) {
+        projectSel.addEventListener('change', function() {
+            if (projectSel.value && typeof setActiveProjectContext === 'function') {
+                setActiveProjectContext(projectSel.value);
+            }
+        });
+    }
     if (typeof SessionFilters !== 'undefined') await SessionFilters.init();
     applyUrlParams();
     loadSessions();
