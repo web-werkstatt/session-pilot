@@ -1,6 +1,6 @@
 # Master Sprint Plan v0.3
 
-Stand: 2026-04-03 (Session-Update)
+Stand: 2026-04-05 (Session-Update)
 
 ## Rollenmodell
 
@@ -89,6 +89,295 @@ Audit v1 ist funktional, aber isoliert. Offene Verbindungen:
 
 ## Completed Sprints (diese Session)
 
+### Sprint QX — Dashboard Self-Discovery konfigurierbar
+
+**Ziel:** `project_dashboard` nicht mehr hart aus der Projekt-Discovery ausfiltern, sondern das Verhalten direkt im Dashboard unter Settings steuerbar machen.
+
+**Umgesetzt:**
+- `services/dashboard_settings_service.py` als persistentes Settings-Layer angelegt
+- Neue API `GET/POST /api/settings/general` fuer Dashboard-Basisoptionen
+- `templates/settings.html`, `static/js/settings.js` und `static/css/settings.css` um einen General-Tab mit Toggle erweitert
+- `services/project_scanner.py` und `routes/project_routes.py` lesen die Option jetzt dynamisch aus dem Settings-Layer
+- Settings werden in `dashboard_settings.json` gespeichert und nutzen Env-Werte nur noch als Default-Fallback
+- Default bleibt sichtbar, damit `project_dashboard` standardmaessig in Scan, Suche und Refresh enthalten ist
+
+**Geaenderte Dateien:**
+- `config.py`
+- `services/dashboard_settings_service.py`
+- `services/project_scanner.py`
+- `routes/settings_routes.py`
+- `routes/project_routes.py`
+- `templates/settings.html`
+- `static/js/settings.js`
+- `static/css/settings.css`
+- `next-session.md`
+- `sprints/master-plan-2026-04-01.md`
+
+**Commit-Hash:** noch nicht committed
+
+### Sprint QY — Plans-Detail gegen Legacy-DB-Schema gehaertet
+
+**Ziel:** Den HTTP-500 beim Oeffnen von Plan-Details auf Systemen mit aelterer `specs`-Tabelle beheben.
+
+**Umgesetzt:**
+- Root Cause im Live-Betrieb identifiziert: `/api/plans/<id>` scheiterte in `ensure_plan_structure_schema()` beim Index auf `specs(sprint_plan_id, updated_at DESC)`
+- `services/db_service.py` erweitert die Schema-Sicherung jetzt um idempotente `ALTER TABLE ... ADD COLUMN IF NOT EXISTS`-Schritte fuer `sprint_plans` und `specs`
+- Damit wird eine vorhandene Legacy-Tabelle nicht mehr stillschweigend als voll kompatibel angenommen
+- Produktionsdienst neu gestartet und die Migration im Live-Kontext erfolgreich ausgefuehrt
+- Der zuvor fehlerhafte Endpunkt `/api/plans/145` antwortet wieder mit HTTP `200`
+
+**Geaenderte Dateien:**
+- `services/db_service.py`
+- `next-session.md`
+- `sprints/master-plan-2026-04-01.md`
+
+**Commit-Hash:** noch nicht committed
+
+### Sprint QZ — Plan-Detailseite mit Tabs
+
+**Ziel:** Plan-Cards nicht mehr ueber ein Auto-Modal auf `/plans?plan=...` oeffnen, sondern ueber eine eigene Detailseite mit klaren Tabs.
+
+**Umgesetzt:**
+- Neue Route `GET /plans/<id>` angelegt
+- Legacy-Links `?plan=<id>` werden auf die neue Detailseite umgeleitet
+- Neues Template `templates/plan_detail.html`
+- Neue Assets `static/js/plan-detail.js` und `static/css/plan-detail.css`
+- Die neue Seite zeigt Tabs fuer `Overview`, `Content`, `Workflow` und `Handoff`
+- Die Seite nutzt bestehende APIs fuer Plan, Workflow und Handoff weiter
+- Plan-Cards aus Projektdetail und Plans-Uebersicht navigieren jetzt auf die echte Detailseite statt auf ein Modal
+
+**Geaenderte Dateien:**
+- `routes/plans_routes.py`
+- `templates/plan_detail.html`
+- `static/js/plan-detail.js`
+- `static/css/plan-detail.css`
+- `static/js/plans.js`
+- `static/js/project-detail.js`
+- `next-session.md`
+- `sprints/master-plan-2026-04-01.md`
+
+**Commit-Hash:** noch nicht committed
+
+### Sprint QR — Projektzentrierter Planning Workspace geplant
+
+**Ziel:** Die GUI fachlich klar auf `Project -> Master Plan -> Sprint Plan -> Task/Spec -> Session` ausrichten.
+
+**Umgesetzt:**
+- Neuer Sprint-Plan `sprints/sprint-qr-project-planning-workspace.md` angelegt
+- Projekt als primaere Homebase fuer Planung und operative Arbeit festgelegt
+- `/plans` im Zielbild als globaler Index statt als konkurrierender Arbeitsraum definiert
+- `Planning` im Projekt als neue zentrale Hierarchieansicht beschrieben
+- Sessions fachlich der operativen Task-/Spec-Ebene zugeordnet
+- zusaetzliche Architekturleitplanken dokumentiert: Glossar, Parent-Child-Regeln, Deep-Link-Prinzipien, normierte UI-Begriffe und erlaubte UI-Aktionen pro Ebene
+- der Sprint ist jetzt in 5 sequentielle Umsetzungs-Sessions mit klaren Voraussetzungen und Ergebnissen aufgeteilt
+
+**Geaenderte Dateien:**
+- `sprints/sprint-qr-project-planning-workspace.md`
+- `next-session.md`
+- `sprints/master-plan-2026-04-01.md`
+
+**Commit-Hash:** noch nicht committed
+
+### Sprint QR — Session 1 Navigation und Begriffssystem festgezogen
+
+**Ziel:** Den Einstiegspunkt fachlich korrekt machen, sichtbare Begriffe normieren und `/plans` als globalen Index statt als konkurrierende Arbeitsflaeche rahmen.
+
+**Umgesetzt:**
+- Projekt-Tab `Plans` zu `Planning` umbenannt und `Sessions` als spaetere `Session History` sekundarisiert
+- Sidebar-Navigation auf `Plan Index` umgestellt
+- `/plans` mit einem expliziten Global-Index-Hinweis versehen
+- Plan-Cards im Index verlinken jetzt zusaetzlich sauber in den jeweiligen Projekt-Workspace
+- Plan-Detailseiten fuehren ueber Query-Kontext wieder zur passenden Projektansicht bzw. zum gefilterten Index zurueck
+
+**Geaenderte Dateien:**
+- `templates/base.html`
+- `templates/project_detail.html`
+- `static/js/project-detail.js`
+- `templates/plans.html`
+- `static/js/plans.js`
+- `templates/plan_detail.html`
+- `static/js/plan-detail.js`
+- `next-session.md`
+- `sprints/master-plan-2026-04-01.md`
+
+**Commit-Hash:** noch nicht committed
+
+### Sprint QR — Session 2 Projekt-Hierarchie sichtbar gemacht
+
+**Ziel:** Die Planungsstruktur im Projekt erstmals als echte Hierarchie `Plan -> Sprint -> Task/Spec` rendern.
+
+**Umgesetzt:**
+- neuen Read-Endpoint `GET /api/projects/<project_id>/planning` fuer den Projekt-Planning-Workspace angelegt
+- `services/plan_structure_service.py` um einen read-only Hierarchie-Aggregator erweitert, der Projekt-Plans mit getaggter Sprint-/Spec-Struktur zusammenfuehrt
+- den Projekt-Tab `Planning` von flachen Plan-Cards auf eine sichtbare Hierarchie umgestellt
+- Sprints, Specs, direkte Sprint-Tasks und markerbasierte Tasks werden jetzt getrennt und in der fachlichen Reihenfolge gerendert
+- leichter Test fuer den neuen Service-Pfad ergaenzt
+
+**Geaenderte Dateien:**
+- `services/plan_structure_service.py`
+- `routes/plans_routes.py`
+- `static/js/project-detail.js`
+- `static/css/project-detail.css`
+- `tests/test_plan_structure_service.py`
+- `next-session.md`
+- `sprints/master-plan-2026-04-01.md`
+
+**Commit-Hash:** noch nicht committed
+
+### Sprint QR — Session 3 Detailpanel fuer operative Arbeit angebunden
+
+**Ziel:** Aus der neuen Hierarchie direkt in konkrete operative Arbeit fuer `Spec` und `Task` wechseln koennen.
+
+**Umgesetzt:**
+- Marker-Daten im Struktur-Service fuer das Projekt-Planning um operative Felder wie `ziel`, `naechster_schritt`, `prompt`, `checks` und `risiko` erweitert
+- im Projekt-Workspace ein selektierbares Detailpanel fuer `Sprint`, `Spec`, Markdown-Tasks und markerbasierte Tasks angebunden
+- fuer markerbasierte Tasks werden jetzt Ziel, Next Step, Prompt, Checks und Risiko direkt im Panel gezeigt
+- fuer plain Markdown-Tasks und Specs werden passende Fallback-Informationen bzw. Strukturzusammenfassungen gerendert
+- die neue Planning-Logik modular in `static/js/project-planning.js` und `static/css/project-planning.css` ausgelagert, damit bestehende Dateien unter 500 Zeilen bleiben
+
+**Geaenderte Dateien:**
+- `services/plan_structure_service.py`
+- `templates/project_detail.html`
+- `static/js/project-planning.js`
+- `static/css/project-planning.css`
+- `static/js/project-detail.js`
+- `static/css/project-detail.css`
+- `tests/test_plan_structure_service.py`
+- `next-session.md`
+- `sprints/master-plan-2026-04-01.md`
+
+**Commit-Hash:** noch nicht committed
+
+### Sprint PX — Hashtag-First Markdown Routine — MODUL 1 START
+
+**Ziel:** Den Sprint modular beginnen: erst einen projektuebergreifenden Markdown-Kernservice bauen und den ersten produktiven Marker-Flow daran anbinden.
+
+**Umgesetzt:**
+- `services/markdown_routine_service.py` neu angelegt
+- Der Service liefert bereits:
+  - Encoding-Fallback fuer Markdown-Dateien
+  - Content-Hash ohne technische Steuer-Marker
+  - heuristische Klassifikation fuer Sprint-/Spec-/Technical-/Legacy-Faelle
+  - Tag-Erkennung fuer `#sprint-*` und `#spec-*`
+  - Sprint-/Spec-Struktur-Extraktion
+  - semantische Split-Point-Erkennung fuer Legacy-Fallbacks
+- Die lokal verfuegbaren Altdateien unter `upload/hash/` dienen jetzt als reale Referenz fuer die Generalisierung
+- `services/copilot_marker_service.py` erweitert Marker um `sprint_tag` und `spec_tag`
+- Der bestehende Sprint->Marker-Import nutzt fuer getaggte Inhalte bereits den neuen Markdown-Service und schreibt Tags an Marker zurueck
+- `marker-context.md` enthaelt beim Aktivieren jetzt ebenfalls `sprint_tag` und `spec_tag`
+- Tests fuer Service und Marker-Integration ergaenzt; `pytest tests/test_markdown_routine_service.py tests/test_copilot_marker_service.py -q` laeuft mit `26 passed`
+
+**Geaenderte Dateien:**
+- `services/markdown_routine_service.py`
+- `services/copilot_marker_service.py`
+- `tests/test_markdown_routine_service.py`
+- `tests/test_copilot_marker_service.py`
+- `next-session.md`
+- `sprints/master-plan-2026-04-01.md`
+
+**Commit-Hash:** noch nicht committed
+
+### Sprint PX — Hashtag-First Markdown Routine — MODUL 2 CHECK/APPLY
+
+**Ziel:** Die neue Tag-Architektur operativ machen, indem fehlende Sprint-/Spec-Tags projektweit erkannt und idempotent geschrieben werden koennen.
+
+**Umgesetzt:**
+- `services/markdown_routine_service.py` um Tag-Setter-Funktionen erweitert:
+  - `build_tag_update_plan()`
+  - `apply_tag_update_plan()`
+- Der Service erkennt jetzt fehlende `#sprint-*`-Tags bei Sprint-Headings und fehlende `#spec-*`-Tags bei Unterabschnitten innerhalb eines Sprints
+- Neues CLI-Script `scripts/markdown_tag_migration.py` angelegt
+- Das Script unterstuetzt bereits:
+  - `--check`
+  - `--apply`
+  - optional `--project`
+  - optional `--handoff`
+- Die erste Migration-Stufe schreibt bewusst nur Markdown-Tags; Marker-Backfill bleibt als separater naechster Modulschritt offen
+- Tests fuer Tag-Setter und Check/Apply-Routine ergaenzt; `pytest tests/test_markdown_routine_service.py tests/test_markdown_tag_migration.py tests/test_copilot_marker_service.py -q` laeuft mit `30 passed`
+
+**Geaenderte Dateien:**
+- `services/markdown_routine_service.py`
+- `scripts/markdown_tag_migration.py`
+- `tests/test_markdown_routine_service.py`
+- `tests/test_markdown_tag_migration.py`
+- `next-session.md`
+- `sprints/master-plan-2026-04-01.md`
+
+**Commit-Hash:** noch nicht committed
+
+### Sprint PX — Hashtag-First Markdown Routine — MODUL 3 MARKER-BACKFILL
+
+**Ziel:** Bestehende Marker in `handoff.md` konservativ auf `sprint_tag` und optional `spec_tag` nachziehen, ohne unklare Volltext-Zuordnungen.
+
+**Umgesetzt:**
+- `scripts/markdown_tag_migration.py` baut jetzt einen Markdown-Struktur-Index aus getaggten Sprint-/Spec-Dateien
+- Marker-Mapping bevorzugt eine eindeutige `plan_id`-Zuordnung
+- `spec_tag` wird nur gesetzt, wenn im eindeutig gemappten Sprint ein eindeutiger Treffer ueber Task-Titel oder Spec-Titel existiert
+- Marker mit bereits vorhandenem `sprint_tag` werden nicht blind ueberschrieben
+- `--check` zeigt fuer ungetaggte Marker Vorschlaege inkl. Grund (`plan_id_unique_match`, `plan_id_plus_task_match`, `plan_id_plus_spec_title_match`)
+- `--apply` schreibt die gemappten Marker-Felder idempotent in `handoff.md`
+- Tests fuer Vorschlag, Writeback und Idempotenz ergaenzt; `pytest tests/test_markdown_routine_service.py tests/test_markdown_tag_migration.py tests/test_copilot_marker_service.py -q` laeuft mit `32 passed`
+
+**Geaenderte Dateien:**
+- `scripts/markdown_tag_migration.py`
+- `tests/test_markdown_tag_migration.py`
+- `next-session.md`
+- `sprints/master-plan-2026-04-01.md`
+
+**Commit-Hash:** noch nicht committed
+
+### Sprint PX — Hashtag-First Markdown Routine — MODUL 4 PARSER/UI-INTEGRATION
+
+**Ziel:** Den ersten sichtbaren Produktpfad von lokaler Frontend-Heuristik auf serverseitige Tag-Hierarchie umstellen.
+
+**Umgesetzt:**
+- `services/plan_structure_service.py` nutzt fuer Sprint-/Spec-Erkennung jetzt bevorzugt `scan_markdown_structure()`
+- `sync_sprint_plans_from_master()` und `sync_specs_from_sprint_plan()` priorisieren `sprint_tag`, `spec_tag` und `plan_id` aus Markdown
+- `get_plan_structure()` und `get_sprint_plan_detail()` matchen Marker bevorzugt ueber `sprint_tag` und `spec_tag`, mit Legacy-Fallback auf `plan_id` bzw. DB-IDs
+- Neuer serverseitiger Helper `derive_tagged_plan_sections()` erzeugt eine direkte `Plan -> Sprint -> Spec -> Marker`-Struktur aus Markdown plus Marker-Bestand
+- `routes/plans_routes.py` liefert in `/api/plans/<id>` jetzt zusaetzlich `tagged_sections`
+- `static/js/copilot_board.js` nutzt fuer `Sprint Sections` bevorzugt diese serverseitige Struktur statt reines Titel-/Task-Matching aus lokal geparsten `##`-Headings
+- Das Source-Panel zeigt Tasks inkl. Spec-Kontext und Marker inkl. Tag-Hierarchie an
+- Tests fuer den neuen Service-Pfad ergaenzt; `pytest tests/test_markdown_routine_service.py tests/test_markdown_tag_migration.py tests/test_copilot_marker_service.py tests/test_plan_structure_service.py -q` laeuft mit `34 passed`
+- JS-Syntaxcheck fuer das Board laeuft: `node --check static/js/copilot_board.js`
+
+**Geaenderte Dateien:**
+- `services/plan_structure_service.py`
+- `routes/plans_routes.py`
+- `static/js/copilot_board.js`
+- `tests/test_plan_structure_service.py`
+- `next-session.md`
+- `sprints/master-plan-2026-04-01.md`
+
+**Commit-Hash:** noch nicht committed
+
+### Sprint PX — Hashtag-First Markdown Routine — REPO-ABSCHLUSS
+
+**Ziel:** Die letzten sinnvollen Legacy-Pfade im Repo schliessen, damit fuer Sprint PX nur noch Live-Validierung gegen reale Plaene offen bleibt.
+
+**Umgesetzt:**
+- `services/plan_structure_service.py` priorisiert bei Spec-Referenzaufloesung jetzt `spec_tag` vor `spec_title`
+- `services/copilot_marker_service.py` reicht `spec_tag` in die Struktur-Referenzaufloesung durch
+- `services/copilot_service.py` fuehrt `sprint_tag` und `spec_tag` explizit im kompakten Marker-Kontext fuer Copilot-Calls mit
+- Die verbleibenden naheliegenden Parser-/Struktur-Altpfade im Code sind damit auf Tag-Hierarchie reduziert oder klar als Legacy-Fallback stehen geblieben
+- Relevante Sprint-Pfade lokal verifiziert:
+  - `pytest tests/test_markdown_routine_service.py tests/test_markdown_tag_migration.py tests/test_copilot_marker_service.py tests/test_plan_structure_service.py tests/test_copilot.py -q`
+  - Ergebnis: `75 passed`
+  - `python3 -m py_compile ...`
+  - `node --check static/js/copilot_board.js`
+
+**Geaenderte Dateien:**
+- `services/plan_structure_service.py`
+- `services/copilot_marker_service.py`
+- `services/copilot_service.py`
+- `tests/test_plan_structure_service.py`
+- `tests/test_copilot.py`
+- `next-session.md`
+- `sprints/sprint-px-hashtag-first-markdown-routine.md`
+- `sprints/master-plan-2026-04-01.md`
+
+**Commit-Hash:** noch nicht committed
+
 ### Session-Status 2026-04-03
 
 **Konsolidiert live:**
@@ -98,6 +387,25 @@ Audit v1 ist funktional, aber isoliert. Offene Verbindungen:
 
 **Rest-Risiko / offen:**
 - Copilot-Workspace braucht weiter gezielten UI-Feinschliff; die globale Navigation und die Filterlogik sind dagegen fuer den Moment stabil
+
+### Sprint PX — Hashtag-First Markdown Routine — PLAN ERSTELLT
+
+**Ziel:** Die Kette `Plan -> Sprint -> Spec -> Marker` explizit als Markdown-first Architektur planen, inklusive projektuebergreifender Parser-Routine fuer alte und neue Projekte.
+
+**Umgesetzt:**
+- Neuer Gesamt-Sprint-Plan `sprints/sprint-px-hashtag-first-markdown-routine.md` angelegt
+- Architekturentscheidung auf Hashtag-first festgezogen: `#sprint-*` und `#spec-*` als stabile Keys
+- Marker-Zukunftsmodell im Plan dokumentiert: `sprint_tag` und optional `spec_tag`
+- Die gefundene Altlogik unter `proj_irtours/archive/ALT/tools/scripts` ist als Quelle fuer eine generische Markdown-Routine festgehalten
+- Der Sprint-Plan enthaelt jetzt auch eine explizite projektuebergreifende Tag-Migration mit Scanner, Tag-Setter, Marker-Updater sowie `--check`/`--apply` fuer Altprojekte
+- DB-first fuer `sprint_plans/specs` ist in diesem Plan nicht mehr primaere Richtung, sondern hoechstens Cache-/Uebergangsmodell
+
+**Geaenderte Dateien:**
+- `sprints/sprint-px-hashtag-first-markdown-routine.md`
+- `next-session.md`
+- `sprints/master-plan-2026-04-01.md`
+
+**Commit-Hash:** noch nicht committed
 
 ### Sprint P4 — Session Write-back — DONE
 
@@ -159,6 +467,38 @@ Audit v1 ist funktional, aber isoliert. Offene Verbindungen:
 - `sprints/master-plan-2026-04-01.md`
 
 **Commit-Hash:** noch nicht committed
+
+### Sprint P-E3 — Execution-Rating & Feedback fuer Marker — DONE
+
+**Ziel:** Nach jeder markerbezogenen Session eine leichte Execution-Bewertung erfassen, die am Marker und optional an der Session haengt.
+
+**Umgesetzt:**
+- `services/copilot_marker_service.py` um optionale Marker-Felder `execution_score`, `execution_comment`, `last_execution_at` sowie `update_execution_rating()`, `get_marker_execution_rating()` und `get_marker_by_last_session()` erweitert
+- `handoff.md` Dual-Format rendert die neuen Execution-Felder rueckwaertskompatibel mit; aeltere Marker bleiben gueltig
+- `services/db_service.py` erweitert `sessions` idempotent um `execution_score` und `execution_comment`
+- `routes/copilot_routes.py` enthaelt jetzt `GET/POST /api/marker/<marker_id>/execution-rating`
+- `routes/session_routes.py` haengt in der Session-Detail-API bei Treffern den zuletzt auf die Session geschriebenen Marker (`last_session == session_uuid`) als `session.marker` an
+- `templates/copilot_board.html`, `static/js/copilot_board.js` und `static/css/copilot.css` zeigen die aktuelle Execution-Bewertung im Board/Marker-Panel an und erlauben dort direkte Aenderungen
+- `templates/session_detail.html`, `static/js/session-detail.js` und `static/css/session-detail.css` enthalten ein leichtes Rating-Panel fuer den zugeordneten Marker; Speichern schreibt Marker und Session gemeinsam
+- Service- und API-Tests decken Marker-Writeback, Session-Update, Score-Validierung und GET/POST-Flow ab
+
+**Geaenderte Dateien:**
+- `services/copilot_marker_service.py`
+- `services/db_service.py`
+- `routes/copilot_routes.py`
+- `routes/session_routes.py`
+- `templates/copilot_board.html`
+- `templates/session_detail.html`
+- `static/js/copilot_board.js`
+- `static/js/session-detail.js`
+- `static/css/copilot.css`
+- `static/css/session-detail.css`
+- `tests/test_copilot_marker_service.py`
+- `tests/test_copilot.py`
+- `next-session.md`
+- `sprints/master-plan-2026-04-01.md`
+
+**Commit-Hash:** 338fd8c
 
 ### Sprint M2.11a — Governance auf aktive Projekte begrenzen — DONE
 

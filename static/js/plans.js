@@ -1,5 +1,5 @@
 /**
- * Plans - Import, Filter, Detail-Ansicht, Drag & Drop Board
+ * Plan Index - Import, Filter, Detail-Ansicht, Drag & Drop Board
  */
 let allPlans = [];
 let filters = { status: '', project: '', category: '' };
@@ -20,6 +20,11 @@ const BOARD_COLUMNS = [
 document.addEventListener('DOMContentLoaded', () => {
     // URL-Parameter auswerten (z.B. /plans?project=contypio&view=board&plan=123)
     const params = new URLSearchParams(window.location.search);
+    const legacyPlanId = params.get('plan');
+    if (legacyPlanId) {
+        window.location.replace('/plans/' + encodeURIComponent(legacyPlanId));
+        return;
+    }
     if (params.get('project')) {
         filters.project = params.get('project');
     }
@@ -27,10 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
         filters.status = params.get('status');
     }
     loadStats();
-    loadPlans().then(() => {
-        const planId = params.get('plan');
-        if (planId) showPlan(parseInt(planId));
-    });
+    loadPlans();
     loadProjects();
 });
 
@@ -144,9 +146,16 @@ function _buildCardHtml(plan, draggable) {
         ? `<span class="card-project"><i data-lucide="folder" class="icon icon-xs"></i> ${escapeHtml(plan.project_name)}</span>`
         : '';
     const cockpitUrl = buildCopilotUrl(plan.id, plan.title);
+    const detailUrl = buildPlanDetailUrl(plan);
+    const projectWorkspaceUrl = plan.project_name
+        ? `/project/${encodeURIComponent(plan.project_name)}`
+        : '';
+    const projectWorkspaceAction = projectWorkspaceUrl
+        ? `<a href="${projectWorkspaceUrl}" class="card-inline-btn" onclick="event.stopPropagation()"><i data-lucide="folder-open" class="icon icon-xs"></i> Project</a>`
+        : '';
 
     return `
-    <div class="plan-card status-${statusClass}" ${dragAttr} onclick="showPlan(${plan.id})">
+    <div class="plan-card status-${statusClass}" ${dragAttr} onclick="location.href='${detailUrl}'">
         <div class="card-head">
             <span class="card-cat-badge cat-${plan.category || 'plan'}"><i data-lucide="${catIcon}" class="icon icon-xs"></i> ${plan.category || 'plan'}</span>
             <span class="card-wf-badge wf-${wfStage}">${wfStage.replace(/_/g, ' ')}</span>
@@ -158,10 +167,25 @@ function _buildCardHtml(plan, draggable) {
         <div class="card-foot">
             <div class="card-foot-meta">${projectBadge}</div>
             <div class="card-foot-actions">
+                ${projectWorkspaceAction}
                 <a href="${cockpitUrl}" class="card-inline-btn" onclick="event.stopPropagation()"><i data-lucide="message-square" class="icon icon-xs"></i> Cockpit</a>
             </div>
         </div>
     </div>`;
+}
+
+function buildPlanDetailUrl(plan) {
+    var url = '/plans/' + encodeURIComponent(plan.id);
+    if (!filters.project && !plan.project_name) return url;
+
+    var params = new URLSearchParams();
+    if (filters.project) {
+        params.set('project', filters.project);
+        params.set('from', 'index');
+    } else if (plan.project_name) {
+        params.set('project', plan.project_name);
+    }
+    return url + '?' + params.toString();
 }
 
 function renderGrid() {
@@ -364,62 +388,6 @@ function setFilter(key, value) {
 // === Detail ===
 var currentPlanId = null;
 
-function showPlan(id) {
-    currentPlanId = id;
-    api.get(`/api/plans/${id}`)
-        .then(plan => {
-            // Header
-            document.getElementById('modalCat').innerHTML = `<i data-lucide="${getCategoryIcon(plan.category)}" class="icon"></i> ${plan.category || 'plan'}`;
-            document.getElementById('modalTitle').textContent = plan.title;
-
-            // Meta header
-            const meta = [];
-            if (plan.project_name) meta.push(`<span><i data-lucide="folder" class="icon icon-xs"></i> ${escapeHtml(plan.project_name)}</span>`);
-            meta.push(`<span><i data-lucide="calendar" class="icon icon-xs"></i> ${formatDate(plan.created_at)}</span>`);
-            document.getElementById('modalMeta').innerHTML = meta.join('');
-
-            // Ist/Soll Overview
-            document.getElementById('modalIst').textContent = plan.current_state || '—';
-            document.getElementById('modalSoll').textContent = plan.target_state || '—';
-
-            // Content
-            document.getElementById('modalContent').innerHTML = plan.content_html || '<em>No content</em>';
-
-            // Sidebar Status
-            document.getElementById('modalStatus').innerHTML = `<span class="status-pill status-${plan.status}">${statusLabel(plan.status)}</span>`;
-
-            // Sidebar Workflow
-            const wfStage = plan.workflow_stage || 'idea';
-            document.getElementById('modalWorkflow').innerHTML = `<span class="wf-pill wf-${wfStage}">${wfStage.replace(/_/g, ' ')}</span>`;
-
-            // Sidebar Meta
-            const metaSidebar = [];
-            if (plan.filename) metaSidebar.push(`<div class="meta-row"><span>Datei</span><code>${escapeHtml(plan.filename.split('/').pop())}</code></div>`);
-            if (plan.session_slug) metaSidebar.push(`<div class="meta-row"><a href="/sessions/${plan.session_slug}"><i data-lucide="bot" class="icon icon-xs"></i> Session</a></div>`);
-            document.getElementById('modalMetaSidebar').innerHTML = metaSidebar.join('') || '<span class="text-muted">—</span>';
-
-            // Copilot Button
-            document.getElementById('modalCopilotBtn').href = buildCopilotUrl(plan.id, plan.title);
-
-            // Workflow Panel via API
-            _loadPlanWorkflow(id);
-
-            openModal('planModal');
-            if (typeof lucide !== 'undefined') lucide.createIcons();
-        })
-        .catch(err => alert('Error: ' + err.message));
-}
-
-function closePlanModal() {
-    closeModal('planModal');
-}
-
-function openPlanCockpit(planId, event) {
-    if (event) event.stopPropagation();
-    const plan = allPlans.find(p => p.id === planId);
-    window.location.href = buildCopilotUrl(planId, plan ? plan.title : `Plan ${planId}`);
-}
-
 function slugifyPlanTitle(text) {
     return String(text || '')
         .toLowerCase()
@@ -459,8 +427,6 @@ function syncPlans() {
 function _loadPlanWorkflow(planId) {
     api.get('/api/plans/' + planId + '/workflow')
         .then(function(wf) {
-            // Next Action in Sidebar
-            const nextEl = document.querySelector('.plan-sidebar-section:last-child') || document.getElementById('modalWorkflow');
             if (wf.next_action) {
                 const nextSection = document.createElement('div');
                 nextSection.className = 'plan-sidebar-section';

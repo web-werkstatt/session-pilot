@@ -16,6 +16,7 @@
 <link rel="stylesheet" href="/static/css/documents.css">
 <link rel="stylesheet" href="/static/css/documents-extras.css">
 <link rel="stylesheet" href="/static/css/project-detail.css">
+<link rel="stylesheet" href="/static/css/project-planning.css">
 <link rel="stylesheet" href="/static/css/sessions-list.css">
 <link rel="stylesheet" href="/static/css/file-heatmap.css">
 <link rel="stylesheet" href="/static/css/governance.css">
@@ -35,12 +36,8 @@
         <button class="project-tab active" onclick="switchProjectTab('overview')">
             <i data-lucide="layout-dashboard" class="icon icon-sm"></i> Overview
         </button>
-        <button class="project-tab" onclick="switchProjectTab('sessions')">
-            <i data-lucide="bot" class="icon icon-sm"></i> Sessions
-            <span class="tab-count" id="sessionsCount"></span>
-        </button>
         <button class="project-tab" onclick="switchProjectTab('plans')">
-            <i data-lucide="clipboard-list" class="icon icon-sm"></i> Plans
+            <i data-lucide="clipboard-list" class="icon icon-sm"></i> Planning
             <span class="tab-count" id="plansCount"></span>
         </button>
         <button class="project-tab" onclick="switchProjectTab('documents')">
@@ -56,6 +53,10 @@
         </button>
         <button class="project-tab" onclick="switchProjectTab('governance')">
             <i data-lucide="shield" class="icon icon-sm"></i> Governance
+        </button>
+        <button class="project-tab" onclick="switchProjectTab('sessions')">
+            <i data-lucide="bot" class="icon icon-sm"></i> Session History
+            <span class="tab-count" id="sessionsCount"></span>
         </button>
     </div>
 
@@ -73,18 +74,7 @@
             </div>
         </div>
 
-        <!-- Tab: Sessions -->
-        <div class="project-tab-content" id="ptab_sessions">
-            <div id="sessionsBody">
-                <div class="loading"><div class="spinner"></div> Loading sessions...</div>
-            </div>
-            <div class="git-section">
-                <h3 style="font-size:14px;margin:24px 0 12px;color:var(--text-muted)">Git Status</h3>
-                <div class="git-panel" id="gitPanel">Loading...</div>
-            </div>
-        </div>
-
-        <!-- Tab: Plans -->
+        <!-- Tab: Planning -->
         <div class="project-tab-content" id="ptab_plans">
             <div id="plansBody">
                 <div class="loading"><div class="spinner"></div> Loading plans...</div>
@@ -206,6 +196,17 @@
                 <div class="loading"><div class="spinner"></div> Loading governance data...</div>
             </div>
         </div>
+
+        <!-- Tab: Session History -->
+        <div class="project-tab-content" id="ptab_sessions">
+            <div id="sessionsBody">
+                <div class="loading"><div class="spinner"></div> Loading sessions...</div>
+            </div>
+            <div class="git-section">
+                <h3 style="font-size:14px;margin:24px 0 12px;color:var(--text-muted)">Git Status</h3>
+                <div class="git-panel" id="gitPanel">Loading...</div>
+            </div>
+        </div>
     </div>
 {% endblock %}
 
@@ -217,6 +218,7 @@
 <script src="/static/js/git-actions.js"></script>
 
 <script>const PROJECT_NAME = "{{ project_name }}";</script>
+<script src="/static/js/project-planning.js"></script>
 <script src="/static/js/project-governance.js"></script>
 <script src="/static/js/project-detail.js"></script>
 <script src="/static/js/file-heatmap.js"></script>

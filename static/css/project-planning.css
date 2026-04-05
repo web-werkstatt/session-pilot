@@ -1,0 +1,277 @@
+.planning-intro {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+    padding: 16px 18px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--bg-card);
+}
+.planning-intro-copy { max-width: 760px; }
+.planning-kicker,
+.planning-node-label,
+.planning-plan-kicker {
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+.planning-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 6px 0;
+}
+.planning-subtitle {
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--text-secondary);
+}
+.planning-index-link,
+.planning-footer-link a,
+.planning-plan-name a {
+    color: var(--accent-light);
+    text-decoration: none;
+}
+.planning-index-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    font-size: 12px;
+}
+.planning-workspace {
+    display: grid;
+    grid-template-columns: minmax(0, 1.7fr) minmax(320px, 0.9fr);
+    gap: 16px;
+    align-items: start;
+}
+.planning-tree {
+    display: grid;
+    gap: 14px;
+    min-width: 0;
+}
+.planning-plan-group {
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: var(--bg-card);
+    padding: 18px;
+}
+.planning-plan-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    align-items: flex-start;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+.planning-plan-name {
+    font-size: 20px;
+    margin: 4px 0 8px;
+}
+.planning-plan-summary {
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--text-secondary);
+    max-width: 780px;
+}
+.planning-plan-stats,
+.planning-sprint-meta {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.planning-pill {
+    padding: 5px 9px;
+    border-radius: 999px;
+    border: 1px solid var(--border-muted);
+    background: rgba(255,255,255,0.03);
+    font-size: 11px;
+    color: var(--text-secondary);
+}
+.planning-sprint-list {
+    display: grid;
+    gap: 12px;
+}
+.planning-sprint-card,
+.planning-spec-card {
+    border: 1px solid var(--border-muted);
+    border-radius: 12px;
+    background: rgba(255,255,255,0.02);
+    padding: 14px;
+}
+.planning-sprint-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+}
+.planning-sprint-title,
+.planning-spec-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-top: 4px;
+}
+.planning-spec-summary {
+    margin-top: 6px;
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--text-secondary);
+}
+.planning-spec-list,
+.planning-direct-block {
+    margin-top: 12px;
+}
+.planning-task-list {
+    list-style: none;
+    padding: 0;
+    margin: 10px 0 0;
+    display: grid;
+    gap: 8px;
+}
+.planning-task-list li {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    padding: 8px 10px;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.03);
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+.planning-bullet-label,
+.planning-marker-status {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+}
+.planning-marker-status { margin-left: auto; }
+.planning-empty {
+    padding: 14px;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.02);
+    color: var(--text-muted);
+    font-size: 13px;
+}
+.planning-selectable {
+    transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+}
+.planning-selectable.is-selected {
+    border-color: rgba(79,195,247,0.7);
+    box-shadow: 0 0 0 1px rgba(79,195,247,0.25) inset;
+    background: rgba(79,195,247,0.06);
+}
+.planning-detail-panel {
+    position: sticky;
+    top: 18px;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: var(--bg-card);
+    padding: 18px;
+}
+.planning-detail-kicker {
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+.planning-detail-title {
+    margin: 6px 0 8px;
+    font-size: 20px;
+    color: var(--text-primary);
+}
+.planning-detail-path {
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--text-secondary);
+    margin-bottom: 18px;
+}
+.planning-detail-field,
+.planning-detail-block {
+    margin-bottom: 14px;
+}
+.planning-detail-label,
+.planning-detail-subhead {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+}
+.planning-detail-value {
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--text-primary);
+}
+.planning-detail-list {
+    margin: 0;
+    padding-left: 18px;
+    color: var(--text-secondary);
+    font-size: 13px;
+    line-height: 1.6;
+}
+.planning-detail-pre {
+    margin: 0;
+    white-space: pre-wrap;
+    word-break: break-word;
+    padding: 12px;
+    border-radius: 10px;
+    background: rgba(0,0,0,0.22);
+    color: var(--text-secondary);
+    font-size: 12px;
+    line-height: 1.55;
+}
+.planning-detail-muted {
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--text-muted);
+}
+.planning-detail-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 18px;
+}
+.planning-detail-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 9px 12px;
+    border-radius: 8px;
+    background: var(--accent);
+    color: #fff;
+    text-decoration: none;
+    font-size: 12px;
+}
+.planning-detail-btn-secondary {
+    background: transparent;
+    border: 1px solid var(--border-muted);
+    color: var(--accent-light);
+}
+.planning-detail-empty {
+    color: var(--text-muted);
+    font-size: 13px;
+    line-height: 1.5;
+}
+.planning-footer-link {
+    margin-top: 12px;
+    text-align: right;
+    font-size: 13px;
+}
+@media (max-width: 1100px) {
+    .planning-workspace {
+        grid-template-columns: 1fr;
+    }
+    .planning-detail-panel {
+        position: static;
+    }
+}

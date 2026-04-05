@@ -2,22 +2,39 @@
 Plans Routes - Uebersicht und Verwaltung von Claude Code Plans
 """
 import markdown
-from flask import Blueprint, Response, jsonify, request, render_template
-from services.db_service import execute, ensure_plans_schema, ensure_plan_workflow_schema
+from flask import Blueprint, Response, jsonify, request, render_template, redirect, url_for
+from services.db_service import execute, ensure_plans_schema, ensure_plan_workflow_schema, ensure_plan_structure_schema
 from services.plans_import import sync_plans
 from services.plan_workflow_service import (
     get_plan_workflow,
     update_plan_workflow,
     get_project_plan_workflows,
 )
+from services.plan_structure_service import (
+    get_tagged_plan_structure,
+    get_plan_structure,
+    get_sprint_plan_detail,
+    get_project_planning_hierarchy,
+    sync_sprint_plans_from_master,
+    sync_specs_from_sprint_plan,
+)
 from services.project_handoff_service import write_handoff
+from services.copilot_marker_service import _get_handoff_path
 
 plans_bp = Blueprint('plans', __name__)
 
 
 @plans_bp.route('/plans')
 def plans_page():
+    plan_id = request.args.get('plan', type=int)
+    if plan_id:
+        return redirect(url_for('plans.plan_detail_page', plan_id=plan_id))
     return render_template('plans.html', active_page='plans')
+
+
+@plans_bp.route('/plans/<int:plan_id>')
+def plan_detail_page(plan_id):
+    return render_template('plan_detail.html', active_page='plans', plan_id=plan_id)
 
 
 @plans_bp.route('/api/plans')
@@ -84,7 +101,7 @@ def get_plans():
 @plans_bp.route('/api/plans/<int:plan_id>')
 def get_plan_detail(plan_id):
     """Einzelnen Plan mit vollstaendigem Inhalt laden."""
-    ensure_plans_schema()
+    ensure_plan_structure_schema()
     rows = execute(
         """SELECT p.id, p.filename, p.title, p.project_name, p.content,
                   p.context_summary, p.category, p.status, p.session_uuid,
@@ -120,7 +137,42 @@ def get_plan_detail(plan_id):
         'updated_at': row['updated_at'].isoformat() if row['updated_at'] else None,
         'session_slug': row['session_slug'],
         'session_started': row['session_started'].isoformat() if row['session_started'] else None,
+        'sprint_plans': get_plan_structure(row['project_name'], _get_handoff_path(row['project_name'])) if row.get('project_name') else [],
+        'tagged_sections': get_tagged_plan_structure(
+            content_md,
+            _get_handoff_path(row['project_name']) if row.get('project_name') else None,
+            source_path=row['filename'] or row['title'] or f"plan:{row['id']}",
+        ),
     })
+
+
+@plans_bp.route('/api/plans/<int:plan_id>/structure/sync', methods=['POST'])
+def sync_plan_structure(plan_id):
+    row = execute("SELECT project_name FROM project_plans WHERE id = %s", (plan_id,), fetchone=True)
+    if not row or not row.get("project_name"):
+        return jsonify({'error': 'Plan not found'}), 404
+    sprint_plans = sync_sprint_plans_from_master(row["project_name"])
+    synced_specs = []
+    for sprint in sprint_plans:
+        synced_specs.extend(sync_specs_from_sprint_plan(sprint["id"]))
+    return jsonify({'success': True, 'sprint_plans': sprint_plans, 'specs': synced_specs})
+
+
+@plans_bp.route('/api/sprint-plans/<int:sprint_plan_id>')
+def get_sprint_plan(sprint_plan_id):
+    row = execute("SELECT project_id FROM sprint_plans WHERE id = %s", (sprint_plan_id,), fetchone=True)
+    if not row or not row.get("project_id"):
+        return jsonify({'error': 'Sprint plan not found'}), 404
+    detail = get_sprint_plan_detail(sprint_plan_id, _get_handoff_path(row["project_id"]))
+    if not detail:
+        return jsonify({'error': 'Sprint plan not found'}), 404
+    return jsonify(detail)
+
+
+@plans_bp.route('/api/projects/<path:project_id>/planning')
+def get_project_planning(project_id):
+    hierarchy = get_project_planning_hierarchy(project_id, _get_handoff_path(project_id))
+    return jsonify({'project_id': project_id, 'plans': hierarchy})
 
 
 @plans_bp.route('/api/plans/<int:plan_id>', methods=['PUT'])

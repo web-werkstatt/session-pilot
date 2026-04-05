@@ -1,5 +1,5 @@
 /**
- * Project Detail Page - Tabs, Plans, README, Sessions
+ * Project Detail Page - Overview, Planning, README, Session History
  * Erwartet globale Variable: PROJECT_NAME (gesetzt im Template)
  */
 let readmeFilename = 'README.md';
@@ -241,7 +241,7 @@ function setProjectBaseline() {
         .catch(function(e) { alert('Error: ' + e); });
 }
 
-// === Sessions Tab ===
+// === Session History Tab ===
 function _outcomeBadge(outcome) {
     if (outcome === 'ok') return '<span class="outcome-badge outcome-ok">OK</span>';
     if (outcome === 'needs_fix') return '<span class="outcome-badge outcome-needs_fix">Fix</span>';
@@ -257,7 +257,7 @@ async function extractSessions() {
         var d = await api.get('/api/sessions?project=' + encodeURIComponent(PROJECT_NAME) + '&limit=100');
         var sessions = d.sessions || [];
         if (!sessions.length) {
-            body.innerHTML = '<p style="color:#888;padding:20px;text-align:center">No Claude sessions for this project</p>';
+            body.innerHTML = '<p style="color:#888;padding:20px;text-align:center">No sessions linked to this project yet.</p>';
             return;
         }
         var countEl = document.getElementById('sessionsCount');
@@ -296,74 +296,6 @@ async function extractSessions() {
         body.innerHTML = html;
     } catch(e) {
         body.innerHTML = '<p style="color:#f44336;padding:20px">Error: ' + e + '</p>';
-    }
-}
-
-// === Plans Tab ===
-async function loadProjectPlans() {
-    plansLoaded = true;
-    try {
-        const variants = [
-            PROJECT_NAME,
-            PROJECT_NAME.replace(/-/g, '_'),
-            PROJECT_NAME.replace(/_/g, '-'),
-        ];
-        let allPlans = [];
-        for (const v of variants) {
-            const d = await api.get('/api/plans?project=' + encodeURIComponent(v));
-            if (d.plans && d.plans.length > 0) allPlans = allPlans.concat(d.plans);
-        }
-        const seen = new Set();
-        allPlans = allPlans.filter(p => { if (seen.has(p.id)) return false; seen.add(p.id); return true; });
-
-        const countEl = document.getElementById('plansCount');
-        if (allPlans.length > 0) countEl.textContent = allPlans.length;
-
-        if (allPlans.length === 0) {
-            document.getElementById('plansBody').innerHTML = `
-                <div style="text-align:center;padding:40px;color:#888">
-                    <p>No plans for this project</p>
-                    <a href="/plans" style="color:#0078d4">View all plans</a>
-                </div>`;
-            return;
-        }
-
-        const statusColors = {
-            draft: { bg: 'transparent', border: '#666', label: 'Draft' },
-            active: { bg: 'rgba(0,120,212,0.12)', border: '#0078d4', label: 'Active' },
-            completed: { bg: 'rgba(46,204,113,0.10)', border: '#2ecc71', label: 'Done' },
-            archived: { bg: 'rgba(80,80,80,0.15)', border: '#555', label: 'Archive' },
-        };
-
-        let html = '<div class="plans-cards">';
-        allPlans.forEach(p => {
-            const sc = statusColors[p.status] || statusColors.draft;
-            const date = p.created_at ? new Date(p.created_at).toLocaleDateString('en-US') : '';
-            const hasSession = p.session_slug && p.session_slug !== 'None';
-            const sessionLink = hasSession
-                ? `<span class="badge" style="font-size:10px;background:rgba(0,120,212,0.2);color:#4fc3f7">Session</span>`
-                : '';
-            const context = p.context_summary
-                ? `<div class="plan-mini-context">${p.context_summary.substring(0, 120)}${p.context_summary.length > 120 ? '...' : ''}</div>`
-                : '';
-            html += `
-            <div class="plan-mini-card" style="background:${sc.bg}; border-left:3px solid ${sc.border}" onclick="location.href='/plans?plan=${p.id}'">
-                <div class="plan-mini-top">
-                    <span class="badge badge-status badge-${p.status}" style="font-size:11px">${sc.label}</span>
-                    <span style="font-size:11px;color:#888">${date}</span>
-                </div>
-                <div class="plan-mini-title">${p.title}</div>
-                ${context}
-                <div class="plan-mini-footer">
-                    <span class="badge badge-cat" style="font-size:10px">${p.category || 'plan'}</span>
-                    ${sessionLink}
-                </div>
-            </div>`;
-        });
-        html += `</div><div style="text-align:right;margin-top:12px"><a href="/plans?project=${encodeURIComponent(PROJECT_NAME)}" style="color:#0078d4;font-size:13px">View all plans &rarr;</a></div>`;
-        document.getElementById('plansBody').innerHTML = html;
-    } catch(e) {
-        document.getElementById('plansBody').innerHTML = '<p style="color:#ff6666;padding:20px">Error: ' + e + '</p>';
     }
 }
 

@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block title %}Plan Detail - Dashboard{% endblock %}
+{% block breadcrumb %}Plan Detail{% endblock %}
+
+{% block topbar_actions %}
+<a href="/plans" class="btn btn-secondary btn-sm" id="planDetailBackLink"><i data-lucide="arrow-left" class="icon icon-sm"></i> Back to Plan Index</a>
+<a href="#" class="btn btn-secondary btn-sm" id="planDetailProjectLink" style="display:none"><i data-lucide="folder-open" class="icon icon-sm"></i> Open Project</a>
+<a href="#" id="planDetailCopilotTop" class="btn btn-primary btn-sm"><i data-lucide="message-square" class="icon icon-sm"></i> Open Cockpit</a>
+{% endblock %}
+
+{% block head_extra %}
+<link rel="stylesheet" href="/static/css/plans.css">
+<link rel="stylesheet" href="/static/css/plan-detail.css">
+{% endblock %}
+
+{% block content %}
+<div class="plan-detail-page" data-plan-id="{{ plan_id }}">
+    <div class="plan-detail-loading" id="planDetailLoading">
+        <div class="spinner"></div>
+        <div>Loading plan...</div>
+    </div>
+
+    <div class="plan-detail-shell" id="planDetailShell" style="display:none;">
+        <div style="display:none;margin-bottom:16px;padding:12px 14px;border:1px solid var(--border);border-radius:12px;background:var(--bg-card)" id="planDetailContextHint"></div>
+        <div class="plan-detail-hero">
+            <div class="plan-detail-headline">
+                <div class="plan-detail-badges">
+                    <span class="plan-detail-cat" id="detailCategory"></span>
+                    <span class="status-pill" id="detailStatus"></span>
+                    <span class="wf-pill" id="detailWorkflow"></span>
+                </div>
+                <h1 class="plan-detail-title" id="detailTitle">Plan</h1>
+                <div class="plan-detail-meta" id="detailMeta"></div>
+            </div>
+            <div class="plan-detail-actions">
+                <a href="#" id="planDetailCopilotBtn" class="btn btn-primary btn-sm"><i data-lucide="message-square" class="icon icon-xs"></i> Cockpit</a>
+                <button class="btn btn-secondary btn-sm" onclick="downloadPlanHandoff()"><i data-lucide="download" class="icon icon-xs"></i> Handoff</button>
+            </div>
+        </div>
+
+        <div class="plan-detail-tabs">
+            <button class="plan-detail-tab active" data-tab="overview" onclick="switchPlanDetailTab('overview', this)">Overview</button>
+            <button class="plan-detail-tab" data-tab="content" onclick="switchPlanDetailTab('content', this)">Content</button>
+            <button class="plan-detail-tab" data-tab="workflow" onclick="switchPlanDetailTab('workflow', this)">Workflow</button>
+            <button class="plan-detail-tab" data-tab="handoff" onclick="switchPlanDetailTab('handoff', this)">Handoff</button>
+        </div>
+
+        <div class="plan-detail-tab-body active" id="tab-overview">
+            <div class="plan-detail-grid">
+                <section class="plan-detail-panel">
+                    <h3>Overview</h3>
+                    <div class="plan-ist-soll">
+                        <div class="plan-ist"><span class="plan-state-label">IST</span><span id="detailIst"></span></div>
+                        <div class="plan-soll"><span class="plan-state-label">SOLL</span><span id="detailSoll"></span></div>
+                    </div>
+                    <div class="plan-detail-summary" id="detailSummary"></div>
+                </section>
+
+                <section class="plan-detail-panel">
+                    <h3>Metadata</h3>
+                    <div class="plan-meta-list" id="detailMetaSidebar"></div>
+                </section>
+            </div>
+
+            <section class="plan-detail-panel" id="detailStructurePanel" style="display:none;">
+                <h3>Tagged Structure</h3>
+                <div class="plan-detail-structure" id="detailStructure"></div>
+            </section>
+        </div>
+
+        <div class="plan-detail-tab-body" id="tab-content">
+            <section class="plan-detail-panel">
+                <h3>Rendered Content</h3>
+                <div class="plan-content" id="detailContent"></div>
+            </section>
+        </div>
+
+        <div class="plan-detail-tab-body" id="tab-workflow">
+            <div class="plan-detail-grid">
+                <section class="plan-detail-panel">
+                    <h3>Workflow</h3>
+                    <div class="plan-detail-workflow-stage" id="detailWorkflowStage"></div>
+                    <div class="plan-detail-next" id="detailNextAction"></div>
+                </section>
+
+                <section class="plan-detail-panel">
+                    <h3>Signals</h3>
+                    <div class="plan-signals" id="detailSignals"></div>
+                </section>
+            </div>
+        </div>
+
+        <div class="plan-detail-tab-body" id="tab-handoff">
+            <section class="plan-detail-panel">
+                <div class="handoff-actions">
+                    <button class="btn btn-primary btn-sm" onclick="copyPlanHandoff()"><i data-lucide="copy" class="icon icon-xs"></i> Copy</button>
+                    <a href="#" id="planDetailHandoffDownload" class="btn btn-secondary btn-sm"><i data-lucide="download" class="icon icon-xs"></i> Download</a>
+                </div>
+                <pre class="handoff-content" id="detailHandoffContent">Loading handoff...</pre>
+            </section>
+        </div>
+    </div>
+
+    <div class="empty-state" id="planDetailError" style="display:none;">
+        <div class="empty-icon"><i data-lucide="triangle-alert" style="width:48px;height:48px;opacity:0.3"></i></div>
+        <h3>Plan not available</h3>
+        <p id="planDetailErrorText">The plan could not be loaded.</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/plan-detail.js"></script>
+{% endblock %}
