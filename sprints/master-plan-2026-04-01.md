@@ -113,7 +113,7 @@ Audit v1 ist funktional, aber isoliert. Offene Verbindungen:
 - `next-session.md`
 - `sprints/master-plan-2026-04-01.md`
 
-**Commit-Hash:** noch nicht committed
+**Commit-Hash:** `61be781`
 
 ### Sprint PX — Hashtag-First Markdown Routine — MODULARER REPO-ABSCHLUSS
 
@@ -145,7 +145,7 @@ Audit v1 ist funktional, aber isoliert. Offene Verbindungen:
 - `next-session.md`
 - `sprints/master-plan-2026-04-01.md`
 
-**Commit-Hash:** noch nicht committed
+**Commit-Hash:** `bbaf112`
 
 ### Sprint QY — Plans-Detail gegen Legacy-DB-Schema gehaertet
 
@@ -163,7 +163,7 @@ Audit v1 ist funktional, aber isoliert. Offene Verbindungen:
 - `next-session.md`
 - `sprints/master-plan-2026-04-01.md`
 
-**Commit-Hash:** noch nicht committed
+**Commit-Hash:** `61be781`
 
 ### Sprint QZ — Plan-Detailseite mit Tabs
 
@@ -188,7 +188,7 @@ Audit v1 ist funktional, aber isoliert. Offene Verbindungen:
 - `next-session.md`
 - `sprints/master-plan-2026-04-01.md`
 
-**Commit-Hash:** noch nicht committed
+**Commit-Hash:** `04f96b7`
 
 ### Sprint QR — Projektzentrierter Planning Workspace geplant
 
@@ -208,7 +208,7 @@ Audit v1 ist funktional, aber isoliert. Offene Verbindungen:
 - `next-session.md`
 - `sprints/master-plan-2026-04-01.md`
 
-**Commit-Hash:** noch nicht committed
+**Commit-Hash:** `04f96b7`
 
 ### Sprint QR — Session 1 Navigation und Begriffssystem festgezogen
 
@@ -232,7 +232,7 @@ Audit v1 ist funktional, aber isoliert. Offene Verbindungen:
 - `next-session.md`
 - `sprints/master-plan-2026-04-01.md`
 
-**Commit-Hash:** noch nicht committed
+**Commit-Hash:** `04f96b7`
 
 ### Sprint QR — Session 2 Projekt-Hierarchie sichtbar gemacht
 
@@ -254,7 +254,7 @@ Audit v1 ist funktional, aber isoliert. Offene Verbindungen:
 - `next-session.md`
 - `sprints/master-plan-2026-04-01.md`
 
-**Commit-Hash:** noch nicht committed
+**Commit-Hash:** `04f96b7`
 
 ### Sprint QR — Session 3 Detailpanel fuer operative Arbeit angebunden
 
@@ -278,7 +278,7 @@ Audit v1 ist funktional, aber isoliert. Offene Verbindungen:
 - `next-session.md`
 - `sprints/master-plan-2026-04-01.md`
 
-**Commit-Hash:** noch nicht committed
+**Commit-Hash:** `04f96b7`
 
 ### Sprint PX — Hashtag-First Markdown Routine — MODUL 1 START
 
@@ -307,7 +307,7 @@ Audit v1 ist funktional, aber isoliert. Offene Verbindungen:
 - `next-session.md`
 - `sprints/master-plan-2026-04-01.md`
 
-**Commit-Hash:** noch nicht committed
+**Commit-Hash:** `bbaf112`
 
 ### Sprint PX — Hashtag-First Markdown Routine — MODUL 2 CHECK/APPLY
 
@@ -335,7 +335,7 @@ Audit v1 ist funktional, aber isoliert. Offene Verbindungen:
 - `next-session.md`
 - `sprints/master-plan-2026-04-01.md`
 
-**Commit-Hash:** noch nicht committed
+**Commit-Hash:** `bbaf112`
 
 ### Sprint PX — Hashtag-First Markdown Routine — MODUL 3 MARKER-BACKFILL
 
@@ -356,7 +356,7 @@ Audit v1 ist funktional, aber isoliert. Offene Verbindungen:
 - `next-session.md`
 - `sprints/master-plan-2026-04-01.md`
 
-**Commit-Hash:** noch nicht committed
+**Commit-Hash:** `bbaf112`
 
 ### Sprint PX — Hashtag-First Markdown Routine — MODUL 4 PARSER/UI-INTEGRATION
 
@@ -381,7 +381,7 @@ Audit v1 ist funktional, aber isoliert. Offene Verbindungen:
 - `next-session.md`
 - `sprints/master-plan-2026-04-01.md`
 
-**Commit-Hash:** noch nicht committed
+**Commit-Hash:** `bbaf112`
 
 ### Sprint PX — Hashtag-First Markdown Routine — REPO-ABSCHLUSS
 
@@ -408,7 +408,7 @@ Audit v1 ist funktional, aber isoliert. Offene Verbindungen:
 - `sprints/sprint-px-hashtag-first-markdown-routine.md`
 - `sprints/master-plan-2026-04-01.md`
 
-**Commit-Hash:** noch nicht committed
+**Commit-Hash:** `bbaf112`
 
 ### Session-Status 2026-04-03
 
