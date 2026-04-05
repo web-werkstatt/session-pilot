@@ -8,6 +8,7 @@ from datetime import datetime
 from flask import Blueprint, jsonify, request, send_from_directory, abort
 
 from config import PROJECTS_DIR
+from services.dashboard_settings_service import should_include_self_project
 from services.path_resolver import resolve_project_path
 from services import scan_projects, update_project_json
 
@@ -128,12 +129,13 @@ def refresh_all_projects():
     force_descriptions = request.args.get('force_descriptions', 'false').lower() == 'true'
     updated = []
     errors = []
+    include_self_project = should_include_self_project()
 
     for item in os.listdir(PROJECTS_DIR):
         item_path = os.path.join(PROJECTS_DIR, item)
         if not os.path.isdir(item_path) or item.startswith('.'):
             continue
-        if item == "project_dashboard":
+        if item == "project_dashboard" and not include_self_project:
             continue
 
         try:

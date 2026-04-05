@@ -2,6 +2,7 @@
 
 let pricingData = [];
 let currentProvider = 'all';
+let generalSettingsLoaded = false;
 
 // === Tab Navigation ===
 function switchTab(tab, btn) {
@@ -10,10 +11,39 @@ function switchTab(tab, btn) {
     document.getElementById('section-' + tab).style.display = '';
     btn.classList.add('active');
 
+    if (tab === 'general' && !generalSettingsLoaded) loadGeneralSettings();
     if (tab === 'pricing' && !pricingData.length) loadPricing();
     if (tab === 'accounts') loadAccounts();
     if (tab === 'links') loadLinks();
     if (tab === 'system') loadSystem();
+}
+
+// === General ===
+async function loadGeneralSettings() {
+    try {
+        const data = await api.get('/api/settings/general');
+        document.getElementById('includeSelfProjectToggle').checked = !!data.include_self_project;
+        document.getElementById('generalSettingsStatus').textContent = '';
+        generalSettingsLoaded = true;
+    } catch (e) {
+        console.error(e);
+    }
+}
+
+async function saveGeneralSettings() {
+    const status = document.getElementById('generalSettingsStatus');
+    const data = {
+        include_self_project: document.getElementById('includeSelfProjectToggle').checked
+    };
+
+    try {
+        await api.post('/api/settings/general', data);
+        status.textContent = 'Saved';
+        setTimeout(() => { status.textContent = ''; }, 1500);
+    } catch (e) {
+        console.error(e);
+        status.textContent = 'Save failed';
+    }
 }
 
 // === Pricing ===

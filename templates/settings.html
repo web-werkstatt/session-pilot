@@ -11,6 +11,7 @@
 <div class="settings-page">
     <!-- Sidebar Tabs -->
     <nav class="settings-nav">
+        <button class="settings-tab" onclick="switchTab('general', this)">General</button>
         <button class="settings-tab active" onclick="switchTab('pricing', this)">Model prices</button>
         <button class="settings-tab" onclick="switchTab('accounts', this)">AI Accounts</button>
         <button class="settings-tab" onclick="switchTab('links', this)">External Links</button>
@@ -19,6 +20,36 @@
 
     <!-- Content Area -->
     <div class="settings-content">
+
+        <!-- General Section -->
+        <section class="settings-section" id="section-general" style="display:none">
+            <div class="settings-header">
+                <div>
+                    <h2>General</h2>
+                    <p class="settings-desc">Global dashboard behavior and discovery settings.</p>
+                </div>
+            </div>
+
+            <div class="s-panel">
+                <div class="s-setting-row">
+                    <div>
+                        <div class="s-setting-title">Show this dashboard as a project</div>
+                        <div class="s-setting-help">
+                            Includes <code>project_dashboard</code> in project scan, search and refresh results.
+                        </div>
+                    </div>
+                    <label class="s-toggle">
+                        <input type="checkbox" id="includeSelfProjectToggle">
+                        <span class="s-toggle-slider"></span>
+                    </label>
+                </div>
+
+                <div class="s-setting-actions">
+                    <button class="s-btn s-btn-primary" onclick="saveGeneralSettings()">Save settings</button>
+                    <span class="s-setting-status" id="generalSettingsStatus"></span>
+                </div>
+            </div>
+        </section>
 
         <!-- Pricing Section -->
         <section class="settings-section" id="section-pricing">

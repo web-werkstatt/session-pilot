@@ -7,6 +7,7 @@ import os
 from flask import Blueprint, jsonify, request, render_template
 from services.db_service import execute
 from services.account_discovery import discover_all_accounts
+from services.dashboard_settings_service import load_dashboard_settings, save_dashboard_settings
 from config import PROJECTS_DIR, GITEA_URL, GITEA_USER, HOST, PORT, DB_CONFIG
 from routes.api_utils import api_route
 
@@ -18,6 +19,22 @@ settings_bp = Blueprint('settings', __name__)
 @settings_bp.route('/settings')
 def settings_page():
     return render_template('settings.html', active_page='settings')
+
+
+# === General Settings ===
+
+@settings_bp.route('/api/settings/general')
+@api_route
+def api_general_settings():
+    return jsonify(load_dashboard_settings())
+
+
+@settings_bp.route('/api/settings/general', methods=['POST'])
+@api_route
+def api_general_settings_save():
+    data = request.get_json() or {}
+    settings = save_dashboard_settings(data)
+    return jsonify({"success": True, "settings": settings})
 
 
 # === Modell-Preise ===

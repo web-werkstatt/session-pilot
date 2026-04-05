@@ -44,6 +44,92 @@
 
 .settings-section { }
 
+.s-panel {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    max-width: 760px;
+}
+
+.s-setting-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    align-items: center;
+}
+
+.s-setting-title {
+    color: var(--text-primary);
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+
+.s-setting-help {
+    color: var(--text-muted);
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.s-setting-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 18px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-subtle);
+}
+
+.s-setting-status {
+    color: var(--text-muted);
+    font-size: 12px;
+    min-height: 18px;
+}
+
+.s-toggle {
+    position: relative;
+    display: inline-flex;
+    width: 52px;
+    height: 30px;
+    flex-shrink: 0;
+}
+
+.s-toggle input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.s-toggle-slider {
+    position: absolute;
+    inset: 0;
+    cursor: pointer;
+    background: var(--border-muted);
+    border-radius: 999px;
+    transition: all var(--transition-fast);
+}
+
+.s-toggle-slider::before {
+    content: "";
+    position: absolute;
+    left: 4px;
+    top: 4px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #fff;
+    transition: all var(--transition-fast);
+}
+
+.s-toggle input:checked + .s-toggle-slider {
+    background: var(--accent);
+}
+
+.s-toggle input:checked + .s-toggle-slider::before {
+    transform: translateX(22px);
+}
+
 .settings-header {
     display: flex;
     justify-content: space-between;
@@ -259,4 +345,5 @@
     .settings-tab { border-left: none; border-bottom: 3px solid transparent; padding: 12px 16px; white-space: nowrap; }
     .settings-tab.active { border-left-color: transparent; border-bottom-color: var(--accent-light); }
     .settings-content { padding: 20px; }
+    .s-setting-row { align-items: flex-start; }
 }

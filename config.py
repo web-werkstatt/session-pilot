@@ -7,9 +7,19 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+
+def _env_flag(name, default=False):
+    """Liest Bool-Flags robust aus der Umgebung."""
+    value = os.environ.get(name)
+    if value is None:
+        return default
+    return value.strip().lower() in {"1", "true", "yes", "on"}
+
 # Pfade
 PROJECTS_DIR = os.environ.get("DASHBOARD_PROJECTS_DIR", "/mnt/projects")
 CACHE_FILE = os.path.join(PROJECTS_DIR, ".project_dashboard_cache.json")
+SETTINGS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dashboard_settings.json')
+INCLUDE_SELF_PROJECT = _env_flag("DASHBOARD_INCLUDE_SELF_PROJECT", True)
 
 # Server
 HOST = os.environ.get("DASHBOARD_HOST", "0.0.0.0")

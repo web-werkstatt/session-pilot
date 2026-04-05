@@ -11,6 +11,7 @@ from config import PROJECTS_DIR
 from services.git_service import get_local_git_info, get_activity_score
 from services.docker_service import load_yaml_simple
 from services.cache_service import load_cache, save_cache, is_cache_valid, get_cached_activity, set_cached_activity
+from services.dashboard_settings_service import should_include_self_project
 from services.project_detector import (
     SCHEMA_VERSION, SCHEMA_FIELDS,
     detect_project_type, detect_subprojects,
@@ -334,6 +335,7 @@ def scan_projects(auto_generate=True):
     projects = {}
     cache = load_cache()
     cache_modified = False
+    include_self_project = should_include_self_project()
 
     # Projektliste sammeln
     items = []
@@ -341,7 +343,7 @@ def scan_projects(auto_generate=True):
         item_path = os.path.join(PROJECTS_DIR, item)
         if not os.path.isdir(item_path) or item.startswith('.'):
             continue
-        if item == "project_dashboard":
+        if item == "project_dashboard" and not include_self_project:
             continue
         if not is_valid_project(item_path, item):
             continue
