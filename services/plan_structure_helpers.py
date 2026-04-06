@@ -39,6 +39,8 @@ def format_duration_ms(duration_ms):
 def serialize_session_row(row):
     if not row:
         return None
+    input_tokens = row.get("total_input_tokens") or 0
+    output_tokens = row.get("total_output_tokens") or 0
     return {
         "session_uuid": row.get("session_uuid"),
         "started_at": row["started_at"].isoformat() if row.get("started_at") else None,
@@ -47,6 +49,9 @@ def serialize_session_row(row):
         "model": row.get("model") or "",
         "outcome": row.get("outcome") or "",
         "slug": row.get("slug") or "",
+        "account": row.get("account") or "",
+        "input_tokens": input_tokens,
+        "output_tokens": output_tokens,
     }
 
 
@@ -60,7 +65,8 @@ def load_sessions_for_markers(project_id, markers):
         return {}
     ensure_session_review_schema()
     rows = execute(
-        """SELECT session_uuid, started_at, duration_ms, model, outcome, slug
+        """SELECT session_uuid, started_at, duration_ms, model, outcome, slug,
+                  account, total_input_tokens, total_output_tokens
            FROM sessions
            WHERE session_uuid = ANY(%s)
              AND (
@@ -93,7 +99,8 @@ def load_recent_project_sessions(project_id, limit=5):
         return []
     ensure_session_review_schema()
     rows = execute(
-        """SELECT session_uuid, started_at, duration_ms, model, outcome, slug
+        """SELECT session_uuid, started_at, duration_ms, model, outcome, slug,
+                  account, total_input_tokens, total_output_tokens
            FROM sessions
            WHERE (
                project_name = %s

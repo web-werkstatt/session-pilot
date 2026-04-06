@@ -349,14 +349,21 @@ function renderDetailActions(plan) {
     return '<div class="planning-detail-actions"><a class="planning-detail-btn" href="' + buildProjectPlanningCopilotUrl(planId, planTitle) + '">Open in Copilot</a><a class="planning-detail-btn planning-detail-btn-secondary" href="/plans/' + encodeURIComponent(planId) + '?project=' + encodeURIComponent(PROJECT_NAME) + '&from=project">Open Plan Detail</a></div>';
 }
 
-function renderSessionHistory(sessions, path) {
+function _fmtTokens(n) { return n >= 1000000 ? (n/1000000).toFixed(1)+'M' : n >= 1000 ? (n/1000).toFixed(1)+'K' : String(n); }
+function _fmtModel(m) { return (m||'unknown model').replace('claude-','').replace('opus-4-6','Opus').replace('sonnet-4-6','Sonnet'); }
+
+function renderSessionHistory(sessions) {
     var items = Array.isArray(sessions) ? sessions : [];
-    if (!items.length) {
-        return '<div class="planning-detail-muted">No sessions linked yet. Continue the work via Copilot to create execution history on the operative level.</div>';
-    }
-    return '<div class="planning-session-history">' + items.map(function(session) {
-        var sessionUrl = '/sessions/' + encodeURIComponent(session.session_uuid || '');
-        return '<a class="planning-session-item planning-session-link" href="' + sessionUrl + '"><span class="planning-session-main">' + escapeHtml(formatPlanningDate(session.started_at) || (session.session_uuid || 'Session')) + '</span><span class="planning-session-meta">' + escapeHtml(session.model || 'unknown model') + ' • ' + escapeHtml(session.duration_label || '-') + ' • ' + escapeHtml(session.outcome || 'unrated') + '</span></a>';
+    if (!items.length) return '<div class="planning-detail-muted">No sessions linked yet. Continue the work via Copilot to create execution history on the operative level.</div>';
+    return '<div class="planning-session-history">' + items.map(function(s) {
+        var url = '/sessions/' + encodeURIComponent(s.session_uuid || '');
+        var acct = s.account || '';
+        var badge = acct ? '<span class="planning-session-account planning-account-' + acct.replace(/[^a-z0-9]/g,'') + '"' + (typeof getAccountBadgeStyle==='function' ? ' style="'+escapeHtml(getAccountBadgeStyle(acct,''))+'"' : '') + '>' + escapeHtml(acct) + '</span>' : '';
+        var iT = Number(s.input_tokens)||0, oT = Number(s.output_tokens)||0;
+        var tokens = (iT||oT) ? ' &bull; ' + _fmtTokens(iT) + ' / ' + _fmtTokens(oT) : '';
+        return '<a class="planning-session-item planning-session-link" href="' + url + '">' + badge
+            + '<span class="planning-session-main">' + escapeHtml(formatPlanningDate(s.started_at)||(s.session_uuid||'Session')) + '</span>'
+            + '<span class="planning-session-meta">' + escapeHtml(_fmtModel(s.model)) + ' &bull; ' + escapeHtml(s.duration_label||'-') + tokens + ' &bull; ' + escapeHtml(s.outcome||'unrated') + '</span></a>';
     }).join('') + '</div>';
 }
 
@@ -380,7 +387,8 @@ function renderRecentProjectSessionsBlock(sessions, path, linkedCount) {
     var items = Array.isArray(sessions) ? sessions : [];
     if (!items.length) return '';
     var intro = linkedCount ? 'Additional recent project sessions:' : 'No direct task/spec link exists yet. Recent project sessions:';
-    return renderDetailBlock('Recent Project Sessions', '<div class="planning-detail-muted">' + escapeHtml(intro) + '</div>' + renderSessionHistory(items, path));
+    var activityLink = '<a class="planning-activity-link" href="/sessions?project=' + encodeURIComponent(PROJECT_NAME) + '">View all in Activity &rarr;</a>';
+    return renderDetailBlock('Recent Project Sessions', '<div class="planning-detail-muted">' + escapeHtml(intro) + '</div>' + renderSessionHistory(items, path) + activityLink);
 }
 
 function buildPlanningSessionNodeId(path, sessionUuid) {

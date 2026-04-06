@@ -463,7 +463,7 @@ def get_project_planning_hierarchy(project_id, handoff_path=None):
         fetch=True,
     ) or []
 
-    recent_project_sessions = load_recent_project_sessions(project_id, limit=6)
+    recent_project_sessions = load_recent_project_sessions(project_id, limit=10)
     hierarchy = []
     for row in rows:
         sections = get_tagged_plan_structure(

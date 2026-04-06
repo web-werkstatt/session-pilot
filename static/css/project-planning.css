@@ -272,15 +272,43 @@
     cursor: pointer;
 }
 .planning-session-link {
-    display: block;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
     text-decoration: none;
 }
 .planning-session-link:hover {
     border-color: rgba(79,195,247,0.45);
     background: rgba(79,195,247,0.08);
 }
+.planning-session-account {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: lowercase;
+    padding: 2px 7px;
+    border-radius: 4px;
+    background: rgba(79,195,247,0.18);
+    color: #4fc3f7;
+    flex-shrink: 0;
+}
+.planning-account-codex { background: rgba(255,152,0,0.18); color: #ffb74d; }
+.planning-account-kilo { background: rgba(186,104,200,0.18); color: #ce93d8; }
+.planning-account-gemini { background: rgba(76,175,80,0.18); color: #81c784; }
+.planning-account-opencode { background: rgba(255,82,82,0.18); color: #ff8a80; }
+.planning-activity-link {
+    display: block;
+    margin-top: 10px;
+    font-size: 12px;
+    color: var(--accent);
+    text-decoration: none;
+    text-align: right;
+}
+.planning-activity-link:hover { text-decoration: underline; }
 .planning-session-main {
     display: block;
+    width: 100%;
     font-size: 12px;
     font-weight: 600;
 }

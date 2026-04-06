@@ -254,7 +254,7 @@ async function extractSessions() {
     sessionsExtracted = true;
     var body = document.getElementById('sessionsBody');
     try {
-        var d = await api.get('/api/sessions?project=' + encodeURIComponent(PROJECT_NAME) + '&limit=100');
+        var d = await api.get('/api/sessions?project=' + encodeURIComponent(PROJECT_NAME) + '&limit=20');
         var sessions = d.sessions || [];
         if (!sessions.length) {
             body.innerHTML = '<p style="color:#888;padding:20px;text-align:center">No sessions linked to this project yet.</p>';
@@ -263,37 +263,62 @@ async function extractSessions() {
         var countEl = document.getElementById('sessionsCount');
         if (countEl) countEl.textContent = sessions.length;
 
-        var maxDur = Math.max(1, Math.max.apply(null, sessions.map(function(s) { return s.duration_ms || 0; })));
-
-        var html = '<table class="data-table sessions-table"><thead><tr>';
-        html += '<th>Account</th><th>Date</th><th>Duration</th><th>Msgs</th><th>Model</th><th>Tokens</th><th>Branch</th><th>Status</th><th></th>';
-        html += '</tr></thead><tbody>';
-
+        // Aggregate stats
+        var accountCounts = {};
+        var totalDuration = 0;
+        var totalTokens = 0;
         sessions.forEach(function(s) {
+            var acct = s.account || 'unknown';
+            accountCounts[acct] = (accountCounts[acct] || 0) + 1;
+            totalDuration += s.duration_ms || 0;
+            totalTokens += (s.total_input_tokens || s.input_tokens || 0) + (s.total_output_tokens || s.output_tokens || 0);
+        });
+
+        var html = '<div class="activity-summary-header">'
+            + '<h3 class="activity-summary-title">Activity Overview</h3>'
+            + '<a class="activity-summary-viewall" href="/sessions?project=' + encodeURIComponent(PROJECT_NAME) + '">View all sessions &rarr;</a>'
+            + '</div>';
+
+        // Stats row
+        html += '<div class="activity-stats-row">';
+        html += '<div class="activity-stat"><span class="activity-stat-value">' + sessions.length + '</span><span class="activity-stat-label">Sessions</span></div>';
+        var durationHrs = Math.round(totalDuration / 3600000 * 10) / 10;
+        html += '<div class="activity-stat"><span class="activity-stat-value">' + (durationHrs >= 1 ? durationHrs + 'h' : Math.round(totalDuration / 60000) + 'm') + '</span><span class="activity-stat-label">Total Time</span></div>';
+        var tokensFmt = totalTokens >= 1000000 ? (totalTokens / 1000000).toFixed(1) + 'M' : totalTokens >= 1000 ? Math.round(totalTokens / 1000) + 'K' : String(totalTokens);
+        html += '<div class="activity-stat"><span class="activity-stat-value">' + tokensFmt + '</span><span class="activity-stat-label">Tokens</span></div>';
+        html += '<div class="activity-stat"><span class="activity-stat-value">' + Object.keys(accountCounts).length + '</span><span class="activity-stat-label">Tools</span></div>';
+        html += '</div>';
+
+        // Account breakdown
+        html += '<div class="activity-accounts">';
+        Object.keys(accountCounts).sort(function(a,b) { return accountCounts[b] - accountCounts[a]; }).forEach(function(acct) {
+            var cls = 'account-' + acct.replace(/[^a-z0-9]/g, '');
+            var acctStyle = typeof getAccountBadgeStyle === 'function' ? getAccountBadgeStyle(acct, '') : '';
+            html += '<span class="account-badge ' + cls + '" style="' + escapeHtml(acctStyle) + '">' + escapeHtml(acct) + ' (' + accountCounts[acct] + ')</span> ';
+        });
+        html += '</div>';
+
+        // Recent sessions compact list
+        html += '<h4 class="activity-recent-title">Recent Sessions</h4>';
+        html += '<div class="activity-recent-list">';
+        sessions.slice(0, 10).forEach(function(s) {
             var date = s.started_at ? new Date(s.started_at) : null;
-            var dateStr = date ? date.toLocaleDateString('en-US', {month:'short',day:'numeric',year:'2-digit'}) : '-';
+            var dateStr = date ? date.toLocaleDateString('en-US', {month:'short',day:'numeric'}) : '-';
             var timeStr = date ? date.toLocaleTimeString('en-US', {hour:'2-digit',minute:'2-digit'}) : '';
             var acctClass = 'account-' + (s.account || '').replace(/[^a-z0-9]/g, '');
             var acctStyle = typeof getAccountBadgeStyle === 'function' ? getAccountBadgeStyle(s.account, s.tool) : '';
-            var durPct = Math.min(100, ((s.duration_ms || 0) / maxDur) * 100);
             var model = (s.model || '-').replace('claude-', '').replace('opus-4-6', 'Opus').replace('sonnet-4-6', 'Sonnet');
-            var msgs = (s.user_message_count || 0) + (s.assistant_message_count || 0);
-            var branch = s.git_branch || '';
 
-            html += '<tr class="row" style="cursor:pointer" onclick="location.href=\'/sessions/' + s.session_uuid + '\'">';
-            html += '<td><span class="account-badge ' + acctClass + '" style="' + escapeHtml(acctStyle) + '">' + escapeHtml(s.account || '-') + '</span></td>';
-            html += '<td><span style="color:#ccc">' + dateStr + '</span> <span style="color:#666;font-size:11px">' + timeStr + '</span></td>';
-            html += '<td><div class="dur-wrap"><div class="dur-bar" style="width:' + durPct + '%"></div><span class="dur-text">' + (s.duration_formatted || '-') + '</span></div></td>';
-            html += '<td>' + msgs + '</td>';
-            html += '<td style="color:#888;font-size:12px">' + model + '</td>';
-            html += '<td class="token-cell">' + (s.tokens_formatted || '-') + '</td>';
-            html += '<td>' + (branch ? '<span class="branch" title="' + escapeHtml(branch) + '">' + escapeHtml(branch) + '</span>' : '') + '</td>';
-            html += '<td>' + _outcomeBadge(s.outcome) + '</td>';
-            html += '<td><div class="row-actions"><button class="row-action" onclick="event.stopPropagation();window.open(\'/api/sessions/' + s.session_uuid + '/export?format=json\')">JSON</button><button class="row-action" onclick="event.stopPropagation();window.open(\'/api/sessions/' + s.session_uuid + '/export?format=md\')">MD</button></div></td>';
-            html += '</tr>';
+            html += '<a class="activity-recent-item" href="/sessions/' + encodeURIComponent(s.session_uuid) + '">';
+            html += '<span class="account-badge ' + acctClass + '" style="' + escapeHtml(acctStyle) + '">' + escapeHtml(s.account || '-') + '</span>';
+            html += '<span class="activity-recent-date">' + dateStr + ' ' + timeStr + '</span>';
+            html += '<span class="activity-recent-meta">' + escapeHtml(model) + '</span>';
+            html += '<span class="activity-recent-meta">' + escapeHtml(s.duration_formatted || '-') + '</span>';
+            html += _outcomeBadge(s.outcome);
+            html += '</a>';
         });
+        html += '</div>';
 
-        html += '</tbody></table>';
         body.innerHTML = html;
     } catch(e) {
         body.innerHTML = '<p style="color:#f44336;padding:20px">Error: ' + e + '</p>';

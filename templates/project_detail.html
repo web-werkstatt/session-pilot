@@ -17,6 +17,7 @@
 <link rel="stylesheet" href="/static/css/documents-extras.css">
 <link rel="stylesheet" href="/static/css/project-overview.css">
 <link rel="stylesheet" href="/static/css/project-detail.css">
+<link rel="stylesheet" href="/static/css/activity-summary.css">
 <link rel="stylesheet" href="/static/css/project-planning.css">
 <link rel="stylesheet" href="/static/css/sessions-list.css">
 <link rel="stylesheet" href="/static/css/file-heatmap.css">
@@ -63,7 +64,7 @@
             <i data-lucide="shield" class="icon icon-sm"></i> Governance
         </button>
         <button class="project-tab" onclick="switchProjectTab('sessions')">
-            <i data-lucide="bot" class="icon icon-sm"></i> Session History
+            <i data-lucide="bot" class="icon icon-sm"></i> Activity
             <span class="tab-count" id="sessionsCount"></span>
         </button>
     </div>
@@ -205,10 +206,10 @@
             </div>
         </div>
 
-        <!-- Tab: Session History -->
+        <!-- Tab: Activity (compact summary + link) -->
         <div class="project-tab-content" id="ptab_sessions">
-            <div id="sessionsBody">
-                <div class="loading"><div class="spinner"></div> Loading sessions...</div>
+            <div class="activity-summary" id="sessionsBody">
+                <div class="loading"><div class="spinner"></div> Loading activity...</div>
             </div>
             <div class="git-section">
                 <h3 style="font-size:14px;margin:24px 0 12px;color:var(--text-muted)">Git Status</h3>
