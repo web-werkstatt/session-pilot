@@ -1,0 +1,249 @@
+/* Copilot Side Panel (extrahiert aus copilot.css) */
+
+/* === 5. SIDE PANEL === */
+.board-panel {
+    background: var(--cn-bg-panel);
+    border-left: 1px solid var(--cn-border);
+    display: none;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+}
+
+.board-split-view.panel-open .board-panel {
+    display: flex;
+}
+
+.board-panel-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 18px 18px 14px;
+    border-bottom: 1px solid var(--cn-border);
+}
+
+.panel-header-info {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+}
+
+.board-panel-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--cn-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* shadcn Button ghost icon */
+.board-panel-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    background: transparent;
+    border: none;
+    border-radius: var(--cn-radius-sm);
+    color: var(--cn-text-muted);
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 1;
+    transition: all 0.15s;
+}
+
+.board-panel-close:hover {
+    background: var(--cn-bg-muted);
+    color: var(--cn-text);
+}
+
+/* Panel Empty State */
+.panel-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    gap: 12px;
+    color: var(--cn-text-muted);
+    text-align: center;
+    padding: 48px 24px;
+}
+
+.panel-empty-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--cn-text-sec);
+}
+
+.panel-empty-desc {
+    font-size: 13px;
+    color: var(--cn-text-muted);
+    max-width: 220px;
+    line-height: 1.5;
+}
+
+.panel-content {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+}
+
+/* Panel Meta */
+.panel-section-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 18px 14px;
+    border-bottom: 1px solid var(--cn-border);
+    font-size: 12px;
+    color: var(--cn-text-sec);
+}
+
+/* Panel Tabs — shadcn Tabs */
+.panel-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--cn-border);
+    padding: 8px 12px 0;
+    gap: 6px;
+}
+
+.panel-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 9px 12px;
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--cn-text-muted);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+    border-radius: var(--cn-radius-sm);
+}
+
+.panel-tab:hover {
+    color: var(--cn-text);
+    background: rgba(255,255,255,0.03);
+}
+
+.panel-tab.active {
+    color: var(--cn-text);
+    border-color: var(--cn-border);
+    background: #16161a;
+    box-shadow: 0 1px 0 rgba(255,255,255,0.03) inset;
+}
+
+.panel-tab-body {
+    display: none;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.panel-tab-body.active {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+/* Output / History empty */
+.panel-output-empty,
+.panel-history-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    height: 100%;
+    color: var(--cn-text-muted);
+    font-size: 13px;
+    padding: 48px 24px;
+    text-align: center;
+}
+
+.panel-output,
+.panel-history {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    overflow-y: auto;
+}
+
+.panel-output-fields,
+.panel-history-fields {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 16px;
+    padding: 16px;
+}
+
+.panel-field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.panel-field-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.panel-field-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--cn-text-muted);
+}
+
+.panel-field-value {
+    font-size: 13px;
+    line-height: 1.55;
+    color: var(--cn-text);
+    white-space: pre-wrap;
+}
+
+.panel-prompt-input {
+    min-height: 120px;
+    font-size: 13px;
+    line-height: 1.5;
+    resize: vertical;
+}
+
+.panel-suggestion-btn {
+    min-height: 28px;
+    padding: 0 10px;
+    font-size: 11px;
+}
+
+.panel-checks {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.panel-check-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--cn-text);
+}
+
+.panel-check-empty {
+    font-size: 13px;
+    color: var(--cn-text-muted);
+}

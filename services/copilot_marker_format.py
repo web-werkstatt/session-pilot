@@ -126,18 +126,62 @@ def _serialize_marker(marker):
 
 
 def parse_markers(handoff_path):
+    """Tolerante Variante: liefert nur die gueltigen Marker, fehlerhafte Bloecke werden uebersprungen.
+
+    Fuer aufrufende Stellen, die zusaetzlich die Fehler brauchen (z.B. UI-Anzeige),
+    siehe parse_markers_with_errors.
+    """
+    markers, _errors = parse_markers_with_errors(handoff_path)
+    return markers
+
+
+def parse_markers_with_errors(handoff_path):
+    """Parst eine handoff.md und liefert (markers, errors).
+
+    errors ist eine Liste von Dicts mit den Feldern:
+        - marker_id: aus dem MARKER:<id>-Tag oder "<unknown>"
+        - error: lesbare Fehlermeldung
+        - error_type: "json_decode" oder "validation" oder "unexpected"
+        - handoff_path: absoluter Pfad der Datei
+    """
     try:
         with open(handoff_path, "r", encoding="utf-8") as f:
             content = f.read()
     except FileNotFoundError:
-        return []
+        return [], []
 
     markers = []
+    errors = []
     for match in _MARKER_BLOCK_RE.finditer(content):
-        payload = json.loads(match.group("json"))
-        payload["marker_id"] = str(payload.get("marker_id") or match.group("marker_id")).strip()
-        markers.append(Marker(**payload))
-    return markers
+        marker_id_hint = (match.group("marker_id") or "").strip() or "<unknown>"
+        try:
+            payload = json.loads(match.group("json"))
+        except json.JSONDecodeError as exc:
+            errors.append({
+                "marker_id": marker_id_hint,
+                "error": f"JSON kaputt: {exc.msg} (Zeile {exc.lineno}, Spalte {exc.colno})",
+                "error_type": "json_decode",
+                "handoff_path": handoff_path,
+            })
+            continue
+        try:
+            payload["marker_id"] = str(payload.get("marker_id") or marker_id_hint).strip()
+            markers.append(Marker(**payload))
+        except (ValueError, TypeError) as exc:
+            errors.append({
+                "marker_id": str(payload.get("marker_id") or marker_id_hint),
+                "error": str(exc),
+                "error_type": "validation",
+                "handoff_path": handoff_path,
+            })
+        except Exception as exc:  # pragma: no cover - defensive
+            errors.append({
+                "marker_id": marker_id_hint,
+                "error": f"unerwarteter Fehler: {exc}",
+                "error_type": "unexpected",
+                "handoff_path": handoff_path,
+            })
+    return markers, errors
 
 
 def _write_marker(handoff_path, marker):

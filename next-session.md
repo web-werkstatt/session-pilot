@@ -1,8 +1,8 @@
 # Projekt-Dashboard - Naechste Session
 
-> **Letzte Aktualisierung:** 2026-04-07
-> **Status:** Sprint QT (Plan-Reality-Sync) abgeschlossen und gepusht - Master-Plan gegen Code-Realitaet abgeglichen, Sprint 9/10/11 korrekt als DONE eingetragen, alle 5 offenen Gitea-Issues (#13-#18) mit Commit-Referenz geschlossen, Session 2026-04-06 archiviert
-> **Naechste Aufgabe:** **Sprint 17 - Marker-Driven Copilot Orchestration** starten (Entscheidung 2026-04-07)
+> **Letzte Aktualisierung:** 2026-04-07 (Sprint 17 Reality-Check + Bugfix #19)
+> **Status:** Sprint 17 als DONE bestaetigt + defensiver Marker-Parser-UX-Bugfix umgesetzt (Issue #19, F1-F5 Tasks abgeschlossen). `parse_markers_with_errors` sammelt fehlerhafte Bloecke statt zu propagieren, API liefert `parse_errors`-Feld, Board zeigt Fehler-Banner mit marker_id + Fehlertyp + Pfad.
+> **Naechste Aufgabe:** Service neu starten (`sudo systemctl restart project-dashboard`), Bugfix in der UI manuell verifizieren, dann naechster Feature-Sprint (siehe Optionen unten)
 
 ---
 
@@ -72,37 +72,95 @@ Master-Plan, Gitea-Issues und Repo-Stand in einen konsistenten Zustand bringen, 
 
 ---
 
-## Naechste Session - Sprint 17 vorbereiten
+## Session 2026-04-07 (zweiter Block) - Sprint 17 Reality-Check
 
-### Sprint 17 - Marker-Driven Copilot Orchestration
+### Ziel
+Pruefen ob Sprint 17 (Marker-Driven Copilot Orchestration) wirklich ein Sprint-Vorhaben ist oder ob der Plan bereits durch fruehere Arbeit (P2/P3/P-E3) ueberholt wurde. Analog zu Sprint QT bei Sprint 9/10/11.
 
-**Plan-Datei:** `sprints/sprint-17-marker-driven-copilot-orchestration.md` (371 Zeilen, bereits ausgearbeitet)
+### Was wurde erledigt
 
-**Ziel:** Copilot-Board von DB-zentrierten `plan_sections` in Richtung eines Markdown-gefuehrten Marker-Workflows weiterentwickeln. Eine feste Markdown-Datei pro Projekt dient als fuehrender Arbeitszustand, Status-Writeback landet in dieser Datei.
+**R1-R7 Reality-Check** der 5 Sprint-17-Arbeitspakete A-E gegen den Code:
 
-**Plan-Stand:** Inhaltlich vollstaendig (Ziel, Problem, Zielbild, Marker-Schema v1, 3 Phasen, 5 Arbeitspakete A-E, Risiken, Migrationsstrategie, Akzeptanzkriterien).
+| Paket | Befund |
+|---|---|
+| A Marker-Dateiformat | DONE - `services/copilot_marker_format.py` (Parser, START/END, Validierung), YAML-Frontmatter `state_format: copilot_markers_v1` in `handoff.md` |
+| B Service-Layer | DONE (uebererfuellt) - `services/copilot_marker_service.py` 11 Funktionen inkl. activate_marker, close_marker, execution_rating, backfill |
+| C Routes/API | DONE (uebererfuellt) - `routes/copilot_marker_routes.py` 9 Endpoints in eigenem Blueprint |
+| D UI-Integration | DONE - `copilot_board.html`+`copilot_board.js` rendern ausschliesslich Marker, Drag&Drop schreibt zurueck |
+| E Chat-Kontext | DONE - `activate_marker` schreibt `marker-context.md`, `/api/copilot/chat` liest via `context_path` |
 
-**Zwei Punkte fehlen vor Start:**
+**Phasen 1-3** alle DONE. **Akzeptanzkriterien:** alle 7 erfuellt.
 
-1. **Keine 2-5-Min-Task-Zerlegung** (im Gegensatz zu QT). Arbeitspakete A-E sind noch zu grob fuer direkten Abarbeitungs-Flow.
-2. **Plan ist teilweise veraltet:** Er nennt `services/copilot_marker_service.py` als *neu*. Der Service existiert aber bereits aus Sprint P2/P3/P-E3 mit `read_markers`, `list_markers_for_plan`, `update_marker_status`, `update_marker_fields`, `update_execution_rating`. Der Plan wurde vor P2/P3 geschrieben.
+**Verifikation der 3 unklaren Akzeptanzpunkte:**
+- **V1 Empty-State bei kaputtem Marker-Block: PARTIAL.** `parse_markers` faengt nur `FileNotFoundError`. JSONDecodeError oder ValueError aus `Marker.__post_init__` propagieren als 500. `copilot_board.js:111` zeigt nur generisches "Fehler beim Laden", verwirft den API-Fehlertext.
+- **V2 Card-Oeffnung behaelt letzten aktiven Tab bei: DONE.** `copilot-board-panel.js:30` `switchPanelTab(tab || _activePanelTab || 'chat')`.
+- **V3 Doku-Update: DONE** (siehe geaenderte Dateien).
 
-### Empfohlener Einstieg: Reality-Check-Paket
+**Befund-Fazit:** Sprint 17 ist faktisch DONE und wurde als solches eingetragen. Der Sprint-17-Plan vom 2026-04-03 war zum Zeitpunkt seiner Erstellung bereits ueberholt - der Service `copilot_marker_service.py` und die Routes existierten schon aus P2/P3/P-E3.
 
-Analog zum QT-Arbeitspaket A, bevor die eigentlichen Arbeitspakete beginnen:
+### Geaenderte Dateien
+| Datei | Aenderung |
+|-------|-----------|
+| `sprints/sprint-17-marker-driven-copilot-orchestration.md` | Status auf DONE, Reality-Check-Block mit Soll/Ist-Tabelle und offenem Folge-Punkt |
+| `sprints/master-plan-2026-04-01.md` | Sprint 17 aus "Open / Next" entfernt, in AI-Governance-Analytics-Tabelle und "Completed Sprints (diese Session)" eingetragen, Current-State-Block ergaenzt |
+| `next-session.md` | Sprint 17 Reality-Check dokumentiert |
 
-- [ ] **R1** (3 Min) `services/copilot_marker_service.py` lesen, vorhandene Funktionen gegen Sprint-17 Paket B pruefen
-- [ ] **R2** (3 Min) `routes/copilot_routes.py` Marker-Endpoints identifizieren, gegen Sprint-17 Paket C pruefen
-- [ ] **R3** (3 Min) `templates/copilot_board.html` + `static/js/copilot_board.js` pruefen: wie werden Marker aktuell gerendert? Gegen Sprint-17 Paket D abgleichen
-- [ ] **R4** (3 Min) `services/project_handoff_service.py` pruefen: aktuelle Struktur von `handoff.md` / `handoff-<plan_id>.md` dokumentieren
-- [ ] **R5** (3 Min) `marker-context.md` Format mit Sprint-17 Marker-Schema v1 vergleichen
-- [ ] **R6** (5 Min) Befund pro Paket A-E dokumentieren: DONE / PARTIAL / OPEN
-- [ ] **R7** (10 Min) Nur noch OPEN/PARTIAL-Anteile in 2-5-Min-Tasks zerlegen, neuen Sprint-Plan `sprints/sprint-17-execution.md` anlegen oder Sprint 17 direkt erweitern
+---
 
-**Danach:** Phase 1 (Read-Only Marker) → Phase 2 (Write-Back) → Phase 3 (Prompt-Orchestrierung) abarbeiten.
+## Bugfix Defensive Marker-Parser-UX (Issue #19) - DONE
 
-### Verschoben aus Sprint QT
-- [ ] **Session<->Spec/Task Binding verbessern:** Sessions haengen aktuell nur ueber Marker-Title-Matching an Tasks. Eigener Mini-Sprint fuer explizite `spec_id`/`task_id`-FK in der `sessions`-Tabelle oder in einer Relation-Tabelle, inkl. Import-Anpassung. Nach Sprint 17 sinnvoll, weil Marker dann die primaere Einheit sind.
+**Backend-Aenderungen:**
+- `services/copilot_marker_format.py`: neue `parse_markers_with_errors(path) -> (markers, errors)`, `parse_markers` ist jetzt tolerant (skipt fehlerhafte Bloecke). Errors enthalten `marker_id`, `error`, `error_type` (`json_decode` / `validation` / `unexpected`), `handoff_path`.
+- `services/copilot_marker_service.py`: neue `list_markers_for_plan_with_errors(project_id, plan_id) -> (markers, errors)`.
+- `routes/copilot_marker_routes.py`: `GET /api/copilot/markers` liefert jetzt zusaetzlich `parse_errors`-Feld.
+
+**Frontend-Aenderungen:**
+- `static/js/copilot_board.js`: `_loadSections` liest `parse_errors`, ruft `_renderMarkerParseErrors`. `.catch` zeigt jetzt die echte Fehlermeldung statt generisch "Fehler beim Laden".
+- `static/js/copilot-marker-errors.js` (neu): `_renderMarkerParseErrors(errors)` zeichnet Hinweis-Banner ueber dem Board mit marker_id, Fehlertyp, Fehlertext und Datei-Pfad.
+- `static/css/copilot-marker-errors.css` (neu): Styling `.marker-parse-errors-banner` (rot, links Border, Liste).
+
+**CSS+JS-Aufteilung (Folge-Refactor wegen file-size-limits.md):**
+Pre-Commit-Hook lehnte zunaechst ab: `copilot.css` (1150) und `copilot_board.js` (539) ueber Limit. Statt nur den Bugfix auszulagern, wurde die Altlast aufgeteilt:
+
+- `copilot.css` 1150 → 320 Zeilen (nur noch Tokens, Progress, Split, Board Columns, Drag&Drop, Toast, Attachments, Responsive)
+- Neue thematische CSS-Dateien:
+  - `copilot-header.css` (138 Z) - Workspace-Header + Plan Switcher
+  - `copilot-cards.css` (235 Z) - Card-Layout + Status Badges
+  - `copilot-panel.css` (249 Z) - Side Panel + Tabs
+  - `copilot-chat.css` (173 Z) - Chat Messages + Input
+  - `copilot-marker-errors.css` (49 Z) - Marker-Parser-Banner (siehe oben)
+- `copilot_board.js` 539 → 474 Zeilen (openAddSectionModal+createSection in `copilot-section-modal.js` 36 Z, Marker-Errors-Renderer in `copilot-marker-errors.js` 41 Z)
+- `templates/copilot_board.html`: 5 neue `<link>` und 2 neue `<script>` in fester Reihenfolge
+
+Alle Dateien jetzt unter Limit (CSS 400 / JS 500).
+
+**Smoke-Tests (alle gruen):**
+1. Datei nicht da -> `([], [])`
+2. 1 kaputter JSON + 1 gueltiger Marker -> `([good], [json_decode error])`
+3. Gueltiger JSON aber leeres `titel`-Feld -> `([], [validation error "titel ist erforderlich"])`
+4. Alte API `parse_markers()` wirft nicht mehr, liefert nur die gueltigen Marker.
+
+**Noch offen:** Service-Restart + manueller UI-Smoke-Test mit kaputter handoff.md.
+
+---
+
+## Naechste Session - Optionen
+
+### Option 1: Verschoben aus Sprint QT
+- [ ] **Session↔Spec/Task Binding verbessern:** Sessions haengen aktuell nur ueber Marker-Title-Matching an Tasks. Eigener Mini-Sprint fuer explizite `spec_id`/`task_id`-FK in der `sessions`-Tabelle oder in einer Relation-Tabelle, inkl. Import-Anpassung. Jetzt nach Sprint 17 DONE besonders sinnvoll, weil Marker dann die primaere Einheit sind.
+
+### Option 2: Naechster echter Feature-Sprint
+Aus Master-Plan "Open / Next":
+- Sprint A - Quality Scanner Spec & Scope Lock
+- Sprint QS - DB-First State Consolidation
+- Sprint 6 - DeRep Fixer
+- Sprint 8 - Automation Tuning
+- Sprint 12 - Governance Feedback-Loop (Voll-Version)
+- Sprint 13 - Bidirektionaler LLM-Control (Voll-Version)
+- Sprint 14 - Sprint-Flow-Tracking
+- Sprint 15 - Turn-Level-Rating
+- Sprint 16 - Workflow-Profiles
+- Sprint 20 - Product Launch Bundle
 
 ### Weitere offene Sprints (aus Master-Plan, nach Sprint 17)
 - Sprint QS - DB-First State Consolidation (JSON-Stores -> DB)

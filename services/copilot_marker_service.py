@@ -17,6 +17,7 @@ from services.copilot_marker_format import (
     _validate_execution_score,
     _write_marker,
     parse_markers,
+    parse_markers_with_errors,
 )
 from services.copilot_marker_import_flow import buildsuggestion, plan_to_marker, sprinttomarkers, sprinttomarkers_from_content
 from services.db_service import ensure_session_review_schema, execute
@@ -115,6 +116,25 @@ def activate_marker(project_id, marker_id, context_path):
 
 def list_markers_for_plan(project_id, plan_id):
     return [_marker_to_dict(marker, include_gate=True) for marker in _load_markers_with_regeneration(project_id) if marker.plan_id == str(plan_id).strip()]
+
+
+def list_markers_for_plan_with_errors(project_id, plan_id):
+    """Wie list_markers_for_plan, gibt zusaetzlich Parser-Fehler aus handoff.md zurueck.
+
+    Returns:
+        (markers_list, errors_list) - errors_list enthaelt nur Fehler aus der
+        handoff.md des Projekts (kein Plan-Filter, da fehlerhafte Bloecke keine
+        plan_id haben).
+    """
+    plan_id_str = str(plan_id).strip()
+    handoff_path = _get_handoff_path(project_id)
+    markers, errors = parse_markers_with_errors(handoff_path)
+    if not markers and not errors and os.path.exists(handoff_path):
+        markers = _load_markers_with_regeneration(project_id)
+    elif not markers and not os.path.exists(handoff_path):
+        markers = _load_markers_with_regeneration(project_id)
+    filtered = [_marker_to_dict(marker, include_gate=True) for marker in markers if marker.plan_id == plan_id_str]
+    return filtered, errors
 
 
 def get_marker_context(project_id, marker_id):

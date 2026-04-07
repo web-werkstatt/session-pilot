@@ -1,0 +1,49 @@
+/* Copilot Marker Parse Errors Banner (Issue #19) */
+
+.marker-parse-errors-banner {
+    background: rgba(239, 68, 68, 0.08);
+    border: 1px solid rgba(239, 68, 68, 0.4);
+    border-left: 4px solid #ef4444;
+    border-radius: 6px;
+    padding: 12px 16px;
+    margin: 0 0 12px 0;
+    color: #fca5a5;
+    font-size: 13px;
+}
+
+.marker-parse-errors-title {
+    font-weight: 600;
+    color: #fecaca;
+    margin-bottom: 8px;
+}
+
+.marker-parse-errors-list {
+    margin: 0;
+    padding-left: 18px;
+    list-style: disc;
+}
+
+.marker-parse-errors-list li {
+    margin-bottom: 8px;
+    line-height: 1.4;
+}
+
+.marker-parse-errors-list li:last-child {
+    margin-bottom: 0;
+}
+
+.marker-parse-errors-type {
+    color: #fca5a5;
+    font-size: 11px;
+    text-transform: uppercase;
+}
+
+.marker-parse-errors-msg {
+    color: #fecaca;
+}
+
+.marker-parse-errors-path {
+    color: #94a3b8;
+    font-family: ui-monospace, monospace;
+    font-size: 11px;
+}

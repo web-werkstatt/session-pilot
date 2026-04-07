@@ -12,7 +12,7 @@ from services.copilot_marker_service import (
     get_marker_context,
     get_marker_execution_rating,
     is_activatable,
-    list_markers_for_plan,
+    list_markers_for_plan_with_errors,
     plan_to_marker,
     read_marker_context,
     sprinttomarkers,
@@ -47,10 +47,10 @@ def api_copilot_markers():
     if not project_id:
         return jsonify({"error": "project_id konnte nicht aufgeloest werden"}), 400
     try:
-        markers = list_markers_for_plan(project_id, plan_id)
+        markers, parse_errors = list_markers_for_plan_with_errors(project_id, plan_id)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-    return jsonify({"markers": markers})
+    return jsonify({"markers": markers, "parse_errors": parse_errors})
 
 
 @copilot_marker_bp.route("/api/copilot/markers/<marker_id>")

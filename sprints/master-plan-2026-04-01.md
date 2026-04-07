@@ -34,6 +34,7 @@ Messen          Auditieren        Bewerten          Steuern           Copilot
 - **Section-Board** DB-first Level-2-Cards (plan_sections) mit Copilot-Chat pro Section auf /copilot?plan_id=X.
 - **Handoff-Service** Zentraler project_handoff_service.py, projektbezogene handoff-<plan_id>.md Dateien, LLM Command handoff-status.
 - **AI Governance Analytics (Sprints 9-11)** Fehler-Kategorien + AI-Scope-Filter, Per-File Heatmap + Risk-Radar, Modell-Qualitaetsvergleich + Empfehlungs-Engine (Status-Korrektur 2026-04-07, siehe "AI Governance Analytics"-Block).
+- **Marker-Driven Copilot (Sprint 17)** Marker-Block in `handoff.md` als fuehrender Arbeitszustand, `/copilot?plan_id=X` rendert Marker als Cards, Drag&Drop schreibt Status zurueck, `marker-context.md` als expliziter Chat-Kontext (Reality-Check 2026-04-07: faktisch DONE durch P2/P3/P-E3).
 
 ---
 
@@ -87,6 +88,7 @@ Masterplan-Eintrag "Roadmap komplett, kein Code" war nicht mehr korrekt.
 | 12 | Governance Feedback-Loop | nur Light-Version als Sprint C abgeschlossen | Voll-Version offen |
 | 13 | Bidirektionaler LLM-Control | nur MVP als Sprint D abgeschlossen | Voll-Version offen |
 | 14 | Sprint-Flow-Tracking | kein Code gesichtet | offen |
+| 17 | Marker-Driven Copilot Orchestration | `services/copilot_marker_format.py` (Parser+Schema), `services/copilot_marker_service.py` (11 Funktionen), `routes/copilot_marker_routes.py` (9 Endpoints), `templates/copilot_board.html` + `static/js/copilot_board.js` + `static/js/copilot-board-panel.js` (Marker-Cards, Drag&Drop-Writeback, Chat-Kontext via marker-context.md) - Reality-Check 2026-04-07 | DONE (Folge: defensive Parser-Fehler-UX, siehe sprint-17-Plan) |
 
 **Nicht geprueft:** vollstaendige Akzeptanzkriterien-Abdeckung pro Sprint
 (z.B. alle Default-Filter pro Policy-Level aus Sprint 9.7, Trend-Analyse
@@ -117,6 +119,34 @@ Referenz:
 ---
 
 ## Completed Sprints (diese Session)
+
+### Sprint 17 — Marker-Driven Copilot Orchestration — DONE (Reality-Check 2026-04-07)
+
+**Ziel:** Copilot-Board von DB-zentrierten `plan_sections` auf einen Markdown-gefuehrten Marker-Workflow umstellen.
+
+**Befund:** Alle 5 Arbeitspakete (A-E) und alle 3 Phasen waren bei Pruefung bereits vollstaendig im Code, vermutlich umgesetzt durch die fruehen Sprints P2/P3/P-E3. Sprint-17-Plan war zum Zeitpunkt seiner Erstellung (2026-04-03) bereits ueberholt.
+
+**Belegter Code-Stand:**
+- `services/copilot_marker_format.py` - Parser, START/END-Block, Marker-Dataclass mit Validierung, YAML-Frontmatter `state_format: copilot_markers_v1`
+- `services/copilot_marker_service.py` (280 Zeilen, 11 Funktionen) - read/list/update/activate/close/execution-rating/backfill
+- `services/copilot_marker_import_flow.py` - Sprint→Marker Konverter
+- `routes/copilot_marker_routes.py` (219 Zeilen, eigener Blueprint) - 9 Endpoints inkl. PATCH status, PATCH fields, POST activate, POST close, GET/POST execution-rating, POST sprint-to-markers
+- `templates/copilot_board.html` (299 Zeilen) - 4-Spalten-Board, Panel mit allen Marker-Feldern (goal, next_step, prompt, checks, risk, last_session, gate, execution_summary)
+- `static/js/copilot_board.js` (500 Zeilen) - Marker-Render, Drag&Drop schreibt PATCH /api/copilot/markers/<id>/status, Empty-State
+- `static/js/copilot-board-panel.js` - openSectionPanel, Tab-Persistenz via `_activePanelTab`
+- `services/project_handoff_service.py` - `build_handoff_markdown` schreibt Marker-Block, behaelt vorhandene Marker-Felder beim Re-Build
+- `marker-context.md` - aktiver Marker-Kontext fuer Chat (von `activate_marker` geschrieben, von `/api/copilot/chat` per `context_path` gelesen)
+
+**Akzeptanzkriterien:** Alle 7 erfuellt. Tab-Persistenz verifiziert in `static/js/copilot-board-panel.js:30`.
+
+**Offener Folge-Punkt:** Defensive Parser-Fehler-UX (Risiko 1 aus dem Sprint-17-Plan) - bei JSONDecodeError oder Validation-Fehler in einem Marker liefert die API 500, das Board zeigt nur generisches "Fehler beim Laden". Soll in einen kuenftigen Bugfix-Sprint als Mini-Task wandern.
+
+**Geaenderte Dateien (nur Doku):**
+- `sprints/sprint-17-marker-driven-copilot-orchestration.md` (Status auf DONE + Reality-Check-Block)
+- `sprints/master-plan-2026-04-01.md` (Sprint 17 aus "Open / Next" entfernt, in AI-Governance-Tabelle und Completed Sprints eingetragen)
+- `next-session.md`
+
+**Commit-Hash:** `n/a`
 
 ### Sprint QT — Plan-Reality-Sync — DONE (2026-04-07)
 
@@ -1388,22 +1418,6 @@ aber nicht verschachteltes `.kilo/node_modules/`.
 ---
 
 ## Open / Next Sprints
-
-### Sprint 17 — Marker-Driven Copilot Orchestration
-
-**Ziel:** Copilot-Board von DB-zentrierten `plan_sections` in Richtung eines Markdown-gefuehrten Marker-/Zeiger-Workflows entwickeln, ohne neue Seite und ohne Aenderungen an `/plans`.
-
-**Kurzfassung:**
-- Fuehrende Projektdatei mit Marker-Block als expliziter Arbeitszustand
-- Marker werden als Copilot-Cards visualisiert
-- Card-Klick oeffnet Perplexity-/Copilot-Chat fuer genau diesen Marker-Kontext
-- Status-/Fortschritt sollen mittelfristig in dieselbe Markdown-Datei zurueckgeschrieben werden
-- `handoff.md` und aktuelle Copilot-Cards muessen dafuer fachlich sauber entkoppelt bzw. neu gemappt werden
-
-**Plan-Datei:**
-- `sprints/sprint-17-marker-driven-copilot-orchestration.md`
-
-**Hinweis:** Diese Planung ist absichtlich in eine eigene Datei ausgelagert, weil das Thema ueber einen normalen UI-Sprint hinausgeht und Datenmodell, Handoff, Copilot-Interaktion und Migrationsstrategie gemeinsam beruehrt.
 
 ### Sprint A — Quality Scanner Spec & Scope Lock
 

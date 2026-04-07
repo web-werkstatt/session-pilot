@@ -7,6 +7,11 @@
 <link rel="stylesheet" href="/static/css/components.css?v={{ cache_bust }}">
 <link rel="stylesheet" href="/static/css/plans.css?v={{ cache_bust }}">
 <link rel="stylesheet" href="/static/css/copilot.css?v={{ cache_bust }}">
+<link rel="stylesheet" href="/static/css/copilot-header.css?v={{ cache_bust }}">
+<link rel="stylesheet" href="/static/css/copilot-cards.css?v={{ cache_bust }}">
+<link rel="stylesheet" href="/static/css/copilot-panel.css?v={{ cache_bust }}">
+<link rel="stylesheet" href="/static/css/copilot-chat.css?v={{ cache_bust }}">
+<link rel="stylesheet" href="/static/css/copilot-marker-errors.css?v={{ cache_bust }}">
 <link rel="stylesheet" href="/static/css/copilot-board.css?v={{ cache_bust }}">
 {% endblock %}
 {% block content %}
@@ -259,41 +264,14 @@
 
     <div class="toast" id="syncToast"></div>
 
-    <div class="modal-overlay" id="addSectionModal">
-        <div class="modal-content" style="max-width:500px;">
-            <div class="modal-header">
-                <h2>Neuer AI Task</h2>
-                <button class="modal-close" onclick="closeModal('addSectionModal')">&times;</button>
-            </div>
-            <div class="modal-body" style="padding:16px 24px;">
-                <div class="form-group" style="margin-bottom:12px;">
-                    <label style="font-size:13px;font-weight:600;">Titel</label>
-                    <input type="text" id="newSectionTitle" class="filter-select" style="width:100%;padding:8px;" placeholder="z.B. Governance Rules definieren">
-                </div>
-                <div class="form-group" style="margin-bottom:12px;">
-                    <label style="font-size:13px;font-weight:600;">Typ</label>
-                    <select id="newSectionKind" class="filter-select" style="width:100%;padding:8px;">
-                        <option value="section">AI Task</option>
-                        <option value="spec">Spec</option>
-                    </select>
-                </div>
-                <div class="form-group" style="margin-bottom:12px;">
-                    <label style="font-size:13px;font-weight:600;">Beschreibung (optional)</label>
-                    <textarea id="newSectionSummary" class="filter-select" style="width:100%;padding:8px;min-height:60px;resize:vertical;font-family:inherit;" placeholder="Was soll dieser Task erreichen?"></textarea>
-                </div>
-                <div class="form-group" style="margin-bottom:12px;">
-                    <label style="font-size:13px;font-weight:600;">Spec-Referenz (optional)</label>
-                    <input type="text" id="newSectionSpecRef" class="filter-select" style="width:100%;padding:8px;" placeholder="z.B. SPEC-QUALITY-001">
-                </div>
-                <button class="btn btn-primary" onclick="createSection()" style="width:100%;">Erstellen</button>
-            </div>
-        </div>
-    </div>
+    {% include "_copilot_add_section_modal.html" %}
 {% endblock %}
 {% block scripts %}
 <script src="/static/js/marked.min.js"></script>
 <script>var PLAN_ID = {{ plan_id }};</script>
 <script src="/static/js/copilot-board-shared.js?v={{ cache_bust }}"></script>
+<script src="/static/js/copilot-marker-errors.js?v={{ cache_bust }}"></script>
 <script src="/static/js/copilot_board.js?v={{ cache_bust }}"></script>
+<script src="/static/js/copilot-section-modal.js?v={{ cache_bust }}"></script>
 <script src="/static/js/copilot-board-panel.js?v={{ cache_bust }}"></script>
 {% endblock %}

@@ -96,7 +96,9 @@ function _loadSections() {
     api.get(_buildMarkerApiUrl())
         .then(function(data) {
             allSections = _filterMarkersForWorkspace((data.markers || []).map(_normalizeMarker));
+            var parseErrors = Array.isArray(data.parse_errors) ? data.parse_errors : [];
             document.getElementById('loading').style.display = 'none';
+            _renderMarkerParseErrors(parseErrors);
             if (allSections.length === 0) {
                 document.getElementById('sectionsBoard').style.display = 'none';
                 document.getElementById('emptyState').style.display = 'block';
@@ -108,8 +110,9 @@ function _loadSections() {
             _renderProgress();
             if (typeof lucide !== 'undefined') lucide.createIcons();
         })
-        .catch(function() {
-            document.getElementById('loading').innerHTML = '<div class="error">Fehler beim Laden</div>';
+        .catch(function(err) {
+            var msg = (err && err.message) ? err.message : 'Fehler beim Laden';
+            document.getElementById('loading').innerHTML = '<div class="error">' + escapeHtml(msg) + '</div>';
         });
 }
 
@@ -468,33 +471,4 @@ function _updateColumnCounts() {
 }
 
 /* === Add Section === */
-function openAddSectionModal() {
-    document.getElementById('newSectionTitle').value = '';
-    document.getElementById('newSectionKind').value = 'section';
-    document.getElementById('newSectionSummary').value = '';
-    document.getElementById('newSectionSpecRef').value = '';
-    openModal('addSectionModal');
-    document.getElementById('newSectionTitle').focus();
-}
-
-function createSection() {
-    var title = document.getElementById('newSectionTitle').value.trim();
-    if (!title) { _showToast('Titel ist erforderlich', true); return; }
-
-    var body = {
-        title: title,
-        kind: document.getElementById('newSectionKind').value,
-        summary: document.getElementById('newSectionSummary').value.trim() || null,
-        spec_ref: document.getElementById('newSectionSpecRef').value.trim() || null,
-    };
-
-    api.post('/api/plans/' + PLAN_ID + '/sections', body)
-        .then(function() {
-            closeModal('addSectionModal');
-            _showToast('AI Task erstellt');
-            _loadSections();
-        })
-        .catch(function(err) {
-            _showToast('Fehler: ' + (err.message || 'Erstellen fehlgeschlagen'), true);
-        });
-}
+/* openAddSectionModal + createSection sind nach copilot-section-modal.js ausgelagert */
