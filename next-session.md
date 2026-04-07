@@ -41,8 +41,7 @@ Master-Plan, Gitea-Issues und Repo-Stand in einen konsistenten Zustand bringen, 
   - #18 (Copilot CSS + handoff regeneration) - Commit `5bcb2af`
 
 **Arbeitspaket C - Marker-Context:**
-- **OFFEN:** `marker-context.md` enthaelt Testmarker `test-cockpit-2026-04-05`, Plan 142
-- Laut CLAUDE.md-Regel nicht eigenmaechtig aenderbar - User-Rueckfrage erforderlich
+- **DONE:** `marker-context.md` bleibt unveraendert (User-Entscheidung: Testmarker `test-cockpit-2026-04-05` behalten)
 
 **Arbeitspaket D - next-session.md Follow-ups:**
 - D1/D2 (Session-Kontext-Links im Planning-Panel schaerfen): **verschoben** - aktuelle Bindung laeuft ueber `Marker.last_session` mit Title-Matching. Echte `spec_id`/`task_id`-FK erfordert Schema-Aenderung + Import-Anpassung, ist groesser als ein Follow-up-Task. Soll als eigener kleiner Sprint angelegt werden.
@@ -76,7 +75,6 @@ Master-Plan, Gitea-Issues und Repo-Stand in einen konsistenten Zustand bringen, 
 ## Naechste Session
 
 ### Offene Entscheidung
-- [ ] **Marker-Context:** Testmarker `test-cockpit-2026-04-05` behalten oder `marker-context.md` leeren? (User-Freigabe noetig)
 - [ ] **Naechster Sprint:** Sprint QS Phase 1 (DB-First State Consolidation, JSON-Stores -> DB) ODER Sprint 17 (Marker-Driven Copilot Orchestration)?
 
 ### Verschoben aus Sprint QT

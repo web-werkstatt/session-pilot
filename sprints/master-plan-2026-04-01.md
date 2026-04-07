@@ -133,7 +133,7 @@ Referenz:
   - Current-State-Block um neue Saeule ergaenzt
 - **Arbeitspaket B - Gitea-Issue-Triage:**
   - 5 offene Issues gepruefte und mit Commit-Referenz geschlossen: #13 (Audit-Integration), #14 (Sprint P3 Prompt-Chain, Commit afd218c), #15 (P2-Branch-Isolierung, Commits 8f8d08c + 6faf2c8), #16 (Sprint P2 marker board, Commit 8f8d08c), #18 (Copilot CSS fix, Commit 5bcb2af)
-- **Arbeitspaket C - Marker-Context:** offen gelassen (User-Rueckfrage wegen Testmarker `test-cockpit-2026-04-05`)
+- **Arbeitspaket C - Marker-Context:** DONE - User-Entscheidung: Testmarker `test-cockpit-2026-04-05` bleibt unveraendert
 - **Arbeitspaket D - next-session.md Follow-ups:**
   - Session-Binding-Schaerfung nach Analyse als eigener kuenftiger Mini-Sprint vertagt (erfordert Schema-Aenderung)
   - Cockpit-Activity-Card Anpassung: obsolet, da keine separate Card existiert (Activity-Tab ist bereits das neue Format)

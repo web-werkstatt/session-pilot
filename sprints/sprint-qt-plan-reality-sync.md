@@ -1,7 +1,7 @@
 # Sprint QT - Plan-Reality-Sync
 
 Stand: 2026-04-07
-Status: DONE 2026-04-07 (Arbeitspaket C teil-offen - Marker wartet auf User)
+Status: DONE 2026-04-07
 Grundlage: `sprints/audit-2026-04-07.md`
 
 ## Ziel
@@ -56,11 +56,11 @@ Jedes Arbeitspaket ist in 2-5-Minuten-Tasks zerlegt. Reihenfolge: A vor B vor C.
 - [x] **B5** Issue #18 Body gelesen: Copilot CSS + handoff regeneration. Verifiziert: `templates/copilot_board.html` Zeilen 6-7 laden `design-tokens.css` + `components.css`, `static/css/components.css` hat `ui-panel`, `ui-button`, `ui-badge`. Commit `5bcb2af fix: Copilot CSS and handoff regeneration refs #18` auf main.
 - [x] **B6** Alle 5 Issues mit Schliess-Kommentar + Commit-Referenz geschlossen (Gitea API).
 
-### Arbeitspaket C - Marker-Context klaeren (~5 Min) - TEIL-OFFEN
+### Arbeitspaket C - Marker-Context klaeren (~5 Min) - DONE 2026-04-07
 
-- [ ] **C1** User-Rueckfrage offen: "Ist `marker-context.md` mit `test-cockpit-2026-04-05` noch relevant oder kann er entfernt werden?"
-- [ ] **C2** blockiert durch C1
-- [ ] **C3** blockiert durch C1
+- [x] **C1** User-Rueckfrage: "Ist `marker-context.md` noch relevant?" -> Antwort: **behalten**.
+- [x] **C2** entfaellt (keine Aktion noetig)
+- [x] **C3** entfaellt (Marker bleibt wie er ist)
 
 ### Arbeitspaket D - next-session.md Follow-ups (~25 Min) - TEILWEISE DONE
 
