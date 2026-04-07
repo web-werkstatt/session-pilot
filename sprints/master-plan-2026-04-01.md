@@ -1454,7 +1454,28 @@ aber nicht verschachteltes `.kilo/node_modules/`.
 
 ---
 
-## Open / Next Sprints
+## Deferred Sprints (post-closeout v1.3-final)
+
+> **Status 2026-04-07:** Dashboard ist mit Tag `v1.3-final` auf Feature-Freeze gesetzt.
+> Die unten gelisteten Sprints sind **bewusst verschoben** ("Bezahl-Features"), nicht
+> vergessen. Reaktivierung jederzeit moeglich: einen der Sprint-Plan-Files in `sprints/`
+> oeffnen, neuen Arbeitssprint starten, `v1.3-final` als Ausgangspunkt nutzen.
+>
+> **Aktuell deferred (geschaetzter Restaufwand laut Audit 2026-04-07: ~275-355h):**
+>
+> - **Sprint QS** — DB-First State Consolidation (notifications/favorites/relations/ideas/settings → DB, Marker-State DB-first)
+> - **Sprint 12 Voll** — preferred_workflow UI + Effectiveness-Display (Light-Version ist DONE als Sprint C)
+> - **Sprint 13 Voll** — Recommendations-Tabelle + Decide-API + Tool-Control + Generatoren (MVP-Version ist DONE als Sprint D)
+> - **Sprint 14** — Sprint-Flow-Tracking (DB-Tabellen `sprints` + `sprint_sessions`, Soll/Ist-Ampel, `/sprints` Page)
+> - **Sprint 15** — Turn-Level Rating (Segment-Heuristik + Per-Segment-Outcome im Session-Detail)
+> - **Sprint 16** — Workflow-Profile (Multi-Profil-DB-Tabelle + `/workflow` Settings-Page)
+> - **Sprint 6** — DeRep Fixer (`auto_coder/derep.py` + CLI)
+> - **Sprint 8** — Automation Tuning (Quality-Scan-Scheduler + neue Notification-Typen)
+> - **Audit-Weiterentwicklung** — Quality-Score als `input_facts`, automatischer Trigger
+> - **Sprint 20** — Product Launch Bundle (Release-Notes-Page, Changelog-Automation)
+>
+> Die folgenden alten Sprint-Beschreibungen (A/B/C/D) sind **historische Referenz** —
+> sie wurden alle bereits abgeschlossen (siehe DONE-Bloecke weiter oben in diesem Plan).
 
 ### Sprint A — Quality Scanner Spec & Scope Lock
 

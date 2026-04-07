@@ -34,7 +34,7 @@ Kein Build-Schritt, keine Tests, kein Linting konfiguriert. Abhaengigkeiten in `
 
 ## Architektur
 
-**Einstiegspunkt:** `app.py` (85 Zeilen) - Flask-App, registriert Blueprints, startet Notification-Checker, laedt .env.
+**Einstiegspunkt:** `app.py` (104 Zeilen) - Flask-App, registriert Blueprints, startet Notification-Checker, laedt .env.
 
 **Route-Module (`routes/`):**
 - `project_routes.py` - Projekt-Info, Detail, Save, Export, Assets
@@ -171,6 +171,7 @@ Bei **jeder Code-Aenderung** (neue Features, Bugfixes, Refactoring) wird ein Git
 ## Backup
 
 Automatisches Backup via Cronjob (`scripts/backup.sh`):
-- Taeglich 01:00: JSON-Daten, project.json, Claude Sessions (7 Tage Rotation)
-- Woechentlich So 02:00: Wochen-Backup (4 Wochen Rotation)
+- Taeglich 12:30: JSON-Daten, project.json, Claude Sessions (7 Tage Rotation)
+- Woechentlich So 13:30: Wochen-Backup (4 Wochen Rotation)
 - Speicherort: `/mnt/projects/backups/project-dashboard/`
+- **Wichtig:** Cron laeuft mittags, weil die Workstation nachts ausgeschaltet ist. Bei Aenderung der Zeit beide Cron-Eintraege im User-Crontab anpassen.

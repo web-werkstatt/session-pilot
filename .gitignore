@@ -57,8 +57,15 @@ account_plans.json
 next-session.md
 next-session-archiv.md
 
-# Upload folder
+# Upload folder (User-Uploads aus Cockpit/Copilot)
 upload/
+static/uploads/
+
+# Codex CLI Stub (versehentlich angelegt, wird vom Code nicht erwartet)
+.codex
+
+# Marker-Context (Runtime-Fokusauftrag, projektlokal, siehe CLAUDE.md)
+marker-context.md
 
 # Claude settings
 .claude/

@@ -120,7 +120,7 @@ No API keys needed. No cloud service. Just point it at `~/.claude/` and go.
 - **Document Browser** — Browse, view, edit, and upload files
 
 ### Technical
-- Flask with modular Blueprint architecture (21 route modules, 21 services)
+- Flask with modular Blueprint architecture (37 route modules, 50+ services)
 - PostgreSQL for session data with connection pooling
 - JSON file cache with TTL for fast project scans
 - `auto_coder` quality scanner with baseline/diff workflow
@@ -302,13 +302,13 @@ All paths are configurable via environment variables. Set `DASHBOARD_PROJECTS_DI
 
 ## Backup
 
-Automatic backup via cron:
+Automatic backup via cron (run at midday so the workstation is awake):
 
 ```bash
-# Daily backup (01:00, 7-day rotation)
+# Daily backup (12:30, 7-day rotation)
 scripts/backup.sh daily
 
-# Weekly backup (Sunday 02:00, 4-week rotation)
+# Weekly backup (Sunday 13:30, 4-week rotation)
 scripts/backup.sh weekly
 ```
 
@@ -318,7 +318,7 @@ scripts/backup.sh weekly
 project_dashboard/
 ├── app.py                    # Flask entry point
 ├── config.py                 # Configuration via env vars
-├── routes/                   # 19 Blueprint modules
+├── routes/                   # 37 Blueprint modules
 │   ├── session_routes.py     # Session CRUD, detail, export
 │   ├── session_analysis_routes.py  # Cost & analytics API
 │   ├── data_routes.py        # Main data aggregation
@@ -330,7 +330,7 @@ project_dashboard/
 │   ├── scheduled_tasks_routes.py  # Scheduled task management
 │   ├── quality_routes.py     # Code quality dashboard & API
 │   └── ...                   # Groups, ideas, news, etc.
-├── services/                 # 18 service classes
+├── services/                 # 50+ service modules
 │   ├── session_import.py     # JSONL parser for Claude sessions
 │   ├── session_export.py     # Multi-format export
 │   ├── project_scanner.py    # Auto-discovery & caching
