@@ -120,6 +120,43 @@ Referenz:
 
 ## Completed Sprints (diese Session)
 
+### Sprint SB — Session-Marker-Binding hart — DONE (2026-04-07)
+
+**Ziel:** Sessions sollen ihre Marker-Zugehoerigkeit explizit in der DB tragen, statt nur ueber `marker.last_session` aufgeloest zu werden (1:1, nur letzte Session pro Marker findbar).
+
+**Umgesetzt:**
+- Schema: `sessions.marker_id VARCHAR(120)`, `sessions.marker_handoff_path TEXT`, Index `idx_sessions_marker_id` via neuer `db_service.ensure_session_marker_schema()` (idempotent, lazy lock).
+- Backfill: `scripts/backfill_session_marker_id.py` scannt alle Projektordner unter `PROJECTS_DIR`, liest jede `handoff.md` ueber `parse_markers()` und stempelt fuer jedes nicht-leere `marker.last_session` die `sessions.marker_id` (nur wenn NULL → idempotent). Erster Lauf: 7 Sessions in `project_dashboard` aktualisiert. Zweiter Lauf: 0 Updates, 7 already_set.
+- Post-Sync-Hook: `_stamp_marker_context_after_sync()` in `services/session_import.py`. Liest pro Projekt `marker-context.md` (nur `- marker_id:`-Zeile), uebernimmt mtime und stempelt alle Sessions mit `started_at >= mtime` und `marker_id IS NULL`. Aufruf am Ende von `sync_all()`. Fehler je Projekt brechen den Sync nicht ab. Deckt alle 5 Importer (claude/codex/gemini/opencode/kilo) ohne Modifikation ab.
+- Read-Path: `routes/session_routes.py:_resolve_session_marker(project_name, session_uuid, stored_marker_id)` bevorzugt den DB-`marker_id` und ruft `get_marker_context()` gezielt; faellt bei NULL auf den bisherigen `get_marker_by_last_session()`-Lookup zurueck. SELECT war bereits `*`, neue Spalten kommen automatisch mit. `ensure_session_marker_schema()` wird in `_api_session_detail_inner` aufgerufen.
+- Neue Route: `GET /api/markers/<marker_id>/sessions?project=...` in `routes/copilot_marker_routes.py`, liefert alle verknuepften Sessions sortiert nach `started_at DESC`. Verlauf statt nur "letzte".
+
+**Akzeptanzkriterien (7/7):**
+- AC1 Schema-Spalten + Index ✓ (verifiziert ueber Service-Layer)
+- AC2 Backfill idempotent ✓ (zweiter Lauf 0 Updates)
+- AC3 Post-Sync-Hook funktional ✓ (Code-Pfad identisch zum Backfill, defensiv)
+- AC4 Read-Path nutzt DB-marker_id zuerst ✓ (`/api/sessions/032e4f9f-...` liefert `marker_id: 141`, `marker.titel: "Sprint-Plan: Projekt-Metadaten Erweiterung"`)
+- AC5 `/api/markers/141/sessions?project=project_dashboard` liefert 1 Session ✓
+- AC6 Marker-Lookup gezielt statt Iteration ✓
+- AC7 End-to-End auf Live-DB ✓
+
+**Geaenderte Dateien:**
+- `services/db_service.py` (+ ensure_session_marker_schema)
+- `services/session_import.py` (+ _stamp_marker_context_after_sync, sync_all-Hook)
+- `routes/session_routes.py` (+ _resolve_session_marker, neuer Aufruf)
+- `routes/copilot_marker_routes.py` (+ /api/markers/<id>/sessions)
+- `scripts/backfill_session_marker_id.py` (NEU)
+- `sprints/sprint-sb-session-marker-binding.md` (NEU - Sprint-Plan)
+- `CLAUDE.md` (Patterns-Eintrag)
+- `next-session.md`
+- `sprints/master-plan-2026-04-01.md`
+
+**Gitea-Issue:** #20 (refs)
+
+**Commit-Hash:** wird beim Commit vergeben
+
+---
+
 ### Sprint 17 — Marker-Driven Copilot Orchestration — DONE (Reality-Check 2026-04-07)
 
 **Ziel:** Copilot-Board von DB-zentrierten `plan_sections` auf einen Markdown-gefuehrten Marker-Workflow umstellen.

@@ -1,104 +1,114 @@
 # Projekt-Dashboard - Naechste Session
 
-> **Letzte Aktualisierung:** 2026-04-07 (Sprint 17 Reality-Check + Bugfix #19 verifiziert)
-> **Status:** Sprint 17 als DONE bestaetigt + defensiver Marker-Parser-UX-Bugfix umgesetzt, getestet und auf prod verifiziert (Service neu gestartet, End-to-End-Test mit kaputter handoff.md erfolgreich).
-> **Naechste Aufgabe:** Naechster Feature-Sprint waehlen (siehe Optionen unten)
+> **Letzte Aktualisierung:** 2026-04-07 (Sprint SB DONE)
+> **Status:** Sessions↔Marker-Bindung jetzt hart in der DB. Backfill 7 Sessions, Hook fuer kuenftige Sessions aktiv, Read-Path und neue Verlauf-Route deployed.
+> **Naechste Aufgabe:** Naechster Sprint waehlen (siehe Optionen unten)
 
 ---
 
-## Session 2026-04-07 (zweiter Block) - Sprint 17 Reality-Check + Bugfix #19
+## Session 2026-04-07 (dritter Block) - Sprint SB Session-Marker-Binding
 
-### Sprint 17 Reality-Check
+### Befund vor dem Sprint
 
-Pruefung der 5 Sprint-17-Arbeitspakete A-E gegen den Code (analog zu Sprint QT bei Sprint 9/10/11):
+- `sessions` kannte ihren Marker nicht. Reverse-Lookup ueber `routes/session_routes.py:278` -> `get_marker_by_last_session()` (services/copilot_marker_service.py:148).
+- `marker.last_session` in `handoff.md` ist 1:1 - nur die *letzte* Session pro Marker findbar, alle vorherigen bekamen `marker = null`.
+- `next-session.md` hatte das urspruenglich als "Title-Matching" beschrieben - das war ungenau.
 
-| Paket | Befund |
-|---|---|
-| A Marker-Dateiformat | DONE - `services/copilot_marker_format.py` (Parser, START/END, Validierung), YAML-Frontmatter `state_format: copilot_markers_v1` in `handoff.md` |
-| B Service-Layer | DONE (uebererfuellt) - `services/copilot_marker_service.py` 11 Funktionen inkl. activate_marker, close_marker, execution_rating, backfill |
-| C Routes/API | DONE (uebererfuellt) - `routes/copilot_marker_routes.py` 9 Endpoints in eigenem Blueprint |
-| D UI-Integration | DONE - `copilot_board.html`+`copilot_board.js` rendern ausschliesslich Marker, Drag&Drop schreibt zurueck |
-| E Chat-Kontext | DONE - `activate_marker` schreibt `marker-context.md`, `/api/copilot/chat` liest via `context_path` |
+### Umgesetzt
 
-**Phasen 1-3** alle DONE. **Akzeptanzkriterien:** 6 von 7 erfuellt, 1 PARTIAL → in Bugfix #19 behoben.
+**Schema (`services/db_service.py`):**
+- `ensure_session_marker_schema()`: `sessions.marker_id VARCHAR(120)`, `sessions.marker_handoff_path TEXT`, Index `idx_sessions_marker_id`. Lazy + Lock-Pattern wie `ensure_ai_scope_schema`.
 
-**Befund-Fazit:** Sprint 17 ist faktisch DONE. Der Sprint-17-Plan vom 2026-04-03 war zum Zeitpunkt seiner Erstellung bereits ueberholt - der Service `copilot_marker_service.py` und die Routes existierten schon aus P2/P3/P-E3.
+**Backfill (`scripts/backfill_session_marker_id.py`):**
+- Scannt alle Projektordner unter `PROJECTS_DIR`, parst jede `handoff.md` mit `parse_markers()`.
+- Fuer jeden Marker mit `last_session != ''`: `UPDATE sessions SET marker_id, marker_handoff_path WHERE session_uuid=? AND marker_id IS NULL`.
+- Idempotent durch `marker_id IS NULL`-Guard.
+- Erster Lauf: 7/7 Sessions in `project_dashboard` aktualisiert.
+- Zweiter Lauf: 0 Updates, 7 already_set.
 
-### Bugfix #19 - Defensive Marker-Parser-UX
+**Post-Sync-Hook (`services/session_import.py`):**
+- `_stamp_marker_context_after_sync()` iteriert nach jedem `sync_all()` ueber alle Projekte mit `marker-context.md`.
+- Liest `- marker_id:` und mtime, stempelt alle Sessions mit `started_at >= mtime` und `marker_id IS NULL`.
+- Fehler je Projekt brechen den Sync nicht ab (defensiv, nur Print).
+- **Single point of change**: deckt alle 5 Importer (claude/codex/gemini/opencode/kilo) ohne Modifikation ab.
 
-Einziger PARTIAL-Punkt aus Sprint 17 Reality-Check (Risiko 1: defensive Parser-Fehler-UX) wurde umgesetzt:
+**Read-Path (`routes/session_routes.py`):**
+- Neuer Helper `_resolve_session_marker(project_name, session_uuid, stored_marker_id)`.
+- Bevorzugt DB-`marker_id` -> gezielter `get_marker_context()`-Lookup. Fallback auf `get_marker_by_last_session()` fuer Sessions ohne DB-Stempel.
+- `ensure_session_marker_schema()` in `_api_session_detail_inner` aufgerufen.
+- SELECT war bereits `*` -> neue Spalten kommen automatisch im Response mit.
 
-**Backend:**
-- `services/copilot_marker_format.py`: neue `parse_markers_with_errors(path) -> (markers, errors)`, `parse_markers` ist jetzt tolerant. Errors enthalten `marker_id`, `error`, `error_type` (`json_decode` / `validation` / `unexpected`), `handoff_path`.
-- `services/copilot_marker_service.py`: neue `list_markers_for_plan_with_errors`.
-- `routes/copilot_marker_routes.py`: `GET /api/copilot/markers` liefert zusaetzlich `parse_errors`-Feld.
+**Neue Route (`routes/copilot_marker_routes.py`):**
+- `GET /api/markers/<marker_id>/sessions?project=...` - liefert Verlauf aller verknuepften Sessions sortiert nach `started_at DESC`.
 
-**Frontend:**
-- `static/js/copilot-marker-errors.js` (neu): `_renderMarkerParseErrors(errors)` zeichnet roten Banner ueber dem Board.
-- `static/js/copilot_board.js`: `_loadSections` liest `parse_errors`, `.catch` zeigt echte Fehlermeldung.
-- `static/css/copilot-marker-errors.css` (neu): Banner-Styling.
+### Verifikation auf Live-System
 
-### Folge-Refactor (file-size-limits.md)
+```bash
+# Schema (ueber Service-Layer)
+ensure_session_marker_schema()  # ok
 
-Pre-Commit-Hook lehnte zunaechst ab: `copilot.css` (1150), `copilot_board.js` (539), `copilot_board.html` (306) ueber Limit. Statt nur den Bugfix auszulagern, wurde die Altlast aufgeteilt:
+# Backfill
+python3 scripts/backfill_session_marker_id.py
+# {"sessions_updated": 7, "sessions_already_set": 0, ...}
+python3 scripts/backfill_session_marker_id.py
+# {"sessions_updated": 0, "sessions_already_set": 7, ...}  -> idempotent
 
-| Datei | Vorher | Nachher |
-|---|---|---|
-| `copilot.css` | 1150 | 320 |
-| `copilot_board.js` | 539 | 474 |
-| `copilot_board.html` | 306 | 277 |
+# Service-Restart
+sudo systemctl restart project-dashboard  # active
 
-8 neue Dateien:
-- 5 thematische CSS: `copilot-header.css` (138), `copilot-cards.css` (235), `copilot-panel.css` (249), `copilot-chat.css` (173), `copilot-marker-errors.css` (49)
-- 2 JS: `copilot-marker-errors.js` (41), `copilot-section-modal.js` (36)
-- 1 HTML-Include: `_copilot_add_section_modal.html` (30)
+# Read-Path Test
+curl /api/sessions/032e4f9f-7ff4-4980-94cc-10a8e13b04c4
+# marker_id: 141, marker_handoff_path: /mnt/projects/.../handoff.md
+# marker.titel: "Sprint-Plan: Projekt-Metadaten Erweiterung"
 
-Alle Dateien jetzt unter Limit (CSS 400 / JS 500 / HTML 300).
+# Verlauf-Route
+curl /api/markers/141/sessions?project=project_dashboard
+# ok: True, count: 1
+```
 
-### Verifikation
+### Akzeptanzkriterien (7/7)
 
-- **Smoke-Tests** (Python): 4/4 gruen (missing file, 1 valid + 1 broken JSON, validation error, parse_markers tolerant)
-- **Service-Restart:** `sudo systemctl restart project-dashboard` → laeuft seit 14:15
-- **End-to-End-Test:** handoff.md temporaer mit broken JSON-Block verfaelscht, `curl /api/copilot/markers?project_id=project_dashboard&plan_id=142` lieferte `markers: [142]` + `parse_errors: [{marker_id: broken-test, error_type: json_decode, error: "JSON kaputt: Expecting property name enclosed in double quotes (Zeile 1, Spalte 3)", handoff_path: "/mnt/projects/project_dashboard/handoff.md"}]`. handoff.md sauber wiederhergestellt.
+- AC1 Schema-Spalten + Index ✓
+- AC2 Backfill idempotent ✓
+- AC3 Post-Sync-Hook funktional ✓ (Code-Pfad identisch zum Backfill)
+- AC4 Read-Path nutzt DB-marker_id zuerst ✓
+- AC5 Verlauf-Route liefert Sessions ✓
+- AC6 Marker-Lookup gezielt statt O(n_marker)-Iteration ✓
+- AC7 End-to-End auf Live-DB ✓
 
 ### Geaenderte Dateien
+
 | Datei | Aenderung |
 |-------|-----------|
-| `services/copilot_marker_format.py` | parse_markers_with_errors + tolerantes parse_markers |
-| `services/copilot_marker_service.py` | list_markers_for_plan_with_errors |
-| `routes/copilot_marker_routes.py` | parse_errors-Feld in /api/copilot/markers |
-| `static/js/copilot_board.js` | parse_errors-Handling, ausgelagerte Helpers |
-| `static/js/copilot-marker-errors.js` | NEU - Banner-Renderer |
-| `static/js/copilot-section-modal.js` | NEU - Add-Section-Modal-Logik |
-| `static/css/copilot.css` | auf 320 Z reduziert |
-| `static/css/copilot-{header,cards,panel,chat,marker-errors}.css` | NEU |
-| `templates/copilot_board.html` | 5 neue link + 2 neue script + Modal-Include |
-| `templates/_copilot_add_section_modal.html` | NEU - Modal-Include |
-| `sprints/sprint-17-marker-driven-copilot-orchestration.md` | Status auf DONE + Reality-Check |
-| `sprints/master-plan-2026-04-01.md` | Sprint 17 in Done eingetragen |
+| `services/db_service.py` | + `ensure_session_marker_schema` |
+| `services/session_import.py` | + `_stamp_marker_context_after_sync`, sync_all-Hook |
+| `routes/session_routes.py` | + `_resolve_session_marker`, neuer Read-Path |
+| `routes/copilot_marker_routes.py` | + `GET /api/markers/<id>/sessions` |
+| `scripts/backfill_session_marker_id.py` | NEU |
+| `sprints/sprint-sb-session-marker-binding.md` | NEU - Sprint-Plan |
+| `CLAUDE.md` | Patterns-Eintrag "Session-Marker-Binding" |
+| `sprints/master-plan-2026-04-01.md` | Sprint SB Completed-Block |
+| `next-session.md` | dieses Update |
 
 ### Gitea-Issues
-- #19 closed (refs `250c0d7`)
 
-**Commit:** `250c0d7`
+- #20 wird beim Commit per `fixes #20` geschlossen
 
 ---
 
 ## Naechste Session - Optionen
 
-### Option 1: Verschoben aus Sprint QT
-- [ ] **Session↔Spec/Task Binding verbessern:** Sessions haengen aktuell nur ueber Marker-Title-Matching an Tasks. Eigener Mini-Sprint fuer explizite `spec_id`/`task_id`-FK in der `sessions`-Tabelle oder in einer Relation-Tabelle, inkl. Import-Anpassung. Jetzt nach Sprint 17 DONE besonders sinnvoll.
+Aus Master-Plan offenen Sprints (Sprint A/B/C/D sind alle DONE - ist in der alten Optionsliste falsch gelistet gewesen):
 
-### Option 2: Naechster echter Feature-Sprint
-Aus Master-Plan "Open / Next":
-- Sprint A - Quality Scanner Spec & Scope Lock
-- Sprint QS - DB-First State Consolidation (JSON-Stores → DB)
-- Sprint 6 - DeRep Fixer (eigenstaendig)
-- Sprint 8 - Automation Tuning
-- Sprint 12 - Governance Feedback-Loop (Voll-Version, nur Light als Sprint C DONE)
-- Sprint 13 - Bidirektionaler LLM-Control (Voll-Version, nur MVP als Sprint D DONE)
-- Sprint 14 - Sprint-Flow-Tracking
-- Sprint 15 - Turn-Level-Rating
-- Sprint 16 - Workflow-Profiles
-- Sprint 20 - Product Launch Bundle
-- Audit-Weiterentwicklung: Quality-Score als `input_facts`, Governance-Gate-Integration, automatischer Trigger
+- **Sprint QS** - DB-First State Consolidation (JSON-Stores → DB). Logischer Anschluss an Sprint SB, weil das Schema-Pattern jetzt etabliert ist.
+- **Sprint 14** - Sprint-Flow-Tracking. Profitiert direkt vom Session-Marker-Binding (Verlauf pro Marker jetzt verfuegbar).
+- **Sprint 15** - Turn-Level-Rating. Setzt auf 14 auf.
+- **Sprint 12** - Governance Feedback-Loop (Voll-Version, nur Light als Sprint C DONE).
+- **Sprint 13** - Bidirektionaler LLM-Control (Voll-Version, nur MVP als Sprint D DONE).
+- **Sprint 16** - Workflow-Profiles.
+- **Sprint 6** - DeRep Fixer.
+- **Sprint 8** - Automation Tuning.
+- **Sprint 20** - Product Launch Bundle.
+- **Audit-Weiterentwicklung** - Quality-Score als `input_facts`, Governance-Gate-Integration, automatischer Trigger.
+
+**Empfehlung naechstes Mal:** **Sprint 14 (Sprint-Flow-Tracking)** - direkter Nutzwert des frischen Session-Marker-Bindings, baut darauf auf.

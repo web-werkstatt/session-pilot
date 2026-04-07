@@ -7,6 +7,7 @@ import json
 import os
 from services.db_service import execute, execute_many
 from services.account_discovery import discover_all_accounts
+from services.session_marker_stamp import stamp_marker_context_after_sync
 from services.session_import_utils import parse_ts, sanitize_content_json, create_session_meta, update_time_range
 from services.ai_scope_service import extract_ai_flags
 from services.file_touch_service import extract_file_touches, extract_file_touches_git, save_file_touches
@@ -452,5 +453,12 @@ def sync_all():
         print(f"  {stats}")
 
     _save_hash_cache(hash_cache)
+
+    # Sprint SB: Sessions mit aktuell aktivem marker-context.md verknuepfen
+    try:
+        stamp_marker_context_after_sync()
+    except Exception as e:
+        print(f"Marker-Context-Stamp fehlgeschlagen: {e}")
+
     print(f"Gesamt: {total_stats}")
     return total_stats

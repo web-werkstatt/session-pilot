@@ -233,6 +233,12 @@ def ensure_plan_structure_schema():
     ensure_plan_structure_schema_impl(execute, ensure_plan_workflow_schema)
 
 
+def ensure_session_marker_schema():
+    """Sprint SB: Session-Marker-Binding (delegiert an db_session_marker_schema)."""
+    from services.db_session_marker_schema import ensure_session_marker_schema_impl
+    ensure_session_marker_schema_impl(execute)
+
+
 _ai_scope_ready = False
 _ai_scope_lock = threading.Lock()
 

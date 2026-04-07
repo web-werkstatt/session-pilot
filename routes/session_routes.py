@@ -5,8 +5,8 @@ Review-Routes sind in session_review_routes.py ausgelagert.
 import time
 import threading
 from flask import Blueprint, render_template, jsonify, request, Response
-from services.db_service import execute, ensure_session_review_schema
-from services.copilot_marker_service import get_marker_by_last_session
+from services.db_service import execute, ensure_session_review_schema, ensure_session_marker_schema
+from services.copilot_marker_service import get_marker_by_last_session, get_marker_context
 from services.session_import import sync_all
 from services.session_validation_service import validate_session, validate_session_page
 from services.session_export import (
@@ -245,8 +245,26 @@ def api_session_detail(uuid):
         return jsonify({"error": f"Database error: {e}"}), 500
 
 
+def _resolve_session_marker(project_name, session_uuid, stored_marker_id):
+    """Sprint SB: bevorzugt sessions.marker_id, faellt auf last_session-Lookup zurueck."""
+    if not project_name:
+        return None
+    if stored_marker_id:
+        try:
+            ctx = get_marker_context(project_name, stored_marker_id)
+            if ctx:
+                return ctx
+        except Exception:
+            pass
+    try:
+        return get_marker_by_last_session(project_name, session_uuid)
+    except Exception:
+        return None
+
+
 def _api_session_detail_inner(uuid):
     ensure_session_review_schema()
+    ensure_session_marker_schema()
     session = execute("SELECT * FROM sessions WHERE session_uuid = %s", (uuid,), fetchone=True)
     if not session:
         return jsonify({"error": "Session not found"}), 404
@@ -274,10 +292,7 @@ def _api_session_detail_inner(uuid):
     s["imported_at"] = s["imported_at"].isoformat() if s.get("imported_at") else None
     s["updated_at"] = s["updated_at"].isoformat() if s.get("updated_at") else None
     s["duration_formatted"] = format_duration(s.get("duration_ms"))
-    try:
-        s["marker"] = get_marker_by_last_session(s.get("project_name"), uuid) if s.get("project_name") else None
-    except Exception:
-        s["marker"] = None
+    s["marker"] = _resolve_session_marker(s.get("project_name"), uuid, s.get("marker_id"))
 
     msgs = []
     for m in (messages or []):

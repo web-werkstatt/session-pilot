@@ -21,7 +21,7 @@ from services.copilot_marker_service import (
     update_marker_fields,
     update_marker_status,
 )
-from services.db_service import execute
+from services.db_service import execute, ensure_session_marker_schema
 
 
 copilot_marker_bp = Blueprint("copilot_marker", __name__)
@@ -217,3 +217,37 @@ def api_sprint_to_markers(plan_id):
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)}), 500
     return jsonify({"ok": True, "plan_id": plan_id, "count": len(markers), "markers": [marker.__dict__ for marker in markers]})
+
+
+@copilot_marker_bp.route("/api/markers/<marker_id>/sessions", methods=["GET"])
+def api_marker_sessions(marker_id):
+    """Sprint SB: liefert alle Sessions, die per sessions.marker_id mit
+    diesem Marker verknuepft sind. Optionaler ?project=... grenzt auf
+    ein Projekt ein."""
+    ensure_session_marker_schema()
+    marker_id = str(marker_id or "").strip()
+    if not marker_id:
+        return jsonify({"ok": False, "error": "marker_id ist erforderlich"}), 400
+    project = (request.args.get("project") or "").strip() or None
+
+    sql = """
+        SELECT id, session_uuid, account, project_name, model, started_at, ended_at,
+               duration_ms, user_message_count, assistant_message_count,
+               total_input_tokens, total_output_tokens, marker_id, marker_handoff_path
+        FROM sessions
+        WHERE marker_id = %s
+    """
+    params = [marker_id]
+    if project:
+        sql += " AND project_name = %s"
+        params.append(project)
+    sql += " ORDER BY started_at DESC NULLS LAST"
+
+    rows = execute(sql, tuple(params), fetch=True) or []
+    sessions = []
+    for row in rows:
+        item = dict(row)
+        item["started_at"] = item["started_at"].isoformat() if item.get("started_at") else None
+        item["ended_at"] = item["ended_at"].isoformat() if item.get("ended_at") else None
+        sessions.append(item)
+    return jsonify({"ok": True, "marker_id": marker_id, "project": project, "count": len(sessions), "sessions": sessions})
