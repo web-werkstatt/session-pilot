@@ -4,6 +4,61 @@
 
 ---
 
+## Session 2026-04-07 - Sprint QT Plan-Reality-Sync
+
+### Ziel
+Master-Plan, Gitea-Issues und Repo-Stand in einen konsistenten Zustand bringen, bevor weitere Feature-Sprints gestartet werden.
+
+### Was wurde erledigt
+
+**Arbeitspaket A - Master-Plan Reality-Check:**
+- Stichprobenhafte Pruefung von Sprint 9/10/11 Artefakten im Code
+- Sprint 9 (Fehler-Kategorien + AI-Scope-Filter) als DONE bestaetigt:
+  - `services/ai_scope_service.py` (86 Zeilen)
+  - `routes/session_filter_routes.py` (187 Zeilen, 4 Endpoints)
+  - `scripts/backfill_ai_flags.py`
+  - AI-Flag-Extraktion in allen Importern unter `services/importers/`
+- Sprint 10 (Per-File Heatmap) als DONE bestaetigt:
+  - `services/file_touch_service.py` (386 Zeilen)
+  - `routes/analytics_routes.py` (2 Endpoints)
+  - `static/js/file-heatmap.js`, in `project_detail.html` integriert
+- Sprint 11 (Modell-Qualitaetsvergleich) als DONE bestaetigt:
+  - `services/model_recommendation.py` (437 Zeilen)
+  - `routes/model_comparison_routes.py` (Page + 4 API-Endpoints)
+  - `templates/model_comparison.html`
+- Master-Plan-Block "AI Governance Analytics (historisch Sprints 9-14)" mit Status-Tabelle korrigiert
+- Historische-Referenz-Tabelle angepasst (Sprint 9/10/11 -> DONE)
+- Current-State-Block um neue Saeule erweitert
+
+**Arbeitspaket B - Gitea-Issue-Triage:**
+- Alle 5 offenen Issues #13, #14, #15, #16, #18 gepruefte und mit Commit-Referenz geschlossen:
+  - #13 (Audit-Integration) - `routes/audit_routes.py` + `templates/audit.html` vorhanden
+  - #14 (Sprint P3 Prompt-Chain) - Commit `afd218c` auf main
+  - #15 (P2-Branch-Isolierung) - Commits `8f8d08c` + `6faf2c8` (PR #17)
+  - #16 (Sprint P2 marker board) - Commit `8f8d08c`
+  - #18 (Copilot CSS + handoff regeneration) - Commit `5bcb2af`
+
+**Arbeitspaket C - Marker-Context:**
+- **DONE:** `marker-context.md` bleibt unveraendert (User-Entscheidung: Testmarker `test-cockpit-2026-04-05` behalten)
+
+**Arbeitspaket D - next-session.md Follow-ups:**
+- D1/D2 (Session-Kontext-Links im Planning-Panel schaerfen): **verschoben**
+- D3/D4 (Cockpit-Activity-Card anpassen): **obsolet**
+- D5/D6 (Archivierung): **DONE**
+
+**Arbeitspaket E - Dokumentation:**
+- `sprints/audit-2026-04-07.md` erstellt (Prueffbericht)
+- `sprints/sprint-qt-plan-reality-sync.md` erstellt
+- `sprints/master-plan-2026-04-01.md` aktualisiert (3 Stellen)
+- `next-session.md` + `next-session-archiv.md` aktualisiert
+
+### Gitea-Issues
+- #13, #14, #15, #16, #18 alle closed mit Commit-Referenz
+
+**Commits:** `e39d97c`, `25009fb`, `26797fa`, `85adbcf`
+
+---
+
 ## Session 2026-04-06 - QR-Validierung + Session-Tab Reduktion
 
 ### Was wurde erledigt
