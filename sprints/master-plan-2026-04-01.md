@@ -33,6 +33,7 @@ Messen          Auditieren        Bewerten          Steuern           Copilot
 - **Plan-Handoff** Generator fuer standardisierte LLM-Executor-Uebergabe (YAML-Frontmatter + 7 Sektionen).
 - **Section-Board** DB-first Level-2-Cards (plan_sections) mit Copilot-Chat pro Section auf /copilot?plan_id=X.
 - **Handoff-Service** Zentraler project_handoff_service.py, projektbezogene handoff-<plan_id>.md Dateien, LLM Command handoff-status.
+- **AI Governance Analytics (Sprints 9-11)** Fehler-Kategorien + AI-Scope-Filter, Per-File Heatmap + Risk-Radar, Modell-Qualitaetsvergleich + Empfehlungs-Engine (Status-Korrektur 2026-04-07, siehe "AI Governance Analytics"-Block).
 
 ---
 
@@ -74,9 +75,23 @@ Bisher: Architektur und Checks-Module geplant (auto_coder/), kein Code.
 
 ### AI Governance Analytics (historisch Sprints 9-14)
 
-AI-Scope-Filter, Fehler-Kategorien, Per-File Heatmap, Model-Vergleich,
-Projekt-Governance, LLM-Steuerung, Sprint-Tracking.
-Bisher: Roadmap komplett, kein Code.
+**Status-Korrektur 2026-04-07 (Sprint QT):** Sprint 9, 10 und 11 sind
+entgegen der frueheren Einschaetzung substanziell implementiert. Der
+Masterplan-Eintrag "Roadmap komplett, kein Code" war nicht mehr korrekt.
+
+| Sprint | Thema | Belegter Code-Stand | Status |
+|--------|-------|---------------------|--------|
+| 9 | Fehler-Kategorien + AI-Scope-Filter | `services/ai_scope_service.py`, `routes/session_filter_routes.py` (4 Endpoints: outcome-reasons, filters, outcome-detail, scope-stats), `scripts/backfill_ai_flags.py`, AI-Flag-Extraktion in allen Importern unter `services/importers/` | DONE |
+| 10 | Per-File Heatmap | `services/file_touch_service.py` (386 Zeilen, heatmap + risk-radar), `routes/analytics_routes.py` (`/api/analytics/file-heatmap/<project>`, `/api/analytics/risk-radar/<project>`), `static/js/file-heatmap.js`, `static/css/file-heatmap.css`, in `templates/project_detail.html` integriert | DONE |
+| 11 | Modell-Qualitaetsvergleich | `services/model_recommendation.py` (437 Zeilen, Quality-Score, Stack-Analyse, Empfehlungs-Engine), `routes/model_comparison_routes.py` (Page + 4 API-Endpoints: model-comparison, model-by-stack, model-trend, model-recommendation), `templates/model_comparison.html` | DONE |
+| 12 | Governance Feedback-Loop | nur Light-Version als Sprint C abgeschlossen | Voll-Version offen |
+| 13 | Bidirektionaler LLM-Control | nur MVP als Sprint D abgeschlossen | Voll-Version offen |
+| 14 | Sprint-Flow-Tracking | kein Code gesichtet | offen |
+
+**Nicht geprueft:** vollstaendige Akzeptanzkriterien-Abdeckung pro Sprint
+(z.B. alle Default-Filter pro Policy-Level aus Sprint 9.7, Trend-Analyse
+aus Sprint 11.6). Die Code-Module und Endpoints entsprechen aber klar
+dem Sprint-Scope, die Einordnung als "kein Code" war falsch.
 
 ### Audit-Weiterentwicklung
 
@@ -102,6 +117,40 @@ Referenz:
 ---
 
 ## Completed Sprints (diese Session)
+
+### Sprint QT — Plan-Reality-Sync — DONE (2026-04-07)
+
+**Ziel:** Master-Plan, Gitea-Issues und Repo-Stand in einen konsistenten Zustand bringen, bevor weitere Feature-Sprints gestartet werden.
+
+**Umgesetzt:**
+- **Arbeitspaket A - Master-Plan Reality-Check:**
+  - Stichprobenhafte Pruefung von Sprint 9/10/11 Artefakten im Code bestaetigt: alle drei Sprints sind substanziell implementiert
+  - Sprint 9 (ai_scope_service.py + session_filter_routes.py + backfill_ai_flags.py) als DONE markiert
+  - Sprint 10 (file_touch_service.py + analytics_routes.py + file-heatmap.js/css) als DONE markiert
+  - Sprint 11 (model_recommendation.py + model_comparison_routes.py + model_comparison.html) als DONE markiert
+  - Master-Plan "AI Governance Analytics"-Block mit Status-Tabelle ersetzt
+  - Historische-Referenz-Tabelle korrigiert (Sprint 9/10/11 -> DONE)
+  - Current-State-Block um neue Saeule ergaenzt
+- **Arbeitspaket B - Gitea-Issue-Triage:**
+  - 5 offene Issues gepruefte und mit Commit-Referenz geschlossen: #13 (Audit-Integration), #14 (Sprint P3 Prompt-Chain, Commit afd218c), #15 (P2-Branch-Isolierung, Commits 8f8d08c + 6faf2c8), #16 (Sprint P2 marker board, Commit 8f8d08c), #18 (Copilot CSS fix, Commit 5bcb2af)
+- **Arbeitspaket C - Marker-Context:** offen gelassen (User-Rueckfrage wegen Testmarker `test-cockpit-2026-04-05`)
+- **Arbeitspaket D - next-session.md Follow-ups:**
+  - Session-Binding-Schaerfung nach Analyse als eigener kuenftiger Mini-Sprint vertagt (erfordert Schema-Aenderung)
+  - Cockpit-Activity-Card Anpassung: obsolet, da keine separate Card existiert (Activity-Tab ist bereits das neue Format)
+  - Session 2026-04-06 archiviert
+- **Arbeitspaket E - Dokumentation:**
+  - Neue Dateien `sprints/audit-2026-04-07.md` (Prueffbericht) und `sprints/sprint-qt-plan-reality-sync.md` (dieser Plan)
+  - `next-session.md` auf Sprint QT Stand
+  - `next-session-archiv.md` ergaenzt
+
+**Geaenderte Dateien:**
+- `sprints/audit-2026-04-07.md` (neu)
+- `sprints/sprint-qt-plan-reality-sync.md` (neu)
+- `sprints/master-plan-2026-04-01.md`
+- `next-session.md`
+- `next-session-archiv.md`
+
+**Commit-Hash:** `n/a` (wird beim Commit vergeben)
 
 ### Hotfix DW — Dashboard Widgets Initial Load
 
@@ -1507,9 +1556,9 @@ Zuordnung zu den neuen Sprints:
 | 6 | DeRep Fixer | nach D (eigenstaendig) |
 | 7 | API/UI Integration | B (Teile), C (Teile) |
 | 8 | Automation Tuning | nach D (eigenstaendig) |
-| 9 | Fehler-Kategorien + AI-Scope | nach D (Daten-Infrastruktur) |
-| 10 | Per-File Heatmap | nach D (nutzt Quality-Score) |
-| 11 | Model-Vergleich | nach D (nutzt Quality-Score) |
+| 9 | Fehler-Kategorien + AI-Scope | DONE (Status-Korrektur 2026-04-07) |
+| 10 | Per-File Heatmap | DONE (Status-Korrektur 2026-04-07) |
+| 11 | Model-Vergleich | DONE (Status-Korrektur 2026-04-07) |
 | 12 | Governance + Feedback-Loop | C (Light-Version) |
 | 13 | Bidirektionaler LLM-Control | D (MVP-Version) |
 | 14 | Sprint-Flow-Tracking | nach D (eigenstaendig) |
