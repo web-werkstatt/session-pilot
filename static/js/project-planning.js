@@ -268,15 +268,10 @@ function renderPlanDetail(match) {
 
 function renderSpecDetail(match) {
     var spec = match.spec || {};
-    var taskCount = Array.isArray(spec.tasks) ? spec.tasks.length : 0;
-    var markerCount = Array.isArray(spec.markers) ? spec.markers.length : 0;
     var sessions = match.sessions || [];
     return ''
         + renderDetailField('Summary', spec.summary || '-')
-        + renderDetailField('Tasks', String(taskCount))
-        + renderDetailField('Mapped Tasks', String(markerCount))
-        + renderDetailField('Linked Sessions', String(sessions.length))
-        + renderDetailBlock('Contained Work', taskCount || markerCount ? buildSpecWorkSummary(spec) : '<div class="planning-detail-muted">No task content stored yet.</div>')
+        + renderDetailBlock('Contained Work', (Array.isArray(spec.tasks) && spec.tasks.length) || (Array.isArray(spec.markers) && spec.markers.length) ? buildSpecWorkSummary(spec) : '<div class="planning-detail-muted">No task content stored yet.</div>')
         + renderDetailBlock('Execution Context', sessions.length ? '<div class="planning-detail-muted">This spec already has linked execution history. Continue operative work from the workflow tab or Copilot.</div>' : '<div class="planning-detail-muted">No linked execution history yet. Operative work continues from the workflow tab or Copilot.</div>')
         + renderDetailActions(match.plan, true);
 }
