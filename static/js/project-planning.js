@@ -236,7 +236,13 @@ function escapeJsValue(value) {
 function selectPlanningNode(nodeId) {
     planningSelectionId = nodeId;
     var body = document.getElementById('plansBody');
-    if (body) body.innerHTML = renderPlanningWorkspace(planningHierarchyData);
+    if (!body) return;
+    body.innerHTML = renderPlanningWorkspace(planningHierarchyData);
+    var detailPanel = document.getElementById('planningDetailPanel');
+    if (!detailPanel) return;
+    window.requestAnimationFrame(function() {
+        detailPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
 }
 
 function renderPlanningDetailPanel() {
