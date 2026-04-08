@@ -282,13 +282,7 @@ function renderSpecDetail(match) {
 }
 
 function renderSprintDetail(match) {
-    var sprint = match.sprint || {};
-    var sessions = match.sessions || [];
     return ''
-        + renderDetailField('Summary', sprint.summary || '-')
-        + renderDetailField('Sprint Tag', sprint.sprint_tag || '-')
-        + renderDetailField('Plan ID', sprint.plan_id || '-')
-        + renderDetailField('Linked Sessions', String(sessions.length))
         + renderDetailBlock('Scope', '<div class="planning-detail-muted">Use this sprint view to inspect structure and scope. Operative task execution belongs to the workflow tab or Copilot.</div>')
         + renderDetailActions(match.plan, true);
 }
