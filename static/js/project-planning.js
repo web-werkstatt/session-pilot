@@ -1,6 +1,17 @@
 let planningHierarchyData = [];
 let planningSelectionId = '';
 
+async function preloadProjectPlansCount() {
+    try {
+        const data = await api.get('/api/projects/' + encodeURIComponent(PROJECT_NAME) + '/planning');
+        const planGroups = Array.isArray(data.plans) ? data.plans : [];
+        const countEl = document.getElementById('plansCount');
+        if (countEl && planGroups.length > 0) countEl.textContent = planGroups.length;
+    } catch (e) {
+        // count badge is non-critical; keep quiet on preload failure
+    }
+}
+
 async function loadProjectPlans() {
     plansLoaded = true;
     try {

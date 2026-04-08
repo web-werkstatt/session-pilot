@@ -431,6 +431,9 @@ if (typeof loadGroups === 'function') {
     loadGroups();
 }
 loadProjectInfo();
+if (typeof preloadProjectPlansCount === 'function') {
+    preloadProjectPlansCount();
+}
 initGitPanel(PROJECT_NAME);
 loadModelRecommendation();
 if (typeof loadRiskRadarPanel === 'function') {
