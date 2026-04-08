@@ -254,14 +254,10 @@ function renderPlanningDetailPanel() {
 
 function renderPlanDetail(match) {
     var plan = match.plan || {};
-    var stats = match.stats || {};
     var sessions = match.projectSessions || [];
     return ''
         + renderDetailField('Status', projectPlanningStatusLabel(plan.status))
         + renderDetailField('Plan ID', plan.id || '-')
-        + renderDetailField('Sprints', String(stats.sprint_count || 0))
-        + renderDetailField('Specs', String(stats.spec_count || 0))
-        + renderDetailField('Direct Tasks', String((stats.direct_task_count || 0) + (stats.direct_marker_count || 0)))
         + renderDetailBlock('Summary', plan.summary ? '<div class="planning-detail-value">' + escapeHtml(plan.summary) + '</div>' : '<div class="planning-detail-muted">No summary available.</div>')
         + renderRecentProjectSessionsBlock(sessions.slice(0, 5), match.path, 0)
         + renderDetailActions(match.plan, false);
