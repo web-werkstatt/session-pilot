@@ -57,6 +57,7 @@ Bis dahin: Dashboard laeuft als systemd-Service auf Port 5055, Backup taeglich
 
 ## Historie
 
+- **2026-04-08:** Spec-Auswahl im Projekt-Planning wieder separat klickbar gemacht: Klick auf eine Spec stoppt jetzt das Bubbling zur uebergeordneten Sprint-Karte, sodass Sprint-Auswahl die Spec nicht mehr sofort ueberschreibt (`static/js/project-planning.js`).
 - **2026-04-08:** Rechte Sprint-Karte im Projekt-Planning komplett entleert von Metadaten: auch `Summary`, `Sprint Tag`, `Plan ID` und `Linked Sessions` entfernt, damit rechts bei Sprint-Auswahl nur noch Scope-Hinweis und CTA bleiben (`static/js/project-planning.js`).
 - **2026-04-08:** Rechte Sprint-Statistik im Projekt-Planning wieder entfernt: `Specs`, `Tasks` und `Mapped Tasks` waren dort redundant zur linken Strukturansicht und wurden aus dem Kontextpanel gestrichen (`static/js/project-planning.js`).
 - **2026-04-08:** Sprint-Kontext im rechten Planning-Panel zaehlt Arbeit jetzt korrekt ueber den ganzen Sprint: statt irrefuehrendem `Direct Tasks` werden `Tasks` und `Mapped Tasks` inklusive Spec-Unterstruktur angezeigt (`static/js/project-planning.js`).

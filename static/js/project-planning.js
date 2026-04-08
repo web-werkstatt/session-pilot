@@ -166,7 +166,7 @@ function renderSpecHierarchyItem(plan, sprint, spec) {
     var sessions = Array.isArray(spec.sessions) ? spec.sessions : [];
     var specId = buildPlanningNodeId('spec', plan.id, sprint.id || sprint.sprint_tag || sprint.title, spec.id || spec.spec_tag || spec.title);
     var html = ''
-        + '<div class="planning-spec-card planning-selectable' + (planningSelectionId === specId ? ' is-selected' : '') + '" onclick="selectPlanningNode(\'' + escapeJsValue(specId) + '\')">'
+        + '<div class="planning-spec-card planning-selectable' + (planningSelectionId === specId ? ' is-selected' : '') + '" onclick="event.stopPropagation();selectPlanningNode(\'' + escapeJsValue(specId) + '\')">'
         + '<div class="planning-node-label">Spec</div>'
         + '<div class="planning-spec-title">' + escapeHtml(spec.title || 'Spec') + '</div>';
 
