@@ -285,14 +285,22 @@ function renderSprintDetail(match) {
     var sprint = match.sprint || {};
     var sessions = match.sessions || [];
     var specCount = Array.isArray(sprint.specs) ? sprint.specs.length : 0;
+    var specs = Array.isArray(sprint.specs) ? sprint.specs : [];
     var directTaskCount = Array.isArray(sprint.tasks) ? sprint.tasks.length : 0;
     var directMarkerCount = Array.isArray(sprint.direct_markers) ? sprint.direct_markers.length : 0;
+    var nestedTaskCount = 0;
+    var nestedMarkerCount = 0;
+    specs.forEach(function(spec) {
+        nestedTaskCount += Array.isArray(spec.tasks) ? spec.tasks.length : 0;
+        nestedMarkerCount += Array.isArray(spec.markers) ? spec.markers.length : 0;
+    });
     return ''
         + renderDetailField('Summary', sprint.summary || '-')
         + renderDetailField('Sprint Tag', sprint.sprint_tag || '-')
         + renderDetailField('Plan ID', sprint.plan_id || '-')
         + renderDetailField('Specs', String(specCount))
-        + renderDetailField('Direct Tasks', String(directTaskCount + directMarkerCount))
+        + renderDetailField('Tasks', String(directTaskCount + nestedTaskCount))
+        + renderDetailField('Mapped Tasks', String(directMarkerCount + nestedMarkerCount))
         + renderDetailField('Linked Sessions', String(sessions.length))
         + renderDetailBlock('Scope', '<div class="planning-detail-muted">Use this sprint view to inspect structure and scope. Operative task execution belongs to the workflow tab or Copilot.</div>')
         + renderDetailActions(match.plan, true);

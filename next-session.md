@@ -57,6 +57,7 @@ Bis dahin: Dashboard laeuft als systemd-Service auf Port 5055, Backup taeglich
 
 ## Historie
 
+- **2026-04-08:** Sprint-Kontext im rechten Planning-Panel zaehlt Arbeit jetzt korrekt ueber den ganzen Sprint: statt irrefuehrendem `Direct Tasks` werden `Tasks` und `Mapped Tasks` inklusive Spec-Unterstruktur angezeigt (`static/js/project-planning.js`).
 - **2026-04-08:** Rechte Planning-Kontextkarte scrollt wieder vollstaendig lesbar: Sticky-Verhalten entfernt und stattdessen automatischer Scroll zur Detailkarte nach Sprint-/Spec-Auswahl eingefuehrt (`static/css/project-planning.css`, `static/js/project-planning.js`).
 - **2026-04-08:** Rechter Plan-Kontext im Projekt-Planning komplett auf Navigation reduziert: auch die Summary entfernt, damit bei Plan-Auswahl keine redundante Inhaltswiederholung mehr rechts erscheint (`static/js/project-planning.js`).
 - **2026-04-08:** Rechter Plan-Kontext im Projekt-Planning weiter reduziert: auch `Status` und `Plan ID` entfernt, sodass bei Plan-Auswahl nur noch die eigentliche Summary plus Navigation bleibt (`static/js/project-planning.js`).
