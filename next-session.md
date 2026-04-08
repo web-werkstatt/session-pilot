@@ -1,6 +1,6 @@
 # Projekt-Dashboard - Naechste Session
 
-> **Letzte Aktualisierung:** 2026-04-08 (Sprint CP Workflow Loop v1)
+> **Letzte Aktualisierung:** 2026-04-08 (Sprint CP Workflow Loop v1 deployt)
 > **Status:** Reaktiviert fuer Sprint CP. `v1.3-final` bleibt letzter Freeze-Tag, die Projektseite `/project/<name>` wird jetzt gezielt zur Control Plane vereinfacht.
 > **Naechste Aufgabe:** Workflow-Loop v1 auf `/project/<name>` visuell und fachlich weiter abnehmen, offene CTA-/Microcopy-Kanten im Copilot-Workspace nachziehen.
 
@@ -57,6 +57,7 @@ Bis dahin: Dashboard laeuft als systemd-Service auf Port 5055, Backup taeglich
 
 ## Historie
 
+- **2026-04-08:** Sprint-CP-Stand mit Workflow-Loop v1 deployt. Commit `4d70fc3` nach `main` gepusht, `project-dashboard` per systemd neu gestartet und lokal gegen die laufende App geprueft: `/copilot?plan_id=141`, `/static/js/plans.js` und `GET /api/project/project_dashboard/workflow-loop` antworten. Kombinierter Regression-Lauf: `203 passed`.
 - **2026-04-08:** Read-only-GETs fuer Smoke-/Degraded-Betrieb gehaertet: `routes/section_routes.py` registriert und abgesichert, `/copilot` ohne `plan_id` rendert jetzt Landing statt Redirect-only, mehrere GET-APIs liefern bei fehlender DB leere valide JSON-Strukturen statt `500` (`routes/api_utils.py`, `routes/session_routes.py`, `routes/session_analysis_routes.py`, `routes/plans_routes.py`, `routes/widget_routes.py`, `routes/copilot_routes.py`, `routes/audit_routes.py`, `services/session_validation_service.py`). Verifiziert mit `pytest -q tests/test_routes_smoke.py` => `110 passed`.
 - **2026-04-08:** Workflow-Loop v1 fuer Sprint CP begonnen und technisch umgesetzt: neues Aggregationsmodul `services/workflow_loop_service.py`, neuer Endpoint `GET /api/project/<name>/workflow-loop`, Shell in `templates/project_detail.html`, neue Frontend-Dateien `static/js/workflow-loop.js`, `static/js/workflow-loop-svg.js`, `static/css/workflow-loop.css`, initiale Deep-Link-Oeffnung in `static/js/copilot_board.js` fuer `marker_id`/`tab`, Tests in `tests/test_workflow_loop_service.py` und `tests/test_workflow_loop_route.py`. Verifiziert mit `pytest -q tests/test_workflow_loop_service.py tests/test_workflow_loop_route.py`, `python3 -m py_compile services/workflow_loop_service.py routes/project_routes.py` und `node --check` fuer die neuen/angepassten JS-Dateien.
 - **2026-04-08:** Zwei praezise Implementierungsdokumente fuer den Workflow Loop erstellt: `sprints/sprint-cp-workflow-loop-implementation.md` und `sprints/sprint-cp-workflow-loop-contracts.md`. Enthalten Arbeitspakete, API-Contract, DOM-Schnitt, CTA-Regeln und feste No-Decisions fuer die Umsetzung.

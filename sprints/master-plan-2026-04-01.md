@@ -151,7 +151,7 @@ Referenz:
 - `next-session.md`
 - `sprints/master-plan-2026-04-01.md`
 
-**Commit-Hash:** `uncommitted`
+**Commit-Hash:** `4d70fc3`
 
 ### Sprint SB — Session-Marker-Binding hart — DONE (2026-04-07)
 
