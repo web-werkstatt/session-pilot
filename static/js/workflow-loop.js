@@ -1,4 +1,8 @@
 (function() {
+    function workflowLoopEscapeJsString(text) {
+        return String(text || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+    }
+
     function ensureWorkflowLoopLayout(shell) {
         shell.innerHTML = ''
             + '<div class="workflow-loop-grid">'
@@ -158,7 +162,7 @@
                 + '<div class="workflow-loop-list-title">' + escapeHtml(item.title) + '</div>'
                 + '<div class="workflow-loop-list-meta">' + escapeHtml(item.status_label) + '</div>'
                 + '</div>'
-                + '<button class="workflow-loop-inline-btn" type="button" onclick="workflowLoopOpenRating(\'' + _escapeJsString(item.plan_id || '') + '\', \'' + _escapeJsString(item.marker_id || '') + '\')">' + escapeHtml(item.cta_label) + '</button>'
+                + '<button class="workflow-loop-inline-btn" type="button" onclick="workflowLoopOpenRating(\'' + workflowLoopEscapeJsString(item.plan_id || '') + '\', \'' + workflowLoopEscapeJsString(item.marker_id || '') + '\')">' + escapeHtml(item.cta_label) + '</button>'
                 + '</div>';
         }).join('');
 
