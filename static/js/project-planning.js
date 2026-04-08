@@ -78,6 +78,10 @@ function buildProjectPlanningWorkspaceUrl() {
     return '/plans?project=' + encodeURIComponent(PROJECT_NAME);
 }
 
+function buildProjectPlanDetailUrl(planId) {
+    return '/plans/' + encodeURIComponent(planId) + '?project=' + encodeURIComponent(PROJECT_NAME) + '&from=project';
+}
+
 function projectPlanningSlugify(text) {
     return String(text || '')
         .toLowerCase()
@@ -301,10 +305,11 @@ function renderDetailBlock(label, content) {
 function renderDetailActions(plan, includeWorkflowLink) {
     var planId = plan && plan.id ? plan.id : '';
     var planTitle = plan && plan.title ? plan.title : 'plan';
+    var planningUrl = includeWorkflowLink ? buildProjectPlanDetailUrl(planId) : buildProjectPlanningWorkspaceUrl();
     var html = '<div class="planning-detail-actions">';
     if (includeWorkflowLink) html += '<a class="planning-detail-btn" href="#" onclick="switchProjectTabByName(\'workflow\');return false;">Open Workflow</a>';
     else html += '<a class="planning-detail-btn" href="' + buildProjectPlanningCopilotUrl(planId, planTitle) + '">Open in Copilot</a>';
-    html += '<a class="planning-detail-btn planning-detail-btn-secondary" href="' + buildProjectPlanningWorkspaceUrl() + '">Open Planning</a></div>';
+    html += '<a class="planning-detail-btn planning-detail-btn-secondary" href="' + planningUrl + '">Open Planning</a></div>';
     return html;
 }
 

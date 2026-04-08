@@ -57,6 +57,7 @@ Bis dahin: Dashboard laeuft als systemd-Service auf Port 5055, Backup taeglich
 
 ## Historie
 
+- **2026-04-08:** `Open Planning` aus ausgewahlter Sprint-/Spec-Ansicht im Projekt-Planning fuehrt jetzt gezielt auf die zugehoerige Plan-Detailseite statt nur in den generischen `/plans?project=...`-Workspace; der Plan-Level-Link bleibt weiter auf dem Workspace (`static/js/project-planning.js`).
 - **2026-04-08:** Leisen Empty-State im Projekt-Planning weiter reduziert: der Hinweis `No sprint hierarchy detected in this plan yet.` wurde entfernt; ein Plan ohne Sprint-Hierarchie erscheint jetzt einfach ohne zusaetzlichen Warntext (`static/js/project-planning.js`).
 - **2026-04-08:** Verbleibende Statistikzeilen aus der rechten Spec-Karte im Projekt-Planning entfernt: `Tasks`, `Mapped Tasks` und `Linked Sessions` sind dort nicht mehr sichtbar (`static/js/project-planning.js`).
 - **2026-04-08:** Spec-Auswahl im Projekt-Planning wieder separat klickbar gemacht: Klick auf eine Spec stoppt jetzt das Bubbling zur uebergeordneten Sprint-Karte, sodass Sprint-Auswahl die Spec nicht mehr sofort ueberschreibt (`static/js/project-planning.js`).
