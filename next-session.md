@@ -57,6 +57,7 @@ Bis dahin: Dashboard laeuft als systemd-Service auf Port 5055, Backup taeglich
 
 ## Historie
 
+- **2026-04-08:** Ruecksprung aus `/plans?project=<name>` landet jetzt direkt im Planning-Tab der Projektseite: Back-Link setzt `?tab=plans`, und die Projektseite wertet `tab=plans` bzw. `tab=planning` beim Laden aus (`static/js/plans.js`, `static/js/project-detail.js`).
 - **2026-04-08:** Ruecksprung auf `/plans?project=<name>` mit mehr Abstand nach oben versehen, damit der Button nicht mehr so dicht unter der Sticky-Zone klebt (`templates/plans.html`, `static/css/plans.css`).
 - **2026-04-08:** `/plans?project=<name>` zeigt jetzt wieder einen klaren Ruecksprung ins Projekt: kontextsensitiver `Zurueck zum Projekt`-Button oben auf der Plans-Seite, nur wenn die Seite mit Projektfilter geoeffnet wurde (`templates/plans.html`, `static/js/plans.js`).
 - **2026-04-08:** Projekt-Dashboard-Planning verlinkt nicht mehr falsch auf die alte Einzel-Plan-Detailseite: Plan-Titel und Sekundaer-CTA fuehren jetzt aus `/project/<name>` in den zentralen `/plans?project=<name>`-Arbeitsbereich (`static/js/project-planning.js`).

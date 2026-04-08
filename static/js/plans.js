@@ -43,7 +43,7 @@ function initPlansContextBar() {
     var contextBar = document.getElementById('plansContextBar');
     var backLink = document.getElementById('plansBackLink');
     if (!contextBar || !backLink || !filters.project) return;
-    backLink.href = '/project/' + encodeURIComponent(filters.project);
+    backLink.href = '/project/' + encodeURIComponent(filters.project) + '?tab=plans';
     contextBar.style.display = 'block';
 }
 

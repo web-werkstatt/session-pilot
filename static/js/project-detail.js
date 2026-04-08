@@ -31,6 +31,20 @@ function switchProjectTabByName(tab) {
     switchProjectTab(tab, button || null);
 }
 
+function normalizeProjectTabName(tab) {
+    var value = String(tab || '').toLowerCase();
+    if (value === 'details') return 'overview';
+    if (value === 'planning') return 'plans';
+    return value;
+}
+
+function initProjectTabFromQuery() {
+    var params = new URLSearchParams(window.location.search);
+    var tab = normalizeProjectTabName(params.get('tab'));
+    if (!tab) return;
+    switchProjectTabByName(tab);
+}
+
 function loadWorkflowTab() {
     workflowLoaded = true;
     loadWorkflowLoop();
@@ -434,6 +448,7 @@ loadProjectInfo();
 if (typeof preloadProjectPlansCount === 'function') {
     preloadProjectPlansCount();
 }
+initProjectTabFromQuery();
 initGitPanel(PROJECT_NAME);
 loadModelRecommendation();
 if (typeof loadRiskRadarPanel === 'function') {
