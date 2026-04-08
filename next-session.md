@@ -57,6 +57,7 @@ Bis dahin: Dashboard laeuft als systemd-Service auf Port 5055, Backup taeglich
 
 ## Historie
 
+- **2026-04-08:** Rechter Plan-Kontext im Projekt-Planning komplett auf Navigation reduziert: auch die Summary entfernt, damit bei Plan-Auswahl keine redundante Inhaltswiederholung mehr rechts erscheint (`static/js/project-planning.js`).
 - **2026-04-08:** Rechter Plan-Kontext im Projekt-Planning weiter reduziert: auch `Status` und `Plan ID` entfernt, sodass bei Plan-Auswahl nur noch die eigentliche Summary plus Navigation bleibt (`static/js/project-planning.js`).
 - **2026-04-08:** Redundante Zaehler aus dem rechten Plan-Kontext im Projekt-Planning entfernt: `Sprints`, `Specs` und `Direct Tasks` bleiben links in der Plan-Card, rechts steht fuer Plan-Auswahl nur noch der eigentliche Kontext (`static/js/project-planning.js`).
 - **2026-04-08:** Ruecksprung aus `/plans?project=<name>` landet jetzt direkt im Planning-Tab der Projektseite: Back-Link setzt `?tab=plans`, und die Projektseite wertet `tab=plans` bzw. `tab=planning` beim Laden aus (`static/js/plans.js`, `static/js/project-detail.js`).
