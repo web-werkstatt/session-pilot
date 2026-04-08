@@ -5,21 +5,35 @@
 let readmeFilename = 'README.md';
 let easyMDE = null;
 let plansLoaded = false;
+let workflowLoaded = false;
 let sessionsExtracted = false;
 let qualityLoaded = false;
 // === Tab Switching ===
-function switchProjectTab(tab) {
+function switchProjectTab(tab, trigger) {
     document.querySelectorAll('.project-tab').forEach(b => b.classList.remove('active'));
     document.querySelectorAll('.project-tab-content').forEach(c => c.classList.remove('active'));
     document.getElementById('ptab_' + tab).classList.add('active');
-    event.currentTarget.classList.add('active');
+    if (trigger) trigger.classList.add('active');
 
     if (tab === 'plans' && !plansLoaded) loadProjectPlans();
+    if (tab === 'workflow' && !workflowLoaded) loadWorkflowTab();
     if (tab === 'sessions' && !sessionsExtracted) extractSessions();
     if (tab === 'documents') loadDocuments();
     if (tab === 'quality' && !qualityLoaded) loadQualityTab();
     if (tab === 'heatmap') loadFileHeatmap();
     if (tab === 'governance' && !governanceTabLoaded) loadGovernanceTab();
+}
+
+function switchProjectTabByName(tab) {
+    var target = document.getElementById('ptab_' + tab);
+    if (!target) return;
+    var button = document.querySelector(".project-tab[onclick*=\"'" + tab + "'\"]");
+    switchProjectTab(tab, button || null);
+}
+
+function loadWorkflowTab() {
+    workflowLoaded = true;
+    loadWorkflowLoop();
 }
 
 // === Details ===
@@ -400,8 +414,6 @@ if (typeof setActiveProjectContext === 'function') {
     setActiveProjectContext(PROJECT_NAME);
 }
 loadProjectInfo();
-loadProjectOverviewCards();
-loadWorkflowLoop();
 initGitPanel(PROJECT_NAME);
 loadModelRecommendation();
 if (typeof loadRiskRadarPanel === 'function') {

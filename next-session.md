@@ -1,6 +1,6 @@
 # Projekt-Dashboard - Naechste Session
 
-> **Letzte Aktualisierung:** 2026-04-08 (Sprint CP Workflow Loop v1 done)
+> **Letzte Aktualisierung:** 2026-04-08 (Projektseite auf Details / Planning / Workflow geschaerft)
 > **Status:** Reaktiviert fuer Sprint CP. `v1.3-final` bleibt letzter Freeze-Tag, die Projektseite `/project/<name>` wird jetzt gezielt zur Control Plane vereinfacht.
 > **Naechste Aufgabe:** Naechsten Produkt-/Sprint-Schnitt fuer die Control Plane waehlen; Workflow-Loop v1 ist abgeschlossen und deployt.
 
@@ -57,6 +57,7 @@ Bis dahin: Dashboard laeuft als systemd-Service auf Port 5055, Backup taeglich
 
 ## Historie
 
+- **2026-04-08:** Projektseite strukturell entschaerft: obere Overview-Cards entfernt, `Workflow` als eigener Haupttab eingefuehrt und der Workflow Loop aus `Details` in diesen Tab verschoben. `Details` bleibt wieder reiner Projektdetail-Bereich, `Planning` bleibt separat. `project-overview-cards.js` ist nicht mehr an die Projektseite gebunden. Verifiziert mit `node --check static/js/project-detail.js` und `pytest -q tests/test_routes_smoke.py tests/test_workflow_loop_route.py` => `112 passed`.
 - **2026-04-08:** Sprint CP fachlich abgeschlossen: Copilot-Workspace zeigt fuer markergebundene Chats jetzt sichtbar `Thread fortsetzen` vs. `Neuen Thread starten`, Marker ohne Rating zeigen `Abschluss unvollstaendig` und fuehren gezielt in den History-/Rating-Kontext. Workflow-Loop-Renderer auf der Projektseite hat robuste Busy-/Responsive-/A11y-Kanten erhalten. Laufend verifiziert via App-Smoke und kombinierter Regression.
 - **2026-04-08:** Sprint-CP-Stand mit Workflow-Loop v1 deployt. Commit `4d70fc3` nach `main` gepusht, `project-dashboard` per systemd neu gestartet und lokal gegen die laufende App geprueft: `/copilot?plan_id=141`, `/static/js/plans.js` und `GET /api/project/project_dashboard/workflow-loop` antworten. Kombinierter Regression-Lauf: `203 passed`.
 - **2026-04-08:** Read-only-GETs fuer Smoke-/Degraded-Betrieb gehaertet: `routes/section_routes.py` registriert und abgesichert, `/copilot` ohne `plan_id` rendert jetzt Landing statt Redirect-only, mehrere GET-APIs liefern bei fehlender DB leere valide JSON-Strukturen statt `500` (`routes/api_utils.py`, `routes/session_routes.py`, `routes/session_analysis_routes.py`, `routes/plans_routes.py`, `routes/widget_routes.py`, `routes/copilot_routes.py`, `routes/audit_routes.py`, `services/session_validation_service.py`). Verifiziert mit `pytest -q tests/test_routes_smoke.py` => `110 passed`.

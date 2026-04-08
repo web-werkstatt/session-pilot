@@ -15,7 +15,6 @@
 {% block head_extra %}
 <link rel="stylesheet" href="/static/css/documents.css">
 <link rel="stylesheet" href="/static/css/documents-extras.css">
-<link rel="stylesheet" href="/static/css/project-overview.css">
 <link rel="stylesheet" href="/static/css/project-detail.css">
 <link rel="stylesheet" href="/static/css/activity-summary.css">
 <link rel="stylesheet" href="/static/css/project-planning.css">
@@ -31,40 +30,36 @@
         <div class="subtitle" id="projectSubtitle">Loading project information...</div>
     </div>
 
-    <section class="project-overview-cards" id="projectOverviewCards">
-        <div class="project-overview-loading">
-            <div class="spinner"></div>
-            <span>Loading project overview...</span>
-        </div>
-    </section>
-
     <!-- Risk Radar Panel (Sprint 10.5 - vor den Tabs) -->
     <div class="risk-radar-panel" id="riskRadarPanel" style="display:none"></div>
 
     <!-- Main Tabs -->
     <div class="project-tabs">
-        <button class="project-tab active" onclick="switchProjectTab('overview')">
+        <button class="project-tab active" onclick="switchProjectTab('overview', this)">
             <i data-lucide="layout-dashboard" class="icon icon-sm"></i> Details
         </button>
-        <button class="project-tab" onclick="switchProjectTab('plans')">
+        <button class="project-tab" onclick="switchProjectTab('plans', this)">
             <i data-lucide="clipboard-list" class="icon icon-sm"></i> Planning
             <span class="tab-count" id="plansCount"></span>
         </button>
-        <button class="project-tab" onclick="switchProjectTab('documents')">
+        <button class="project-tab" onclick="switchProjectTab('workflow', this)">
+            <i data-lucide="orbit" class="icon icon-sm"></i> Workflow
+        </button>
+        <button class="project-tab" onclick="switchProjectTab('documents', this)">
             <i data-lucide="folder-open" class="icon icon-sm"></i> Documents
             <span class="tab-count" id="docsCount"></span>
         </button>
-        <button class="project-tab" onclick="switchProjectTab('quality')">
+        <button class="project-tab" onclick="switchProjectTab('quality', this)">
             <i data-lucide="shield-check" class="icon icon-sm"></i> Quality
             <span class="tab-count" id="qualityScore"></span>
         </button>
-        <button class="project-tab" onclick="switchProjectTab('heatmap')">
+        <button class="project-tab" onclick="switchProjectTab('heatmap', this)">
             <i data-lucide="flame" class="icon icon-sm"></i> AI Heatmap
         </button>
-        <button class="project-tab" onclick="switchProjectTab('governance')">
+        <button class="project-tab" onclick="switchProjectTab('governance', this)">
             <i data-lucide="shield" class="icon icon-sm"></i> Governance
         </button>
-        <button class="project-tab" onclick="switchProjectTab('sessions')">
+        <button class="project-tab" onclick="switchProjectTab('sessions', this)">
             <i data-lucide="bot" class="icon icon-sm"></i> Activity
             <span class="tab-count" id="sessionsCount"></span>
         </button>
@@ -73,12 +68,6 @@
     <div class="project-body">
         <!-- Tab: Details -->
         <div class="project-tab-content active" id="ptab_overview">
-            <section class="workflow-loop-shell" id="workflowLoopShell">
-                <div class="workflow-loop-loading">
-                    <div class="spinner"></div>
-                    <span>Loading workflow loop...</span>
-                </div>
-            </section>
             <div class="overview-layout">
                 <div class="project-info-section" id="projectBody">
                     <div class="loading">
@@ -95,6 +84,16 @@
             <div id="plansBody">
                 <div class="loading"><div class="spinner"></div> Loading plans...</div>
             </div>
+        </div>
+
+        <!-- Tab: Workflow -->
+        <div class="project-tab-content" id="ptab_workflow">
+            <section class="workflow-loop-shell" id="workflowLoopShell">
+                <div class="workflow-loop-loading">
+                    <div class="spinner"></div>
+                    <span>Loading workflow loop...</span>
+                </div>
+            </section>
         </div>
 
         <!-- Tab: Documents -->
@@ -236,7 +235,6 @@
 <script>const PROJECT_NAME = "{{ project_name }}";</script>
 <script src="/static/js/project-planning.js"></script>
 <script src="/static/js/project-governance.js"></script>
-<script src="/static/js/project-overview-cards.js"></script>
 <script src="/static/js/file-heatmap.js"></script>
 <script src="/static/js/workflow-loop-svg.js"></script>
 <script src="/static/js/workflow-loop.js"></script>
