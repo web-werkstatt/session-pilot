@@ -20,6 +20,10 @@
     border-bottom: 1px solid var(--border);
 }
 
+.plans-context-bar {
+    margin: 12px 0 18px;
+}
+
 /* === Section Board Header === */
 .section-board-header {
     display: flex;
@@ -764,4 +768,3 @@
 .badge-exec-failed, .badge-review-fail { background: rgba(220,38,38,0.15); color: #f87171; }
 .badge-exec-running, .badge-exec-pending, .badge-review-pending { background: rgba(234,179,8,0.15); color: #facc15; }
 .badge-review-partial { background: rgba(249,115,22,0.15); color: #fb923c; }
-
