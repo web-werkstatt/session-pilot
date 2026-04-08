@@ -138,7 +138,7 @@ def validate_session(f):
             return jsonify({"error": "Session not found"}), 404
 
         if validation["status"] == "db_error":
-            return jsonify({"error": "Internal server error during session lookup"}), 500
+            return jsonify({"error": "Session not found"}), 404
 
         return f(*args, **kwargs)
     return wrapper
@@ -159,9 +159,9 @@ def validate_session_page(f):
         validation = validate_session_path(session_uuid, ip_address)
 
         if not validation["valid"]:
-            if validation["status"] in ("invalid_format", "not_found"):
+            if validation["status"] in ("invalid_format", "not_found", "db_error"):
                 return redirect(url_for('sessions.sessions_page'))
-            return jsonify({"error": "Internal server error"}), 500
+            return redirect(url_for('sessions.sessions_page'))
 
         return f(*args, **kwargs)
     return wrapper

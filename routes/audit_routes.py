@@ -131,11 +131,17 @@ def api_audit_run():
 @api_route
 def api_audit_by_run_id(run_id):
     """Laedt einen persistierten Audit-Run nach ID."""
-    run = load_audit_run(run_id)
+    try:
+        run = load_audit_run(run_id)
+    except Exception:
+        return jsonify({"error": f"Audit-Run {run_id} nicht gefunden"}), 404
     if not run:
         return jsonify({"error": f"Audit-Run {run_id} nicht gefunden"}), 404
 
-    results = load_audit_results(run_id)
+    try:
+        results = load_audit_results(run_id)
+    except Exception:
+        return jsonify({"error": f"Audit-Run {run_id} nicht gefunden"}), 404
     return jsonify(_serialize_persisted_run(run, results))
 
 

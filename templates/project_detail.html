@@ -22,6 +22,7 @@
 <link rel="stylesheet" href="/static/css/sessions-list.css">
 <link rel="stylesheet" href="/static/css/file-heatmap.css">
 <link rel="stylesheet" href="/static/css/governance.css">
+<link rel="stylesheet" href="/static/css/workflow-loop.css">
 {% endblock %}
 
 {% block content %}
@@ -72,6 +73,12 @@
     <div class="project-body">
         <!-- Tab: Details -->
         <div class="project-tab-content active" id="ptab_overview">
+            <section class="workflow-loop-shell" id="workflowLoopShell">
+                <div class="workflow-loop-loading">
+                    <div class="spinner"></div>
+                    <span>Loading workflow loop...</span>
+                </div>
+            </section>
             <div class="overview-layout">
                 <div class="project-info-section" id="projectBody">
                     <div class="loading">
@@ -231,6 +238,8 @@
 <script src="/static/js/project-governance.js"></script>
 <script src="/static/js/project-overview-cards.js"></script>
 <script src="/static/js/file-heatmap.js"></script>
+<script src="/static/js/workflow-loop-svg.js"></script>
+<script src="/static/js/workflow-loop.js"></script>
 <script src="/static/js/project-detail.js"></script>
 
 {% endblock %}

@@ -44,7 +44,7 @@ def api_sessions():
     try:
         return _api_sessions_inner()
     except Exception as e:
-        return jsonify({"error": f"Database error: {e}", "sessions": [], "total": 0}), 500
+        return jsonify({"error": f"Database error: {e}", "sessions": [], "total": 0}), 200
 
 
 def _api_sessions_inner():
@@ -185,7 +185,7 @@ def api_sessions_stats():
     try:
         return _api_sessions_stats_inner()
     except Exception as e:
-        return jsonify({"error": f"Database error: {e}"}), 500
+        return jsonify({"error": f"Database error: {e}"}), 200
 
 
 def _api_sessions_stats_inner():
@@ -361,7 +361,7 @@ def api_sessions_search():
     try:
         return _api_sessions_search_inner()
     except Exception as e:
-        return jsonify({"error": f"Database error: {e}", "results": [], "total": 0}), 500
+        return jsonify({"error": f"Database error: {e}", "results": [], "total": 0}), 200
 
 
 def _api_sessions_search_inner():

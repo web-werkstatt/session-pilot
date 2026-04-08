@@ -157,15 +157,16 @@ def widget_overview():
 @widget_bp.route('/api/widgets/ai-hotspots')
 def widget_ai_hotspots():
     """Sprint 10.7: Top 10 AI-Hotspot-Dateien ueber alle Projekte (30 Tage)"""
-    ensure_file_touch_schema()
-    project = request.args.get("project")
-    where = "ft.ai_written = TRUE AND ft.timestamp > NOW() - INTERVAL '30 days'"
-    params = []
-    if project:
-        where += " AND ft.project = %s"
-        params.append(project)
-    params.append(10)
-    rows = execute(f"""
+    try:
+        ensure_file_touch_schema()
+        project = request.args.get("project")
+        where = "ft.ai_written = TRUE AND ft.timestamp > NOW() - INTERVAL '30 days'"
+        params = []
+        if project:
+            where += " AND ft.project = %s"
+            params.append(project)
+        params.append(10)
+        rows = execute(f"""
         SELECT
             ft.project,
             ft.file_path,
@@ -181,20 +182,22 @@ def widget_ai_hotspots():
         LIMIT %s
     """, params, fetch=True)
 
-    hotspots = []
-    for r in (rows or []):
-        total = r["touches"]
-        rework = r["rework_count"] or 0
-        hotspots.append({
-            "project": r["project"],
-            "file_path": r["file_path"],
-            "touches": total,
-            "sessions": r["sessions"],
-            "rework_rate": round(rework / total * 100, 1) if total else 0,
-            "outcome_stats": {
-                "ok": r["ok_count"] or 0,
-                "needs_fix": rework,
-            },
-        })
+        hotspots = []
+        for r in (rows or []):
+            total = r["touches"]
+            rework = r["rework_count"] or 0
+            hotspots.append({
+                "project": r["project"],
+                "file_path": r["file_path"],
+                "touches": total,
+                "sessions": r["sessions"],
+                "rework_rate": round(rework / total * 100, 1) if total else 0,
+                "outcome_stats": {
+                    "ok": r["ok_count"] or 0,
+                    "needs_fix": rework,
+                },
+            })
 
-    return jsonify({"hotspots": hotspots, "total": len(hotspots)})
+        return jsonify({"hotspots": hotspots, "total": len(hotspots)})
+    except Exception:
+        return jsonify({"hotspots": [], "total": 0})

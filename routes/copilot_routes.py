@@ -46,7 +46,7 @@ def copilot_page():
             return redirect(f"/copilot?plan_id={last['id']}")
     except Exception:
         pass
-    return redirect("/plans")
+    return render_template("copilot_landing.html", active_page="copilot")
 
 
 @copilot_bp.route("/api/copilot/stats")
@@ -208,7 +208,7 @@ def api_copilot_runs():
             limit=limit,
         )
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"runs": [], "error": str(e)}), 200
 
     return jsonify({"runs": runs})
 

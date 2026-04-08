@@ -3,15 +3,14 @@ import os
 import re
 
 from services.copilot_marker_service import parse_markers
-from services.db_service import ensure_plan_structure_schema, execute
+from services.db_service import ensure_plan_structure_schema, ensure_session_review_schema, execute
 from services.markdown_routine_service import scan_markdown_structure
 from services.path_resolver import resolve_project_path
 from services.plan_structure_helpers import (
-    attach_session_refs_to_markers,
     build_task_items,
     collect_session_summaries,
-    load_recent_project_sessions,
     marker_summary,
+    serialize_session_row,
 )
 def _slugify(value):
     slug = re.sub(r"[^a-z0-9]+", "-", str(value or "").strip().lower()).strip("-")
@@ -58,6 +57,66 @@ def _first_description_line(lines):
             continue
         return re.sub(r"^(?:[-*]|\d+\.)\s+", "", stripped)
     return ""
+
+
+def load_recent_project_sessions(project_id, limit=5):
+    if not project_id:
+        return []
+    ensure_session_review_schema()
+    rows = execute(
+        """SELECT session_uuid, started_at, duration_ms, model, outcome, slug,
+                  account, total_input_tokens, total_output_tokens
+           FROM sessions
+           WHERE (
+               project_name = %s
+               OR project_name = REPLACE(%s, '_', '-')
+               OR cwd LIKE %s
+           )
+           ORDER BY started_at DESC NULLS LAST
+           LIMIT %s""",
+        (project_id, project_id, f"%/{project_id}", int(limit)),
+        fetch=True,
+    ) or []
+    return [serialize_session_row(row) for row in rows if row]
+
+
+def load_sessions_for_markers(project_id, markers):
+    session_ids = sorted({
+        str(getattr(marker, "last_session", "") or "").strip()
+        for marker in (markers or [])
+        if str(getattr(marker, "last_session", "") or "").strip()
+    })
+    if not session_ids:
+        return {}
+    ensure_session_review_schema()
+    rows = execute(
+        """SELECT session_uuid, started_at, duration_ms, model, outcome, slug,
+                  account, total_input_tokens, total_output_tokens
+           FROM sessions
+           WHERE session_uuid = ANY(%s)
+             AND (
+                 project_name = %s
+                 OR project_name = REPLACE(%s, '_', '-')
+                 OR cwd LIKE %s
+             )
+           ORDER BY started_at DESC NULLS LAST""",
+        (session_ids, project_id, project_id, f"%/{project_id}"),
+        fetch=True,
+    ) or []
+    return {
+        str(row.get("session_uuid") or "").strip(): serialize_session_row(row)
+        for row in rows
+        if str(row.get("session_uuid") or "").strip()
+    }
+
+
+def attach_session_refs_to_markers(project_id, markers):
+    session_map = load_sessions_for_markers(project_id, markers)
+    for marker in markers or []:
+        session_id = str(getattr(marker, "last_session", "") or "").strip()
+        session_summary = session_map.get(session_id)
+        marker._planning_sessions = [session_summary] if session_summary else []
+    return markers
 
 
 def derive_tagged_plan_sections(content, markers=None, source_path="", project_id=""):

@@ -20,8 +20,13 @@ var _currentProjectId = null;
 var _currentMarkerPlanId = null;
 var _planSections = [];
 var _currentPlanSectionId = null;
+var _initialMarkerId = null;
+var _initialPanelTab = null;
 
 document.addEventListener('DOMContentLoaded', function() {
+    var params = new URLSearchParams(window.location.search);
+    _initialMarkerId = params.get('marker_id');
+    _initialPanelTab = params.get('tab');
     _loadPlanInfo()
         .finally(function() {
             _loadSections();
@@ -105,6 +110,7 @@ function _loadSections() {
             } else {
                 document.getElementById('emptyState').style.display = 'none';
                 _renderBoard();
+                _openInitialMarkerContext();
             }
             _renderSprintSections();
             _renderProgress();
@@ -114,6 +120,14 @@ function _loadSections() {
             var msg = (err && err.message) ? err.message : 'Fehler beim Laden';
             document.getElementById('loading').innerHTML = '<div class="error">' + escapeHtml(msg) + '</div>';
         });
+}
+
+function _openInitialMarkerContext() {
+    if (!_initialMarkerId) return;
+    var markerExists = allSections.some(function(item) { return item.marker_id === _initialMarkerId; });
+    if (!markerExists) return;
+    openSectionPanel(_initialMarkerId, _initialPanelTab || 'chat');
+    _initialMarkerId = null;
 }
 
 function _filterMarkersForWorkspace(markers) {

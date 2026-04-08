@@ -120,6 +120,39 @@ Referenz:
 
 ## Completed Sprints (diese Session)
 
+### Sprint CP — Workflow Loop v1 auf der Projektseite — IN ARBEIT (2026-04-08)
+
+**Ziel:** `/project/<name>` als klare Control Plane staerken und den Marker-Workflow als lesbaren 5-Step-Loop auf der Projektseite sichtbar machen, waehrend `/copilot?...` der Execution Workspace bleibt.
+
+**Umgesetzt:**
+- Backend-Aggregation in `services/workflow_loop_service.py`: feste 5-Step-Definition, Ableitung von `current_step`, `current_marker`, `next_marker`, `pending_ratings` und `signals` aus bestehender Marker-/Governance-/Audit-/Quality-Logik.
+- Neuer JSON-Endpoint `GET /api/project/<name>/workflow-loop` in `routes/project_routes.py`.
+- Neue Shell auf der Projektseite in `templates/project_detail.html` plus Einbindung von `static/css/workflow-loop.css`, `static/js/workflow-loop.js` und `static/js/workflow-loop-svg.js`.
+- Frontend-Controller rendert Ring, Summary und Kontextkarten (`Aktiver Marker`, `Naechster Marker`, `Abschluesse ohne Rating`, `Marker mit Risiko-Hinweisen`) und verlinkt CTAs in bestehende Copilot-Pfade.
+- Kleiner Copilot-Anschluss in `static/js/copilot_board.js`: `marker_id`- und `tab`-Query-Parameter oeffnen beim Laden direkt den passenden Marker-Kontext.
+- Tests fuer Service-Shape/Ableitung und Route in `tests/test_workflow_loop_service.py` und `tests/test_workflow_loop_route.py`, lokal gruen.
+
+**Offen / Naechster Schnitt:**
+- Manuelle UI-Abnahme auf Desktop/Mobile im laufenden Dashboard.
+- Microcopy/CTA-Kanten im Copilot-Workspace gegen die Sprint-CP-Entscheidungen nachziehen.
+- Danach Sprint-Datei `sprints/sprint-cp-workflow-loop-implementation.md` auf DONE pruefen.
+
+**Geaenderte Dateien:**
+- `services/workflow_loop_service.py`
+- `routes/project_routes.py`
+- `templates/project_detail.html`
+- `static/js/workflow-loop.js`
+- `static/js/workflow-loop-svg.js`
+- `static/css/workflow-loop.css`
+- `static/js/project-detail.js`
+- `static/js/copilot_board.js`
+- `tests/test_workflow_loop_service.py`
+- `tests/test_workflow_loop_route.py`
+- `next-session.md`
+- `sprints/master-plan-2026-04-01.md`
+
+**Commit-Hash:** `uncommitted`
+
 ### Sprint SB — Session-Marker-Binding hart — DONE (2026-04-07)
 
 **Ziel:** Sessions sollen ihre Marker-Zugehoerigkeit explizit in der DB tragen, statt nur ueber `marker.last_session` aufgeloest zu werden (1:1, nur letzte Session pro Marker findbar).

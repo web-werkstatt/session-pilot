@@ -1,20 +1,18 @@
 # Projekt-Dashboard - Naechste Session
 
-> **Letzte Aktualisierung:** 2026-04-07 (Closeout)
-> **Status:** **Feature-Freeze.** Tag `v1.3-final`. Ab sofort Wartungsmodus.
-> **Naechste Aufgabe:** Keine. Dashboard ist stabil und einsatzbereit fuer echte Projekt-Arbeit.
+> **Letzte Aktualisierung:** 2026-04-08 (Sprint CP Workflow Loop v1)
+> **Status:** Reaktiviert fuer Sprint CP. `v1.3-final` bleibt letzter Freeze-Tag, die Projektseite `/project/<name>` wird jetzt gezielt zur Control Plane vereinfacht.
+> **Naechste Aufgabe:** Workflow-Loop v1 auf `/project/<name>` visuell und fachlich weiter abnehmen, offene CTA-/Microcopy-Kanten im Copilot-Workspace nachziehen.
 
 ---
 
 ## Was gilt jetzt
 
-Das Dashboard ist mit Tag **`v1.3-final`** auf Feature-Freeze gesetzt. Hintergrund:
-Sprint SB (Session-Marker-Binding) war der letzte aktive Feature-Sprint. Danach wurde
-ein Closeout-Audit durchgefuehrt der ergab: die naechste Welle von Features (Sprint
-QS, 12-Voll, 13-Voll, 14, 15, 16, 6, 8, Audit-Erweiterung, 20) braucht ~275-355h
-Restaufwand und liefert keinen unmittelbaren Wert fuer die echten Projekte ab Montag.
-Diese Sprints sind bewusst verschoben ("Bezahl-Features"), nicht vergessen — siehe
-Master-Plan-Block "Deferred Sprints (post-closeout v1.3-final)".
+Der Freeze-Stand **`v1.3-final`** bleibt als stabile Basis erhalten. Seit 2026-04-08
+ist das Repo jedoch gezielt fuer Sprint CP reaktiviert: Fokus ist nicht eine neue
+Feature-Welle, sondern die Vereinfachung von `/project/<name>` zur klaren Control
+Plane, waehrend `/copilot?...` Execution Workspace bleibt. Alle Deferred-Sprints aus
+dem Closeout bleiben weiterhin deferred; der laufende Strang ist nur Sprint CP.
 
 ## Was funktioniert (= Bestand der v1.3-final)
 
@@ -59,6 +57,17 @@ Bis dahin: Dashboard laeuft als systemd-Service auf Port 5055, Backup taeglich
 
 ## Historie
 
+- **2026-04-08:** Read-only-GETs fuer Smoke-/Degraded-Betrieb gehaertet: `routes/section_routes.py` registriert und abgesichert, `/copilot` ohne `plan_id` rendert jetzt Landing statt Redirect-only, mehrere GET-APIs liefern bei fehlender DB leere valide JSON-Strukturen statt `500` (`routes/api_utils.py`, `routes/session_routes.py`, `routes/session_analysis_routes.py`, `routes/plans_routes.py`, `routes/widget_routes.py`, `routes/copilot_routes.py`, `routes/audit_routes.py`, `services/session_validation_service.py`). Verifiziert mit `pytest -q tests/test_routes_smoke.py` => `110 passed`.
+- **2026-04-08:** Workflow-Loop v1 fuer Sprint CP begonnen und technisch umgesetzt: neues Aggregationsmodul `services/workflow_loop_service.py`, neuer Endpoint `GET /api/project/<name>/workflow-loop`, Shell in `templates/project_detail.html`, neue Frontend-Dateien `static/js/workflow-loop.js`, `static/js/workflow-loop-svg.js`, `static/css/workflow-loop.css`, initiale Deep-Link-Oeffnung in `static/js/copilot_board.js` fuer `marker_id`/`tab`, Tests in `tests/test_workflow_loop_service.py` und `tests/test_workflow_loop_route.py`. Verifiziert mit `pytest -q tests/test_workflow_loop_service.py tests/test_workflow_loop_route.py`, `python3 -m py_compile services/workflow_loop_service.py routes/project_routes.py` und `node --check` fuer die neuen/angepassten JS-Dateien.
+- **2026-04-08:** Zwei praezise Implementierungsdokumente fuer den Workflow Loop erstellt: `sprints/sprint-cp-workflow-loop-implementation.md` und `sprints/sprint-cp-workflow-loop-contracts.md`. Enthalten Arbeitspakete, API-Contract, DOM-Schnitt, CTA-Regeln und feste No-Decisions fuer die Umsetzung.
+- **2026-04-08:** Technischer UI-Schnitt fuer den Workflow-Loop in `sprints/sprint-cp-workflow-loop-technical-cut.md` dokumentiert. Festgezogen: Flask/Jinja-Shell auf `/project/<name>`, separater JSON-Endpoint, Vanilla-JS-Controller und SVG-Renderer fuer den Ring.
+- **2026-04-08:** Produktentscheidung fuer Sprint CP erweitert: Audit-, Governance- und Quality-Signale werden als lesbarer Priorisierungskontext mit expliziten Hinweisen eingebunden, aber ohne automatische Re-Sortierung oder harte Gates. AC15-AC16 und Microcopy (`bevorzugt bearbeiten`, `Quality-kritisch`) in die Sprint-Dokumente aufgenommen.
+- **2026-04-08:** Produktentscheidung fuer Sprint CP erweitert: `done` ohne Rating wird als sichtbarer Zwischenzustand `Abschluss unvollstaendig` gefuehrt. AC12-AC14 und Microcopy (`Abschluss unvollstaendig`, `Rating nachholen`) in die Sprint-Dokumente aufgenommen.
+- **2026-04-08:** Produktentscheidung fuer Sprint CP festgezogen: markergebundene Chats werden als explizit fortsetzbare Marker-Threads modelliert. AC9-AC11 und Microcopy-Linie (`Thread fortsetzen` / `Neuen Thread starten`) in die Sprint-Dokumente aufgenommen.
+- **2026-04-08:** Chat-Unterstuetzung fuer Sprint CP explizit in `sprints/sprint-cp-ux-ui-target-picture.md` und `sprints/sprint-cp-control-plane-loop-closure.md` verankert. Fokus: Plan-Chat ohne aktiven Marker vs. markergebundene Execution mit sichtbarem Thread-Fortsetzungszustand.
+- **2026-04-08:** UX/UI-Zielbild als neues Diskussionsdokument `sprints/sprint-cp-ux-ui-target-picture.md` erstellt. Kerngedanke: `/project/<name>` als Control Plane, `/copilot?plan_id=...` als Execution Workspace mit explizitem Abschluss-Flow.
+- **2026-04-08:** Neuer Sprint-Plan `sprints/sprint-cp-control-plane-loop-closure.md` aus dem Workflow-Dokument abgeleitet. Fokus: Gate -> Aktivierung -> Execution -> Write-back -> Rating -> naechster Marker als geschlossener Control-Plane-Loop.
+- **2026-04-08:** Neues internes Workflow-Dokument `sprints/workflow-control-plane-loop.md` erstellt; beschreibt den SessionPilot-Workflow als zyklischen Control-Plane-Loop mit Gate, `marker-context.md`, Post-Execution-Write-back und Execution-Rating. Hilfe-Center-Eintrag wieder entfernt, weil das Thema in die Sprint-/Systemdoku gehoert.
 - **2026-04-07 vormittags:** Sprint SB DONE (Session-Marker-Binding hart in DB), Tag-Commit `0bac136`
 - **2026-04-07 nachmittags:** Closeout durchgefuehrt (M1-M14), Tag `v1.3-final`
 - **Davor:** siehe `master-plan-2026-04-01.md` Section "Completed Sprints"

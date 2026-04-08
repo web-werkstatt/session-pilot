@@ -10,6 +10,7 @@ from flask import Blueprint, jsonify, request, send_from_directory, abort
 from config import PROJECTS_DIR
 from services.dashboard_settings_service import should_include_self_project
 from services.path_resolver import resolve_project_path
+from services.workflow_loop_service import build_workflow_loop_data
 from services import scan_projects, update_project_json
 
 project_bp = Blueprint('projects', __name__)
@@ -46,6 +47,16 @@ def get_project(name):
         "name": name, "description": "", "group": None,
         "priority": None, "deadline": None, "progress": None, "milestones": []
     })
+
+
+@project_bp.route('/api/project/<path:name>/workflow-loop')
+def get_project_workflow_loop(name):
+    try:
+        return jsonify(build_workflow_loop_data(name))
+    except FileNotFoundError:
+        return jsonify({"error": "Project not found"}), 404
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 @project_bp.route('/api/project/save', methods=['POST'])

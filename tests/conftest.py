@@ -205,8 +205,10 @@ def mock_plan_handoff_db(monkeypatch, tmp_path):
                 "filename": params[0],
                 "title": params[1],
                 "project_name": project_name,
+                "context_summary": None,
                 "status": status,
                 "category": category,
+                "session_uuid": None,
                 "plan_type": "plan",
                 "workflow_stage": "idea",
                 "current_state": None,
@@ -267,11 +269,35 @@ def mock_plan_handoff_db(monkeypatch, tmp_path):
             rows = [dict(plan) for plan in plans.values() if plan.get("project_name") == project_name]
             return rows if fetch else (rows[0] if rows and fetchone else None)
 
+        if "from project_plans p" in q and "left join sessions s on s.session_uuid = p.session_uuid" in q:
+            rows = []
+            for plan in plans.values():
+                row = dict(plan)
+                row["session_slug"] = None
+                rows.append(row)
+            rows.sort(key=lambda item: -(item.get("created_at") or _now()).timestamp())
+            return rows if fetch else (rows[0] if rows and fetchone else None)
+
         if "select id from project_plans where id = %s" in q:
             plan = plans.get(params[0])
             return {"id": plan["id"]} if plan and fetchone else ( [{"id": plan["id"]}] if plan and fetch else [] )
 
-        if "from information_schema.columns" in q or "from information_schema.tables" in q:
+        if "from information_schema.columns" in q:
+            if "table_name = 'project_plans'" in q:
+                expected = [
+                    "current_state", "governance_status", "last_run_at",
+                    "latest_audit_status", "latest_executor_status", "latest_quality_score",
+                    "latest_review_status", "next_action", "open_items_count",
+                    "plan_type", "prompt_ref", "spec_ref", "target_state", "workflow_stage",
+                ]
+                rows = [{"column_name": name} for name in expected]
+                return rows if fetch else None
+            if "table_name = 'copilot_runs'" in q and "column_name = 'plan_id'" in q:
+                rows = [{"column_name": "plan_id"}]
+                return rows if fetch else (rows[0] if fetchone else None)
+            return [] if fetch else None
+
+        if "from information_schema.tables" in q:
             return [] if fetch else None
 
         if "from audit_runs" in q:
@@ -285,6 +311,9 @@ def mock_plan_handoff_db(monkeypatch, tmp_path):
     monkeypatch.setattr(test_plan_workflow_module, "execute", fake_execute)
 
     monkeypatch.setattr(plan_workflow_service, "ensure_plan_workflow_schema", lambda: None)
+    monkeypatch.setattr(plans_routes, "ensure_plan_workflow_schema", lambda: None)
+    monkeypatch.setattr(plans_routes, "ensure_plans_schema", lambda: None)
+    monkeypatch.setattr(plans_routes, "ensure_plan_structure_schema", lambda: None)
     monkeypatch.setattr(project_handoff_service, "ensure_plans_schema", lambda: None)
     monkeypatch.setattr(test_plan_workflow_module, "ensure_plan_workflow_schema", lambda: None)
 

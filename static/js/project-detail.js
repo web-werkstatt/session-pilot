@@ -401,6 +401,7 @@ if (typeof setActiveProjectContext === 'function') {
 }
 loadProjectInfo();
 loadProjectOverviewCards();
+loadWorkflowLoop();
 initGitPanel(PROJECT_NAME);
 loadModelRecommendation();
 if (typeof loadRiskRadarPanel === 'function') {

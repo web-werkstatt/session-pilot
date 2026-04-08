@@ -18,6 +18,8 @@ from services.plan_workflow_service import (
 from services.project_handoff_service import build_handoff_markdown
 from services.db_service import execute, ensure_plan_workflow_schema
 
+pytestmark = pytest.mark.usefixtures("mock_plan_handoff_db")
+
 
 @pytest.fixture
 def test_plan():

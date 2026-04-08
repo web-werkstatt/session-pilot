@@ -21,7 +21,10 @@ section_bp = Blueprint("sections", __name__)
 @section_bp.route("/api/plans/<int:plan_id>/sections")
 def api_list_sections(plan_id):
     """Liefert alle Sections eines Plans fuer das Board."""
-    sections = list_plan_sections(plan_id)
+    try:
+        sections = list_plan_sections(plan_id)
+    except Exception:
+        return jsonify({"sections": []}), 200
     return jsonify({"sections": sections})
 
 
@@ -80,7 +83,10 @@ def api_update_section(section_id):
 @section_bp.route("/api/plan-sections/<int:section_id>")
 def api_get_section(section_id):
     """Laedt eine einzelne Section."""
-    section = get_plan_section(section_id)
+    try:
+        section = get_plan_section(section_id)
+    except Exception:
+        return jsonify({"error": "Section not found"}), 404
     if not section:
         return jsonify({"error": "Section not found"}), 404
     return jsonify(section)
@@ -98,7 +104,10 @@ def api_get_thread():
     plan_id = request.args.get("plan_id", type=int) or 0
     project_id = request.args.get("project_id", type=int)
 
-    result = get_or_create_thread(project_id, plan_id, section_id)
+    try:
+        result = get_or_create_thread(project_id, plan_id, section_id)
+    except Exception:
+        result = {"thread_id": None, "project_id": project_id, "plan_id": plan_id, "section_id": section_id}
     return jsonify(result)
 
 
@@ -112,7 +121,10 @@ def api_list_messages():
         return jsonify({"error": "thread_id ist erforderlich"}), 400
 
     limit = request.args.get("limit", 50, type=int)
-    msgs = list_messages(thread_id, limit=limit)
+    try:
+        msgs = list_messages(thread_id, limit=limit)
+    except Exception:
+        msgs = []
     return jsonify({"messages": msgs})
 
 
