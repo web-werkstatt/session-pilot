@@ -1,8 +1,8 @@
 # Projekt-Dashboard - Naechste Session
 
-> **Letzte Aktualisierung:** 2026-04-08 (Projektseite auf 3 Primaer-Tabs reduziert)
+> **Letzte Aktualisierung:** 2026-04-08 (Planning-Tab auf Strukturansicht reduziert)
 > **Status:** Reaktiviert fuer Sprint CP. `v1.3-final` bleibt letzter Freeze-Tag, die Projektseite `/project/<name>` wird jetzt gezielt zur Control Plane vereinfacht.
-> **Naechste Aufgabe:** Naechsten Produkt-/Sprint-Schnitt fuer die Control Plane waehlen; Workflow-Loop v1 ist abgeschlossen und deployt.
+> **Naechste Aufgabe:** Naechsten Produkt-/Sprint-Schnitt fuer die Control Plane waehlen; Workflow-Loop v1 und der entschlackte Planning-Tab sind abgeschlossen und deployt.
 
 ---
 
@@ -57,6 +57,7 @@ Bis dahin: Dashboard laeuft als systemd-Service auf Port 5055, Backup taeglich
 
 ## Historie
 
+- **2026-04-08:** Planning-Tab entmischt: links bleiben Plans/Sprints/Specs mit Tasks und Markern nur noch als untergeordnete Listenpunkte, rechts zeigt der Kontextbereich jetzt ausschliesslich Plan-, Sprint- und Spec-Kontext statt operativem Task-/Marker-Inspector (`static/js/project-planning.js`, `static/css/project-planning.css`). Verifiziert mit `node --check static/js/project-planning.js` und `pytest -q tests/test_routes_smoke.py tests/test_workflow_loop_route.py` => `112 passed`.
 - **2026-04-08:** TOC-Scrollabstand auf der Projektseite nachgezogen: Inhaltslinks landen jetzt mit mehr Abstand unter der sticky Navigation (`static/css/project-detail.css` via `scroll-margin-top`).
 - **2026-04-08:** Projekt-Description-Fehler behoben: kaputtes trailing `<br` aus `project.json` entfernt und zusaetzlich den Description-/Subtitle-Renderpfad gegen halb kaputte HTML-Reste gehaertet (`routes/project_info_routes.py`, `static/js/project-detail.js`). Verifiziert mit `python3 -m py_compile routes/project_info_routes.py`, `node --check static/js/project-detail.js` und `pytest -q tests/test_routes_smoke.py tests/test_workflow_loop_route.py` => `112 passed`.
 - **2026-04-08:** Zweiter Reduktionsschnitt fuer `/project/<name>`: Hauptnavigation auf `Details`, `Planning`, `Workflow` reduziert. `Documents`, `Quality`, `Governance`, `AI Heatmap` und `Activity` erscheinen jetzt als leisere Sekundaer-Links statt gleichrangiger Haupttabs. Verifiziert mit `pytest -q tests/test_routes_smoke.py tests/test_workflow_loop_route.py` => `112 passed`.

@@ -133,6 +133,7 @@ Referenz:
 - Copilot-Workspace nachgeschaerft: sichtbarer Thread-Fortsetzungsmodus fuer markergebundene Chats, klarere CTA-Texte (`Thread fortsetzen`, `Neuen Thread starten`, `Rating nachholen`) und sichtbarer Zustand `Abschluss unvollstaendig`.
 - Projektseite entschlackt: obere Overview-Cards entfernt, `Workflow` als eigener Haupttab neben `Details` und `Planning` eingefuehrt, Workflow Loop aus dem Detailtab herausgeloest.
 - Projektseite weiter reduziert: nur noch `Details`, `Planning`, `Workflow` als Primaer-Tabs; selten genutzte Bereiche als Sekundaer-Links statt gleichrangiger Navigation.
+- Planning-Tab entmischt: rechte Spalte zeigt nur noch Plan-, Sprint- und Spec-Kontext; Tasks und Marker bleiben links sichtbar, sind aber keine operativen Inspector-Ziele mehr.
 - Tests fuer Service-Shape/Ableitung und Route in `tests/test_workflow_loop_service.py` und `tests/test_workflow_loop_route.py`, lokal gruen.
 
 **Abnahme / Verifikation:**
@@ -148,6 +149,8 @@ Referenz:
 - `static/js/workflow-loop-svg.js`
 - `static/css/workflow-loop.css`
 - `static/js/project-detail.js`
+- `static/js/project-planning.js`
+- `static/css/project-planning.css`
 - `static/js/copilot_board.js`
 - `tests/test_workflow_loop_service.py`
 - `tests/test_workflow_loop_route.py`

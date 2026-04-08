@@ -86,10 +86,11 @@ function renderPlanHierarchyGroup(group) {
     var sprints = Array.isArray(group.sprints) ? group.sprints : [];
     var stats = group.stats || {};
     var detailUrl = '/plans/' + encodeURIComponent(plan.id) + '?project=' + encodeURIComponent(PROJECT_NAME) + '&from=project';
+    var planId = buildPlanningNodeId('plan', plan.id);
 
     var html = ''
         + '<section class="planning-plan-group">'
-        + '<div class="planning-plan-head">'
+        + '<div class="planning-plan-head planning-selectable' + (planningSelectionId === planId ? ' is-selected' : '') + '" onclick="selectPlanningNode(\'' + escapeJsValue(planId) + '\')">'
         + '<div class="planning-plan-meta">'
         + '<div class="planning-plan-kicker">Plan</div>'
         + '<h3 class="planning-plan-name"><a href="' + detailUrl + '">' + escapeHtml(plan.title || 'Plan') + '</a></h3>'
@@ -179,16 +180,14 @@ function renderTaskList(plan, sprint, spec, tasks, nodeType) {
     return '<ul class="planning-task-list">' + tasks.map(function(task, index) {
         var taskTitle = getPlanningTaskTitle(task);
         var sessions = getPlanningTaskSessions(task);
-        var taskId = buildPlanningNodeId(nodeType, plan.id, sprint.id || sprint.sprint_tag || sprint.title, spec ? (spec.id || spec.spec_tag || spec.title) : 'direct', index);
-        return '<li class="planning-selectable' + (planningSelectionId === taskId ? ' is-selected' : '') + '" onclick="event.stopPropagation();selectPlanningNode(\'' + escapeJsValue(taskId) + '\')"><span class="planning-bullet-label">Task</span><span>' + escapeHtml(taskTitle) + '</span>' + (sessions.length ? '<span class="planning-session-chip">' + escapeHtml(String(sessions.length)) + ' session' + (sessions.length === 1 ? '' : 's') + '</span>' : '') + '</li>';
+        return '<li><span class="planning-bullet-label">Task</span><span class="planning-subitem-title">' + escapeHtml(taskTitle) + '</span>' + (sessions.length ? '<span class="planning-session-chip">' + escapeHtml(String(sessions.length)) + ' session' + (sessions.length === 1 ? '' : 's') + '</span>' : '') + '</li>';
     }).join('') + '</ul>';
 }
 
 function renderMarkerList(plan, sprint, spec, markers) {
     if (!markers || !markers.length) return '';
     return '<ul class="planning-task-list">' + markers.map(function(marker) {
-        var markerId = buildPlanningNodeId('marker', plan.id, sprint.id || sprint.sprint_tag || sprint.title, spec ? (spec.id || spec.spec_tag || spec.title) : 'direct', marker.marker_id || marker.titel);
-        return '<li class="planning-selectable' + (planningSelectionId === markerId ? ' is-selected' : '') + '" onclick="event.stopPropagation();selectPlanningNode(\'' + escapeJsValue(markerId) + '\')"><span class="planning-bullet-label">Task</span><span>' + escapeHtml(marker.titel || marker.marker_id || 'Task') + '</span><span class="planning-marker-status">' + escapeHtml(marker.status || 'todo') + '</span></li>';
+        return '<li><span class="planning-bullet-label">Marker</span><span class="planning-subitem-title">' + escapeHtml(marker.titel || marker.marker_id || 'Task') + '</span><span class="planning-marker-status">' + escapeHtml(marker.status || 'todo') + '</span></li>';
     }).join('') + '</ul>';
 }
 
@@ -206,22 +205,15 @@ function ensurePlanningSelection(planGroups) {
 
 function findFirstPlanningSelection(group) {
     var plan = group.plan || {};
+    if (plan.id) return { id: buildPlanningNodeId('plan', plan.id) };
     var sprints = Array.isArray(group.sprints) ? group.sprints : [];
     for (var i = 0; i < sprints.length; i++) {
         var sprint = sprints[i];
         var specs = Array.isArray(sprint.specs) ? sprint.specs : [];
         for (var j = 0; j < specs.length; j++) {
             var spec = specs[j];
-            var markers = Array.isArray(spec.markers) ? spec.markers : [];
-            if (markers.length) return { id: buildPlanningNodeId('marker', plan.id, sprint.id || sprint.sprint_tag || sprint.title, spec.id || spec.spec_tag || spec.title, markers[0].marker_id || markers[0].titel) };
-            var tasks = Array.isArray(spec.tasks) ? spec.tasks : [];
-            if (tasks.length) return { id: buildPlanningNodeId('task', plan.id, sprint.id || sprint.sprint_tag || sprint.title, spec.id || spec.spec_tag || spec.title, 0) };
             return { id: buildPlanningNodeId('spec', plan.id, sprint.id || sprint.sprint_tag || sprint.title, spec.id || spec.spec_tag || spec.title) };
         }
-        var directMarkers = Array.isArray(sprint.direct_markers) ? sprint.direct_markers : [];
-        if (directMarkers.length) return { id: buildPlanningNodeId('marker', plan.id, sprint.id || sprint.sprint_tag || sprint.title, 'direct', directMarkers[0].marker_id || directMarkers[0].titel) };
-        var directTasks = Array.isArray(sprint.tasks) ? sprint.tasks : [];
-        if (directTasks.length) return { id: buildPlanningNodeId('task', plan.id, sprint.id || sprint.sprint_tag || sprint.title, 'direct', 0) };
         return { id: buildPlanningNodeId('sprint', plan.id, sprint.id || sprint.sprint_tag || sprint.title) };
     }
     return null;
@@ -245,51 +237,30 @@ function selectPlanningNode(nodeId) {
 
 function renderPlanningDetailPanel() {
     var match = findPlanningNodeById(planningSelectionId);
-    if (!match) return '<div class="planning-detail-empty">Select a spec or task to inspect the operative details.</div>';
+    if (!match) return '<div class="planning-detail-empty">Select a plan, sprint or spec to inspect the planning context.</div>';
 
     var context = '<div class="planning-detail-kicker">' + escapeHtml(match.kindLabel) + '</div>'
         + '<h3 class="planning-detail-title">' + escapeHtml(match.title) + '</h3>'
         + '<div class="planning-detail-path">' + escapeHtml(match.path.join(' / ')) + '</div>';
 
-    if (match.kind === 'marker') return context + renderMarkerDetail(match);
-    if (match.kind === 'session') return context + renderSessionDetail(match);
-    if (match.kind === 'task') return context + renderTaskDetail(match);
+    if (match.kind === 'plan') return context + renderPlanDetail(match);
     if (match.kind === 'spec') return context + renderSpecDetail(match);
     return context + renderSprintDetail(match);
 }
 
-function renderMarkerDetail(match) {
-    var marker = match.marker || {};
-    var checks = Array.isArray(marker.checks) ? marker.checks : [];
-    var prompt = marker.prompt || marker.prompt_suggestion || '';
-    var sessions = match.sessions || [];
-    var fallbackSessions = getPlanningFallbackSessions(match);
+function renderPlanDetail(match) {
+    var plan = match.plan || {};
+    var stats = match.stats || {};
+    var sessions = match.projectSessions || [];
     return ''
-        + renderDetailField('Status', marker.status || '-')
-        + renderDetailField('Goal', marker.ziel || '-')
-        + renderDetailField('Next Step', marker.naechster_schritt || '-')
-        + renderDetailField('Risk', marker.risiko || '-')
-        + renderDetailField('Last Session', marker.last_session || '-')
-        + renderDetailBlock('Checks', checks.length ? '<ul class="planning-detail-list">' + checks.map(function(item) { return '<li>' + escapeHtml(item) + '</li>'; }).join('') + '</ul>' : '<div class="planning-detail-muted">No checks defined.</div>')
-        + renderDetailBlock('Prompt', prompt ? '<pre class="planning-detail-pre">' + escapeHtml(prompt) + '</pre>' : '<div class="planning-detail-muted">No prompt defined.</div>')
-        + renderDetailBlock('Sessions', renderSessionHistory(sessions, match.path))
-        + renderRecentProjectSessionsBlock(fallbackSessions, match.path, sessions.length)
-        + renderDetailActions(match.plan);
-}
-
-function renderTaskDetail(match) {
-    var sessions = match.sessions || [];
-    var fallbackSessions = getPlanningFallbackSessions(match);
-    return ''
-        + renderDetailField('Status', 'planned')
-        + renderDetailField('Goal', match.taskTitle || '-')
-        + renderDetailField('Next Step', sessions.length ? 'Use the linked session history to continue this task in context.' : 'Turn this task into a marker or continue via Copilot.')
-        + renderDetailField('Risk', '-')
-        + renderDetailBlock('Checks', '<div class="planning-detail-muted">No checks stored for plain markdown tasks.</div>')
-        + renderDetailBlock('Prompt', '<div class="planning-detail-muted">No prompt stored for plain markdown tasks.</div>')
-        + renderDetailBlock('Sessions', renderSessionHistory(sessions, match.path))
-        + renderRecentProjectSessionsBlock(fallbackSessions, match.path, sessions.length)
-        + renderDetailActions(match.plan);
+        + renderDetailField('Status', projectPlanningStatusLabel(plan.status))
+        + renderDetailField('Plan ID', plan.id || '-')
+        + renderDetailField('Sprints', String(stats.sprint_count || 0))
+        + renderDetailField('Specs', String(stats.spec_count || 0))
+        + renderDetailField('Direct Tasks', String((stats.direct_task_count || 0) + (stats.direct_marker_count || 0)))
+        + renderDetailBlock('Summary', plan.summary ? '<div class="planning-detail-value">' + escapeHtml(plan.summary) + '</div>' : '<div class="planning-detail-muted">No summary available.</div>')
+        + renderRecentProjectSessionsBlock(sessions.slice(0, 5), match.path, 0)
+        + renderDetailActions(match.plan, false);
 }
 
 function renderSpecDetail(match) {
@@ -297,42 +268,31 @@ function renderSpecDetail(match) {
     var taskCount = Array.isArray(spec.tasks) ? spec.tasks.length : 0;
     var markerCount = Array.isArray(spec.markers) ? spec.markers.length : 0;
     var sessions = match.sessions || [];
-    var fallbackSessions = getPlanningFallbackSessions(match);
     return ''
         + renderDetailField('Summary', spec.summary || '-')
         + renderDetailField('Tasks', String(taskCount))
         + renderDetailField('Mapped Tasks', String(markerCount))
         + renderDetailField('Linked Sessions', String(sessions.length))
         + renderDetailBlock('Contained Work', taskCount || markerCount ? buildSpecWorkSummary(spec) : '<div class="planning-detail-muted">No task content stored yet.</div>')
-        + renderDetailBlock('Sessions', renderSessionHistory(sessions, match.path))
-        + renderRecentProjectSessionsBlock(fallbackSessions, match.path, sessions.length)
-        + renderDetailActions(match.plan);
+        + renderDetailBlock('Execution Context', sessions.length ? '<div class="planning-detail-muted">This spec already has linked execution history. Continue operative work from the workflow tab or Copilot.</div>' : '<div class="planning-detail-muted">No linked execution history yet. Operative work continues from the workflow tab or Copilot.</div>')
+        + renderDetailActions(match.plan, true);
 }
 
 function renderSprintDetail(match) {
     var sprint = match.sprint || {};
     var sessions = match.sessions || [];
-    var fallbackSessions = getPlanningFallbackSessions(match);
+    var specCount = Array.isArray(sprint.specs) ? sprint.specs.length : 0;
+    var directTaskCount = Array.isArray(sprint.tasks) ? sprint.tasks.length : 0;
+    var directMarkerCount = Array.isArray(sprint.direct_markers) ? sprint.direct_markers.length : 0;
     return ''
         + renderDetailField('Summary', sprint.summary || '-')
         + renderDetailField('Sprint Tag', sprint.sprint_tag || '-')
         + renderDetailField('Plan ID', sprint.plan_id || '-')
+        + renderDetailField('Specs', String(specCount))
+        + renderDetailField('Direct Tasks', String(directTaskCount + directMarkerCount))
         + renderDetailField('Linked Sessions', String(sessions.length))
-        + renderDetailBlock('Next Step', '<div class="planning-detail-muted">Select a spec or task inside this sprint for operative work.</div>')
-        + renderDetailBlock('Sessions', renderSessionHistory(sessions, match.path))
-        + renderRecentProjectSessionsBlock(fallbackSessions, match.path, sessions.length)
-        + renderDetailActions(match.plan);
-}
-
-function renderSessionDetail(match) {
-    var session = match.session || {};
-    return ''
-        + renderDetailField('Started', formatPlanningDate(session.started_at) || '-')
-        + renderDetailField('Duration', session.duration_label || '-')
-        + renderDetailField('Model', session.model || '-')
-        + renderDetailField('Outcome', session.outcome || 'unrated')
-        + renderDetailField('Session UUID', session.session_uuid || '-')
-        + '<div class="planning-detail-actions"><a class="planning-detail-btn" href="/sessions/' + encodeURIComponent(session.session_uuid || '') + '">Open Session Detail</a></div>';
+        + renderDetailBlock('Scope', '<div class="planning-detail-muted">Use this sprint view to inspect structure and scope. Operative task execution belongs to the workflow tab or Copilot.</div>')
+        + renderDetailActions(match.plan, true);
 }
 
 function buildSpecWorkSummary(spec) {
@@ -354,10 +314,14 @@ function renderDetailBlock(label, content) {
     return '<div class="planning-detail-block"><div class="planning-detail-label">' + escapeHtml(label) + '</div>' + content + '</div>';
 }
 
-function renderDetailActions(plan) {
+function renderDetailActions(plan, includeWorkflowLink) {
     var planId = plan && plan.id ? plan.id : '';
     var planTitle = plan && plan.title ? plan.title : 'plan';
-    return '<div class="planning-detail-actions"><a class="planning-detail-btn" href="' + buildProjectPlanningCopilotUrl(planId, planTitle) + '">Open in Copilot</a><a class="planning-detail-btn planning-detail-btn-secondary" href="/plans/' + encodeURIComponent(planId) + '?project=' + encodeURIComponent(PROJECT_NAME) + '&from=project">Open Plan Detail</a></div>';
+    var html = '<div class="planning-detail-actions">';
+    if (includeWorkflowLink) html += '<a class="planning-detail-btn" href="#" onclick="switchProjectTabByName(\'workflow\');return false;">Open Workflow</a>';
+    else html += '<a class="planning-detail-btn" href="' + buildProjectPlanningCopilotUrl(planId, planTitle) + '">Open in Copilot</a>';
+    html += '<a class="planning-detail-btn planning-detail-btn-secondary" href="/plans/' + encodeURIComponent(planId) + '?project=' + encodeURIComponent(PROJECT_NAME) + '&from=project">Open Plan Detail</a></div>';
+    return html;
 }
 
 function _fmtTokens(n) { return n >= 1000000 ? (n/1000000).toFixed(1)+'M' : n >= 1000 ? (n/1000).toFixed(1)+'K' : String(n); }
@@ -418,6 +382,10 @@ function findPlanningNodeById(nodeId) {
     for (var i = 0; i < planningHierarchyData.length; i++) {
         var group = planningHierarchyData[i];
         var plan = group.plan || {};
+        var stats = group.stats || {};
+        if (nodeId === buildPlanningNodeId('plan', plan.id)) {
+            return { kind: 'plan', kindLabel: 'Plan', title: plan.title || 'Plan', path: [plan.title || 'Plan'], plan: plan, stats: stats, projectSessions: Array.isArray(group.recent_sessions) ? group.recent_sessions : [] };
+        }
         var sprints = Array.isArray(group.sprints) ? group.sprints : [];
         for (var j = 0; j < sprints.length; j++) {
             var sprint = sprints[j];
@@ -432,76 +400,7 @@ function findPlanningNodeById(nodeId) {
                 var specPath = [plan.title || 'Plan', sprint.title || 'Sprint', spec.title || 'Spec'];
                 if (nodeId === buildPlanningNodeId('spec', plan.id, sprintKey, specKey)) return { kind: 'spec', kindLabel: 'Spec', title: spec.title || 'Spec', path: specPath, plan: plan, sprint: sprint, spec: spec, sessions: Array.isArray(spec.sessions) ? spec.sessions : [], projectSessions: Array.isArray(group.recent_sessions) ? group.recent_sessions : [] };
 
-                var specTasks = Array.isArray(spec.tasks) ? spec.tasks : [];
-                for (var t = 0; t < specTasks.length; t++) {
-                    var specTaskTitle = getPlanningTaskTitle(specTasks[t]);
-                    var specTaskPath = [plan.title || 'Plan', sprint.title || 'Sprint', spec.title || 'Spec', specTaskTitle];
-                    if (nodeId === buildPlanningNodeId('task', plan.id, sprintKey, specKey, t)) return { kind: 'task', kindLabel: 'Task', title: specTaskTitle, taskTitle: specTaskTitle, path: specTaskPath, plan: plan, sprint: sprint, spec: spec, sessions: getPlanningTaskSessions(specTasks[t]), projectSessions: Array.isArray(group.recent_sessions) ? group.recent_sessions : [] };
-                }
-
-                var specMarkers = Array.isArray(spec.markers) ? spec.markers : [];
-                for (var m = 0; m < specMarkers.length; m++) {
-                    var specMarker = specMarkers[m];
-                    var specMarkerPath = [plan.title || 'Plan', sprint.title || 'Sprint', spec.title || 'Spec', specMarker.titel || specMarker.marker_id || 'Task'];
-                    if (nodeId === buildPlanningNodeId('marker', plan.id, sprintKey, specKey, specMarker.marker_id || specMarker.titel)) return { kind: 'marker', kindLabel: 'Task', title: specMarker.titel || specMarker.marker_id || 'Task', path: specMarkerPath, plan: plan, sprint: sprint, spec: spec, marker: specMarker, sessions: Array.isArray(specMarker.sessions) ? specMarker.sessions : [], projectSessions: Array.isArray(group.recent_sessions) ? group.recent_sessions : [] };
-                }
             }
-
-            var directTasks = Array.isArray(sprint.tasks) ? sprint.tasks : [];
-            for (var dt = 0; dt < directTasks.length; dt++) {
-                var directTaskTitle = getPlanningTaskTitle(directTasks[dt]);
-                var directTaskPath = [plan.title || 'Plan', sprint.title || 'Sprint', directTaskTitle];
-                if (nodeId === buildPlanningNodeId('task', plan.id, sprintKey, 'direct', dt)) return { kind: 'task', kindLabel: 'Task', title: directTaskTitle, taskTitle: directTaskTitle, path: directTaskPath, plan: plan, sprint: sprint, sessions: getPlanningTaskSessions(directTasks[dt]), projectSessions: Array.isArray(group.recent_sessions) ? group.recent_sessions : [] };
-            }
-
-            var directMarkers = Array.isArray(sprint.direct_markers) ? sprint.direct_markers : [];
-            for (var dm = 0; dm < directMarkers.length; dm++) {
-                var directMarker = directMarkers[dm];
-                var directMarkerPath = [plan.title || 'Plan', sprint.title || 'Sprint', directMarker.titel || directMarker.marker_id || 'Task'];
-                if (nodeId === buildPlanningNodeId('marker', plan.id, sprintKey, 'direct', directMarker.marker_id || directMarker.titel)) return { kind: 'marker', kindLabel: 'Task', title: directMarker.titel || directMarker.marker_id || 'Task', path: directMarkerPath, plan: plan, sprint: sprint, marker: directMarker, sessions: Array.isArray(directMarker.sessions) ? directMarker.sessions : [], projectSessions: Array.isArray(group.recent_sessions) ? group.recent_sessions : [] };
-            }
-
-            var sessionMatch = findPlanningSessionMatch(nodeId, sprintPath, sprint.sessions, plan, sprint, null, null);
-            if (sessionMatch) return sessionMatch;
-            for (var sp = 0; sp < specs.length; sp++) {
-                var loopSpec = specs[sp];
-                var loopSpecPath = [plan.title || 'Plan', sprint.title || 'Sprint', loopSpec.title || 'Spec'];
-                sessionMatch = findPlanningSessionMatch(nodeId, loopSpecPath, loopSpec.sessions, plan, sprint, loopSpec, null);
-                if (sessionMatch) return sessionMatch;
-                var loopTasks = Array.isArray(loopSpec.tasks) ? loopSpec.tasks : [];
-                for (var st = 0; st < loopTasks.length; st++) {
-                    var loopTaskTitle = getPlanningTaskTitle(loopTasks[st]);
-                    sessionMatch = findPlanningSessionMatch(nodeId, loopSpecPath.concat([loopTaskTitle]), getPlanningTaskSessions(loopTasks[st]), plan, sprint, loopSpec, { title: loopTaskTitle });
-                    if (sessionMatch) return sessionMatch;
-                }
-                var loopMarkers = Array.isArray(loopSpec.markers) ? loopSpec.markers : [];
-                for (var sm = 0; sm < loopMarkers.length; sm++) {
-                    var loopSpecMarker = loopMarkers[sm];
-                    sessionMatch = findPlanningSessionMatch(nodeId, loopSpecPath.concat([loopSpecMarker.titel || loopSpecMarker.marker_id || 'Task']), loopSpecMarker.sessions, plan, sprint, loopSpec, null, loopSpecMarker);
-                    if (sessionMatch) return sessionMatch;
-                }
-            }
-            for (var dts = 0; dts < directTasks.length; dts++) {
-                var loopDirectTaskTitle = getPlanningTaskTitle(directTasks[dts]);
-                sessionMatch = findPlanningSessionMatch(nodeId, sprintPath.concat([loopDirectTaskTitle]), getPlanningTaskSessions(directTasks[dts]), plan, sprint, null, { title: loopDirectTaskTitle });
-                if (sessionMatch) return sessionMatch;
-            }
-            for (var dms = 0; dms < directMarkers.length; dms++) {
-                var loopDirectMarker = directMarkers[dms];
-                sessionMatch = findPlanningSessionMatch(nodeId, sprintPath.concat([loopDirectMarker.titel || loopDirectMarker.marker_id || 'Task']), loopDirectMarker.sessions, plan, sprint, null, null, loopDirectMarker);
-                if (sessionMatch) return sessionMatch;
-            }
-        }
-    }
-    return null;
-}
-
-function findPlanningSessionMatch(nodeId, path, sessions, plan, sprint, spec, task, marker) {
-    var items = Array.isArray(sessions) ? sessions : [];
-    for (var i = 0; i < items.length; i++) {
-        var session = items[i];
-        if (nodeId === buildPlanningSessionNodeId(path, session.session_uuid)) {
-            return { kind: 'session', kindLabel: 'Session', title: formatPlanningDate(session.started_at) || session.session_uuid || 'Session', path: (path || []).concat(['Session']), plan: plan, sprint: sprint, spec: spec, task: task, marker: marker, session: session };
         }
     }
     return null;

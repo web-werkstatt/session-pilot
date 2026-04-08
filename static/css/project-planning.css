@@ -69,6 +69,9 @@
     align-items: flex-start;
     margin-bottom: 16px;
     flex-wrap: wrap;
+    border-radius: 12px;
+    padding: 12px;
+    margin: -6px -6px 16px;
 }
 .planning-plan-name {
     font-size: 20px;
@@ -146,11 +149,16 @@
     display: flex;
     gap: 10px;
     align-items: center;
-    padding: 8px 10px;
+    padding: 7px 10px;
     border-radius: 8px;
-    background: rgba(255,255,255,0.03);
+    background: rgba(255,255,255,0.015);
+    border: 1px solid rgba(255,255,255,0.04);
     font-size: 12px;
     color: var(--text-secondary);
+}
+.planning-subitem-title {
+    min-width: 0;
+    flex: 1;
 }
 .planning-bullet-label,
 .planning-marker-status {
@@ -193,6 +201,10 @@
     border-radius: 14px;
     background: var(--bg-card);
     padding: 18px;
+}
+.planning-detail-panel .planning-detail-field {
+    display: grid;
+    gap: 4px;
 }
 .planning-detail-kicker {
     font-size: 11px;
@@ -256,6 +268,9 @@
     gap: 8px;
     flex-wrap: wrap;
     margin-top: 18px;
+}
+.planning-detail-actions .planning-detail-btn:first-child {
+    min-width: 124px;
 }
 .planning-session-history {
     display: grid;
