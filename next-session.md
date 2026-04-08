@@ -57,6 +57,7 @@ Bis dahin: Dashboard laeuft als systemd-Service auf Port 5055, Backup taeglich
 
 ## Historie
 
+- **2026-04-08:** Planning-Kontext rechts wieder sichtbar gehalten ohne zweiten Scrollbar: Panel ist jetzt erneut `sticky`, aber ohne `max-height` und ohne internes `overflow`, damit man nach Plan-Auswahl nicht immer nach oben springen muss (`static/css/project-planning.css`).
 - **2026-04-08:** Planning-Kontextspalte scrollt wieder im normalen Seitenfluss: eigener Sticky-/Overflow-Container entfernt, damit kein zweiter Scrollbar mehr entsteht und Inhalte rechts nicht mehr abgeschnitten wirken (`static/css/project-planning.css`).
 - **2026-04-08:** Kleiner Layout-Hotfix fuer den Planning-Tab: die Plan-Card scrollt wieder voll sichtbar, nachdem die negative Aussenmarge am klickbaren Plan-Header entfernt wurde (`static/css/project-planning.css`).
 - **2026-04-08:** Planning-Tab entmischt: links bleiben Plans/Sprints/Specs mit Tasks und Markern nur noch als untergeordnete Listenpunkte, rechts zeigt der Kontextbereich jetzt ausschliesslich Plan-, Sprint- und Spec-Kontext statt operativem Task-/Marker-Inspector (`static/js/project-planning.js`, `static/css/project-planning.css`). Verifiziert mit `node --check static/js/project-planning.js` und `pytest -q tests/test_routes_smoke.py tests/test_workflow_loop_route.py` => `112 passed`.

@@ -191,6 +191,9 @@
     background: rgba(79,195,247,0.06);
 }
 .planning-detail-panel {
+    position: sticky;
+    top: 104px;
+    align-self: start;
     border: 1px solid var(--border);
     border-radius: 14px;
     background: var(--bg-card);
