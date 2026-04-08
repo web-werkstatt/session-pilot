@@ -11,6 +11,10 @@
     box-shadow: 0 18px 36px rgba(15, 23, 42, 0.28);
 }
 
+.workflow-loop-shell[aria-busy="true"] {
+    opacity: 0.96;
+}
+
 .workflow-loop-grid {
     display: grid;
     grid-template-columns: minmax(300px, 420px) minmax(260px, 1fr);
@@ -278,7 +282,7 @@
     fill: #ef4444;
 }
 
-@media (max-width: 1180px) {
+@media (max-width: 860px) {
     .workflow-loop-grid {
         grid-template-columns: 1fr;
     }
@@ -288,22 +292,26 @@
     }
 }
 
-@media (max-width: 720px) {
+@media (max-width: 640px) {
     .workflow-loop-shell {
         padding: 16px;
+    }
+
+    .workflow-loop-ring {
+        padding: 8px;
     }
 
     .workflow-loop-cards {
         grid-template-columns: 1fr;
     }
 
-    .workflow-loop-summary-title {
-        font-size: 24px;
-    }
-
     .workflow-loop-list-item {
         flex-direction: column;
         align-items: flex-start;
+    }
+
+    .workflow-loop-summary-title {
+        font-size: 22px;
     }
 
     .workflow-loop-node-label {

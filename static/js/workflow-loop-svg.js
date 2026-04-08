@@ -72,6 +72,7 @@ function renderWorkflowLoopSvg(container, data, onStepClick) {
     centerTitle.setAttribute('text-anchor', 'middle');
     centerTitle.setAttribute('class', 'workflow-loop-center-title');
     centerTitle.textContent = workflowLoopCenterTitle(data);
+    centerTitle.setAttribute('aria-hidden', 'true');
     svg.appendChild(centerTitle);
 
     steps.forEach(function(step, index) {
@@ -85,6 +86,10 @@ function renderWorkflowLoopSvg(container, data, onStepClick) {
         var title = document.createElementNS(ns, 'title');
         title.textContent = step.label + ' · ' + (step.cta_label || '');
         group.appendChild(title);
+
+        var desc = document.createElementNS(ns, 'desc');
+        desc.textContent = workflowLoopNodeDescription(step);
+        group.appendChild(desc);
 
         var circle = document.createElementNS(ns, 'circle');
         circle.setAttribute('cx', point.x);
@@ -146,4 +151,15 @@ function workflowLoopCenterTitle(data) {
         return data.next_marker.title;
     }
     return 'Noch keine Marker vorhanden';
+}
+
+function workflowLoopNodeDescription(step) {
+    var statusMap = {
+        done: 'erledigt',
+        active: 'aktiv',
+        pending: 'ausstehend',
+        attention: 'braucht Aufmerksamkeit',
+        blocked: 'blockiert'
+    };
+    return (step.label || 'Schritt') + ', Status: ' + (statusMap[step.status] || step.status || 'ausstehend') + '.';
 }

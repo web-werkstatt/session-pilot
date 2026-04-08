@@ -354,7 +354,9 @@ function _buildCard(sec) {
         ? '<div class="card-ai-preview"><div class="card-ai-preview-text">' + escapeHtml(previewText) + '</div></div>'
         : '';
     var executionHtml = '';
-    if (sec.execution_score !== null && sec.execution_score !== undefined && sec.execution_score !== '') {
+    if (st === 'done' && (sec.execution_score === null || sec.execution_score === undefined || sec.execution_score === '')) {
+        executionHtml = '<div class="card-execution-rating">Abschluss unvollstaendig · Rating nachholen</div>';
+    } else if (sec.execution_score !== null && sec.execution_score !== undefined && sec.execution_score !== '') {
         executionHtml = '<div class="card-execution-rating">Execution ' + escapeHtml(String(sec.execution_score)) + '/5'
             + (sec.execution_comment ? ' · ' + escapeHtml(sec.execution_comment) : '')
             + '</div>';
@@ -374,6 +376,11 @@ function _buildCard(sec) {
     var activateBtnHtml = sec.is_activatable
         ? '<button class="card-action-btn ui-button ui-button--ghost" onclick="event.stopPropagation();activateMarker(\'' + _escapeJsString(sec.marker_id) + '\')">OK</button>'
         : '';
+    var chatButtonLabel = sec.last_session ? 'Thread fortsetzen' : 'Neuen Thread starten';
+    if (st === 'done' && (sec.execution_score === null || sec.execution_score === undefined || sec.execution_score === '')) {
+        chatButtonLabel = 'Rating nachholen';
+    }
+    var chatTab = chatButtonLabel === 'Rating nachholen' ? 'history' : 'chat';
 
     return '<div class="plan-card ui-card board-task-card sec-status-' + st + (locked ? ' is-locked' : '') + selected + '" draggable="true" '
         + 'data-marker-id="' + escapeHtml(sec.marker_id) + '" data-status="' + st + '" '
@@ -391,7 +398,7 @@ function _buildCard(sec) {
         + timeHtml
         + '<div class="card-actions">'
         + activateBtnHtml
-        + '<button class="card-action-btn ui-button ui-button--ghost" onclick="event.stopPropagation();openSectionPanel(\'' + _escapeJsString(sec.marker_id) + '\', \'chat\')">Chat</button>'
+        + '<button class="card-action-btn ui-button ui-button--ghost" onclick="event.stopPropagation();openSectionPanel(\'' + _escapeJsString(sec.marker_id) + '\', \'' + chatTab + '\')">' + chatButtonLabel + '</button>'
         + '</div></div></div>';
 }
 

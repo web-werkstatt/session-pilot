@@ -14,6 +14,7 @@
 
         shell.classList.remove('is-error');
         shell.classList.remove('is-empty');
+        shell.setAttribute('aria-busy', 'true');
 
         try {
             ensureWorkflowLoopLayout(shell);
@@ -26,6 +27,8 @@
                 + '<div class="workflow-loop-state-title">Workflow Loop konnte nicht geladen werden</div>'
                 + '<button class="workflow-loop-inline-btn" type="button" onclick="loadWorkflowLoop()">Retry</button>'
                 + '</div>';
+        } finally {
+            shell.setAttribute('aria-busy', 'false');
         }
     }
 
@@ -155,7 +158,7 @@
                 + '<div class="workflow-loop-list-title">' + escapeHtml(item.title) + '</div>'
                 + '<div class="workflow-loop-list-meta">' + escapeHtml(item.status_label) + '</div>'
                 + '</div>'
-                + '<button class="workflow-loop-inline-btn" type="button" onclick="workflowLoopOpenRating(\'' + escapeHtml(item.plan_id || '') + '\', \'' + escapeHtml(item.marker_id || '') + '\')">' + escapeHtml(item.cta_label) + '</button>'
+                + '<button class="workflow-loop-inline-btn" type="button" onclick="workflowLoopOpenRating(\'' + _escapeJsString(item.plan_id || '') + '\', \'' + _escapeJsString(item.marker_id || '') + '\')">' + escapeHtml(item.cta_label) + '</button>'
                 + '</div>';
         }).join('');
 
@@ -257,10 +260,11 @@
 
     function workflowLoopStatusLabel(marker) {
         if (marker.rating_pending) return 'Abschluss unvollstaendig';
-        if (marker.status === 'in_progress') return 'in_progress';
-        if (marker.status === 'done') return 'done';
-        if (marker.status === 'blocked') return 'blocked';
-        return marker.status || 'todo';
+        if (marker.status === 'in_progress') return 'Aktiv';
+        if (marker.status === 'done') return 'Done';
+        if (marker.status === 'blocked') return 'Blocked';
+        if (marker.status === 'todo') return 'Todo';
+        return marker.status || 'Todo';
     }
 
     window.loadWorkflowLoop = loadWorkflowLoop;

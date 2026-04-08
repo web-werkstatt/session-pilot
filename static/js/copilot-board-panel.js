@@ -64,11 +64,13 @@ function askCopilot() {
 function _loadPanelChat(sectionId) {
     var container = document.getElementById('panelChatMessages');
     container.innerHTML = '<div class="panel-chat-empty"><div class="panel-chat-empty-icon">...</div>Chat laden...</div>';
+    _renderThreadMode(_currentSection, false);
 
     api.get('/api/copilot/runs?thread_id=' + encodeURIComponent(_markerThreadId(sectionId)) + '&plan_id=' + PLAN_ID + _projectQueryParam())
         .then(function(data) {
             _currentThreadId = _markerThreadId(sectionId);
             var msgs = data.runs || [];
+            _renderThreadMode(_currentSection, msgs.length > 0);
             container.innerHTML = '';
             if (msgs.length === 0) {
                 container.innerHTML = '<div class="panel-chat-empty"><div class="panel-chat-empty-icon">💬</div>Noch keine Nachrichten.<br>Stelle eine Frage!</div>';
@@ -89,8 +91,28 @@ function _loadPanelChat(sectionId) {
             _scrollChat();
         })
         .catch(function() {
+            _renderThreadMode(_currentSection, false);
             container.innerHTML = '<div class="panel-chat-empty"><div class="panel-chat-empty-icon">⚠️</div>Chat konnte nicht geladen werden.</div>';
         });
+}
+
+function _renderThreadMode(marker, hasHistory) {
+    var node = document.getElementById('panelThreadMode');
+    if (!node) return;
+    if (!marker || !marker.marker_id) {
+        node.style.display = 'none';
+        node.innerHTML = '';
+        return;
+    }
+
+    var continuation = hasHistory || !!marker.last_session;
+    node.style.display = 'flex';
+    node.className = 'panel-thread-mode ' + (continuation ? 'is-continuation' : 'is-fresh');
+    node.innerHTML = ''
+        + '<div class="panel-thread-mode-title">' + (continuation ? 'Thread fortsetzen' : 'Neuen Thread starten') + '</div>'
+        + '<div class="panel-thread-mode-copy">' + escapeHtml(continuation
+            ? 'Dieser markergebundene Chat wird im bestehenden Verlauf fortgesetzt.'
+            : 'Dieser markergebundene Chat startet als neuer Verlauf fuer diesen Marker.') + '</div>';
 }
 
 function _appendChatMsg(role, text, images, usageMeta) {
@@ -283,12 +305,13 @@ function _renderPanelMarkerDetails(marker) {
     document.getElementById('panelMarkerLastSession').textContent = marker.last_session || '-';
     document.getElementById('panelMarkerUpdatedAt').textContent = marker.updated_at || '-';
     document.getElementById('panelMarkerGate').textContent = marker.is_activatable ? 'freigegeben' : (marker.gate_reason || 'gesperrt');
-    document.getElementById('panelMarkerExecutionSummary').textContent = marker.execution_score === null ? '-' : (String(marker.execution_score) + '/5' + (marker.last_execution_at ? ' · ' + marker.last_execution_at : ''));
+    document.getElementById('panelMarkerExecutionSummary').textContent = marker.execution_score === null ? (marker.status === 'done' ? 'Abschluss unvollstaendig' : '-') : (String(marker.execution_score) + '/5' + (marker.last_execution_at ? ' · ' + marker.last_execution_at : ''));
     document.getElementById('panelMarkerExecutionComment').textContent = marker.execution_comment || '-';
     document.getElementById('panelExecutionScore').value = marker.execution_score === null ? '' : String(marker.execution_score);
     document.getElementById('panelExecutionCommentInput').value = marker.execution_comment || '';
     document.getElementById('panelMarkerChecks').innerHTML = _renderChecksHtml(marker.checks);
     adoptBtn.style.display = marker.prompt_suggestion ? 'inline-flex' : 'none';
+    _renderThreadMode(marker, !!marker.last_session);
     if (_currentPlanSectionId) {
         var section = _planSections.find(function(item) { return item.id === _currentPlanSectionId; });
         if (section) _renderPlanSectionDetails(section);

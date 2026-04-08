@@ -120,7 +120,7 @@ Referenz:
 
 ## Completed Sprints (diese Session)
 
-### Sprint CP — Workflow Loop v1 auf der Projektseite — IN ARBEIT (2026-04-08)
+### Sprint CP — Workflow Loop v1 auf der Projektseite — DONE (2026-04-08)
 
 **Ziel:** `/project/<name>` als klare Control Plane staerken und den Marker-Workflow als lesbaren 5-Step-Loop auf der Projektseite sichtbar machen, waehrend `/copilot?...` der Execution Workspace bleibt.
 
@@ -130,12 +130,13 @@ Referenz:
 - Neue Shell auf der Projektseite in `templates/project_detail.html` plus Einbindung von `static/css/workflow-loop.css`, `static/js/workflow-loop.js` und `static/js/workflow-loop-svg.js`.
 - Frontend-Controller rendert Ring, Summary und Kontextkarten (`Aktiver Marker`, `Naechster Marker`, `Abschluesse ohne Rating`, `Marker mit Risiko-Hinweisen`) und verlinkt CTAs in bestehende Copilot-Pfade.
 - Kleiner Copilot-Anschluss in `static/js/copilot_board.js`: `marker_id`- und `tab`-Query-Parameter oeffnen beim Laden direkt den passenden Marker-Kontext.
+- Copilot-Workspace nachgeschaerft: sichtbarer Thread-Fortsetzungsmodus fuer markergebundene Chats, klarere CTA-Texte (`Thread fortsetzen`, `Neuen Thread starten`, `Rating nachholen`) und sichtbarer Zustand `Abschluss unvollstaendig`.
 - Tests fuer Service-Shape/Ableitung und Route in `tests/test_workflow_loop_service.py` und `tests/test_workflow_loop_route.py`, lokal gruen.
 
-**Offen / Naechster Schnitt:**
-- Manuelle UI-Abnahme auf Desktop/Mobile im laufenden Dashboard.
-- Microcopy/CTA-Kanten im Copilot-Workspace gegen die Sprint-CP-Entscheidungen nachziehen.
-- Danach Sprint-Datei `sprints/sprint-cp-workflow-loop-implementation.md` auf DONE pruefen.
+**Abnahme / Verifikation:**
+- Deploy auf laufenden systemd-Service erfolgt.
+- Kombinierter Regression-Lauf fuer den betroffenen Scope: `203 passed`.
+- Laufende App geprueft ueber `/copilot?plan_id=141` und `GET /api/project/project_dashboard/workflow-loop`.
 
 **Geaenderte Dateien:**
 - `services/workflow_loop_service.py`
