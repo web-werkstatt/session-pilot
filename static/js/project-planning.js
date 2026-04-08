@@ -256,8 +256,6 @@ function renderPlanDetail(match) {
     var plan = match.plan || {};
     var sessions = match.projectSessions || [];
     return ''
-        + renderDetailField('Status', projectPlanningStatusLabel(plan.status))
-        + renderDetailField('Plan ID', plan.id || '-')
         + renderDetailBlock('Summary', plan.summary ? '<div class="planning-detail-value">' + escapeHtml(plan.summary) + '</div>' : '<div class="planning-detail-muted">No summary available.</div>')
         + renderRecentProjectSessionsBlock(sessions.slice(0, 5), match.path, 0)
         + renderDetailActions(match.plan, false);
