@@ -108,10 +108,7 @@ function renderPlanHierarchyGroup(group) {
         + '</div>'
         + '</div>';
 
-    if (!sprints.length) {
-        html += '<div class="planning-empty">No sprint hierarchy detected in this plan yet.</div></section>';
-        return html;
-    }
+    if (!sprints.length) return html + '</section>';
 
     html += '<div class="planning-sprint-list">';
     sprints.forEach(function(sprint) {

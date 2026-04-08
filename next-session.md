@@ -57,6 +57,7 @@ Bis dahin: Dashboard laeuft als systemd-Service auf Port 5055, Backup taeglich
 
 ## Historie
 
+- **2026-04-08:** Leisen Empty-State im Projekt-Planning weiter reduziert: der Hinweis `No sprint hierarchy detected in this plan yet.` wurde entfernt; ein Plan ohne Sprint-Hierarchie erscheint jetzt einfach ohne zusaetzlichen Warntext (`static/js/project-planning.js`).
 - **2026-04-08:** Verbleibende Statistikzeilen aus der rechten Spec-Karte im Projekt-Planning entfernt: `Tasks`, `Mapped Tasks` und `Linked Sessions` sind dort nicht mehr sichtbar (`static/js/project-planning.js`).
 - **2026-04-08:** Spec-Auswahl im Projekt-Planning wieder separat klickbar gemacht: Klick auf eine Spec stoppt jetzt das Bubbling zur uebergeordneten Sprint-Karte, sodass Sprint-Auswahl die Spec nicht mehr sofort ueberschreibt (`static/js/project-planning.js`).
 - **2026-04-08:** Rechte Sprint-Karte im Projekt-Planning komplett entleert von Metadaten: auch `Summary`, `Sprint Tag`, `Plan ID` und `Linked Sessions` entfernt, damit rechts bei Sprint-Auswahl nur noch Scope-Hinweis und CTA bleiben (`static/js/project-planning.js`).
