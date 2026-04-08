@@ -33,10 +33,19 @@ document.addEventListener('DOMContentLoaded', () => {
     if (params.get('status')) {
         filters.status = params.get('status');
     }
+    initPlansContextBar();
     loadStats();
     loadPlans();
     loadProjects();
 });
+
+function initPlansContextBar() {
+    var contextBar = document.getElementById('plansContextBar');
+    var backLink = document.getElementById('plansBackLink');
+    if (!contextBar || !backLink || !filters.project) return;
+    backLink.href = '/project/' + encodeURIComponent(filters.project);
+    contextBar.style.display = 'block';
+}
 
 // === Data ===
 function loadPlans() {
