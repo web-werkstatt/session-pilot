@@ -74,6 +74,10 @@ function buildProjectPlanningCopilotUrl(planId, planTitle) {
     return '/copilot?plan_id=' + encodeURIComponent(planId) + '&plan=' + encodeURIComponent(projectPlanningSlugify(planTitle)) + '&project=' + encodeURIComponent(PROJECT_NAME);
 }
 
+function buildProjectPlanningWorkspaceUrl() {
+    return '/plans?project=' + encodeURIComponent(PROJECT_NAME);
+}
+
 function projectPlanningSlugify(text) {
     return String(text || '')
         .toLowerCase()
@@ -85,7 +89,7 @@ function renderPlanHierarchyGroup(group) {
     var plan = group.plan || {};
     var sprints = Array.isArray(group.sprints) ? group.sprints : [];
     var stats = group.stats || {};
-    var detailUrl = '/plans/' + encodeURIComponent(plan.id) + '?project=' + encodeURIComponent(PROJECT_NAME) + '&from=project';
+    var detailUrl = buildProjectPlanningWorkspaceUrl();
     var planId = buildPlanningNodeId('plan', plan.id);
 
     var html = ''
@@ -320,7 +324,7 @@ function renderDetailActions(plan, includeWorkflowLink) {
     var html = '<div class="planning-detail-actions">';
     if (includeWorkflowLink) html += '<a class="planning-detail-btn" href="#" onclick="switchProjectTabByName(\'workflow\');return false;">Open Workflow</a>';
     else html += '<a class="planning-detail-btn" href="' + buildProjectPlanningCopilotUrl(planId, planTitle) + '">Open in Copilot</a>';
-    html += '<a class="planning-detail-btn planning-detail-btn-secondary" href="/plans/' + encodeURIComponent(planId) + '?project=' + encodeURIComponent(PROJECT_NAME) + '&from=project">Open Plan Detail</a></div>';
+    html += '<a class="planning-detail-btn planning-detail-btn-secondary" href="' + buildProjectPlanningWorkspaceUrl() + '">Open Planning</a></div>';
     return html;
 }
 
