@@ -132,6 +132,7 @@ Referenz:
 - Kleiner Copilot-Anschluss in `static/js/copilot_board.js`: `marker_id`- und `tab`-Query-Parameter oeffnen beim Laden direkt den passenden Marker-Kontext.
 - Copilot-Workspace nachgeschaerft: sichtbarer Thread-Fortsetzungsmodus fuer markergebundene Chats, klarere CTA-Texte (`Thread fortsetzen`, `Neuen Thread starten`, `Rating nachholen`) und sichtbarer Zustand `Abschluss unvollstaendig`.
 - Projektseite entschlackt: obere Overview-Cards entfernt, `Workflow` als eigener Haupttab neben `Details` und `Planning` eingefuehrt, Workflow Loop aus dem Detailtab herausgeloest.
+- Projektseite weiter reduziert: nur noch `Details`, `Planning`, `Workflow` als Primaer-Tabs; selten genutzte Bereiche als Sekundaer-Links statt gleichrangiger Navigation.
 - Tests fuer Service-Shape/Ableitung und Route in `tests/test_workflow_loop_service.py` und `tests/test_workflow_loop_route.py`, lokal gruen.
 
 **Abnahme / Verifikation:**
