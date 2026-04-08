@@ -227,6 +227,88 @@
             </div>
         </div>
     </div>
+
+    <div class="modal-overlay" id="editModal">
+        <div class="modal-content" style="max-width:700px">
+            <div class="modal-header">
+                <h2>Project: <span id="editProjectName"></span></h2>
+                <button class="modal-close" onclick="closeEditModal()">&times;</button>
+            </div>
+            <div class="modal-tabs">
+                <button class="modal-tab active" onclick="switchEditTab('general')">General</button>
+                <button class="modal-tab" onclick="switchEditTab('relations')">Relations</button>
+            </div>
+            <div class="modal-body">
+                <div id="editTabGeneral" class="edit-tab-content active">
+                    <form class="edit-form" id="editForm">
+                        <label>Description</label>
+                        <textarea id="editDescription" rows="2" placeholder="Short project description..."></textarea>
+                        <div class="row">
+                            <div>
+                                <label>Group</label>
+                                <div style="display:flex;gap:8px">
+                                    <select id="editGroup" style="flex:1"><option value="">-- None --</option></select>
+                                    <button type="button" onclick="toggleInlineGroupForm()" class="btn-add" title="Create new group" style="padding:8px 12px">+</button>
+                                </div>
+                            </div>
+                            <div>
+                                <label>Priority</label>
+                                <select id="editPriority">
+                                    <option value="">-- None --</option>
+                                    <option value="high">High</option>
+                                    <option value="medium">Medium</option>
+                                    <option value="low">Low</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div id="inlineGroupForm" style="display:none;background:#141414;padding:15px;border-radius:8px;margin:10px 0;border:1px solid #333">
+                            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+                                <strong style="color:#4fc3f7">Create new group</strong>
+                                <button type="button" onclick="toggleInlineGroupForm()" style="background:none;border:none;color:#666;font-size:18px;cursor:pointer">&times;</button>
+                            </div>
+                            <div class="row">
+                                <div><label style="margin-top:0">Short name</label><input type="text" id="inlineGroupId" placeholder="e.g. client_web" style="text-transform:lowercase"></div>
+                                <div><label style="margin-top:0">Display name</label><input type="text" id="inlineGroupName" placeholder="e.g. Web Clients"></div>
+                            </div>
+                            <div class="row" style="margin-top:10px">
+                                <div><label style="margin-top:0">Icon</label><select id="inlineGroupIcon" style="font-size:16px"><option value="📁">📁</option><option value="🏠">🏠</option><option value="🏢">🏢</option><option value="👤">👤</option><option value="🚀">🚀</option><option value="⭐">⭐</option><option value="🌐">🌐</option><option value="🎨">🎨</option><option value="🤖">🤖</option><option value="📦">📦</option><option value="💰">💰</option></select></div>
+                                <div><label style="margin-top:0">Color</label><input type="color" id="inlineGroupColor" value="#666666" style="height:38px;padding:3px"></div>
+                            </div>
+                            <div style="margin-top:12px;text-align:right"><button type="button" class="btn-save" onclick="createInlineGroup()" style="padding:8px 20px">Create</button></div>
+                        </div>
+                        <div class="row">
+                            <div><label>Deadline</label><input type="date" id="editDeadline"></div>
+                            <div><label>Progress (%)</label><input type="number" id="editProgress" min="0" max="100" placeholder="0-100"></div>
+                        </div>
+                        <label>Milestones</label>
+                        <div class="milestone-list" id="milestoneList"></div>
+                        <button type="button" class="btn-add" onclick="addMilestone()" style="margin-top:5px">+ Milestone</button>
+                        <div class="modal-actions">
+                            <button type="button" class="btn-cancel" onclick="closeEditModal()">Cancel</button>
+                            <button type="submit" class="btn-save">Save</button>
+                        </div>
+                    </form>
+                </div>
+                <div id="editTabRelations" class="edit-tab-content edit-form">
+                    <div class="relations-section"><h4>Outgoing (this project &rarr;)</h4><div id="outgoingRelations" class="project-relations-list"></div></div>
+                    <div class="relations-section"><h4>Incoming (&rarr; this project)</h4><div id="incomingRelations" class="project-relations-list"></div></div>
+                    <div class="relations-section" style="border-top:1px solid var(--border-subtle);padding-top:15px;margin-top:15px;">
+                        <h4>New Relation</h4>
+                        <div class="relation-direction">
+                            <label class="radio-label"><input type="radio" name="relationDirection" value="outgoing" checked onchange="updateRelationForm()"> This &rarr; Other</label>
+                            <label class="radio-label"><input type="radio" name="relationDirection" value="incoming" onchange="updateRelationForm()"> Other &rarr; This</label>
+                        </div>
+                        <div class="row" style="margin-top:10px">
+                            <div style="flex:2"><label id="relationTargetLabel">Target Project</label><div class="autocomplete-wrapper"><input type="text" id="editRelationProject" placeholder="Search project..." oninput="onEditRelationSearch()" autocomplete="off"><div class="autocomplete-dropdown" id="editRelationDropdown"></div></div></div>
+                            <div style="flex:1"><label>Type</label><select id="editRelationType"></select></div>
+                        </div>
+                        <div><label>Note</label><input type="text" id="editRelationNote" placeholder="e.g. Shared DB..."></div>
+                        <div style="margin-top:10px"><button type="button" class="btn-save" onclick="addProjectRelation()" style="padding:8px 20px">Add</button></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 {% endblock %}
 
 {% block scripts %}
@@ -237,11 +319,14 @@
 <script src="/static/js/git-actions.js"></script>
 
 <script>const PROJECT_NAME = "{{ project_name }}";</script>
+<script src="/static/js/dashboard-state.js"></script>
+<script src="/static/js/dashboard-groups.js"></script>
 <script src="/static/js/project-planning.js"></script>
 <script src="/static/js/project-governance.js"></script>
 <script src="/static/js/file-heatmap.js"></script>
 <script src="/static/js/workflow-loop-svg.js"></script>
 <script src="/static/js/workflow-loop.js"></script>
 <script src="/static/js/project-detail.js"></script>
+<script src="/static/js/dashboard-modals.js"></script>
 
 {% endblock %}

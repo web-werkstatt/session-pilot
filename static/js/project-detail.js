@@ -36,6 +36,11 @@ function loadWorkflowTab() {
     loadWorkflowLoop();
 }
 
+function loadData() {
+    loadProjectInfo();
+    if (typeof loadGroups === 'function') loadGroups();
+}
+
 function normalizeProjectSubtitle(text) {
     return String(text || '')
         .replace(/&lt;br\s*\/?&gt;?/gi, ' ')
@@ -421,6 +426,9 @@ async function loadModelRecommendation() {
 // === Init ===
 if (typeof setActiveProjectContext === 'function') {
     setActiveProjectContext(PROJECT_NAME);
+}
+if (typeof loadGroups === 'function') {
+    loadGroups();
 }
 loadProjectInfo();
 initGitPanel(PROJECT_NAME);
