@@ -126,6 +126,36 @@
     border-bottom-color: var(--accent);
 }
 
+.project-secondary-links {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 12px 24px 0;
+}
+
+.project-secondary-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 32px;
+    padding: 6px 10px;
+    border: 1px solid var(--border-subtle);
+    border-radius: 999px;
+    background: rgba(255,255,255,0.03);
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-weight: 500;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.project-secondary-link:hover {
+    color: var(--text-primary);
+    border-color: var(--border-hover);
+    background: rgba(255,255,255,0.05);
+}
+
 .tab-count {
     font-size: 11px;
     background: var(--elevated, var(--bg-elevated));
@@ -139,6 +169,10 @@
 .project-tab.active .tab-count {
     background: rgba(0,120,212,0.2);
     color: var(--accent);
+}
+
+.project-secondary-link .tab-count {
+    background: rgba(255,255,255,0.08);
 }
 
 

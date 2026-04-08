@@ -47,6 +47,27 @@
         </button>
     </div>
 
+    <div class="project-secondary-links">
+        <button class="project-secondary-link" type="button" onclick="switchProjectTabByName('documents')">
+            <i data-lucide="folder-open" class="icon icon-xs"></i> Documents
+            <span class="tab-count" id="docsCount"></span>
+        </button>
+        <button class="project-secondary-link" type="button" onclick="switchProjectTabByName('quality')">
+            <i data-lucide="shield-check" class="icon icon-xs"></i> Quality
+            <span class="tab-count" id="qualityScore"></span>
+        </button>
+        <button class="project-secondary-link" type="button" onclick="switchProjectTabByName('governance')">
+            <i data-lucide="shield" class="icon icon-xs"></i> Governance
+        </button>
+        <button class="project-secondary-link" type="button" onclick="switchProjectTabByName('heatmap')">
+            <i data-lucide="flame" class="icon icon-xs"></i> AI Heatmap
+        </button>
+        <a class="project-secondary-link" href="/sessions?project={{ project_name | urlencode }}">
+            <i data-lucide="bot" class="icon icon-xs"></i> Activity
+            <span class="tab-count" id="sessionsCount"></span>
+        </a>
+    </div>
+
     <div class="project-body">
         <!-- Tab: Details -->
         <div class="project-tab-content active" id="ptab_overview">
