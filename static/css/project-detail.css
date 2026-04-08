@@ -75,6 +75,12 @@
     margin-top: 0;
     color: var(--text-primary);
 }
+
+.info-block h3,
+#slowSections h3,
+#projectBody > h3 {
+    scroll-margin-top: 128px;
+}
 @media (max-width: 768px) {
     .info-grid { grid-template-columns: 1fr; }
 }

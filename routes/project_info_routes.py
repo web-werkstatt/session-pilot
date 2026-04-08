@@ -25,6 +25,17 @@ def _escape(text):
     return html_mod.escape(str(text)) if text else ""
 
 
+def _normalize_description_text(text):
+    value = str(text or "").strip()
+    if not value:
+        return ""
+    # Tolerate broken trailing HTML remnants from older project metadata.
+    value = value.replace("<br>", " ").replace("<br/>", " ").replace("<br />", " ")
+    if value.endswith("<br"):
+        value = value[:-3].rstrip()
+    return value
+
+
 @project_info_bp.route('/api/info')
 def get_info():
     """Schnelle Basis-Info: Metadaten, Tech-Stack, Env, Changelog, README, Screenshots, Milestones, Relations"""
@@ -48,8 +59,9 @@ def get_info():
     if not pj.get("changelog_latest"):
         pj["changelog_latest"] = parse_changelog(project_path)
 
-    if pj.get("description"):
-        sections.append(f"<h3>Description</h3><p>{_escape(pj['description'])}</p>")
+    description_text = _normalize_description_text(pj.get("description"))
+    if description_text:
+        sections.append(f"<h3>Description</h3><p>{_escape(description_text)}</p>")
 
     # Schnelle Sections (File I/O only, kein Subprocess/Netzwerk)
     _add_metadata_section(sections, pj, project_path)
@@ -449,5 +461,4 @@ def _add_env_section(sections, project_path):
         sections.append(f"<h3>Environment Variables</h3><p>{badges}</p>")
     except Exception:
         pass
-
 

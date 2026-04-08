@@ -36,13 +36,22 @@ function loadWorkflowTab() {
     loadWorkflowLoop();
 }
 
+function normalizeProjectSubtitle(text) {
+    return String(text || '')
+        .replace(/&lt;br\s*\/?&gt;?/gi, ' ')
+        .replace(/<br\s*\/?>/gi, ' ')
+        .replace(/<br$/i, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
 // === Details ===
 async function loadProjectInfo() {
     try {
         const d = await api.get('/api/info?name=' + encodeURIComponent(PROJECT_NAME));
 
         const match = d.description.match(/<h3>(?:Beschreibung|Description)<\/h3><p>(.*?)<\/p>/);
-        document.getElementById('projectSubtitle').textContent = match ? match[1] : '';
+        document.getElementById('projectSubtitle').textContent = normalizeProjectSubtitle(match ? match[1] : '');
 
         let sectionHtml = d.description
             .replace(/<h3>README<\/h3>[\s\S]*?(?=<h3>|<div class="export-hint"|$)/, '');
