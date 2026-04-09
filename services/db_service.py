@@ -239,6 +239,12 @@ def ensure_session_marker_schema():
     ensure_session_marker_schema_impl(execute)
 
 
+def ensure_workflow_state_schema():
+    """Sprint Workflow-v2: Persistente Marker-Workflow-States."""
+    from services.db_workflow_state_schema import ensure_workflow_state_schema_impl
+    ensure_workflow_state_schema_impl(execute)
+
+
 _ai_scope_ready = False
 _ai_scope_lock = threading.Lock()
 

@@ -7,6 +7,11 @@ from services.copilot_marker_service import _load_markers_with_regeneration
 from services.governance_service import get_governance_gate
 from services.path_resolver import resolve_project_path
 from services.db_service import execute
+from services.workflow_state_service import (
+    get_allowed_transitions,
+    get_workflow_states_for_project,
+    sync_marker_to_workflow,
+)
 
 
 STEP_DEFINITIONS = [
@@ -31,12 +36,18 @@ def build_workflow_loop_data(project_name):
 
     markers = list(_load_markers_with_regeneration(project_name) or [])
     plan_titles = _load_plan_titles(project_name)
+
+    # Sync: Marker-Status aus handoff.md in persistierten Workflow-State uebernehmen
+    _sync_markers_to_workflow(project_name, markers)
+    workflow_states = _load_workflow_states_map(project_name)
+
     current_marker = _build_current_marker(markers, plan_titles)
     next_marker = _build_next_marker(markers, plan_titles, current_marker)
     pending_ratings = _build_pending_ratings(markers)
     signals = _build_signals(project_name, markers, next_marker)
     current_step = _derive_current_step(markers, current_marker, next_marker, pending_ratings)
     steps = _build_steps(current_step, current_marker, next_marker)
+    marker_groups = _build_marker_groups(project_name, markers, plan_titles, workflow_states, current_marker, next_marker)
 
     return {
         "project_id": project_name,
@@ -47,6 +58,8 @@ def build_workflow_loop_data(project_name):
         "next_marker": next_marker,
         "signals": signals,
         "pending_ratings": pending_ratings,
+        "workflow_states": workflow_states,
+        "marker_groups": marker_groups,
     }
 
 
@@ -246,6 +259,113 @@ def _serialize_marker_focus(marker, plan_titles):
     }
 
 
+def _build_marker_groups(project_name, markers, plan_titles, workflow_states, current_marker, next_marker):
+    groups = {
+        "active": {"id": "active", "label": "Aktiv", "tone": "green", "cards": []},
+        "waiting": {"id": "waiting", "label": "Wartet", "tone": "amber", "cards": []},
+        "blocked": {"id": "blocked", "label": "Blockiert", "tone": "red", "cards": []},
+    }
+    current_marker_id = str((current_marker or {}).get("marker_id") or "")
+    next_marker_id = str((next_marker or {}).get("marker_id") or "")
+
+    for marker in sorted(list(markers or []), key=_marker_sort_key, reverse=True):
+        card = _serialize_marker_card(project_name, marker, plan_titles, workflow_states, current_marker_id, next_marker_id)
+        groups[card["group"]]["cards"].append(card)
+
+    return [groups["active"], groups["waiting"], groups["blocked"]]
+
+
+def _serialize_marker_card(project_name, marker, plan_titles, workflow_states, current_marker_id, next_marker_id):
+    plan_id = str(marker.plan_id or "")
+    gate_ready = bool(getattr(marker, "prompt", "").strip() and len(getattr(marker, "checks", []) or []) >= 1)
+    gate_status = "ready" if gate_ready else "blocked"
+    gate_reason = "" if gate_ready else _derive_gate_reason(marker)
+    state = workflow_states.get(marker.marker_id) or {}
+    workflow_status = str(state.get("workflow_status") or _derive_card_status(marker, gate_ready)).strip() or "planned"
+    try:
+        allowed = get_allowed_transitions(project_name, marker.marker_id)
+    except Exception:
+        allowed = {
+            "current_status": workflow_status,
+            "allowed": _fallback_allowed_transitions(workflow_status),
+            "owner": state.get("owner"),
+            "blocked_reason": state.get("blocked_reason"),
+        }
+
+    return {
+        "marker_id": marker.marker_id,
+        "title": marker.titel,
+        "goal": marker.ziel,
+        "next_step": marker.naechster_schritt,
+        "plan_id": plan_id,
+        "plan_title": plan_titles.get(plan_id, f"Plan {marker.plan_id}"),
+        "marker_status": marker.status,
+        "workflow_status": workflow_status,
+        "workflow_status_label": _workflow_status_label(workflow_status),
+        "group": _workflow_group(workflow_status),
+        "owner": state.get("owner") or "",
+        "blocked_reason": state.get("blocked_reason") or "",
+        "last_session": state.get("last_session") or marker.last_session or "",
+        "execution_score": marker.execution_score,
+        "execution_comment": marker.execution_comment or "",
+        "rating_pending": marker.status == "done" and marker.execution_score is None,
+        "gate_status": gate_status,
+        "gate_reason": gate_reason,
+        "checks_count": len(getattr(marker, "checks", []) or []),
+        "allowed_transitions": allowed.get("allowed", []),
+        "is_current": marker.marker_id == current_marker_id,
+        "is_next": marker.marker_id == next_marker_id,
+        "updated_at": getattr(marker, "updated_at", "") or "",
+    }
+
+
+def _fallback_allowed_transitions(workflow_status):
+    fallback = {
+        "planned": ["blocked", "ready"],
+        "ready": ["active", "blocked", "planned"],
+        "active": ["blocked", "write_back"],
+        "write_back": ["active", "blocked", "rating"],
+        "rating": ["active", "done"],
+        "done": ["active"],
+        "blocked": ["planned", "ready", "active"],
+    }
+    return fallback.get(str(workflow_status or "").strip(), [])
+
+
+def _derive_card_status(marker, gate_ready):
+    if marker.status == "in_progress":
+        return "active"
+    if marker.status == "blocked":
+        return "blocked"
+    if marker.status == "done":
+        return "rating" if marker.execution_score is None else "done"
+    if marker.status == "todo":
+        return "ready" if gate_ready else "planned"
+    return "planned"
+
+
+def _workflow_group(workflow_status):
+    workflow_status = str(workflow_status or "").strip()
+    if workflow_status == "blocked":
+        return "blocked"
+    if workflow_status in ("active", "write_back", "rating"):
+        return "active"
+    return "waiting"
+
+
+def _workflow_status_label(workflow_status):
+    labels = {
+        "planned": "Noch nicht bereit",
+        "ready": "Bereit zum Start",
+        "active": "Aktiv in Execution",
+        "write_back": "Write Back offen",
+        "rating": "Rating offen",
+        "done": "Sauber abgeschlossen",
+        "blocked": "Blockiert",
+    }
+    return labels.get(str(workflow_status or "").strip(), workflow_status or "Unbekannt")
+
+
 def _append_marker_hints(hints, seen, marker):
     risk_text = str(getattr(marker, "risiko", "") or "").lower()
     if "governance" in risk_text:
@@ -324,3 +444,28 @@ def _marker_sort_key(marker):
         return datetime.fromisoformat(value.replace("Z", "+00:00"))
     except ValueError:
         return datetime.min.replace(tzinfo=timezone.utc)
+
+
+def _sync_markers_to_workflow(project_name, markers):
+    """Synchronisiert alle Marker-Statuses in die persistierte Workflow-State-Tabelle."""
+    for marker in markers:
+        try:
+            sync_marker_to_workflow(
+                project_name,
+                marker.marker_id,
+                marker.status,
+                last_session=marker.last_session or None,
+                gate_ready=bool(getattr(marker, "prompt", "").strip() and len(getattr(marker, "checks", []) or []) >= 1),
+                execution_score=getattr(marker, "execution_score", None),
+            )
+        except Exception:
+            pass  # Sync-Fehler duerfen den Loop nicht blockieren
+
+
+def _load_workflow_states_map(project_name):
+    """Laedt alle Workflow-States als dict {marker_id: state}."""
+    try:
+        states = get_workflow_states_for_project(project_name)
+        return {s["marker_id"]: s for s in states}
+    except Exception:
+        return {}

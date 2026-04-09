@@ -80,6 +80,352 @@
     gap: 16px;
 }
 
+.workflow-loop-board {
+    grid-column: 1 / -1;
+    display: grid;
+    gap: 18px;
+    margin-top: 4px;
+}
+
+.workflow-loop-board-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 18px 20px;
+    border: 1px solid rgba(148, 163, 184, 0.14);
+    border-radius: 18px;
+    background: rgba(15, 23, 42, 0.52);
+}
+
+.workflow-loop-board-title {
+    margin: 8px 0 0;
+    color: #f8fafc;
+    font-size: 22px;
+    line-height: 1.2;
+}
+
+.workflow-loop-board-copy {
+    max-width: 520px;
+    margin: 0;
+    color: rgba(226, 232, 240, 0.74);
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.workflow-marker-group {
+    padding: 18px;
+    border-radius: 18px;
+    border: 1px solid rgba(148, 163, 184, 0.14);
+    background: rgba(15, 23, 42, 0.5);
+}
+
+.workflow-marker-group--green {
+    background:
+        linear-gradient(180deg, rgba(10, 35, 28, 0.92), rgba(15, 23, 42, 0.7)),
+        rgba(15, 23, 42, 0.5);
+}
+
+.workflow-marker-group--amber {
+    background:
+        linear-gradient(180deg, rgba(56, 34, 10, 0.82), rgba(15, 23, 42, 0.68)),
+        rgba(15, 23, 42, 0.5);
+}
+
+.workflow-marker-group--red {
+    background:
+        linear-gradient(180deg, rgba(56, 15, 22, 0.86), rgba(15, 23, 42, 0.68)),
+        rgba(15, 23, 42, 0.5);
+}
+
+.workflow-marker-group-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 14px;
+}
+
+.workflow-marker-group-kicker {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: rgba(148, 163, 184, 0.88);
+}
+
+.workflow-marker-group-title {
+    margin: 8px 0 0;
+    color: #f8fafc;
+    font-size: 18px;
+    line-height: 1.3;
+}
+
+.workflow-marker-group-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 34px;
+    height: 34px;
+    padding: 0 12px;
+    border-radius: 999px;
+    background: rgba(15, 23, 42, 0.72);
+    color: #f8fafc;
+    font-weight: 700;
+}
+
+.workflow-marker-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 14px;
+}
+
+.workflow-marker-empty {
+    padding: 16px 18px;
+    border-radius: 14px;
+    background: rgba(15, 23, 42, 0.46);
+    color: rgba(226, 232, 240, 0.68);
+    font-size: 14px;
+}
+
+.workflow-marker-card {
+    display: grid;
+    gap: 12px;
+    padding: 18px;
+    border-radius: 18px;
+    border: 1px solid rgba(148, 163, 184, 0.14);
+    background: rgba(2, 6, 23, 0.54);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.02);
+}
+
+.workflow-marker-card--active {
+    border-color: rgba(34, 197, 94, 0.24);
+}
+
+.workflow-marker-card--waiting {
+    border-color: rgba(245, 158, 11, 0.2);
+}
+
+.workflow-marker-card--blocked,
+.workflow-marker-card.is-blocked {
+    border-color: rgba(239, 68, 68, 0.38);
+    box-shadow: inset 0 0 0 1px rgba(239, 68, 68, 0.18);
+}
+
+.workflow-marker-card.is-current {
+    box-shadow:
+        inset 0 0 0 1px rgba(56, 189, 248, 0.26),
+        0 16px 28px rgba(2, 6, 23, 0.22);
+}
+
+.workflow-marker-card-top,
+.workflow-marker-card-flags,
+.workflow-marker-actions,
+.workflow-marker-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.workflow-marker-card-top {
+    justify-content: space-between;
+    align-items: center;
+}
+
+.workflow-owner-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px 6px 8px;
+    border-radius: 999px;
+    background: rgba(30, 41, 59, 0.8);
+    color: #e2e8f0;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.workflow-owner-badge--empty {
+    color: rgba(226, 232, 240, 0.62);
+}
+
+.workflow-owner-badge-dot {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, rgba(14, 165, 233, 0.3), rgba(34, 197, 94, 0.25));
+    color: #f8fafc;
+    font-size: 11px;
+}
+
+.workflow-owner-badge--empty .workflow-owner-badge-dot {
+    background: rgba(71, 85, 105, 0.76);
+}
+
+.workflow-marker-flag,
+.workflow-marker-meta-item {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: rgba(30, 41, 59, 0.84);
+    color: rgba(226, 232, 240, 0.88);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.workflow-marker-flag--current {
+    background: rgba(14, 165, 233, 0.18);
+    color: #7dd3fc;
+}
+
+.workflow-marker-flag--next {
+    background: rgba(245, 158, 11, 0.18);
+    color: #fcd34d;
+}
+
+.workflow-marker-flag--rating {
+    background: rgba(129, 140, 248, 0.18);
+    color: #c7d2fe;
+}
+
+.workflow-marker-flag--blocked {
+    background: rgba(239, 68, 68, 0.16);
+    color: #fca5a5;
+}
+
+.workflow-marker-card-title {
+    margin: 0;
+    color: #f8fafc;
+    font-size: 20px;
+    line-height: 1.25;
+}
+
+.workflow-marker-card-copy {
+    margin: 0;
+    color: rgba(226, 232, 240, 0.78);
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.workflow-marker-focus {
+    display: grid;
+    gap: 10px;
+    padding: 14px;
+    border-radius: 14px;
+    background: rgba(15, 23, 42, 0.6);
+}
+
+.workflow-marker-focus--writeback {
+    border: 1px solid rgba(14, 165, 233, 0.18);
+}
+
+.workflow-marker-focus--rating {
+    border: 1px solid rgba(129, 140, 248, 0.2);
+}
+
+.workflow-marker-focus--blocked {
+    border: 1px solid rgba(239, 68, 68, 0.24);
+}
+
+.workflow-marker-focus-title,
+.workflow-marker-editor-label {
+    color: #f8fafc;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.workflow-checklist-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: rgba(226, 232, 240, 0.8);
+    font-size: 14px;
+}
+
+.workflow-marker-editor {
+    display: grid;
+    gap: 8px;
+}
+
+.workflow-marker-owner-input,
+.workflow-marker-textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid rgba(148, 163, 184, 0.16);
+    border-radius: 12px;
+    background: rgba(15, 23, 42, 0.86);
+    color: #f8fafc;
+    font: inherit;
+}
+
+.workflow-marker-owner-input::placeholder,
+.workflow-marker-textarea::placeholder {
+    color: rgba(148, 163, 184, 0.64);
+}
+
+.workflow-marker-textarea {
+    resize: vertical;
+    min-height: 86px;
+}
+
+.workflow-marker-textarea--danger {
+    border-color: rgba(239, 68, 68, 0.36);
+}
+
+.workflow-rating-scale {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.workflow-rating-btn,
+.workflow-marker-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 14px;
+    border: 1px solid rgba(125, 211, 252, 0.22);
+    border-radius: 12px;
+    background: rgba(14, 165, 233, 0.12);
+    color: #e0f2fe;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.workflow-rating-btn.is-active {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.28), rgba(34, 197, 94, 0.24));
+    border-color: rgba(125, 211, 252, 0.44);
+    color: #f8fafc;
+}
+
+.workflow-marker-btn--secondary {
+    background: rgba(30, 41, 59, 0.84);
+    border-color: rgba(148, 163, 184, 0.18);
+    color: #e2e8f0;
+}
+
+.workflow-marker-btn:disabled {
+    opacity: 0.6;
+    cursor: wait;
+}
+
+.workflow-marker-message {
+    min-height: 20px;
+    color: transparent;
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+.workflow-marker-message--error {
+    color: #fca5a5;
+}
+
+.workflow-marker-message--success {
+    color: #86efac;
+}
+
 .workflow-loop-loading,
 .workflow-loop-state {
     min-height: 180px;
@@ -324,6 +670,10 @@
     .workflow-loop-cards {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
+
+    .workflow-loop-board-head {
+        flex-direction: column;
+    }
 }
 
 @media (max-width: 640px) {
@@ -339,6 +689,10 @@
         grid-template-columns: 1fr;
     }
 
+    .workflow-marker-grid {
+        grid-template-columns: 1fr;
+    }
+
     .workflow-loop-list-item {
         flex-direction: column;
         align-items: flex-start;
@@ -350,5 +704,9 @@
 
     .workflow-loop-node-label {
         font-size: 10px;
+    }
+
+    .workflow-marker-card-top {
+        align-items: flex-start;
     }
 }

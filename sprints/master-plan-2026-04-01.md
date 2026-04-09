@@ -120,6 +120,31 @@ Referenz:
 
 ## Completed Sprints (diese Session)
 
+### Sprint Workflow-v2 GUI/UX — Operativer Workflow-Tab mit lebendiger Grafik — DONE (2026-04-09)
+
+**Ziel:** Die bestehende Workflow-Grafik auf `/project/<name>?tab=workflow` behalten, aber darunter echte operative Arbeit ermoeglichen: Marker gruppieren, starten, blockieren, reaktivieren, Write Back vorbereiten und Ratings direkt im Tab abschliessen.
+
+**Umgesetzt:**
+- `services/workflow_loop_service.py` liefert jetzt gruppierte Marker-Boards mit Workflow-Status, Owner, Blocker-Grund, erlaubten Transitionen und operativen Meta-Informationen statt nur Fokus-Highlights.
+- `services/workflow_state_service.py` synchronisiert Marker-Status aus `handoff.md` feiner in die Workflow-State-Tabelle, damit `ready`, `write_back` und `rating` durch den laufenden Sync nicht sofort wieder verloren gehen.
+- `static/js/workflow-loop.js` behaelt Ringgrafik und Summary, erweitert den Tab aber um drei Marker-Gruppen (`Aktiv`, `Wartet`, `Blockiert`) mit Inline-Aktionen fuer `Starten`, `Blockieren`, `Reaktivieren`, `An Write Back geben`, `An Rating uebergeben` und `Rating speichern`.
+- Marker-Cards zeigen jetzt Owner-Badge, Status-Flags, Blocker-Textarea, Write-Back-Checkliste und kompaktes Rating-Widget mit 1-5-Skala plus Kommentar; alle Aktionen laufen per API ohne Seiten-Reload und ziehen den Workflow danach frisch nach.
+- Der bereits eingebaute Intro-Block oberhalb der Grafik erklaert Zweck und typische Nutzung des Workflow Loop direkt im UI.
+
+**Abnahme / Verifikation:**
+- `node --check static/js/workflow-loop.js`
+- `python3 -m py_compile services/workflow_loop_service.py services/workflow_state_service.py`
+
+**Geaenderte Dateien:**
+- `static/js/workflow-loop.js`
+- `static/css/workflow-loop.css`
+- `services/workflow_loop_service.py`
+- `services/workflow_state_service.py`
+- `next-session.md`
+- `sprints/master-plan-2026-04-01.md`
+
+**Commit-Hash:** `pending`
+
 ### Sprint CP Follow-up — Session-Detail Back-Navigation im Planning — DONE (2026-04-09)
 
 **Ziel:** Ruecksprung aus Session-Details, die aus dem Projekt-Planning geoeffnet wurden, wieder stabil in den `Planning`-Tab der Projektseite fuehren und den falsch platzierten `Zurueck`-Eintrag im Breadcrumb entfernen.
@@ -150,6 +175,7 @@ Referenz:
 - Projekt-Detailseite mit intelligenterer Back-Navigation versehen: `← Back` nutzt jetzt bevorzugt `return_to` oder den echten Referrer statt immer zum Dashboard zu springen.
 - Workflow-Loop-Leerzustand bereinigt: doppelte Marker-Fehlmeldung in der zentralen Grafik entfernt, damit der leere Zustand ruhiger und klarer wirkt.
 - Workflow-Tab mit erklaerendem Einstieg versehen: Intro-Block macht Zweck und Bedienlogik des Workflow Loop direkt im UI verstaendlich.
+- Neuer Repo-interner Sprint-Plan fuer den Vollausbau des Workflow-Systems angelegt: `sprints/sprint-workflow-v2-full-system.md` als sichtbare Projektquelle parallel zur technischen Importdatei in `~/.claude/plans/`.
 
 **Geaenderte Dateien:**
 - `templates/session_detail.html`

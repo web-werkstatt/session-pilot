@@ -1,32 +1,37 @@
 # Projekt-Dashboard - Naechste Session
 
-> **Letzte Aktualisierung:** 2026-04-09 (Session-Detail Navigation, TOC und Sidebar-Hotfixes deploy-ready)
-> **Status:** Reaktiviert fuer Sprint CP. `v1.3-final` bleibt letzter Freeze-Tag, die Projektseite `/project/<name>` wird jetzt gezielt zur Control Plane vereinfacht.
-> **Naechste Aufgabe:** Naechsten Produkt-/Sprint-Schnitt fuer die Control Plane waehlen; Workflow-Loop v1 und der entschlackte Planning-Tab sind abgeschlossen. Letzter UI-Hotfix korrigiert den Ruecksprung aus Session-Details zur Planning-Ansicht.
+> **Letzte Aktualisierung:** 2026-04-09 (Workflow-v2 GUI/UX im Workflow-Tab umgesetzt)
+> **Status:** Sprint Workflow-v2 ist im Projekt-Workflow-Tab funktional angekommen: Ring bleibt als Uebersicht, darunter gibt es jetzt echte Marker-Gruppen mit Aktionen, Owner, Blocker-, Write-Back- und Rating-UI.
+> **Naechste Aufgabe:** Live-Nutzung im Workflow-Tab beobachten und danach nur noch gezielte Nachschaerfungen an Transition-Tiefe oder Microcopy vornehmen.
 
 ---
 
 ## Was gilt jetzt
 
-Der Freeze-Stand **`v1.3-final`** bleibt als stabile Basis erhalten. Seit 2026-04-08
-ist das Repo jedoch gezielt fuer Sprint CP reaktiviert: Fokus ist nicht eine neue
-Feature-Welle, sondern die Vereinfachung von `/project/<name>` zur klaren Control
-Plane, waehrend `/copilot?...` Execution Workspace bleibt. Alle Deferred-Sprints aus
-dem Closeout bleiben weiterhin deferred; der laufende Strang ist nur Sprint CP.
+Der Freeze-Stand **`v1.3-final`** bleibt als stabile Basis. Sprint CP (Workflow-Loop v1)
+ist abgeschlossen. Jetzt laeuft **Sprint Workflow-v2**: Ausbau des Workflow-Tabs von
+reiner Anzeige zu echtem operativem Steuerungssystem. Die GUI/UX-Schicht im Workflow-Tab
+ist jetzt sichtbar umgesetzt; offene Arbeit ist nur noch Feintuning nach Live-Feedback.
 
-## Was funktioniert (= Bestand der v1.3-final)
+## Naechste Aufgaben
+
+### Feinschliff / Follow-up
+
+- [ ] Im Live-Betrieb pruefen, ob fuer reale Copilot-Flows noch mehr Automatik zwischen Handoff-Status und Workflow-State noetig ist (`services/workflow_state_service.py`, `services/workflow_loop_service.py`)
+- [ ] Falls gewuenscht Owner separat editierbar machen, auch ohne Statuswechsel (`static/js/workflow-loop.js`, `routes/workflow_routes.py`)
+- [ ] Microcopy der Marker-Gruppen und CTA-Reihenfolge nach ein paar echten Projekten feinjustieren (`static/js/workflow-loop.js`, `static/css/workflow-loop.css`)
+
+## Was funktioniert (= Bestand)
 
 | Bereich | Status |
 |---|---|
 | Session-Verwaltung | DONE — Multi-Account, Live-Viewer, Reviews, Export |
 | Plans-Import + Detail | DONE — `/plans` mit Tabs, Sprint-Plans-Liste |
-| Cockpit / Copilot-Board | DONE — Marker-Cards, Drag&Drop, Chat-Kontext, Session-Marker-Binding (Sprint SB) |
+| Cockpit / Copilot-Board | DONE — Marker-Cards, Drag&Drop, Chat-Kontext, Session-Marker-Binding |
 | Quality Scanner | DONE — `/quality` mit 7 Checks, Baseline/Diff |
-| Governance Light (Sprint C) | DONE — `/governance` mit Policy-Levels, Gate-Ampel, Rules, Effectiveness, Snippets |
-| LLM Command Hub MVP | DONE — `/llm-commands` mit 3+ Start-Commands |
-| Audit Core + Integration | DONE — `/audits` mit Run-Trigger, Requirements, LLM-Reviews |
-| Usage Monitor | DONE — Live-JSONL, P90-Limits, OTel-Empfaenger |
-| Sprint-Flow als Markdown | DONE als Datei-basiert (DB-Variante deferred = Sprint 14) |
+| Governance Light | DONE — `/governance` mit Policy-Levels, Gate-Ampel |
+| Workflow Loop v1 | DONE — Visualisierung, Deep-Links, Signale |
+| **Workflow-v2 Sprint 1** | **DONE — Persistentes Datenmodell, Transition-Regeln, REST-API, Sync** |
 | Backup taeglich | DONE — Cron 12:30, 7-Tage-Rotation |
 
 ## Was nicht da ist (= Deferred)
@@ -35,15 +40,15 @@ Siehe Master-Plan, Block "Deferred Sprints (post-closeout v1.3-final)".
 
 ## Wie naechste Session starten
 
-Wenn du das Dashboard wieder anfasst (z.B. um einen deferred Sprint zu reaktivieren):
-
 1. Dieses File zuerst lesen
-2. Master-Plan ueberfliegen — vor allem den "Deferred"-Block
-3. Gewuenschten Sprint aus `sprints/` waehlen, neuen Sprint-Plan anlegen
-4. `v1.3-final` als Ausgangspunkt: `git diff v1.3-final`
+2. Sprint-Plan lesen: `sprints/sprint-workflow-v2-full-system.md`
+3. Workflow-Tab eines echten Projekts mit Markern oeffnen
+4. Pruefen, ob Starten, Blockieren, Reaktivieren, Write Back und Rating in der Praxis so stimmig wirken
 
-Bis dahin: Dashboard laeuft als systemd-Service auf Port 5055, Backup taeglich
-12:30, keine aktive Entwicklung noetig.
+Vollstaendiger Sprint-Plan mit GUI/UX-Specs pro Sprint:
+- `sprints/sprint-workflow-v2-full-system.md`
+
+Dashboard laeuft als systemd-Service auf Port 5055, Backup taeglich 12:30.
 
 ## Operative Hinweise
 
@@ -57,6 +62,7 @@ Bis dahin: Dashboard laeuft als systemd-Service auf Port 5055, Backup taeglich
 
 ## Historie
 
+- **2026-04-09:** Workflow-Tab von reiner Anzeige zu operativem Arbeitsbereich ausgebaut: Ringgrafik blieb erhalten, darunter gibt es jetzt gruppierte Marker-Boards (`Aktiv`, `Wartet`, `Blockiert`) mit Owner-Badges, Blocker-Textarea, Write-Back-Checkliste, kompaktem Rating-Widget und echten Inline-Aktionen fuer Starten, Blockieren, Reaktivieren, Write Back und Rating. Das Backend liefert dafuer Marker-Gruppen inklusive erlaubter Transitionen; der Workflow-Sync bewahrt feinere Stati wie `ready`, `write_back` und `rating` jetzt stabiler gegen Handoff-Sync (`static/js/workflow-loop.js`, `static/css/workflow-loop.css`, `services/workflow_loop_service.py`, `services/workflow_state_service.py`).
 - **2026-04-09:** Session-Detailseite entkoppelt den Breadcrumb vom Rueck-CTA: statt `Workspace / Zurueck / Detail` zeigt der Breadcrumb wieder nur Kontext (`Planning` bzw. Fallback `Activity`), und Session-Links aus dem Projekt-Planning tragen jetzt ein explizites Rueckziel auf `/project/<name>?tab=plans`, sodass `Zurueck` verlaesslich wieder im Planning-Tab landet (`templates/session_detail.html`, `static/js/session-detail.js`, `static/js/project-planning.js`).
 - **2026-04-09:** Session-Detail-TOC lesbarer gemacht: Nummer/Text stehen sauber nebeneinander, User-Eintraege zeigen mehr Hoehe, und die Preview kuerzt jetzt weich an Wortgrenzen mit `...` statt hart mitten im Wort; aktueller Preview-Cut ist 75 Zeichen (`static/css/session-detail.css`, `static/js/session-toc.js`).
 - **2026-04-09:** `Projects` im Sidebar-Menue bekam einen staerkeren aktiven Hintergrund, damit der Parent-Link GUI-seitig klarer als aktiver Navigationspunkt erkennbar ist (`static/css/sidebar-submenu.css`).
@@ -80,6 +86,7 @@ Bis dahin: Dashboard laeuft als systemd-Service auf Port 5055, Backup taeglich
 - **2026-04-09:** Back-Button auf der Projekt-Detailseite verbessert. Er fuehrt jetzt bevorzugt ueber `return_to`, danach ueber den echten gleichen Referrer und faellt erst zuletzt auf `/` zurueck, statt immer stumpf zum Dashboard zu springen (`templates/project_detail.html`, `static/js/project-detail.js`).
 - **2026-04-09:** Workflow-Loop-Leerzustand gestrafft: die doppelte Meldung `Noch keine Marker vorhanden` wurde aus der zentralen Grafik entfernt. Im leeren Workflow-Zustand bleibt die Erklaerung jetzt nur noch im Summary-Bereich sichtbar (`static/js/workflow-loop-svg.js`).
 - **2026-04-09:** Workflow-Tab um einen klaren Einstieg erweitert. Oberhalb von Grafik und Karten erklaert ein neuer Intro-Block jetzt, was der Workflow Loop ist und wie man ihn benutzt: Marker pruefen, Execution starten/fortsetzen, Ergebnis zurueckschreiben, Abschluss bewerten (`static/js/workflow-loop.js`, `static/css/workflow-loop.css`).
+- **2026-04-09:** Neuer Workflow-Ausbauplan zusaetzlich im Projekt selbst abgelegt: [sprints/sprint-workflow-v2-full-system.md](/mnt/projects/project_dashboard/sprints/sprint-workflow-v2-full-system.md). Die importierbare Version liegt weiterhin technisch unter `~/.claude/plans/`, aber die Projektquelle fuer die naechste Session ist jetzt direkt im Repo sichtbar.
 - **2026-04-08:** `Open Planning` aus ausgewahlter Sprint-/Spec-Ansicht im Projekt-Planning fuehrt jetzt gezielt auf die zugehoerige Plan-Detailseite statt nur in den generischen `/plans?project=...`-Workspace; der Plan-Level-Link bleibt weiter auf dem Workspace (`static/js/project-planning.js`).
 - **2026-04-08:** Leisen Empty-State im Projekt-Planning weiter reduziert: der Hinweis `No sprint hierarchy detected in this plan yet.` wurde entfernt; ein Plan ohne Sprint-Hierarchie erscheint jetzt einfach ohne zusaetzlichen Warntext (`static/js/project-planning.js`).
 - **2026-04-08:** Verbleibende Statistikzeilen aus der rechten Spec-Karte im Projekt-Planning entfernt: `Tasks`, `Mapped Tasks` und `Linked Sessions` sind dort nicht mehr sichtbar (`static/js/project-planning.js`).
