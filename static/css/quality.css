@@ -194,8 +194,7 @@
 .quality-table-container {
     border: 1px solid var(--border, #333);
     border-radius: 14px;
-    overflow-x: auto;
-    overflow-y: visible;
+    overflow: visible;
     background: rgba(255,255,255,0.015);
 }
 
@@ -394,6 +393,11 @@
 }
 
 @media (max-width: 760px) {
+    .quality-table-container {
+        overflow-x: auto;
+        overflow-y: visible;
+    }
+
     .quality-stats {
         flex-wrap: wrap;
     }
