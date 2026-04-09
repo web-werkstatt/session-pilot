@@ -100,6 +100,7 @@ function normalizeProjectSubtitle(text) {
 async function loadProjectInfo() {
     try {
         const d = await api.get('/api/info?name=' + encodeURIComponent(PROJECT_NAME));
+        const hasReadmeSection = /<h3>README<\/h3>/.test(d.description);
 
         const match = d.description.match(/<h3>(?:Beschreibung|Description)<\/h3><p>(.*?)<\/p>/);
         document.getElementById('projectSubtitle').textContent = normalizeProjectSubtitle(match ? match[1] : '');
@@ -117,20 +118,22 @@ async function loadProjectInfo() {
         // Platzhalter fuer teure Sections (werden async nachgeladen)
         html += '<div class="info-grid" id="slowSections"><div class="info-block"><div class="loading" style="padding:10px;font-size:12px;color:#555">Loading additional data...</div></div></div>';
 
-        html += `
-        <h3>README</h3>
-        <div class="readme-actions">
-            <button class="btn-edit" onclick="toggleReadmeEdit()" id="readmeEditBtn"><i data-lucide="edit" class="icon"></i> Edit</button>
-            <button class="btn-save" onclick="saveReadme()" id="readmeSaveBtn" style="display:none"><i data-lucide="save" class="icon"></i> Save</button>
-            <button class="btn-cancel" onclick="cancelReadmeEdit()" id="readmeCancelBtn" style="display:none">Cancel</button>
-            <span class="status" id="readmeStatus"></span>
-        </div>
-        <div id="readmeRendered" class="readme-rendered">Loading README...</div>
-        <div id="readmeEditor"><textarea id="readmeTextarea"></textarea></div>`;
+        if (hasReadmeSection) {
+            html += `
+            <h3>README</h3>
+            <div class="readme-actions">
+                <button class="btn-edit" onclick="toggleReadmeEdit()" id="readmeEditBtn"><i data-lucide="edit" class="icon"></i> Edit</button>
+                <button class="btn-save" onclick="saveReadme()" id="readmeSaveBtn" style="display:none"><i data-lucide="save" class="icon"></i> Save</button>
+                <button class="btn-cancel" onclick="cancelReadmeEdit()" id="readmeCancelBtn" style="display:none">Cancel</button>
+                <span class="status" id="readmeStatus"></span>
+            </div>
+            <div id="readmeRendered" class="readme-rendered">Loading README...</div>
+            <div id="readmeEditor"><textarea id="readmeTextarea"></textarea></div>`;
+        }
 
         document.getElementById('projectBody').innerHTML = html;
         if (typeof lucide !== 'undefined') lucide.createIcons();
-        loadReadme();
+        if (hasReadmeSection) loadReadme();
         buildOverviewToc();
 
         // Teure Sections async nachladen
