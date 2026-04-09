@@ -66,15 +66,6 @@ function renderWorkflowLoopSvg(container, data, onStepClick) {
     centerLabel.textContent = workflowLoopCurrentStepLabel(data);
     svg.appendChild(centerLabel);
 
-    var centerTitle = document.createElementNS(ns, 'text');
-    centerTitle.setAttribute('x', center);
-    centerTitle.setAttribute('y', center + 18);
-    centerTitle.setAttribute('text-anchor', 'middle');
-    centerTitle.setAttribute('class', 'workflow-loop-center-title');
-    centerTitle.textContent = workflowLoopCenterTitle(data);
-    centerTitle.setAttribute('aria-hidden', 'true');
-    svg.appendChild(centerTitle);
-
     steps.forEach(function(step, index) {
         var point = positions[index];
         var group = document.createElementNS(ns, 'g');
@@ -141,16 +132,6 @@ function workflowLoopCurrentStepLabel(data) {
         rating: 'Rating'
     };
     return map[current] || 'Workflow';
-}
-
-function workflowLoopCenterTitle(data) {
-    if (data && data.current_marker && data.current_marker.title) {
-        return data.current_marker.title;
-    }
-    if (data && data.next_marker && data.next_marker.title) {
-        return data.next_marker.title;
-    }
-    return '';
 }
 
 function workflowLoopNodeDescription(step) {
