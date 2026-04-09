@@ -46,6 +46,26 @@ function initProjectTabFromQuery() {
     switchProjectTabByName(tab);
 }
 
+function projectDetailGoBack() {
+    var params = new URLSearchParams(window.location.search);
+    var returnTo = params.get('return_to') || '';
+    if (returnTo) {
+        window.location.href = returnTo;
+        return;
+    }
+    if (document.referrer) {
+        try {
+            var refUrl = new URL(document.referrer, window.location.origin);
+            if (refUrl.origin === window.location.origin && refUrl.pathname !== window.location.pathname) {
+                window.history.back();
+                return;
+            }
+        } catch (e) {
+        }
+    }
+    window.location.href = '/';
+}
+
 function loadWorkflowTab() {
     workflowLoaded = true;
     loadWorkflowLoop();

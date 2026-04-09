@@ -5,7 +5,7 @@
 {% block breadcrumb %}<a href="/" style="color:#4fc3f7;text-decoration:none">Projects</a> <span class="bc-sep">/</span> {{ project_name }}{% endblock %}
 
 {% block topbar_actions %}
-<a href="/" class="topbar-btn" style="text-decoration:none" title="Back to Dashboard">← Back</a>
+<button class="topbar-btn" type="button" onclick="projectDetailGoBack()" title="Go Back">← Back</button>
 <button class="topbar-btn" onclick="exportProject('html')" title="HTML Export">HTML</button>
 <button class="topbar-btn" onclick="exportProject('md')" title="Markdown Export">MD</button>
 <button class="topbar-btn" onclick="exportProject('json')" title="JSON Export">JSON</button>
