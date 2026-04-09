@@ -15,6 +15,40 @@
     opacity: 0.96;
 }
 
+.workflow-loop-intro {
+    margin-bottom: 18px;
+    padding: 18px 20px;
+    border: 1px solid rgba(148, 163, 184, 0.14);
+    border-radius: 18px;
+    background: rgba(15, 23, 42, 0.52);
+    backdrop-filter: blur(8px);
+}
+
+.workflow-loop-intro-kicker {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: rgba(148, 163, 184, 0.88);
+}
+
+.workflow-loop-intro-title {
+    margin: 8px 0 10px;
+    font-size: 24px;
+    line-height: 1.2;
+    color: #f8fafc;
+}
+
+.workflow-loop-intro-copy {
+    margin: 0;
+    color: rgba(226, 232, 240, 0.78);
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.workflow-loop-intro-copy + .workflow-loop-intro-copy {
+    margin-top: 10px;
+}
+
 .workflow-loop-grid {
     display: grid;
     grid-template-columns: minmax(300px, 420px) minmax(260px, 1fr);

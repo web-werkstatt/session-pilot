@@ -5,6 +5,12 @@
 
     function ensureWorkflowLoopLayout(shell) {
         shell.innerHTML = ''
+            + '<div class="workflow-loop-intro">'
+            + '<div class="workflow-loop-intro-kicker">Was ist das?</div>'
+            + '<h2 class="workflow-loop-intro-title">Operativer Arbeitsfluss fuer Marker</h2>'
+            + '<p class="workflow-loop-intro-copy">Der Workflow Loop zeigt, welcher Marker gerade laeuft, was als Naechstes dran ist und wo Ratings oder Risiken offen sind. Hier steuerst du keine Planung, sondern die operative Abarbeitung aus dem Planning heraus.</p>'
+            + '<p class="workflow-loop-intro-copy">Typischer Ablauf: naechsten Marker pruefen, Execution starten oder fortsetzen, Ergebnis zurueckschreiben und Abschluss bewerten.</p>'
+            + '</div>'
             + '<div class="workflow-loop-grid">'
             + '<div class="workflow-loop-ring" id="workflowLoopRing"></div>'
             + '<div class="workflow-loop-summary" id="workflowLoopSummary"></div>'

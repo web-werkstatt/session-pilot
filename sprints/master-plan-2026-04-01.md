@@ -149,6 +149,7 @@ Referenz:
 - Projekt-Detailseiten um sichtbare Fortschrittsanzeige erweitert: `Fortschritt` zeigt Planning-Readiness plus Kernstatistiken fuer Plaene, Sprints, Specs und Tasks direkt im Detail-Tab.
 - Projekt-Detailseite mit intelligenterer Back-Navigation versehen: `← Back` nutzt jetzt bevorzugt `return_to` oder den echten Referrer statt immer zum Dashboard zu springen.
 - Workflow-Loop-Leerzustand bereinigt: doppelte Marker-Fehlmeldung in der zentralen Grafik entfernt, damit der leere Zustand ruhiger und klarer wirkt.
+- Workflow-Tab mit erklaerendem Einstieg versehen: Intro-Block macht Zweck und Bedienlogik des Workflow Loop direkt im UI verstaendlich.
 
 **Geaenderte Dateien:**
 - `templates/session_detail.html`
