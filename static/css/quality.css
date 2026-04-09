@@ -351,6 +351,7 @@
 .quality-stats {
     display: flex;
     gap: 12px;
+    margin-top: 10px;
     padding: 10px 0 14px;
     position: sticky;
     top: 56px;
