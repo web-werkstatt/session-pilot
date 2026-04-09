@@ -308,8 +308,7 @@ def get_info():
     _add_action_summary_section(sections, name, pj, project_path)
     if is_monorepo:
         _add_structure_section(sections, pj, project_path)
-        _add_root_assets_section(sections, project_path)
-        _add_metadata_section(sections, pj, project_path, hide_path=True)
+        _add_root_assets_section(sections, project_path, compact=True)
         _add_tech_stack_section(sections, project_path, minimum_items=2)
     else:
         _add_metadata_section(sections, pj, project_path)
@@ -441,7 +440,7 @@ def _add_structure_section(sections, pj, project_path):
     )
 
 
-def _add_root_assets_section(sections, project_path):
+def _add_root_assets_section(sections, project_path, compact=False):
     try:
         entries = sorted(os.listdir(project_path))
     except OSError:
@@ -478,6 +477,24 @@ def _add_root_assets_section(sections, project_path):
             for name in key_dirs
         )
         blocks.append(f"<div><div style='font-size:11px;color:#888;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px'>Important Paths</div><div style='display:flex;flex-wrap:wrap;gap:8px'>{dirs_html}</div></div>")
+
+    if compact:
+        compact_items = []
+        compact_items.extend(
+            f"<span style='display:inline-flex;align-items:center;padding:4px 8px;border-radius:999px;"
+            f"background:#1a1a1a;border:1px solid #2a2a2a;font-size:12px;color:#ddd'>{_escape(name)}</span>"
+            for name in doc_files
+        )
+        compact_items.extend(
+            f"<span style='display:inline-flex;align-items:center;padding:4px 8px;border-radius:999px;"
+            f"background:#141d2b;border:1px solid #22344f;font-size:12px;color:#9ac7ff'>{_escape(name)}/</span>"
+            for name in key_dirs
+        )
+        sections.append(
+            f"<h3>Quick Entry Points</h3>"
+            f"<div style='display:flex;flex-wrap:wrap;gap:8px'>{''.join(compact_items)}</div>"
+        )
+        return
 
     sections.append(
         f"<h3>Root Orientation</h3>"
