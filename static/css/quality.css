@@ -205,8 +205,17 @@
     background: var(--bg-base);
 }
 #qualityTable td { vertical-align: middle; }
-.project-link { color: var(--accent, #4fc3f7); text-decoration: none; }
-.project-link:hover { text-decoration: underline; }
+.project-link {
+    color: var(--text-primary);
+    text-decoration: none;
+    font-weight: 600;
+    transition: color var(--transition-fast), opacity var(--transition-fast);
+}
+.project-link:hover {
+    color: var(--text-primary);
+    opacity: 0.82;
+    text-decoration: none;
+}
 .actions-cell { white-space: nowrap; }
 .quality-project-cell {
     display: flex;
