@@ -146,6 +146,7 @@ Referenz:
 - Planning fuer Subprojekte auf Parent-Fallback erweitert: Subprojekte ohne eigene Plan-Zuordnung erben jetzt das Planning ihres `parent_project` und zeigen im UI einen entsprechenden Hinweis.
 - Planning-UX fuer Subprojekte weiter verfeinert: leerer Parent-Fallback wird jetzt sprachlich korrekt erklaert, damit klar ist, dass das geerbte Parent-Planning selbst noch keine Eintraege besitzt.
 - Subprojekt-Planning-Fallback korrigiert: vorhandene eigene Plan-Datensaetze eines Subprojekts haben jetzt Vorrang vor dem Parent-Fallback.
+- Projekt-Detailseiten um sichtbare Fortschrittsanzeige erweitert: `Fortschritt` zeigt Planning-Readiness plus Kernstatistiken fuer Plaene, Sprints, Specs und Tasks direkt im Detail-Tab.
 
 **Geaenderte Dateien:**
 - `templates/session_detail.html`

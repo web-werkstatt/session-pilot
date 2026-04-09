@@ -15,6 +15,7 @@ from services.metadata_extractor import (
 )
 from services.git_service import get_branches, get_contributors
 from services.description_extractor import parse_env_example
+from services.plan_structure_service import get_project_planning_hierarchy, resolve_planning_project_id
 from routes.project_info_sections_s3 import add_github_section, add_health_section, add_security_section
 
 project_info_bp = Blueprint('project_info', __name__)
@@ -173,6 +174,129 @@ def _render_action_items(items, empty_text):
     return rows
 
 
+def _load_planning_progress(name):
+    planning_project_id = resolve_planning_project_id(name)
+    hierarchy = get_project_planning_hierarchy(name) or []
+
+    if not hierarchy:
+        return {
+            "planning_project_id": planning_project_id,
+            "inherits_parent": planning_project_id != name,
+            "plan_count": 0,
+            "sprint_count": 0,
+            "spec_count": 0,
+            "task_count": 0,
+            "status_counts": {"draft": 0, "active": 0, "completed": 0},
+            "progress_percent": 0,
+            "progress_label": "Kein Planning",
+        }
+
+    plan_count = len(hierarchy)
+    sprint_count = sum((group.get("stats") or {}).get("sprint_count", 0) for group in hierarchy)
+    spec_count = sum((group.get("stats") or {}).get("spec_count", 0) for group in hierarchy)
+    direct_task_count = sum((group.get("stats") or {}).get("direct_task_count", 0) for group in hierarchy)
+    direct_marker_count = sum((group.get("stats") or {}).get("direct_marker_count", 0) for group in hierarchy)
+    nested_task_count = 0
+    status_counts = {"draft": 0, "active": 0, "completed": 0}
+
+    for group in hierarchy:
+        status = str((group.get("plan") or {}).get("status") or "draft").lower()
+        if status in status_counts:
+            status_counts[status] += 1
+        for sprint in group.get("sprints") or []:
+            for spec in sprint.get("specs") or []:
+                nested_task_count += len(spec.get("tasks") or [])
+
+    task_count = direct_task_count + direct_marker_count + nested_task_count
+
+    points = 0
+    if plan_count:
+        points += 25
+    if sprint_count:
+        points += 25
+    if spec_count:
+        points += 25
+    if task_count:
+        points += 25
+
+    if points >= 100:
+        label = "Strukturiert"
+    elif points >= 75:
+        label = "Gut vorbereitet"
+    elif points >= 50:
+        label = "In Arbeit"
+    elif points >= 25:
+        label = "Erste Planung"
+    else:
+        label = "Kein Planning"
+
+    return {
+        "planning_project_id": planning_project_id,
+        "inherits_parent": planning_project_id != name,
+        "plan_count": plan_count,
+        "sprint_count": sprint_count,
+        "spec_count": spec_count,
+        "task_count": task_count,
+        "status_counts": status_counts,
+        "progress_percent": points,
+        "progress_label": label,
+    }
+
+
+def _add_progress_section(sections, name):
+    progress = _load_planning_progress(name)
+    if not progress.get("plan_count"):
+        return
+
+    meta_line = ""
+    if progress.get("inherits_parent"):
+        meta_line = (
+            f"<div style='font-size:12px;color:#888;margin-top:8px'>"
+            f"Quelle: Planning von <code>{_escape(progress['planning_project_id'])}</code>"
+            f"</div>"
+        )
+
+    stat_cards = [
+        ("Plaene", progress["plan_count"]),
+        ("Sprints", progress["sprint_count"]),
+        ("Specs", progress["spec_count"]),
+        ("Tasks", progress["task_count"]),
+    ]
+    stats_html = "".join(
+        f"<div style='padding:10px 12px;border:1px solid #2a2a2a;border-radius:10px;background:#141414'>"
+        f"<div style='font-size:11px;color:#888;text-transform:uppercase;letter-spacing:0.08em'>{label}</div>"
+        f"<div style='font-size:24px;font-weight:700;color:#f3f4f6;margin-top:4px'>{_escape(value)}</div>"
+        f"</div>"
+        for label, value in stat_cards
+    )
+
+    status_bits = []
+    if progress["status_counts"]["completed"]:
+        status_bits.append(f"{progress['status_counts']['completed']} done")
+    if progress["status_counts"]["active"]:
+        status_bits.append(f"{progress['status_counts']['active']} active")
+    if progress["status_counts"]["draft"]:
+        status_bits.append(f"{progress['status_counts']['draft']} draft")
+    status_line = " · ".join(status_bits) if status_bits else "Noch keine Plan-Stati"
+
+    sections.append(
+        f"<h3>Fortschritt</h3>"
+        f"<div style='padding:16px 18px;border:1px solid #2a2a2a;border-radius:10px;background:#141414'>"
+        f"<div style='display:flex;justify-content:space-between;gap:12px;align-items:flex-end;flex-wrap:wrap'>"
+        f"<div><div style='font-size:12px;color:#888;text-transform:uppercase;letter-spacing:0.08em'>Planning Readiness</div>"
+        f"<div style='font-size:28px;font-weight:700;color:#f3f4f6'>{progress['progress_percent']}%</div>"
+        f"<div style='font-size:13px;color:#9ca3af'>{_escape(progress['progress_label'])}</div></div>"
+        f"<div style='font-size:12px;color:#888'>{_escape(status_line)}</div>"
+        f"</div>"
+        f"<div style='margin-top:12px;height:10px;background:#20242c;border-radius:999px;overflow:hidden'>"
+        f"<div style='width:{progress['progress_percent']}%;height:100%;background:linear-gradient(90deg,#4fc3f7,#43a047);border-radius:999px'></div>"
+        f"</div>"
+        f"{meta_line}"
+        f"<div style='display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-top:14px'>{stats_html}</div>"
+        f"</div>"
+    )
+
+
 def _add_action_summary_section(sections, name, pj, project_path):
     signals = _build_project_signals(name, pj, project_path)
     quality = signals["quality"] or {}
@@ -305,6 +429,7 @@ def get_info():
         sections.append(f"<h3>Description</h3><p>{_escape(description_text)}</p>")
 
     # Schnelle Sections (File I/O only, kein Subprocess/Netzwerk)
+    _add_progress_section(sections, name)
     _add_action_summary_section(sections, name, pj, project_path)
     if is_monorepo:
         _add_structure_section(sections, pj, project_path)
