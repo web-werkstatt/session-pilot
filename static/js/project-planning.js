@@ -24,9 +24,12 @@ async function loadProjectPlans() {
         if (countEl && planGroups.length > 0) countEl.textContent = planGroups.length;
 
         if (!planGroups.length) {
+            var emptyText = inheritedFrom
+                ? 'This subproject inherits planning from <strong>' + escapeHtml(inheritedFrom) + '</strong>, but no plans exist there yet.'
+                : 'No plans assigned to this project yet.';
             document.getElementById('plansBody').innerHTML = `
                 <div style="text-align:center;padding:40px;color:#888">
-                    <p>No plans assigned to this project yet.</p>
+                    <p>${emptyText}</p>
                     <a href="/plans" style="color:#0078d4">Open global plan index</a>
                 </div>`;
             return;

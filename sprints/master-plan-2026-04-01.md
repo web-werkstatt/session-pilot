@@ -144,6 +144,7 @@ Referenz:
 - Projekt-Detailseite weiter vereinfacht: rechte `Contents`-Sidebar entfernt und die Overview-Ansicht wieder auf einspaltiges Lesen reduziert.
 - Projekt-Detailseite nach User-Feedback wieder mit rechter `Contents`-Sidebar ausgestattet, damit die sichtbaren Overview-Sections erneut direkt anspringbar sind.
 - Planning fuer Subprojekte auf Parent-Fallback erweitert: Subprojekte ohne eigene Plan-Zuordnung erben jetzt das Planning ihres `parent_project` und zeigen im UI einen entsprechenden Hinweis.
+- Planning-UX fuer Subprojekte weiter verfeinert: leerer Parent-Fallback wird jetzt sprachlich korrekt erklaert, damit klar ist, dass das geerbte Parent-Planning selbst noch keine Eintraege besitzt.
 
 **Geaenderte Dateien:**
 - `templates/session_detail.html`
