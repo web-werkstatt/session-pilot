@@ -135,6 +135,7 @@ Referenz:
 - Governance-KPI-Zeile zusaetzlich abgeschwaecht, damit sie visuell hinter Intro, Tabs und Projektentscheidungen zuruecktritt.
 - Reinen Statistik-Tab aus `/governance` entfernt, damit die zentrale Seite kein Analyse-Bypath mehr ist, sondern ausschliesslich Projektentscheidungen zeigt.
 - Redundante Status-Legende im Governance-Intro entfernt, damit oberhalb der Tabelle kein zweiter Erklaerungsblock fuer dieselben Stati stehen bleibt.
+- `/quality` visuell und inhaltlich aufgewertet: klarerer Einstieg, risikoorientierte Projektliste, staerkere Priorisierung im Detailmodal und allgemein hochwertigere Informationshierarchie.
 
 **Geaenderte Dateien:**
 - `templates/session_detail.html`
@@ -149,6 +150,9 @@ Referenz:
 - `templates/governance.html`
 - `static/js/governance.js`
 - `static/css/governance.css`
+- `templates/quality.html`
+- `static/js/quality.js`
+- `static/css/quality.css`
 - `next-session.md`
 - `sprints/master-plan-2026-04-01.md`
 

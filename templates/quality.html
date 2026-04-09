@@ -5,8 +5,8 @@
 {% block breadcrumb %}Code Quality{% endblock %}
 
 {% block topbar_actions %}
-<button class="btn btn-sm" onclick="var g=document.getElementById('guideSection');g.style.display=g.style.display==='none'?'':'none'"><i data-lucide="help-circle" class="icon icon-sm"></i> Guide</button>
-<button class="btn btn-primary btn-sm" onclick="scanProject()"><i data-lucide="scan" class="icon icon-sm"></i> Scan</button>
+<button class="btn btn-sm" id="qualityGuideToggle" onclick="toggleQualityGuide()"><i data-lucide="help-circle" class="icon icon-sm"></i> Playbook</button>
+<button class="btn btn-primary btn-sm" onclick="scanProject()"><i data-lucide="scan" class="icon icon-sm"></i> Scan Project</button>
 <button class="btn btn-secondary btn-sm" onclick="loadProjects()"><i data-lucide="refresh-cw" class="icon icon-sm"></i> Refresh</button>
 {% endblock %}
 
@@ -15,86 +15,110 @@
 {% endblock %}
 
 {% block content %}
+    <section class="quality-hero">
+        <div class="quality-hero__copy">
+            <div class="quality-hero__kicker">Quality Control</div>
+            <h1 class="quality-hero__title">Welche Projekte sind stabil und wo droht gerade echter Qualitaetsdruck?</h1>
+            <p class="quality-hero__text">Die Seite priorisiert Scans nach Risiko statt nur nach Rohzahlen. Erst schauen, wo Fehler und Warnungen wirklich Handlungsdruck erzeugen, dann gezielt scannen oder Baselines erneuern.</p>
+        </div>
+        <div class="quality-hero__aside">
+            <div class="quality-hero-note">
+                <span class="quality-hero-note__label">Arbeitsmodus</span>
+                <strong>Scan -> Details -> Baseline</strong>
+                <p>Nutze Baselines erst nach einem bewusst akzeptierten Stand. Sonst verschiebst du Altlasten nur in die Zukunft.</p>
+            </div>
+        </div>
+    </section>
+
     <div class="quality-stats">
         <div class="stat">
             <span class="stat-value" id="statProjects">-</span>
-            <span class="stat-label">Projects scanned</span>
+            <span class="stat-label">Aktive Reports</span>
         </div>
         <div class="stat">
             <span class="stat-value" style="color:var(--success)" id="statGood">-</span>
-            <span class="stat-label">Score A-B</span>
+            <span class="stat-label">Stabil</span>
         </div>
         <div class="stat">
             <span class="stat-value" style="color:var(--warning)" id="statMedium">-</span>
-            <span class="stat-label">Score C-D</span>
+            <span class="stat-label">Beobachten</span>
         </div>
         <div class="stat">
             <span class="stat-value" style="color:var(--danger)" id="statBad">-</span>
-            <span class="stat-label">Score F</span>
+            <span class="stat-label">Kritisch</span>
         </div>
     </div>
 
     <!-- Guide (collapsed) -->
     <div class="quality-guide" id="guideSection" style="display:none">
-        <h3>How the Quality Scanner works</h3>
+        <h3>Quality Playbook</h3>
         <div class="guide-steps">
             <div class="guide-step">
                 <div class="step-number">1</div>
                 <div class="step-content">
-                    <strong>Scan</strong>
-                    <p>Choose a project and click "Scan". The scanner checks file sizes, code duplication, complexity, CSS/JS quality and architecture rules.</p>
+                    <strong>Scan bewusst starten</strong>
+                    <p>Scanne gezielt das Projekt, das gerade echten Druck hat. Der Scanner bewertet Dateigroessen, Duplikate, Komplexitaet, CSS/JS-Qualitaet und Architekturregeln.</p>
                 </div>
             </div>
             <div class="guide-step">
                 <div class="step-number">2</div>
                 <div class="step-content">
-                    <strong>Set baseline</strong>
-                    <p>Freeze the current state. From now on "Diff" only shows new or resolved issues — no noise from legacy problems.</p>
+                    <strong>Erst lesen, dann Baseline</strong>
+                    <p>Baseline bedeutet: dieser Zustand ist bewusst akzeptiert. Danach zeigt der Diff nur neue oder geloeste Probleme statt Altlast-Rauschen.</p>
                 </div>
             </div>
             <div class="guide-step">
                 <div class="step-number">3</div>
                 <div class="step-content">
-                    <strong>Improve</strong>
-                    <p>Work through the issues: consolidate duplicates, split complex functions, break up large files. Always small steps, 1-3 files per run.</p>
+                    <strong>Kleine Reparaturpakete</strong>
+                    <p>Arbeite Issues in kleinen Paketen ab: Duplikate zusammenziehen, komplexe Funktionen schneiden, zu grosse Dateien aufteilen. Lieber 1-3 Dateien sauber als grossflaechig halb.</p>
                 </div>
             </div>
             <div class="guide-step">
                 <div class="step-number">4</div>
                 <div class="step-content">
-                    <strong>Check diff</strong>
-                    <p>After each change: Scan + Diff. The score must not drop. If it rises: set a new baseline.</p>
+                    <strong>Diff wirklich nutzen</strong>
+                    <p>Nach jeder relevanten Aenderung: Scan plus Diff. Der Score darf nicht heimlich fallen. Wenn er stabil steigt, kannst du den neuen Stand einfrieren.</p>
                 </div>
             </div>
         </div>
-        <button class="btn btn-sm" onclick="document.getElementById('guideSection').style.display='none'">Hide guide</button>
+        <button class="btn btn-sm" onclick="toggleQualityGuide(false)">Playbook schliessen</button>
     </div>
 
-    <!-- Project overview -->
-    <div class="quality-table-container">
+    <section class="quality-board">
+        <div class="quality-board__head">
+            <div>
+                <div class="quality-board__kicker">Projektuebersicht</div>
+                <h2 class="quality-board__title">Wo lohnt sich der naechste Scan am meisten?</h2>
+            </div>
+            <p class="quality-board__copy">Die Liste ist risikoorientiert sortiert. Hohe Fehlerlast und schwacher Score landen oben.</p>
+        </div>
+
+        <div class="quality-table-container">
         <table class="data-table" id="qualityTable">
             <thead>
                 <tr>
                     <th>Project</th>
                     <th>Score</th>
+                    <th>Risk</th>
                     <th>Errors</th>
                     <th>Warnings</th>
-                    <th>Info</th>
                     <th>Last scan</th>
                     <th>Actions</th>
                 </tr>
-            </thead>
-            <tbody id="projectBody">
+                </thead>
+                <tbody id="projectBody">
                 <tr><td colspan="7" class="loading-cell">Loading projects...</td></tr>
-            </tbody>
-        </table>
-    </div>
+                </tbody>
+            </table>
+        </div>
+    </section>
 
     <!-- Detail panel -->
     <div class="modal-overlay" id="detailModal">
         <div class="modal-content modal-lg">
             <div class="modal-header">
-                <h3 id="detailTitle">Project details</h3>
+                <h3 id="detailTitle">Quality Briefing</h3>
                 <button class="modal-close" onclick="closeModal('detailModal')">&times;</button>
             </div>
             <div class="modal-body" id="detailBody">

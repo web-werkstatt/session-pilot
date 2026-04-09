@@ -1,5 +1,15 @@
 var allProjects = [];
 
+function toggleQualityGuide(forceState) {
+    var guide = document.getElementById('guideSection');
+    var button = document.getElementById('qualityGuideToggle');
+    if (!guide) return;
+    var shouldShow = typeof forceState === 'boolean' ? forceState : guide.style.display === 'none';
+    guide.style.display = shouldShow ? '' : 'none';
+    if (button) button.innerHTML = '<i data-lucide="help-circle" class="icon icon-sm"></i> ' + (shouldShow ? 'Playbook ausblenden' : 'Playbook');
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
 function loadProjects() {
     api.get('/api/quality/projects')
         .then(function(data) {
@@ -26,21 +36,39 @@ function scoreClass(score) {
     return 'score-bad';
 }
 
+function qualityRisk(project) {
+    if (!project) return { label: 'Unknown', cls: 'risk-neutral' };
+    if ((project.errors || 0) > 0 || (project.score_numeric || 0) < 40) return { label: 'Critical', cls: 'risk-critical' };
+    if ((project.warnings || 0) > 0 || (project.score_numeric || 0) < 60) return { label: 'Watch', cls: 'risk-watch' };
+    return { label: 'Stable', cls: 'risk-stable' };
+}
+
+function qualityProjectPulse(project) {
+    if (!project) return '';
+    var parts = [];
+    if ((project.errors || 0) > 0) parts.push(project.errors + ' blocker');
+    if ((project.warnings || 0) > 0) parts.push(project.warnings + ' warnings');
+    if (!parts.length) parts.push('No urgent issues');
+    return parts.join(' · ');
+}
+
 function renderProjects(projects) {
     var tbody = document.getElementById('projectBody');
     if (!projects.length) {
-        tbody.innerHTML = '<tr><td colspan="7" class="loading-cell">No projects scanned yet. Click "Scan" to start.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" class="loading-cell"><div class="quality-empty"><strong>No quality reports yet.</strong><span>Start with a project scan to make this board useful.</span></div></td></tr>';
         return;
     }
     tbody.innerHTML = projects.map(function(p) {
+        var risk = qualityRisk(p);
         return '<tr>' +
-            '<td><a href="/project/' + encodeURIComponent(p.name) + '" class="project-link">' + escapeHtml(p.name) + '</a></td>' +
+            '<td><div class="quality-project-cell"><a href="/project/' + encodeURIComponent(p.name) + '" class="project-link">' + escapeHtml(p.name) + '</a><span class="quality-project-meta">' + escapeHtml(qualityProjectPulse(p)) + '</span></div></td>' +
             '<td><span class="score-badge ' + scoreClass(p.score) + '">' + p.score + ' <small>' + p.score_numeric + '</small></span></td>' +
+            '<td><span class="risk-pill ' + risk.cls + '">' + risk.label + '</span></td>' +
             '<td>' + (p.errors > 0 ? '<span class="count-error">' + p.errors + '</span>' : '<span class="count-zero">0</span>') + '</td>' +
             '<td>' + (p.warnings > 0 ? '<span class="count-warning">' + p.warnings + '</span>' : '<span class="count-zero">0</span>') + '</td>' +
-            '<td>' + (p.info > 0 ? p.info : '<span class="count-zero">0</span>') + '</td>' +
-            '<td>' + formatTimeAgo(p.scanned_at) + '</td>' +
+            '<td><span class="quality-lastscan">' + formatTimeAgo(p.scanned_at) + '</span></td>' +
             '<td class="actions-cell">' +
+                '<button class="btn btn-xs btn-secondary" onclick="showDetail(\'' + escapeHtml(p.name) + '\')">Details</button> ' +
                 '<button class="btn btn-xs" onclick="scanSingle(\'' + escapeHtml(p.name) + '\')">Scan</button> ' +
                 '<button class="btn btn-xs" onclick="setBaseline(\'' + escapeHtml(p.name) + '\')">Baseline</button>' +
             '</td>' +
@@ -66,24 +94,35 @@ function renderDetail(data) {
     var r = data.report;
     var s = r.summary || {};
     var issues = r.issues || [];
+    var risk = qualityRisk({
+        score_numeric: r.score_numeric,
+        errors: s.errors || 0,
+        warnings: s.warnings || 0
+    });
 
     var html = '<div class="detail-header">';
-    html += '<div class="detail-score"><span class="score-badge score-lg ' + scoreClass(r.score) + '">' + r.score + '</span><span class="score-num">' + r.score_numeric + '/100</span></div>';
+    html += '<div class="detail-score"><span class="score-badge score-lg ' + scoreClass(r.score) + '">' + r.score + '</span><span class="score-num">' + r.score_numeric + '/100</span><span class="risk-pill ' + risk.cls + '">' + risk.label + '</span></div>';
     html += '<div class="detail-stats">';
-    html += '<span>' + (s.errors || 0) + ' Errors</span>';
-    html += '<span>' + (s.warnings || 0) + ' Warnings</span>';
-    html += '<span>' + (s.info || 0) + ' Info</span>';
+    html += '<span><strong>' + (s.errors || 0) + '</strong> Errors</span>';
+    html += '<span><strong>' + (s.warnings || 0) + '</strong> Warnings</span>';
+    html += '<span><strong>' + (s.info || 0) + '</strong> Info</span>';
+    html += '<span><strong>' + (s.total_issues || 0) + '</strong> Total</span>';
     html += '</div>';
 
     if (data.diff) {
         var d = data.diff;
         html += '<div class="detail-diff">';
-        html += '<span class="diff-label">vs. Baseline:</span>';
+        html += '<span class="diff-label">Baseline diff</span>';
         html += '<span class="' + (d.score_delta >= 0 ? 'diff-good' : 'diff-bad') + '">Score ' + (d.score_delta >= 0 ? '+' : '') + d.score_delta + '</span>';
         if (d.new_issues > 0) html += '<span class="diff-bad">+' + d.new_issues + ' new</span>';
         if (d.fixed_issues > 0) html += '<span class="diff-good">' + d.fixed_issues + ' fixed</span>';
         html += '</div>';
     }
+    html += '</div>';
+
+    html += '<div class="detail-priority-strip">';
+    html += '<div class="detail-priority-card"><span class="detail-priority-label">Focus now</span><strong>' + escapeHtml((s.errors || 0) > 0 ? 'Errors first' : ((s.warnings || 0) > 0 ? 'Warnings review' : 'Keep stable')) + '</strong></div>';
+    html += '<div class="detail-priority-card"><span class="detail-priority-label">Recommended next step</span><strong>' + escapeHtml(data.diff ? 'Inspect diff before new baseline' : 'Create a baseline after review') + '</strong></div>';
     html += '</div>';
 
     // Issues nach Kategorie gruppieren
@@ -153,11 +192,11 @@ function renderDetail(data) {
 function scanSingle(project) {
     var btn = event.target;
     btn.disabled = true;
-    btn.textContent = '...';
+    btn.textContent = 'Scanning';
 
     api.post('/api/quality/scan/' + encodeURIComponent(project))
         .then(function() {
-            btn.textContent = 'OK';
+            btn.textContent = 'Done';
             setTimeout(function() { loadProjects(); }, 500);
         })
         .catch(function(err) {
