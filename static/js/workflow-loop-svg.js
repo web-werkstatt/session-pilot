@@ -150,7 +150,7 @@ function workflowLoopCenterTitle(data) {
     if (data && data.next_marker && data.next_marker.title) {
         return data.next_marker.title;
     }
-    return 'Noch keine Marker vorhanden';
+    return '';
 }
 
 function workflowLoopNodeDescription(step) {

@@ -148,6 +148,7 @@ Referenz:
 - Subprojekt-Planning-Fallback korrigiert: vorhandene eigene Plan-Datensaetze eines Subprojekts haben jetzt Vorrang vor dem Parent-Fallback.
 - Projekt-Detailseiten um sichtbare Fortschrittsanzeige erweitert: `Fortschritt` zeigt Planning-Readiness plus Kernstatistiken fuer Plaene, Sprints, Specs und Tasks direkt im Detail-Tab.
 - Projekt-Detailseite mit intelligenterer Back-Navigation versehen: `← Back` nutzt jetzt bevorzugt `return_to` oder den echten Referrer statt immer zum Dashboard zu springen.
+- Workflow-Loop-Leerzustand bereinigt: doppelte Marker-Fehlmeldung in der zentralen Grafik entfernt, damit der leere Zustand ruhiger und klarer wirkt.
 
 **Geaenderte Dateien:**
 - `templates/session_detail.html`
