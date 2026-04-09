@@ -153,7 +153,7 @@
     function workflowLoopGroupHtml(group) {
         var cards = Array.isArray(group.cards) ? group.cards : [];
         return ''
-            + '<section class="workflow-marker-group workflow-marker-group--' + escapeHtml(group.tone || 'neutral') + '">'
+            + '<section class="workflow-marker-group workflow-marker-group--' + escapeHtml(group.tone || 'neutral') + '" id="workflowMarkerGroup-' + escapeHtml(group.id || 'group') + '">'
             + '<div class="workflow-marker-group-head">'
             + '<div>'
             + '<div class="workflow-marker-group-kicker">' + escapeHtml(group.label || 'Marker') + '</div>'
@@ -190,7 +190,11 @@
         if (card.gate_status === 'blocked' && card.gate_reason) meta.push('Gate: ' + card.gate_reason);
 
         return ''
-            + '<article class="workflow-marker-card workflow-marker-card--' + escapeHtml(card.group || 'waiting') + (card.workflow_status === 'blocked' ? ' is-blocked' : '') + (card.is_current ? ' is-current' : '') + '" data-marker-id="' + escapeHtml(markerId) + '">'
+            + '<article class="workflow-marker-card workflow-marker-card--' + escapeHtml(card.group || 'waiting') + (card.workflow_status === 'blocked' ? ' is-blocked' : '') + (card.is_current ? ' is-current' : '') + '"'
+            + ' data-marker-id="' + escapeHtml(markerId) + '"'
+            + ' data-workflow-status="' + escapeHtml(card.workflow_status || '') + '"'
+            + ' data-is-current="' + (card.is_current ? '1' : '0') + '"'
+            + ' data-is-next="' + (card.is_next ? '1' : '0') + '">'
             + '<div class="workflow-marker-card-top">'
             + '<div class="workflow-loop-card-kicker">' + escapeHtml(card.workflow_status_label || 'Marker') + '</div>'
             + workflowOwnerBadgeHtml(owner)
@@ -635,17 +639,45 @@
 
     function handleWorkflowStepClick(step) {
         if (!step) return;
-        var cards = {
-            gate_ready: 'workflowCardNextMarker',
-            active: 'workflowCardCurrentMarker',
-            execution: 'workflowCardCurrentMarker',
-            write_back: 'workflowLoopBoard',
-            rating: 'workflowCardPendingRatings'
-        };
-        var target = document.getElementById(cards[step.id]);
-        if (target) {
-            target.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        var target = workflowLoopResolveStepTarget(step.id);
+        if (!target) return;
+        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        workflowLoopPulseTarget(target);
+    }
+
+    function workflowLoopResolveStepTarget(stepId) {
+        if (stepId === 'gate_ready') {
+            return document.querySelector('.workflow-marker-card[data-is-next="1"]')
+                || document.getElementById('workflowCardNextMarker')
+                || document.getElementById('workflowMarkerGroup-waiting');
         }
+        if (stepId === 'active' || stepId === 'execution') {
+            return document.querySelector('.workflow-marker-card[data-is-current="1"]')
+                || document.querySelector('.workflow-marker-card[data-workflow-status="active"]')
+                || document.getElementById('workflowCardCurrentMarker')
+                || document.getElementById('workflowMarkerGroup-active');
+        }
+        if (stepId === 'write_back') {
+            return document.querySelector('.workflow-marker-card[data-workflow-status="write_back"]')
+                || document.getElementById('workflowMarkerGroup-active')
+                || document.getElementById('workflowLoopBoard');
+        }
+        if (stepId === 'rating') {
+            return document.querySelector('.workflow-marker-card[data-workflow-status="rating"]')
+                || document.getElementById('workflowCardPendingRatings')
+                || document.getElementById('workflowMarkerGroup-active');
+        }
+        return document.getElementById('workflowLoopBoard');
+    }
+
+    function workflowLoopPulseTarget(target) {
+        if (!target) return;
+        target.classList.remove('workflow-loop-target-pulse');
+        void target.offsetWidth;
+        target.classList.add('workflow-loop-target-pulse');
+        window.setTimeout(function() {
+            target.classList.remove('workflow-loop-target-pulse');
+        }, 1600);
     }
 
     function workflowLoopStatusLabel(marker) {

@@ -216,6 +216,10 @@
         0 16px 28px rgba(2, 6, 23, 0.22);
 }
 
+.workflow-loop-target-pulse {
+    animation: workflowLoopTargetPulse 1.35s ease;
+}
+
 .workflow-marker-card-top,
 .workflow-marker-card-flags,
 .workflow-marker-actions,
@@ -424,6 +428,24 @@
 
 .workflow-marker-message--success {
     color: #86efac;
+}
+
+@keyframes workflowLoopTargetPulse {
+    0% {
+        box-shadow:
+            0 0 0 0 rgba(125, 211, 252, 0.55),
+            inset 0 0 0 1px rgba(125, 211, 252, 0.12);
+    }
+    50% {
+        box-shadow:
+            0 0 0 10px rgba(125, 211, 252, 0),
+            inset 0 0 0 1px rgba(125, 211, 252, 0.4);
+    }
+    100% {
+        box-shadow:
+            0 0 0 0 rgba(125, 211, 252, 0),
+            inset 0 0 0 1px rgba(125, 211, 252, 0.12);
+    }
 }
 
 .workflow-loop-loading,
