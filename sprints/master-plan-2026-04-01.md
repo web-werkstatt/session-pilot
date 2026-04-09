@@ -143,7 +143,7 @@ Referenz:
 - `next-session.md`
 - `sprints/master-plan-2026-04-01.md`
 
-**Commit-Hash:** `pending`
+**Commit-Hash:** `e2e5a15`
 
 ### Sprint CP Follow-up — Session-Detail Back-Navigation im Planning — DONE (2026-04-09)
 
