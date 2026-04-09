@@ -143,6 +143,7 @@ Referenz:
 - Projekt-Detailseite weiter bereinigt: der separate `README`-Block wird nur noch bei vorhandenem README gerendert, damit `Contents` keine Phantom-Sektion mehr zeigt.
 - Projekt-Detailseite weiter vereinfacht: rechte `Contents`-Sidebar entfernt und die Overview-Ansicht wieder auf einspaltiges Lesen reduziert.
 - Projekt-Detailseite nach User-Feedback wieder mit rechter `Contents`-Sidebar ausgestattet, damit die sichtbaren Overview-Sections erneut direkt anspringbar sind.
+- Planning fuer Subprojekte auf Parent-Fallback erweitert: Subprojekte ohne eigene Plan-Zuordnung erben jetzt das Planning ihres `parent_project` und zeigen im UI einen entsprechenden Hinweis.
 
 **Geaenderte Dateien:**
 - `templates/session_detail.html`

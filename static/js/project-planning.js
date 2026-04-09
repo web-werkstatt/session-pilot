@@ -17,6 +17,7 @@ async function loadProjectPlans() {
     try {
         const data = await api.get('/api/projects/' + encodeURIComponent(PROJECT_NAME) + '/planning');
         const planGroups = Array.isArray(data.plans) ? data.plans : [];
+        const inheritedFrom = data && data.inherits_parent_planning ? data.planning_project_id : '';
         planningHierarchyData = planGroups;
         planningSelectionId = '';
         const countEl = document.getElementById('plansCount');
@@ -30,20 +31,26 @@ async function loadProjectPlans() {
                 </div>`;
             return;
         }
-        document.getElementById('plansBody').innerHTML = renderPlanningWorkspace(planGroups);
+        document.getElementById('plansBody').setAttribute('data-planning-parent', inheritedFrom || '');
+        document.getElementById('plansBody').innerHTML = renderPlanningWorkspace(planGroups, inheritedFrom);
     } catch(e) {
         document.getElementById('plansBody').innerHTML = '<p style="color:#ff6666;padding:20px">Error: ' + e + '</p>';
     }
 }
 
-function renderPlanningWorkspace(planGroups) {
+function renderPlanningWorkspace(planGroups, inheritedFrom) {
     ensurePlanningSelection(planGroups);
+    var inheritedHint = '';
+    if (inheritedFrom) {
+        inheritedHint = '<div class="planning-parent-hint">This subproject uses the planning workspace of <strong>' + escapeHtml(inheritedFrom) + '</strong>.</div>';
+    }
     var html = ''
         + '<div class="planning-intro">'
         + '<div class="planning-intro-copy">'
         + '<div class="planning-kicker">Project workspace</div>'
         + '<div class="planning-title">Planning</div>'
         + '<div class="planning-subtitle">This view is the primary entry for plans in <strong>' + escapeHtml(PROJECT_NAME) + '</strong>. The global plan index remains a cross-project read view.</div>'
+        + inheritedHint
         + '</div>'
         + '<div class="planning-intro-actions">'
         + '<a href="/plans?project=' + encodeURIComponent(PROJECT_NAME) + '" class="planning-index-link">Open plan index</a>'
@@ -238,7 +245,8 @@ function selectPlanningNode(nodeId) {
     planningSelectionId = nodeId;
     var body = document.getElementById('plansBody');
     if (!body) return;
-    body.innerHTML = renderPlanningWorkspace(planningHierarchyData);
+    var inheritedFrom = body.getAttribute('data-planning-parent') || '';
+    body.innerHTML = renderPlanningWorkspace(planningHierarchyData, inheritedFrom);
     var detailPanel = document.getElementById('planningDetailPanel');
     if (!detailPanel) return;
     window.requestAnimationFrame(function() {

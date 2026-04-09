@@ -15,6 +15,7 @@ from services.plan_structure_service import (
     get_plan_structure,
     get_sprint_plan_detail,
     get_project_planning_hierarchy,
+    resolve_planning_project_id,
     sync_sprint_plans_from_master,
     sync_specs_from_sprint_plan,
 )
@@ -177,8 +178,14 @@ def get_sprint_plan(sprint_plan_id):
 
 @plans_bp.route('/api/projects/<path:project_id>/planning')
 def get_project_planning(project_id):
-    hierarchy = get_project_planning_hierarchy(project_id, _get_handoff_path(project_id))
-    return jsonify({'project_id': project_id, 'plans': hierarchy})
+    planning_project_id = resolve_planning_project_id(project_id)
+    hierarchy = get_project_planning_hierarchy(project_id, _get_handoff_path(planning_project_id))
+    return jsonify({
+        'project_id': project_id,
+        'planning_project_id': planning_project_id,
+        'inherits_parent_planning': planning_project_id != project_id,
+        'plans': hierarchy,
+    })
 
 
 @plans_bp.route('/api/plans/<int:plan_id>', methods=['PUT'])

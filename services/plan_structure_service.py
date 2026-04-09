@@ -1,4 +1,5 @@
 """Explizite Struktur fuer Plan -> Sprint-Plan -> Spec -> Marker."""
+import json
 import os
 import re
 
@@ -57,6 +58,27 @@ def _first_description_line(lines):
             continue
         return re.sub(r"^(?:[-*]|\d+\.)\s+", "", stripped)
     return ""
+
+
+def _load_project_meta(project_id):
+    project_root = resolve_project_path(project_id)
+    if not project_root:
+        return {}
+    project_json = os.path.join(project_root, "project.json")
+    if not os.path.exists(project_json):
+        return {}
+    try:
+        with open(project_json, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except (OSError, json.JSONDecodeError):
+        return {}
+
+
+def resolve_planning_project_id(project_id):
+    meta = _load_project_meta(project_id)
+    if meta.get("project_type") == "subproject" and meta.get("parent_project"):
+        return str(meta.get("parent_project")).strip() or project_id
+    return project_id
 
 
 def load_recent_project_sessions(project_id, limit=5):
@@ -511,6 +533,7 @@ def get_sprint_plan_detail(sprint_plan_id, handoff_path=None):
 def get_project_planning_hierarchy(project_id, handoff_path=None):
     """Liest die Projekt-Hierarchie fuer den Planning-Workspace read-only aus."""
     ensure_plan_structure_schema()
+    planning_project_id = resolve_planning_project_id(project_id)
     rows = execute(
         """SELECT id, title, project_name, context_summary, content, category, status,
                   workflow_stage, current_state, target_state, next_action,
@@ -518,11 +541,11 @@ def get_project_planning_hierarchy(project_id, handoff_path=None):
            FROM project_plans
            WHERE project_name = %s
            ORDER BY created_at DESC, id DESC""",
-        (project_id,),
+        (planning_project_id,),
         fetch=True,
     ) or []
 
-    recent_project_sessions = load_recent_project_sessions(project_id, limit=10)
+    recent_project_sessions = load_recent_project_sessions(planning_project_id, limit=10)
     hierarchy = []
     for row in rows:
         sections = get_tagged_plan_structure(
