@@ -77,6 +77,13 @@ def _load_project_meta(project_id):
 def resolve_planning_project_id(project_id):
     meta = _load_project_meta(project_id)
     if meta.get("project_type") == "subproject" and meta.get("parent_project"):
+        own_rows = execute(
+            "SELECT id FROM project_plans WHERE project_name = %s ORDER BY id DESC LIMIT 1",
+            (project_id,),
+            fetch=True,
+        ) or []
+        if own_rows:
+            return project_id
         return str(meta.get("parent_project")).strip() or project_id
     return project_id
 
