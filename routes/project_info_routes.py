@@ -36,6 +36,16 @@ def _normalize_description_text(text):
     return value
 
 
+def _is_meaningful_description(name, text):
+    value = _normalize_description_text(text)
+    if not value:
+        return False
+
+    normalized_name = str(name or "").strip().lower().replace("-", " ").replace("_", " ")
+    normalized_value = value.lower().replace("-", " ").replace("_", " ")
+    return normalized_value != normalized_name
+
+
 @project_info_bp.route('/api/info')
 def get_info():
     """Schnelle Basis-Info: Metadaten, Tech-Stack, Env, Changelog, README, Screenshots, Milestones, Relations"""
@@ -59,18 +69,26 @@ def get_info():
     if not pj.get("changelog_latest"):
         pj["changelog_latest"] = parse_changelog(project_path)
 
+    is_monorepo = pj.get("project_type") == "monorepo"
+
     description_text = _normalize_description_text(pj.get("description"))
-    if description_text:
+    if _is_meaningful_description(name, description_text):
         sections.append(f"<h3>Description</h3><p>{_escape(description_text)}</p>")
 
     # Schnelle Sections (File I/O only, kein Subprocess/Netzwerk)
-    _add_metadata_section(sections, pj, project_path)
-    _add_structure_section(sections, pj, project_path)
-    _add_tech_stack_section(sections, project_path)
-    _add_root_assets_section(sections, project_path)
+    if is_monorepo:
+        _add_structure_section(sections, pj, project_path)
+        _add_root_assets_section(sections, project_path)
+        _add_metadata_section(sections, pj, project_path, hide_path=True)
+        _add_tech_stack_section(sections, project_path, minimum_items=2)
+    else:
+        _add_metadata_section(sections, pj, project_path)
+        _add_structure_section(sections, pj, project_path)
+        _add_tech_stack_section(sections, project_path)
+        _add_root_assets_section(sections, project_path)
     _add_env_section(sections, project_path)
     _add_changelog_section(sections, pj)
-    _add_readme_section(sections, project_path)
+    _add_readme_section(sections, project_path, compact=is_monorepo)
     _add_screenshots_section(sections, name, project_path)
     _add_milestones_section(sections, pj)
     _add_relations_section(sections, name)
@@ -100,12 +118,14 @@ def get_info_slow():
 
     sections = []
 
+    is_monorepo = pj.get("project_type") == "monorepo"
+
     # Repo-Groesse als eigene Zeile
-    if pj.get("repo_size"):
+    if pj.get("repo_size") and not is_monorepo:
         sections.append(
             f"<h3>Size</h3><p style='font-size:13px'>{_escape(pj['repo_size'])}</p>"
         )
-    _add_loc_section(sections, pj)
+    _add_loc_section(sections, pj, compact=is_monorepo)
     _add_git_section(sections, project_path)
     _add_branches_section(sections, project_path)
     _add_contributors_section(sections, project_path)
@@ -129,7 +149,7 @@ def _load_project_json(project_path):
     return {}
 
 
-def _add_metadata_section(sections, pj, project_path):
+def _add_metadata_section(sections, pj, project_path, hide_path=False):
     meta = []
     if pj.get("project_type"):
         meta.append(("Type", _escape(pj["project_type"])))
@@ -148,7 +168,8 @@ def _add_metadata_section(sections, pj, project_path):
         meta.append(("License", _escape(pj["license"])))
     if pj.get("repo_size"):
         meta.append(("Size", _escape(pj["repo_size"])))
-    meta.append(("Path", _escape(project_path)))
+    if not hide_path:
+        meta.append(("Path", _escape(project_path)))
 
     if meta:
         rows = "".join(
@@ -234,9 +255,11 @@ def _add_root_assets_section(sections, project_path):
     )
 
 
-def _add_loc_section(sections, pj):
+def _add_loc_section(sections, pj, compact=False):
     loc = pj.get("loc_stats")
     if not loc or not loc.get("total"):
+        return
+    if compact and loc.get("total", 0) < 2000:
         return
     total = loc["total"]
     total_display = f"{total:,}".replace(",", ".")
@@ -283,7 +306,7 @@ def _add_changelog_section(sections, pj):
     )
 
 
-def _add_tech_stack_section(sections, project_path):
+def _add_tech_stack_section(sections, project_path, minimum_items=1):
     tech = []
     markers = {
         "package.json": "Node.js", "tsconfig.json": "TypeScript", "next.config": "Next.js",
@@ -302,7 +325,7 @@ def _add_tech_stack_section(sections, project_path):
                     tech.append(label)
     except OSError:
         pass
-    if tech:
+    if len(tech) >= minimum_items:
         badges = " ".join(
             f"<code style='background:#1a3a5c;color:#4fc3f7;padding:2px 8px;border-radius:4px;font-size:12px'>"
             f"{_escape(t)}</code>"
@@ -344,13 +367,15 @@ def _add_git_section(sections, project_path):
         pass
 
 
-def _add_readme_section(sections, project_path):
+def _add_readme_section(sections, project_path, compact=False):
     for readme in ["README.md", "readme.md", "Readme.md"]:
         rpath = os.path.join(project_path, readme)
         if os.path.exists(rpath):
             try:
                 with open(rpath, 'r', encoding='utf-8') as f:
                     content = f.read()[:3000]
+                if compact and len(content.strip()) < 120:
+                    return
                 safe = html_mod.escape(content)
                 safe = safe.replace('\n\n', '</p><p>').replace('\n', '<br>')
                 sections.append(
