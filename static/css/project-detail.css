@@ -156,6 +156,36 @@
     background: rgba(255,255,255,0.05);
 }
 
+.project-secondary-link.quality-state-none {
+    background: rgba(148, 163, 184, 0.08);
+    border-color: rgba(148, 163, 184, 0.18);
+    color: var(--text-muted);
+}
+
+.project-secondary-link.quality-state-good {
+    background: rgba(67, 160, 71, 0.12);
+    border-color: rgba(67, 160, 71, 0.28);
+    color: #b9efc0;
+}
+
+.project-secondary-link.quality-state-warning {
+    background: rgba(255, 193, 7, 0.12);
+    border-color: rgba(255, 193, 7, 0.28);
+    color: #ffe082;
+}
+
+.project-secondary-link.quality-state-critical {
+    background: rgba(244, 67, 54, 0.12);
+    border-color: rgba(244, 67, 54, 0.28);
+    color: #ffb4ae;
+}
+
+.project-secondary-link.quality-state-running {
+    background: rgba(79, 195, 247, 0.12);
+    border-color: rgba(79, 195, 247, 0.28);
+    color: var(--accent-light);
+}
+
 .tab-count {
     font-size: 11px;
     background: var(--elevated, var(--bg-elevated));
@@ -173,6 +203,15 @@
 
 .project-secondary-link .tab-count {
     background: rgba(255,255,255,0.08);
+}
+
+.project-secondary-link.quality-state-none .tab-count,
+.project-secondary-link.quality-state-good .tab-count,
+.project-secondary-link.quality-state-warning .tab-count,
+.project-secondary-link.quality-state-critical .tab-count,
+.project-secondary-link.quality-state-running .tab-count {
+    background: rgba(0, 0, 0, 0.16);
+    color: inherit;
 }
 
 

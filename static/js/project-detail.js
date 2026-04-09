@@ -8,6 +8,7 @@ let plansLoaded = false;
 let workflowLoaded = false;
 let sessionsExtracted = false;
 let qualityLoaded = false;
+let qualityStatusLoaded = false;
 // === Tab Switching ===
 function switchProjectTab(tab, trigger) {
     document.querySelectorAll('.project-tab').forEach(b => b.classList.remove('active'));
@@ -53,6 +54,37 @@ function loadWorkflowTab() {
 function loadData() {
     loadProjectInfo();
     if (typeof loadGroups === 'function') loadGroups();
+}
+
+function setQualityButtonState(state, label) {
+    var button = document.getElementById('qualitySecondaryLink');
+    var badge = document.getElementById('qualityScore');
+    if (!button || !badge) return;
+    button.classList.remove('quality-state-none', 'quality-state-good', 'quality-state-warning', 'quality-state-critical', 'quality-state-running');
+    if (state) button.classList.add('quality-state-' + state);
+    if (label) badge.textContent = label;
+}
+
+function getQualityStateFromReport(report) {
+    if (!report) return { state: 'none', label: 'No Scan' };
+    var score = Number(report.score_numeric);
+    if (!isNaN(score)) {
+        if (score < 40) return { state: 'critical', label: report.score || String(score) };
+        if (score < 60) return { state: 'warning', label: report.score || String(score) };
+    }
+    return { state: 'good', label: report.score || 'OK' };
+}
+
+function loadQualityButtonState() {
+    qualityStatusLoaded = true;
+    api.get('/api/quality/report/' + encodeURIComponent(PROJECT_NAME))
+        .then(function(d) {
+            var next = getQualityStateFromReport(d && d.report ? d.report : null);
+            setQualityButtonState(next.state, next.label);
+        })
+        .catch(function() {
+            setQualityButtonState('none', 'No Scan');
+        });
 }
 
 function normalizeProjectSubtitle(text) {
@@ -103,10 +135,7 @@ async function loadProjectInfo() {
 
         // Teure Sections async nachladen
         loadSlowSections();
-        // Quality-Score im Tab-Badge anzeigen
-        api.get('/api/quality/report/' + encodeURIComponent(PROJECT_NAME))
-            .then(function(d) { if (d.report) document.getElementById('qualityScore').textContent = d.report.score; })
-            .catch(function() {});
+        if (!qualityStatusLoaded) loadQualityButtonState();
     } catch(e) {
         document.getElementById('projectBody').innerHTML = '<div class="loading" style="color:#ff6666">Error: ' + e + '</div>';
     }
@@ -257,6 +286,7 @@ var _checkNames = {
 
 function runQualityScan() {
     var body = document.getElementById('qualityBody');
+    setQualityButtonState('running', 'Scanning');
     body.innerHTML = '<div id="scanProgress" style="padding:30px;text-align:center"><div class="spinner" style="margin:0 auto 12px"></div><div id="scanStep" style="font-size:13px;color:#888">Starting scan...</div><div id="scanBar" style="margin:16px auto;width:300px;height:6px;background:#222;border-radius:3px;overflow:hidden"><div id="scanFill" style="width:0%;height:100%;background:var(--accent);border-radius:3px;transition:width 0.3s"></div></div></div>';
 
     _scanPollTimer = setInterval(function() {
@@ -273,13 +303,13 @@ function runQualityScan() {
     }, 800);
 
     api.post('/api/quality/scan/' + encodeURIComponent(PROJECT_NAME))
-        .then(function() { clearInterval(_scanPollTimer); qualityLoaded = false; loadQualityTab(); })
-        .catch(function(e) { clearInterval(_scanPollTimer); body.innerHTML = '<div style="color:#f44336;padding:20px">Error: ' + e + '</div>'; });
+        .then(function() { clearInterval(_scanPollTimer); qualityLoaded = false; loadQualityButtonState(); loadQualityTab(); })
+        .catch(function(e) { clearInterval(_scanPollTimer); loadQualityButtonState(); body.innerHTML = '<div style="color:#f44336;padding:20px">Error: ' + e + '</div>'; });
 }
 
 function setProjectBaseline() {
     api.post('/api/quality/baseline/' + encodeURIComponent(PROJECT_NAME))
-        .then(function(d) { alert('Baseline set: ' + d.score + ' (' + d.score_numeric + '/100)'); qualityLoaded = false; loadQualityTab(); })
+        .then(function(d) { alert('Baseline set: ' + d.score + ' (' + d.score_numeric + '/100)'); qualityLoaded = false; loadQualityButtonState(); loadQualityTab(); })
         .catch(function(e) { alert('Error: ' + e); });
 }
 
