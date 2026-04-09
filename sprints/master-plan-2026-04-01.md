@@ -134,6 +134,7 @@ Referenz:
 - Zentrale Governance-Seite `/governance` auf lesbarere Entscheidungsansicht umgebaut: Intro mit Legende, reduzierte Projekt-Tabelle mit sichtbaren Gruenden statt Tooltip-Ampeln und klarer abgegrenzter Fehlermuster-Tab.
 - Governance-KPI-Zeile zusaetzlich abgeschwaecht, damit sie visuell hinter Intro, Tabs und Projektentscheidungen zuruecktritt.
 - Reinen Statistik-Tab aus `/governance` entfernt, damit die zentrale Seite kein Analyse-Bypath mehr ist, sondern ausschliesslich Projektentscheidungen zeigt.
+- Redundante Status-Legende im Governance-Intro entfernt, damit oberhalb der Tabelle kein zweiter Erklaerungsblock fuer dieselben Stati stehen bleibt.
 
 **Geaenderte Dateien:**
 - `templates/session_detail.html`

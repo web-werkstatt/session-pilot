@@ -38,13 +38,6 @@
     line-height: 1.55;
 }
 
-.gov-intro__legend {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-}
-
 /* Health Ampel Badges */
 .gov-status-pill {
     display: inline-flex;
