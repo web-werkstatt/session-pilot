@@ -45,14 +45,7 @@
         </div>
     </div>
 
-    <!-- Tabs -->
-    <div class="gov-tabs">
-        <button class="gov-tab active" onclick="showGovTab('overview')" data-tab="overview">Projektstatus</button>
-        <button class="gov-tab" onclick="showGovTab('feedback')" data-tab="feedback">Fehlermuster</button>
-    </div>
-
-    <!-- Tab: Overview -->
-    <div id="tab-overview" class="gov-tab-content active">
+    <div class="gov-tab-content active" id="tab-overview">
         <div class="gov-overview-head">
             <div>
                 <div class="gov-section-kicker">Entscheidungsansicht</div>
@@ -78,20 +71,6 @@
             </table>
         </div>
         <p class="gov-footnote">Rule Suggestions, Effectiveness und Export Snippets bleiben im Governance-Tab der jeweiligen Projekt-Detail-Seite.</p>
-    </div>
-
-    <!-- Tab: Feedback Loop -->
-    <div id="tab-feedback" class="gov-tab-content">
-        <div class="gov-overview-head">
-            <div>
-                <div class="gov-section-kicker">Muster statt Rohdaten</div>
-                <h2 class="gov-section-title">Welche Fehler tauchen je Policy-Level am haeufigsten auf?</h2>
-            </div>
-            <p class="gov-section-copy">Diese Ansicht ist nur fuer Mustererkennung gedacht, nicht fuer den operativen Einstieg.</p>
-        </div>
-        <div id="feedbackContent" class="gov-feedback">
-            <p class="text-muted">Loading feedback analysis...</p>
-        </div>
     </div>
 
     <!-- Policy Edit Modal -->

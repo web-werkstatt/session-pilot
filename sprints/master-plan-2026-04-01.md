@@ -133,6 +133,7 @@ Referenz:
 - `Quality` im Projekt-Sekundaermenue signalisiert jetzt direkt den Report-Zustand ueber Farbe und Badge (`No Scan`, gut, warnend, kritisch, laufender Scan), statt immer neutral auszusehen.
 - Zentrale Governance-Seite `/governance` auf lesbarere Entscheidungsansicht umgebaut: Intro mit Legende, reduzierte Projekt-Tabelle mit sichtbaren Gruenden statt Tooltip-Ampeln und klarer abgegrenzter Fehlermuster-Tab.
 - Governance-KPI-Zeile zusaetzlich abgeschwaecht, damit sie visuell hinter Intro, Tabs und Projektentscheidungen zuruecktritt.
+- Reinen Statistik-Tab aus `/governance` entfernt, damit die zentrale Seite kein Analyse-Bypath mehr ist, sondern ausschliesslich Projektentscheidungen zeigt.
 
 **Geaenderte Dateien:**
 - `templates/session_detail.html`

@@ -7,7 +7,6 @@ let _editLevel = 1;
 // --- Init ---
 document.addEventListener('DOMContentLoaded', () => {
     loadGovernanceOverview();
-    loadFeedbackLoop();
 });
 
 // --- Tabs ---
