@@ -131,6 +131,7 @@ Referenz:
 - Session-Detail-TOC optisch nachgeschaerft: Nummer und Text stehen sauber in einer Zeile, Eintraege zeigen mehr sichtbaren Text, und die Preview kuerzt jetzt weich mit `...` an Wortgrenzen statt stumpf per `substring`.
 - Aktiver Parent-Link `Projects` im Sidebar-Menue klarer hervorgehoben, damit er sich visuell besser an die restlichen aktiven Navigationselemente anlehnt.
 - `Quality` im Projekt-Sekundaermenue signalisiert jetzt direkt den Report-Zustand ueber Farbe und Badge (`No Scan`, gut, warnend, kritisch, laufender Scan), statt immer neutral auszusehen.
+- Zentrale Governance-Seite `/governance` auf lesbarere Entscheidungsansicht umgebaut: Intro mit Legende, reduzierte Projekt-Tabelle mit sichtbaren Gruenden statt Tooltip-Ampeln und klarer abgegrenzter Fehlermuster-Tab.
 
 **Geaenderte Dateien:**
 - `templates/session_detail.html`
@@ -142,6 +143,9 @@ Referenz:
 - `templates/project_detail.html`
 - `static/js/project-detail.js`
 - `static/css/project-detail.css`
+- `templates/governance.html`
+- `static/js/governance.js`
+- `static/css/governance.css`
 - `next-session.md`
 - `sprints/master-plan-2026-04-01.md`
 
