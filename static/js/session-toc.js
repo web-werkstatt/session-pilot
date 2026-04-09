@@ -1,14 +1,24 @@
 /* Session Detail - Table of Contents Sidebar */
 
+function truncateTocPreview(text, maxLen) {
+    const value = String(text || '').replace(/\s+/g, ' ').trim();
+    if (!value) return '';
+    if (value.length <= maxLen) return value;
+    const slice = value.slice(0, maxLen + 1);
+    const lastSpace = slice.lastIndexOf(' ');
+    const cutoff = lastSpace > Math.floor(maxLen * 0.6) ? lastSpace : maxLen;
+    return value.slice(0, cutoff).trim() + '...';
+}
+
 function getTocPreview(msg) {
     const raw = (msg.content || '').trim();
     if (!raw) return '';
     const lines = raw.split('\n');
     for (const line of lines) {
         const clean = line.replace(/^[#*\->\s`_\[\]]+/, '').trim();
-        if (clean.length > 8) return clean.substring(0, 40);
+        if (clean.length > 8) return truncateTocPreview(clean, 75);
     }
-    return lines[0].replace(/[#*`_\[\]]/g, '').trim().substring(0, 40);
+    return truncateTocPreview(lines[0].replace(/[#*`_\[\]]/g, '').trim(), 75);
 }
 
 function getToolNames(msg) {

@@ -2,7 +2,7 @@
 
 {% block title %}Session Detail - Dashboard{% endblock %}
 
-{% block breadcrumb %}<button type="button" onclick="goSessionBack()" style="background:none;border:none;color:var(--accent-light);padding:0;cursor:pointer;font:inherit">Zurueck</button> <span class="bc-sep">/</span> Detail{% endblock %}
+{% block breadcrumb %}<span id="sessionDetailBreadcrumbLabel">Activity</span> <span class="bc-sep">/</span> Detail{% endblock %}
 
 {% block head_extra %}
 <link rel="stylesheet" href="/static/css/sessions2.css?v={{ cache_bust }}">

@@ -320,7 +320,8 @@ function renderSessionHistory(sessions) {
     var items = Array.isArray(sessions) ? sessions : [];
     if (!items.length) return '<div class="planning-detail-muted">No sessions linked yet. Continue the work via Copilot to create execution history on the operative level.</div>';
     return '<div class="planning-session-history">' + items.map(function(s) {
-        var url = '/sessions/' + encodeURIComponent(s.session_uuid || '');
+        var returnTo = '/project/' + encodeURIComponent(PROJECT_NAME) + '?tab=plans';
+        var url = '/sessions/' + encodeURIComponent(s.session_uuid || '') + '?return_to=' + encodeURIComponent(returnTo) + '&return_label=' + encodeURIComponent('Planning');
         var acct = s.account || '';
         var badge = acct ? '<span class="planning-session-account planning-account-' + acct.replace(/[^a-z0-9]/g,'') + '"' + (typeof getAccountBadgeStyle==='function' ? ' style="'+escapeHtml(getAccountBadgeStyle(acct,''))+'"' : '') + '>' + escapeHtml(acct) + '</span>' : '';
         var iT = Number(s.input_tokens)||0, oT = Number(s.output_tokens)||0;

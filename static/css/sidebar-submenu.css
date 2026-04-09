@@ -10,6 +10,16 @@
     flex: 1;
 }
 
+.nav-subsection-link.active {
+    background: linear-gradient(135deg, rgba(79, 195, 247, 0.2), rgba(79, 195, 247, 0.1));
+    box-shadow: inset 0 0 0 1px rgba(79, 195, 247, 0.24);
+    color: #f4f8ff;
+}
+
+.nav-subsection-link.active:hover {
+    background: linear-gradient(135deg, rgba(79, 195, 247, 0.24), rgba(79, 195, 247, 0.12));
+}
+
 .nav-subsection-toggle-btn {
     width: 32px;
     min-width: 32px;

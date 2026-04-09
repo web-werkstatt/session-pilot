@@ -1,8 +1,8 @@
 # Projekt-Dashboard - Naechste Session
 
-> **Letzte Aktualisierung:** 2026-04-08 (Planning-Tab auf Strukturansicht reduziert)
+> **Letzte Aktualisierung:** 2026-04-09 (Session-Detail Navigation, TOC und Sidebar-Hotfixes deploy-ready)
 > **Status:** Reaktiviert fuer Sprint CP. `v1.3-final` bleibt letzter Freeze-Tag, die Projektseite `/project/<name>` wird jetzt gezielt zur Control Plane vereinfacht.
-> **Naechste Aufgabe:** Naechsten Produkt-/Sprint-Schnitt fuer die Control Plane waehlen; Workflow-Loop v1 und der entschlackte Planning-Tab sind abgeschlossen und deployt.
+> **Naechste Aufgabe:** Naechsten Produkt-/Sprint-Schnitt fuer die Control Plane waehlen; Workflow-Loop v1 und der entschlackte Planning-Tab sind abgeschlossen. Letzter UI-Hotfix korrigiert den Ruecksprung aus Session-Details zur Planning-Ansicht.
 
 ---
 
@@ -57,6 +57,9 @@ Bis dahin: Dashboard laeuft als systemd-Service auf Port 5055, Backup taeglich
 
 ## Historie
 
+- **2026-04-09:** Session-Detailseite entkoppelt den Breadcrumb vom Rueck-CTA: statt `Workspace / Zurueck / Detail` zeigt der Breadcrumb wieder nur Kontext (`Planning` bzw. Fallback `Activity`), und Session-Links aus dem Projekt-Planning tragen jetzt ein explizites Rueckziel auf `/project/<name>?tab=plans`, sodass `Zurueck` verlaesslich wieder im Planning-Tab landet (`templates/session_detail.html`, `static/js/session-detail.js`, `static/js/project-planning.js`).
+- **2026-04-09:** Session-Detail-TOC lesbarer gemacht: Nummer/Text stehen sauber nebeneinander, User-Eintraege zeigen mehr Hoehe, und die Preview kuerzt jetzt weich an Wortgrenzen mit `...` statt hart mitten im Wort; aktueller Preview-Cut ist 75 Zeichen (`static/css/session-detail.css`, `static/js/session-toc.js`).
+- **2026-04-09:** `Projects` im Sidebar-Menue bekam einen staerkeren aktiven Hintergrund, damit der Parent-Link GUI-seitig klarer als aktiver Navigationspunkt erkennbar ist (`static/css/sidebar-submenu.css`).
 - **2026-04-08:** `Open Planning` aus ausgewahlter Sprint-/Spec-Ansicht im Projekt-Planning fuehrt jetzt gezielt auf die zugehoerige Plan-Detailseite statt nur in den generischen `/plans?project=...`-Workspace; der Plan-Level-Link bleibt weiter auf dem Workspace (`static/js/project-planning.js`).
 - **2026-04-08:** Leisen Empty-State im Projekt-Planning weiter reduziert: der Hinweis `No sprint hierarchy detected in this plan yet.` wurde entfernt; ein Plan ohne Sprint-Hierarchie erscheint jetzt einfach ohne zusaetzlichen Warntext (`static/js/project-planning.js`).
 - **2026-04-08:** Verbleibende Statistikzeilen aus der rechten Spec-Karte im Projekt-Planning entfernt: `Tasks`, `Mapped Tasks` und `Linked Sessions` sind dort nicht mehr sichtbar (`static/js/project-planning.js`).

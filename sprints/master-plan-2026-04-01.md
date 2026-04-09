@@ -120,6 +120,29 @@ Referenz:
 
 ## Completed Sprints (diese Session)
 
+### Sprint CP Follow-up — Session-Detail Back-Navigation im Planning — DONE (2026-04-09)
+
+**Ziel:** Ruecksprung aus Session-Details, die aus dem Projekt-Planning geoeffnet wurden, wieder stabil in den `Planning`-Tab der Projektseite fuehren und den falsch platzierten `Zurueck`-Eintrag im Breadcrumb entfernen.
+
+**Umgesetzt:**
+- Breadcrumb der Session-Detailseite von klickbarem `Zurueck` auf reinen Kontextlabel umgestellt; Fallback bleibt `Activity`, aus Planning geoeffnet zeigt er `Planning`.
+- `static/js/session-detail.js` wertet jetzt `return_to` und `return_label` aus, setzt den Breadcrumb-Kontext und bevorzugt dieses explizite Rueckziel vor `document.referrer`.
+- Session-Links aus dem Projekt-Planning bauen jetzt `/sessions/<uuid>?return_to=/project/<name>?tab=plans&return_label=Planning`, damit der Header-Button gezielt zur richtigen Projektansicht zurueckkehrt.
+- Session-Detail-TOC optisch nachgeschaerft: Nummer und Text stehen sauber in einer Zeile, Eintraege zeigen mehr sichtbaren Text, und die Preview kuerzt jetzt weich mit `...` an Wortgrenzen statt stumpf per `substring`.
+- Aktiver Parent-Link `Projects` im Sidebar-Menue klarer hervorgehoben, damit er sich visuell besser an die restlichen aktiven Navigationselemente anlehnt.
+
+**Geaenderte Dateien:**
+- `templates/session_detail.html`
+- `static/js/session-detail.js`
+- `static/js/project-planning.js`
+- `static/css/session-detail.css`
+- `static/js/session-toc.js`
+- `static/css/sidebar-submenu.css`
+- `next-session.md`
+- `sprints/master-plan-2026-04-01.md`
+
+**Commit-Hash:** `pending`
+
 ### Sprint CP — Workflow Loop v1 auf der Projektseite — DONE (2026-04-08)
 
 **Ziel:** `/project/<name>` als klare Control Plane staerken und den Marker-Workflow als lesbaren 5-Step-Loop auf der Projektseite sichtbar machen, waehrend `/copilot?...` der Execution Workspace bleibt.

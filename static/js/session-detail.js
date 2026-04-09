@@ -14,8 +14,32 @@ function setWidth(val) {
     localStorage.setItem('session-width', val);
 }
 
+function getSessionReturnContext() {
+    var params = new URLSearchParams(window.location.search);
+    var returnTo = params.get('return_to') || '';
+    var returnLabel = params.get('return_label') || '';
+    return { returnTo: returnTo, returnLabel: returnLabel };
+}
+
+function applySessionBreadcrumbContext() {
+    var context = getSessionReturnContext();
+    var label = document.getElementById('sessionDetailBreadcrumbLabel');
+    if (!label) return;
+    label.textContent = context.returnLabel || 'Activity';
+}
+
 function goSessionBack() {
+    var context = getSessionReturnContext();
     var fallbackUrl = '/sessions';
+    if (context.returnTo) {
+        try {
+            var targetUrl = new URL(context.returnTo, window.location.origin);
+            if (targetUrl.origin === window.location.origin) {
+                window.location.href = targetUrl.pathname + targetUrl.search + targetUrl.hash;
+                return;
+            }
+        } catch (e) {}
+    }
     try {
         if (document.referrer) {
             var refUrl = new URL(document.referrer, window.location.origin);
@@ -32,6 +56,8 @@ function goSessionBack() {
     const saved = localStorage.getItem('session-width') || '1000';
     setWidth(saved);
 })();
+
+applySessionBreadcrumbContext();
 
 let currentOutcome = null;
 let sessionData = null;
