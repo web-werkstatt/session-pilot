@@ -503,8 +503,32 @@
 .policy-details p { margin: var(--space-1) 0; }
 
 /* Sticky KPI + Tabs */
-.kpi-row { position: sticky; top: 56px; z-index: 41; background: var(--bg-base); padding-bottom: var(--space-2); }
-.gov-tabs { position: sticky; top: 154px; z-index: 40; background: var(--bg-base); }
+.kpi-row {
+    position: sticky;
+    top: 56px;
+    z-index: 41;
+    background: var(--bg-base);
+    padding-bottom: 8px;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.kpi-row .kpi-card {
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.025);
+}
+
+.kpi-row .kpi-value {
+    font-size: 22px;
+}
+
+.kpi-row .kpi-label {
+    font-size: 11px;
+    margin-top: 3px;
+}
+
+.gov-tabs { position: sticky; top: 132px; z-index: 40; background: var(--bg-base); }
 
 /* KPI alert variant */
 .kpi-card--alert .kpi-value { color: var(--status-error); }
