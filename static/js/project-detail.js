@@ -134,6 +134,7 @@ async function loadProjectInfo() {
         document.getElementById('projectBody').innerHTML = html;
         if (typeof lucide !== 'undefined') lucide.createIcons();
         if (hasReadmeSection) loadReadme();
+        buildOverviewToc();
 
         // Teure Sections async nachladen
         loadSlowSections();
@@ -165,10 +166,30 @@ async function loadSlowSections() {
             el.innerHTML = '';
         }
         if (typeof lucide !== 'undefined') lucide.createIcons();
+        buildOverviewToc();
     } catch(e) {
         var el = document.getElementById('slowSections');
         if (el) el.innerHTML = '';
     }
+}
+
+function buildOverviewToc() {
+    var toc = document.getElementById('overviewToc');
+    if (!toc) return;
+    var body = document.getElementById('projectBody');
+    if (!body) return;
+    var headings = body.querySelectorAll('.info-block h3, #slowSections h3, #projectBody > h3');
+    if (headings.length < 2) return;
+
+    var html = '<div class="toc-title">Contents</div>';
+    var idx = 0;
+    headings.forEach(function(h) {
+        if (h.closest('.readme-rendered')) return;
+        var id = 'section-' + idx++;
+        h.id = id;
+        html += '<a href="#' + id + '" class="toc-link" onclick="document.getElementById(\'' + id + '\').scrollIntoView({behavior:\'smooth\',block:\'start\'});return false;">' + h.textContent + '</a>';
+    });
+    toc.innerHTML = html;
 }
 
 // === Quality Tab ===
