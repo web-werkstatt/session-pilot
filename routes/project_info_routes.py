@@ -46,6 +46,235 @@ def _is_meaningful_description(name, text):
     return normalized_value != normalized_name
 
 
+def _project_action_link(label, tab=None):
+    safe_label = _escape(label)
+    if not tab:
+        return safe_label
+    return (
+        f"<a href='#' onclick=\"switchProjectTabByName('{_escape(tab)}');return false;\">"
+        f"{safe_label}</a>"
+    )
+
+
+def _find_files(project_path, matcher, max_depth=3, limit=8):
+    matches = []
+    root_depth = project_path.rstrip(os.sep).count(os.sep)
+    for root, dirs, files in os.walk(project_path):
+        current_depth = root.count(os.sep) - root_depth
+        if current_depth >= max_depth:
+            dirs[:] = []
+        dirs[:] = [d for d in dirs if d not in {".git", "node_modules", "__pycache__", ".next", "dist", "build", ".venv", "venv"}]
+        for filename in files:
+            full_path = os.path.join(root, filename)
+            rel_path = os.path.relpath(full_path, project_path)
+            if matcher(filename, rel_path):
+                matches.append(rel_path)
+                if len(matches) >= limit:
+                    return matches
+    return matches
+
+
+def _read_quality_summary(project_path):
+    report_path = os.path.join(project_path, ".quality", "report.json")
+    if not os.path.exists(report_path):
+        return None
+    try:
+        with open(report_path, "r", encoding="utf-8") as f:
+            report = json.load(f)
+    except (OSError, json.JSONDecodeError):
+        return None
+
+    summary = report.get("summary") or {}
+    return {
+        "score": report.get("score"),
+        "score_numeric": report.get("score_numeric"),
+        "errors": summary.get("errors", 0),
+        "warnings": summary.get("warnings", 0),
+        "info": summary.get("info", 0),
+    }
+
+
+def _build_project_signals(name, pj, project_path):
+    readme_path = None
+    readme_length = 0
+    for readme in ["README.md", "readme.md", "Readme.md"]:
+        candidate = os.path.join(project_path, readme)
+        if os.path.exists(candidate):
+            readme_path = readme
+            try:
+                with open(candidate, "r", encoding="utf-8") as f:
+                    readme_length = len(f.read().strip())
+            except OSError:
+                readme_length = 0
+            break
+
+    tests = _find_files(
+        project_path,
+        lambda filename, rel_path: (
+            "test" in filename.lower()
+            or "spec" in filename.lower()
+            or "/tests/" in rel_path.lower().replace("\\", "/")
+            or rel_path.lower().startswith("tests/")
+        ),
+        max_depth=4,
+        limit=10,
+    )
+    ci_files = _find_files(
+        project_path,
+        lambda filename, rel_path: (
+            rel_path.startswith(".github/workflows/")
+            or rel_path == ".gitlab-ci.yml"
+            or rel_path == ".circleci/config.yml"
+            or filename.startswith("Jenkinsfile")
+        ),
+        max_depth=4,
+        limit=6,
+    )
+    env_examples = _find_files(
+        project_path,
+        lambda filename, rel_path: filename in {".env.example", ".env.sample", ".env.template"},
+        max_depth=4,
+        limit=6,
+    )
+    docs_exists = os.path.isdir(os.path.join(project_path, "docs"))
+    subprojects = pj.get("subprojects") if isinstance(pj.get("subprojects"), list) else []
+    quality = _read_quality_summary(project_path)
+    description_text = _normalize_description_text(pj.get("description"))
+
+    meaningful_sub_descriptions = 0
+    for sub in subprojects:
+        if _is_meaningful_description(sub.get("name", ""), sub.get("description", "")):
+            meaningful_sub_descriptions += 1
+
+    return {
+        "project_name": name,
+        "is_monorepo": pj.get("project_type") == "monorepo",
+        "description_ok": _is_meaningful_description(name, description_text),
+        "readme_path": readme_path,
+        "readme_length": readme_length,
+        "docs_exists": docs_exists,
+        "subprojects": subprojects,
+        "meaningful_sub_descriptions": meaningful_sub_descriptions,
+        "tests": tests,
+        "ci_files": ci_files,
+        "env_examples": env_examples,
+        "quality": quality,
+    }
+
+
+def _render_action_items(items, empty_text):
+    if not items:
+        return f"<div style='font-size:13px;color:#888;line-height:1.55'>{_escape(empty_text)}</div>"
+    rows = "".join(
+        f"<div style='display:flex;gap:10px;align-items:flex-start;padding:6px 0;font-size:13px;line-height:1.5'>"
+        f"<span style='color:#4fc3f7'>•</span><span>{item}</span></div>"
+        for item in items
+    )
+    return rows
+
+
+def _add_action_summary_section(sections, name, pj, project_path):
+    signals = _build_project_signals(name, pj, project_path)
+    quality = signals["quality"] or {}
+    good = []
+    missing = []
+    next_steps = []
+
+    if signals["is_monorepo"] and signals["subprojects"]:
+        good.append(
+            f"Das Projekt ist als Monorepo erkennbar und hat {len(signals['subprojects'])} sichtbare Teilbereiche."
+        )
+    if signals["readme_path"] and signals["readme_length"] >= 200:
+        good.append(
+            f"Es gibt eine brauchbare Einstiegsdoku in <code>{_escape(signals['readme_path'])}</code>."
+        )
+    if signals["docs_exists"]:
+        good.append("Ein eigener <code>docs/</code>-Bereich ist vorhanden.")
+    if signals["env_examples"]:
+        good.append(
+            f"Mindestens ein Konfigurationsbeispiel liegt vor, z. B. <code>{_escape(signals['env_examples'][0])}</code>."
+        )
+    if quality.get("score_numeric") is not None and quality.get("score_numeric", 0) >= 60:
+        good.append(
+            f"Es liegt bereits ein Quality-Scan mit {quality.get('score_numeric')}/100 vor."
+        )
+
+    if not signals["description_ok"]:
+        missing.append("Die Projektbeschreibung ist zu duenn und erklaert den Zweck kaum.")
+        next_steps.append(
+            f"Die Kurzbeschreibung in <code>project.json</code> schaerfen, damit oben sofort klar ist, was dieses Projekt leistet."
+        )
+    if signals["is_monorepo"] and signals["subprojects"] and signals["meaningful_sub_descriptions"] == 0:
+        missing.append("Die Teilprojekte haben kaum brauchbare Beschreibungen.")
+        next_steps.append(
+            "Die Eintraege unter <code>project.json.subprojects</code> mit echten Beschreibungen ergaenzen."
+        )
+    if not signals["readme_path"]:
+        missing.append("Es fehlt ein README als schneller Einstieg.")
+        next_steps.append(
+            f"Im {_project_action_link('Documents-Tab', 'documents')} ein <code>README.md</code> anlegen und Setup, Zweck und Startschritte dokumentieren."
+        )
+    elif signals["readme_length"] < 200:
+        missing.append("Das README ist vorhanden, aber noch zu knapp fuer einen brauchbaren Einstieg.")
+        next_steps.append(
+            "Das <code>README.md</code> um Zweck, Setup, Start, Architektur und wichtige Befehle erweitern."
+        )
+    if not signals["tests"]:
+        missing.append("Es sind keine erkennbaren Tests oder Spec-Dateien sichtbar.")
+        next_steps.append(
+            "Mindestens einen ersten Smoke-Test oder API-/UI-Test anlegen, damit Aenderungen pruefbar werden."
+        )
+    if not signals["ci_files"]:
+        missing.append("Es ist keine sichtbare CI-Pipeline konfiguriert.")
+        next_steps.append(
+            "Eine einfache Pipeline fuer Lint, Tests oder Build unter <code>.github/workflows/</code> oder aequivalent anlegen."
+        )
+    if quality.get("score_numeric") is None:
+        missing.append("Es gibt noch keinen Quality-Scan fuer konkrete technische Baustellen.")
+        next_steps.append(
+            f"Im {_project_action_link('Quality-Tab', 'quality')} einen Scan starten, um blocker und warnings mit Dateibezug zu sehen."
+        )
+    elif quality.get("errors", 0) > 0 or quality.get("warnings", 0) > 0:
+        missing.append(
+            f"Der letzte Quality-Scan meldet {quality.get('errors', 0)} blocker und {quality.get('warnings', 0)} warnings."
+        )
+        next_steps.append(
+            f"Im {_project_action_link('Quality-Tab', 'quality')} die offenen Funde nach Kategorie durchgehen und die betroffenen Dateien priorisieren."
+        )
+
+    if not next_steps:
+        next_steps.append("Als Naechstes den Quality-Tab und die Struktur pruefen, um konkrete Code- oder Doku-Verbesserungen abzuleiten.")
+
+    cards = [
+        (
+            "Was Ist Gut",
+            "#43a047",
+            _render_action_items(good, "Aktuell gibt es noch keine starken positiven Signale ausser der sichtbaren Struktur."),
+        ),
+        (
+            "Was Fehlt",
+            "#ffb300",
+            _render_action_items(missing, "Aktuell sind keine offensichtlichen Luecken erkannt."),
+        ),
+        (
+            "Was Als Naechstes",
+            "#4fc3f7",
+            _render_action_items(next_steps, "Noch keine direkten Folgeaktionen erkannt."),
+        ),
+    ]
+
+    card_html = "".join(
+        f"<div style='padding:14px 16px;border:1px solid #2a2a2a;border-radius:10px;background:#141414'>"
+        f"<div style='font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:{color};margin-bottom:10px'>{title}</div>"
+        f"{body}</div>"
+        for title, color, body in cards
+    )
+    sections.append(
+        f"<h3>Was Kann Ich Verbessern?</h3>"
+        f"<div style='display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px'>{card_html}</div>"
+    )
+
+
 @project_info_bp.route('/api/info')
 def get_info():
     """Schnelle Basis-Info: Metadaten, Tech-Stack, Env, Changelog, README, Screenshots, Milestones, Relations"""
@@ -76,6 +305,7 @@ def get_info():
         sections.append(f"<h3>Description</h3><p>{_escape(description_text)}</p>")
 
     # Schnelle Sections (File I/O only, kein Subprocess/Netzwerk)
+    _add_action_summary_section(sections, name, pj, project_path)
     if is_monorepo:
         _add_structure_section(sections, pj, project_path)
         _add_root_assets_section(sections, project_path)

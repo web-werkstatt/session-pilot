@@ -138,6 +138,7 @@ Referenz:
 - `/quality` visuell und inhaltlich aufgewertet: klarerer Einstieg, risikoorientierte Projektliste, staerkere Priorisierung im Detailmodal und allgemein hochwertigere Informationshierarchie.
 - Projekt-Detailseite fuer Monorepos angereichert: `Structure` und `Root Orientation` machen Root-Docs, wichtige Pfade und Subprojects jetzt direkt in `Details` sichtbar.
 - Projekt-Detailseite fuer Monorepos weiter gestrafft: generische Auto-Sections mit wenig Nutzwert werden fuer Monorepos wie `auth-stack` jetzt reduziert, damit die Ansicht staerker auf Struktur und Orientierung fokussiert bleibt.
+- Projekt-Detailseiten um eine Arbeitsansicht erweitert: `Was kann ich verbessern?` leitet aus Projektbeschreibung, README, Doku, Tests, CI und Quality-Scan konkrete Luecken und naechste Schritte fuer die Bearbeitung ab.
 
 **Geaenderte Dateien:**
 - `templates/session_detail.html`
