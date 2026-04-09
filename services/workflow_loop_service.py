@@ -171,10 +171,31 @@ def _build_signals(project_name, markers, next_marker):
             "hint": "bevorzugt bearbeiten",
         })
 
+    # Dead-Code-Signal aus Quality-Report
+    dead_code = quality_summary.get("dead_code_summary") or {}
+    dead_total = dead_code.get("total", 0)
+    if next_marker_id and dead_total > 0:
+        parts = []
+        if dead_code.get("unused_imports"):
+            parts.append(f"{dead_code['unused_imports']} ungenutzte Imports")
+        if dead_code.get("orphaned_files"):
+            parts.append(f"{dead_code['orphaned_files']} verwaiste Dateien")
+        if dead_code.get("unused_deps"):
+            parts.append(f"{dead_code['unused_deps']} ungenutzte Dependencies")
+        if dead_code.get("orphaned_assets"):
+            parts.append(f"{dead_code['orphaned_assets']} verwaiste Assets")
+        _append_hint(hints, seen, {
+            "marker_id": next_marker_id,
+            "label": "Dead Code",
+            "level": "high" if dead_total > 20 else "medium",
+            "hint": ", ".join(parts[:3]) if parts else f"{dead_total} Findings",
+        })
+
     return {
         "governance_status": gate.get("status") or "unknown",
         "audit_status": (audit_status or "unknown").lower(),
         "quality_score": quality_score if quality_score is not None else None,
+        "dead_code_summary": dead_code if dead_code else None,
         "priority_hints": hints[:6],
     }
 

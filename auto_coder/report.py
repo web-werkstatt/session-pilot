@@ -25,6 +25,8 @@ class Issue:
     fix_prompt: str = ""
     status: str = "open"  # open, fixed, ignored
     fixed_at: Optional[str] = None
+    confidence: str = "high"  # high, medium, low
+    evidence: str = ""  # maschinenlesbare Begruendung
 
 
 @dataclass
@@ -57,6 +59,9 @@ def issue_id(category: str, index: int) -> str:
         "architecture": "arch",
         "test_failure": "test",
         "js_quality": "js",
+        "dead_code": "dead",
+        "dead_deps": "ddep",
+        "dead_frontend": "dfrt",
     }
     prefix = prefix_map.get(category, category[:4])
     return f"{prefix}-{index:03d}"

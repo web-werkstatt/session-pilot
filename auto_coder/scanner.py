@@ -7,6 +7,9 @@ from datetime import datetime, timezone
 from auto_coder.checks.architecture import ArchitectureCheck
 from auto_coder.checks.complexity import ComplexityCheck
 from auto_coder.checks.css_quality import CSSQualityCheck
+from auto_coder.checks.dead_code import DeadCodeCheck
+from auto_coder.checks.dead_dependencies import DeadDependenciesCheck
+from auto_coder.checks.dead_frontend import DeadFrontendCheck
 from auto_coder.checks.duplication import DuplicationCheck
 from auto_coder.checks.file_sizes import FileSizeCheck
 from auto_coder.checks.js_quality import JSQualityCheck
@@ -32,6 +35,9 @@ class ProjectQualityScanner:
             JSQualityCheck(),
             ArchitectureCheck(),
             TestCheck(),
+            DeadFrontendCheck(),
+            DeadDependenciesCheck(),
+            DeadCodeCheck(),
         ]
 
     def _write_progress(self, project_path, step, total, check_name, status):

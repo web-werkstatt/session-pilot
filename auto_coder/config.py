@@ -14,6 +14,9 @@ SCORE_WEIGHTS = {
     "css_undefined": -1,
     "architecture": -5,
     "test_failure": -5,
+    "dead_code": -2,
+    "dead_deps": -1,
+    "dead_frontend": -2,
 }
 
 FILE_SIZE_LIMITS = {

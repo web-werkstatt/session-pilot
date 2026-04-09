@@ -4,6 +4,64 @@
 
 ---
 
+## Session 2026-04-09 (Nachmittag) - Dead Code Detection + Workflow-Integration
+
+### Was wurde erledigt
+- Workflow-v2 Sprint 1 Code: Persistentes Datenmodell (`marker_workflow_states`, `workflow_transitions`), Transition-Regeln, REST-API, Auto-Sync
+- Dead-Code-Erkennung: 3 neue Quality-Checks (`dead_code.py`, `dead_dependencies.py`, `dead_frontend.py`) mit Confidence/Evidence, AST-basiert
+- Workflow-Integration: Dead-Code-Summary fliesst von Quality-Report ueber Governance-Gate in Workflow-Signale
+- Sprint-Plan `sprint-workflow-v2-full-system.md` um GUI/UX-Specs fuer Sprint 2-5 ergaenzt
+- next-session.md auf Code/GUI-Split umgestellt (Claude Code vs. Codex)
+
+### Neue Dateien
+- `services/db_workflow_state_schema.py` — DB-Schema fuer Workflow-States
+- `services/workflow_state_service.py` — Transition-Logik (7 Statuses, ALLOWED_TRANSITIONS)
+- `routes/workflow_routes.py` — 5 REST-Endpoints
+- `auto_coder/checks/_dead_code_utils.py` — Shared Helpers
+- `auto_coder/checks/dead_code.py` — Ungenutzte Imports + verwaiste .py-Dateien
+- `auto_coder/checks/dead_dependencies.py` — Ungenutzte Python/npm Deps
+- `auto_coder/checks/dead_frontend.py` — Verwaiste JS/CSS + CSS-Klassen
+
+### Geaenderte Dateien
+- `services/db_service.py` — `ensure_workflow_state_schema()` hinzugefuegt
+- `services/workflow_loop_service.py` — Auto-Sync, marker_groups, Dead-Code-Signal
+- `services/governance_service.py` — `dead_code_summary` in Quality-Summary
+- `routes/__init__.py` — `workflow_bp` registriert
+- `auto_coder/scanner.py` — 3 neue Checks registriert
+- `auto_coder/report.py` — Issue: +confidence, +evidence
+- `auto_coder/config.py` — Score-Weights fuer dead_code, dead_deps, dead_frontend
+- `CLAUDE.md` — Workflow-State-System + Dead-Code-Erkennung dokumentiert
+
+### Ergebnisse Dead-Code-Scan (project_dashboard)
+- 38 ungenutzte Imports, 9 verwaiste .py-Dateien, 2 ungenutzte Dependencies, 2 verwaiste Assets, 28 CSS-Klassen-Kandidaten
+- 42 davon mit confidence=high
+
+---
+
+## Session 2026-04-09 (Vormittag) - Workflow-v2 GUI/UX + UX-Schliff
+
+### Historie (aus next-session.md uebernommen)
+- Workflow-Tab von Anzeige zu operativem Arbeitsbereich ausgebaut (Marker-Boards, Owner, Blocker, Rating)
+- Workflow-Cards UX-Punkte identifiziert (Informationshierarchie, leerer Workflow-State)
+- Session-Detail Navigation, TOC, Sidebar-Hotfixes
+- Quality/Governance UX vereinfacht
+- Monorepo-Detailseiten verbessert
+- Planning fuer Subprojekte + Fortschrittsblock
+
+---
+
+## Session 2026-04-08 - Sprint CP + Control Plane
+
+### Historie (aus next-session.md uebernommen)
+- Sprint CP fachlich abgeschlossen: Thread-Fortsetzung, Abschluss-Flow, Workflow-Loop v1
+- Projektseite strukturell vereinfacht: 3 Haupttabs (Details, Planning, Workflow)
+- Planning-Tab entmischt, Kontext-Panel optimiert
+- Read-only-GETs fuer Degraded-Betrieb gehaertet
+- Workflow-Loop v1 implementiert und deployt
+- UX/UI-Zielbild und Sprint-Dokumente erstellt
+
+---
+
 ## Session 2026-04-07 - Sprint QT Plan-Reality-Sync
 
 ### Ziel
