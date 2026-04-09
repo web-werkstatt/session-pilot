@@ -141,6 +141,7 @@ Referenz:
 - Projekt-Detailseiten um eine Arbeitsansicht erweitert: `Was kann ich verbessern?` leitet aus Projektbeschreibung, README, Doku, Tests, CI und Quality-Scan konkrete Luecken und naechste Schritte fuer die Bearbeitung ab.
 - Projekt-Detailseiten fuer Monorepos weiter bereinigt: `Details` entfernt und `Root Orientation` zu kompakteren `Quick Entry Points` reduziert, damit nur noch die arbeitsrelevanten Bloecke dominieren.
 - Projekt-Detailseite weiter bereinigt: der separate `README`-Block wird nur noch bei vorhandenem README gerendert, damit `Contents` keine Phantom-Sektion mehr zeigt.
+- Projekt-Detailseite weiter vereinfacht: rechte `Contents`-Sidebar entfernt und die Overview-Ansicht wieder auf einspaltiges Lesen reduziert.
 
 **Geaenderte Dateien:**
 - `templates/session_detail.html`
