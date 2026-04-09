@@ -176,6 +176,7 @@
     function workflowMarkerCardHtml(card) {
         var markerId = String(card.marker_id || '');
         var owner = workflowLoopOwnerValue(card);
+        var compact = card.group === 'active' && card.workflow_status !== 'blocked' && card.workflow_status !== 'write_back' && card.workflow_status !== 'rating';
         var loading = !!workflowLoopUi.loadingByMarker[markerId];
         var error = workflowLoopUi.errorsByMarker[markerId] || '';
         var success = workflowLoopUi.successByMarker[markerId] || '';
@@ -183,14 +184,19 @@
         var messageText = error || success;
         var meta = [];
 
-        if (card.plan_title) meta.push(card.plan_title);
-        if (card.last_session) meta.push('Session ' + card.last_session);
-        if (card.execution_score !== null && card.execution_score !== undefined) meta.push('Execution ' + card.execution_score + '/5');
-        if (card.checks_count) meta.push(card.checks_count + ' Checks');
-        if (card.gate_status === 'blocked' && card.gate_reason) meta.push('Gate: ' + card.gate_reason);
+        if (compact) {
+            if (card.last_session) meta.push('Session ' + card.last_session);
+            if (card.execution_score !== null && card.execution_score !== undefined) meta.push('Execution ' + card.execution_score + '/5');
+        } else {
+            if (card.plan_title) meta.push(card.plan_title);
+            if (card.last_session) meta.push('Session ' + card.last_session);
+            if (card.execution_score !== null && card.execution_score !== undefined) meta.push('Execution ' + card.execution_score + '/5');
+            if (card.checks_count) meta.push(card.checks_count + ' Checks');
+            if (card.gate_status === 'blocked' && card.gate_reason) meta.push('Gate: ' + card.gate_reason);
+        }
 
         return ''
-            + '<article class="workflow-marker-card workflow-marker-card--' + escapeHtml(card.group || 'waiting') + (card.workflow_status === 'blocked' ? ' is-blocked' : '') + (card.is_current ? ' is-current' : '') + '"'
+            + '<article class="workflow-marker-card workflow-marker-card--' + escapeHtml(card.group || 'waiting') + (compact ? ' workflow-marker-card--compact' : '') + (card.workflow_status === 'blocked' ? ' is-blocked' : '') + (card.is_current ? ' is-current' : '') + '"'
             + ' data-marker-id="' + escapeHtml(markerId) + '"'
             + ' data-workflow-status="' + escapeHtml(card.workflow_status || '') + '"'
             + ' data-is-current="' + (card.is_current ? '1' : '0') + '"'
@@ -202,11 +208,11 @@
             + '<div class="workflow-marker-card-flags">' + workflowMarkerFlagsHtml(card) + '</div>'
             + '<h4 class="workflow-marker-card-title">' + escapeHtml(card.title || 'Ohne Titel') + '</h4>'
             + '<p class="workflow-marker-card-copy">' + escapeHtml(workflowMarkerCopy(card)) + '</p>'
-            + '<div class="workflow-marker-meta">' + meta.map(function(item) {
+            + (meta.length ? '<div class="workflow-marker-meta">' + meta.map(function(item) {
                 return '<span class="workflow-marker-meta-item">' + escapeHtml(item) + '</span>';
-            }).join('') + '</div>'
+            }).join('') + '</div>' : '')
             + workflowMarkerFocusHtml(card)
-            + workflowMarkerEditorHtml(card)
+            + workflowMarkerEditorHtml(card, compact)
             + workflowMarkerActionBarHtml(card, loading)
             + '<div class="' + messageClass + '">' + escapeHtml(messageText) + '</div>'
             + '</article>';
@@ -289,7 +295,10 @@
             + '</div>';
     }
 
-    function workflowMarkerEditorHtml(card) {
+    function workflowMarkerEditorHtml(card, compact) {
+        if (compact) {
+            return '';
+        }
         return ''
             + '<div class="workflow-marker-editor">'
             + '<label class="workflow-marker-editor-label">Owner</label>'

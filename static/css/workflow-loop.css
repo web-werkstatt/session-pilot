@@ -196,6 +196,10 @@
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.02);
 }
 
+.workflow-marker-card--compact {
+    gap: 10px;
+}
+
 .workflow-marker-card--active {
     border-color: rgba(34, 197, 94, 0.24);
 }
@@ -310,6 +314,19 @@
     color: rgba(226, 232, 240, 0.78);
     font-size: 14px;
     line-height: 1.6;
+}
+
+.workflow-marker-card--compact .workflow-marker-card-copy {
+    color: rgba(226, 232, 240, 0.86);
+}
+
+.workflow-marker-card--compact .workflow-marker-card-flags {
+    gap: 6px;
+}
+
+.workflow-marker-card--compact .workflow-marker-meta-item {
+    padding: 5px 9px;
+    font-size: 11px;
 }
 
 .workflow-marker-focus {
