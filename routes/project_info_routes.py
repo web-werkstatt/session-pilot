@@ -65,7 +65,9 @@ def get_info():
 
     # Schnelle Sections (File I/O only, kein Subprocess/Netzwerk)
     _add_metadata_section(sections, pj, project_path)
+    _add_structure_section(sections, pj, project_path)
     _add_tech_stack_section(sections, project_path)
+    _add_root_assets_section(sections, project_path)
     _add_env_section(sections, project_path)
     _add_changelog_section(sections, pj)
     _add_readme_section(sections, project_path)
@@ -154,6 +156,82 @@ def _add_metadata_section(sections, pj, project_path):
             for k, v in meta
         )
         sections.append(f"<h3>Details</h3><table style='font-size:13px'>{rows}</table>")
+
+
+def _add_structure_section(sections, pj, project_path):
+    subprojects = pj.get("subprojects")
+    if not isinstance(subprojects, list) or not subprojects:
+        return
+
+    items = []
+    for sub in subprojects[:8]:
+        name = _escape(sub.get("name", "Subproject"))
+        subtype = _escape(sub.get("type", "component"))
+        desc = _normalize_description_text(sub.get("description"))
+        desc_html = f"<div style='color:#888;font-size:12px;line-height:1.45'>{_escape(desc)}</div>" if desc else ""
+        rel_path = _escape(sub.get("path", ""))
+        link_target = sub.get("name") or sub.get("path") or ""
+        link_html = (
+            f"<a href='/project/{html_mod.escape(link_target)}' "
+            f"style='color:#4fc3f7;text-decoration:none;font-weight:600'>{name}</a>"
+        )
+        items.append(
+            f"<div style='padding:10px 12px;border:1px solid #2a2a2a;border-radius:8px;background:#151515'>"
+            f"<div style='display:flex;justify-content:space-between;gap:10px;align-items:flex-start'>"
+            f"<div>{link_html}{desc_html}</div>"
+            f"<span style='font-size:11px;color:#aaa;text-transform:uppercase;letter-spacing:0.06em'>{subtype}</span></div>"
+            f"<div style='margin-top:8px;font-size:11px;color:#666'>{rel_path}</div>"
+            f"</div>"
+        )
+
+    sections.append(
+        f"<h3>Structure</h3>"
+        f"<div style='display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px'>{''.join(items)}</div>"
+    )
+
+
+def _add_root_assets_section(sections, project_path):
+    try:
+        entries = sorted(os.listdir(project_path))
+    except OSError:
+        return
+
+    doc_files = []
+    key_dirs = []
+    priority_files = {"INTEGRATION.md", "CLAUDE.md", "README.md", "README.txt", ".mcp.json"}
+    priority_dirs = {"docs", "scripts", "docker", "app", "apps", "packages", "services"}
+
+    for entry in entries:
+        full_path = os.path.join(project_path, entry)
+        if os.path.isfile(full_path) and entry in priority_files:
+            doc_files.append(entry)
+        elif os.path.isdir(full_path) and entry in priority_dirs:
+            key_dirs.append(entry)
+
+    if not doc_files and not key_dirs:
+        return
+
+    blocks = []
+    if doc_files:
+        docs_html = "".join(
+            f"<span style='display:inline-flex;align-items:center;padding:4px 8px;border-radius:999px;"
+            f"background:#1a1a1a;border:1px solid #2a2a2a;font-size:12px;color:#ddd'>{_escape(name)}</span>"
+            for name in doc_files
+        )
+        blocks.append(f"<div><div style='font-size:11px;color:#888;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px'>Root Docs</div><div style='display:flex;flex-wrap:wrap;gap:8px'>{docs_html}</div></div>")
+
+    if key_dirs:
+        dirs_html = "".join(
+            f"<span style='display:inline-flex;align-items:center;padding:4px 8px;border-radius:999px;"
+            f"background:#141d2b;border:1px solid #22344f;font-size:12px;color:#9ac7ff'>{_escape(name)}/</span>"
+            for name in key_dirs
+        )
+        blocks.append(f"<div><div style='font-size:11px;color:#888;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px'>Important Paths</div><div style='display:flex;flex-wrap:wrap;gap:8px'>{dirs_html}</div></div>")
+
+    sections.append(
+        f"<h3>Root Orientation</h3>"
+        f"<div style='display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px'>{''.join(blocks)}</div>"
+    )
 
 
 def _add_loc_section(sections, pj):
@@ -461,4 +539,3 @@ def _add_env_section(sections, project_path):
         sections.append(f"<h3>Environment Variables</h3><p>{badges}</p>")
     except Exception:
         pass
-
