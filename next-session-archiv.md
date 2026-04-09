@@ -38,28 +38,6 @@
 
 ---
 
-## Session 2026-04-09 (Vormittag) - Workflow-v2 GUI/UX + UX-Schliff
-
-### Historie (aus next-session.md uebernommen)
-- Workflow-Tab von Anzeige zu operativem Arbeitsbereich ausgebaut (Marker-Boards, Owner, Blocker, Rating)
-- Workflow-Cards UX-Punkte identifiziert (Informationshierarchie, leerer Workflow-State)
-- Session-Detail Navigation, TOC, Sidebar-Hotfixes
-- Quality/Governance UX vereinfacht
-- Monorepo-Detailseiten verbessert
-- Planning fuer Subprojekte + Fortschrittsblock
-
----
-
-## Session 2026-04-08 - Sprint CP + Control Plane
-
-### Historie (aus next-session.md uebernommen)
-- Sprint CP fachlich abgeschlossen: Thread-Fortsetzung, Abschluss-Flow, Workflow-Loop v1
-- Projektseite strukturell vereinfacht: 3 Haupttabs (Details, Planning, Workflow)
-- Planning-Tab entmischt, Kontext-Panel optimiert
-- Read-only-GETs fuer Degraded-Betrieb gehaertet
-- Workflow-Loop v1 implementiert und deployt
-- UX/UI-Zielbild und Sprint-Dokumente erstellt
-
 ---
 
 ## Session 2026-04-07 - Sprint QT Plan-Reality-Sync

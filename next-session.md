@@ -87,5 +87,22 @@ Dashboard laeuft als systemd-Service auf Port 5055, Backup taeglich 12:30.
 - Workflow-Cards: Informationshierarchie vereinfachen (Kopf/Mitte/Fuss-Struktur)
 - Leerer Workflow: Marker-Erstellungspfad klaren (CTA aus Planning oder manuell)
 
-### Vorherige Sessions
-Siehe `next-session-archiv.md`
+## Historie
+
+- **2026-04-09:** Weiterer offener UX-Punkt fuer die naechste Session festgehalten: Die Workflow-Cards sind funktional deutlich weiter, aber visuell noch zu unruhig. Das Problem ist weniger fehlende Daten als fehlende Informationshierarchie. Zu viele gleich starke Elemente konkurrieren in einer Card gleichzeitig (`Status`, `Flags`, `Owner`, `Meta`, `Text`, `Actions`). Fuer die naechste Session sollte deshalb ein reiner Design-Schnitt geplant werden: Kopf nur mit Status + Titel, Mitte nur mit einem klaren `Naechster Schritt`, Fuss nur mit 1 Primaeraktion + 1 Sekundaeraktion; Zusatzinfos wie Owner, Session oder Execution nur noch leise und kritisch nur bei echten Sonderfaellen wie `Blockiert` oder `Rating offen` (`static/js/workflow-loop.js`, `static/css/workflow-loop.css`).
+- **2026-04-09:** Offener UX-Punkt im Workflow-Tab explizit festgehalten: Wenn ein Projekt noch keine Marker hat, bleibt der Workflow derzeit leer und der Nutzer muss gedanklich sowie navigationstechnisch zurueck nach `Planning` oder Copilot springen. Das System ist technisch konsistent, aber als Arbeitsfluss noch nicht geschlossen. Fuer die naechste Denk-/Bauphase sollte deshalb sauber entschieden werden, wie Marker initial entstehen sollen: CTA `Marker aus Planning erzeugen`, manueller `Ersten Marker anlegen`-Pfad oder ein halbautomatischer Bruecken-Flow direkt aus dem leeren Workflow-State. Nichts loeschen, sondern diese Luecke als eigenstaendigen Produktpunkt weiterdenken (`static/js/workflow-loop.js`, `services/workflow_loop_service.py`, `routes/copilot_marker_routes.py`).
+- **2026-04-09:** Workflow-Tab von reiner Anzeige zu operativem Arbeitsbereich ausgebaut: Ringgrafik blieb erhalten, darunter gibt es jetzt gruppierte Marker-Boards (`Aktiv`, `Wartet`, `Blockiert`) mit Owner-Badges, Blocker-Textarea, Write-Back-Checkliste, kompaktem Rating-Widget und echten Inline-Aktionen fuer Starten, Blockieren, Reaktivieren, Write Back und Rating. Das Backend liefert dafuer Marker-Gruppen inklusive erlaubter Transitionen; der Workflow-Sync bewahrt feinere Stati wie `ready`, `write_back` und `rating` jetzt stabiler gegen Handoff-Sync (`static/js/workflow-loop.js`, `static/css/workflow-loop.css`, `services/workflow_loop_service.py`, `services/workflow_state_service.py`).
+- **2026-04-09:** Session-Detailseite entkoppelt den Breadcrumb vom Rueck-CTA (`templates/session_detail.html`, `static/js/session-detail.js`, `static/js/project-planning.js`).
+- **2026-04-09:** Session-Detail-TOC lesbarer gemacht (`static/css/session-detail.css`, `static/js/session-toc.js`).
+- **2026-04-09:** `Projects` im Sidebar-Menue staerkerer aktiver Hintergrund (`static/css/sidebar-submenu.css`).
+- **2026-04-09:** `Quality` auf der Projektseite signalisiert Report-Status direkt im Sekundaerlink (`templates/project_detail.html`, `static/js/project-detail.js`, `static/css/project-detail.css`).
+- **2026-04-09:** Governance-Uebersicht auf Entscheidungslogik vereinfacht (`templates/governance.html`, `static/js/governance.js`, `static/css/governance.css`).
+- **2026-04-09:** `/quality` GUI/UX nachgeschaerft: risikoorientierte Projektliste, Quality Briefing (`templates/quality.html`, `static/js/quality.js`, `static/css/quality.css`).
+- **2026-04-09:** Monorepo-Detailseiten verbessert + `Was kann ich verbessern?` Block (`routes/project_info_routes.py`).
+- **2026-04-09:** Planning fuer Subprojekte + Fortschrittsblock (`services/plan_structure_service.py`, `routes/plans_routes.py`, `static/js/project-planning.js`).
+- **2026-04-09:** Workflow-Loop Intro-Block und Leerzustand gestrafft (`static/js/workflow-loop.js`, `static/js/workflow-loop-svg.js`, `static/css/workflow-loop.css`).
+- **2026-04-08:** Sprint CP fachlich abgeschlossen + deployt. Workflow-Loop v1, Thread-Fortsetzung, Abschluss-Flow.
+- **2026-04-08:** Projektseite auf 3 Haupttabs reduziert (Details, Planning, Workflow). Planning-Tab entmischt.
+- **2026-04-08:** Read-only-GETs gehaertet, Workflow-Loop v1 implementiert und getestet.
+- **2026-04-07:** Sprint SB DONE, Closeout (M1-M14), Tag `v1.3-final`
+- **Davor:** siehe `next-session-archiv.md` und `master-plan-2026-04-01.md`
