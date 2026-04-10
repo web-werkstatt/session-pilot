@@ -1,8 +1,8 @@
 # Projekt-Dashboard - Naechste Session
 
-> **Letzte Aktualisierung:** 2026-04-10 (ADR-001 Prio 1+3+4 implementiert)
-> **Status:** ADR-001 Kern implementiert: `markers`-DB-Tabelle, `workflow_core_service`, `marker_importer`, alle Lese-/Schreibpfade in `copilot_marker_service` und `workflow_loop_service` auf DB-first umgestellt. 598 Tests gruen. Quality-Scanner IGNORE_DIRS fuer Multi-CLI gefixt.
-> **Naechste Aufgabe:** ADR-001 Prio 2: `block_marker_parser.py` + `write_guard.py` (Produktfeature: Block-Marker-Schutz), dann Prio 3: Migration aller Projekte via `import_all_projects()`.
+> **Letzte Aktualisierung:** 2026-04-10 (ADR-001 Prio 1+2+3+4 implementiert)
+> **Status:** ADR-001 Prio 1-4 komplett. Block-Marker-Schutz (Prio 2) produktiv: Parser, Write-Guard mit Atomic Write + File-Lock, Integration in `project_handoff_service`. 635 Tests gruen.
+> **Naechste Aufgabe:** ADR-001 Prio 5: Write-Back Core -> handoff.md (Mirror, via Write-Guard), dann Prio 6: `tool_profile_adapter_service.py`.
 
 ---
 
@@ -28,7 +28,7 @@ CLAUDE.md/AGENTS.md/GEMINI.md. Perplexity-Copilot wird Read-Only-Validierungssch
 - [x] Dead-Code-Summary in Governance-Gate integriert (`services/governance_service.py`)
 - [x] Dead-Code-Signal im Workflow-Loop (`services/workflow_loop_service.py`)
 - [x] **ADR-001 Prio 1:** Marker-DB-Tabelle (`services/db_marker_schema.py`) + `services/workflow_core_service.py` + `services/marker_importer.py`
-- [ ] **ADR-001 Prio 2:** `services/block_marker_parser.py` + `services/write_guard.py` (Produktfeature: Block-Marker-Schutz fuer alle Projekte)
+- [x] **ADR-001 Prio 2:** `services/block_marker_parser.py` + `services/write_guard.py` (Produktfeature: Block-Marker-Schutz fuer alle Projekte)
 - [x] **ADR-001 Prio 3:** Idempotenter Importer aus handoff.md in DB (`services/marker_importer.py`, `import_all_projects()` bereit)
 - [x] **ADR-001 Prio 4:** `workflow_loop_service` + `copilot_marker_service` + `plan_structure_service` + `copilot_service` auf Core umgebaut
 - [ ] **ADR-001 Prio 5:** Write-Back: Core -> handoff.md (Mirror, via Write-Guard)
@@ -56,7 +56,7 @@ CLAUDE.md/AGENTS.md/GEMINI.md. Perplexity-Copilot wird Read-Only-Validierungssch
 | Governance Light | DONE — `/governance` mit Policy-Levels, Gate-Ampel |
 | Workflow Loop v1 | DONE — Visualisierung, Deep-Links, Signale |
 | **Workflow-v2 Sprint 1** | **DONE — Persistentes Datenmodell, Transition-Regeln, REST-API, Sync** |
-| **ADR-001 Prio 1+3+4** | **DONE — Marker-DB, Core-Service, Importer, alle Lese-/Schreibpfade auf DB-first** |
+| **ADR-001 Prio 1+2+3+4** | **DONE — Marker-DB, Core-Service, Importer, DB-first, Block-Marker-Schutz mit Write-Guard** |
 | Backup taeglich | DONE — Cron 12:30, 7-Tage-Rotation |
 
 ## Was nicht da ist (= Deferred)
@@ -67,8 +67,8 @@ Siehe Master-Plan, Block "Deferred Sprints (post-closeout v1.3-final)".
 
 1. Dieses File zuerst lesen
 2. ADR lesen: `sprints/adr-001-db-first-marker-core-tool-adapter.md`
-3. Sprint-Plan lesen: `sprints/sprint-adr001-welle1-db-first-core.md` (Ticket 3)
-4. Mit ADR-001 Prio 2 starten: `block_marker_parser.py` + `write_guard.py`
+3. Sprint-Plan lesen: `sprints/sprint-adr001-welle1-db-first-core.md` (Ticket 3 DONE, Ticket 4 offen)
+4. Mit ADR-001 Prio 5 starten: Write-Back Core -> handoff.md (Mirror, via Write-Guard)
 
 Architektur-Referenz:
 - `sprints/adr-001-db-first-marker-core-tool-adapter.md` (bindende Architekturentscheidung)
@@ -110,6 +110,7 @@ Dashboard laeuft als systemd-Service auf Port 5055, Backup taeglich 12:30.
 
 ## Historie
 
+- **2026-04-10 (Nacht):** ADR-001 Prio 2 implementiert: Block-Marker-Parser + Write-Guard als Produktfeature. Code-Review durchgefuehrt (Korrektheit=2, Architektur-Fit=1 im Ausgangszustand), daraufhin gezielter Refactor: `_compare_content()` auf SequenceMatcher umgestellt, APPEND_ONLY auf Prefix-Check vereinfacht, Parser fail-closed bei defekten Markern, SOURCE_ALLOWLIST als Uebergangs-Policy fuer handoff.md, Atomic Write (temp+fsync+rename), File-Lock (fcntl.flock) mit TOCTOU-Schutz. Integration in `project_handoff_service.write_handoff()`. 37 neue Tests, 635 gesamt. Alle 7 Akzeptanzkriterien erfuellt. Commit `44f52f6` (`services/block_marker_parser.py`, `services/write_guard.py`, `services/project_handoff_service.py`, `tests/test_block_marker_parser.py`, `tests/test_write_guard.py`, `tests/test_write_guard_hardening.py`).
 - **2026-04-10:** ADR-001 Prio 1+3+4 implementiert: `markers`-DB-Tabelle, `workflow_core_service`, `marker_importer`. Alle Marker-Lese-/Schreibpfade in `copilot_marker_service`, `workflow_loop_service`, `plan_structure_service`, `copilot_service` auf DB-first mit handoff.md-Fallback umgestellt. Zentrale Resolver `_resolve_marker()` / `_resolve_markers()` eingefuehrt. Quality-Scanner `IGNORE_DIRS` fuer Multi-CLI-Setups (.kilo, .codex, .aider, .serena) erweitert, jscpd-Globs + Post-Filter. 598 Tests gruen (`services/db_marker_schema.py`, `services/marker_importer.py`, `services/workflow_core_service.py`, `services/copilot_marker_service.py`, `services/workflow_loop_service.py`, `auto_coder/config.py`, `auto_coder/checks/duplication.py`).
 - **2026-04-10:** Szenarien-Analyse (4 Szenarien: Neues Projekt, Bestehendes Projekt, Multi-LLM, China-LLMs) durchgefuehrt. Freigabe-Matrix erstellt. 4 Coding-Tickets definiert (Marker-DB, Core-Service, Write-Guard, Tool-Update). Sprint-Plan `sprints/sprint-adr001-welle1-db-first-core.md` und Planverzeichnis `sprints/plan-directory.md` erstellt. Korrekturen aus Review: Wrapper statt Modell fuer China-LLMs, Atomic Write Pattern, Idempotente Re-Generierung.
 - **2026-04-10:** ADR-001 erstellt: DB-First Marker Core + Tool-Adapter + Perplexity-Review-Layer. Sprint-Nachtraege in Sprint 17 (Architekturprinzip ueberholt), Sprint CP (AC5 + Risiko 3 ueberholt), Sprint QS (Status auf Bindend), Master-Plan (Data Persistence Block aktualisiert). Perplexity-Copilot als vorschlagsbasierte Read-Only-Validierungsschicht verankert, Joseph bleibt finale Autoritaet (`sprints/adr-001-db-first-marker-core-tool-adapter.md`, `sprints/sprint-17-*.md`, `sprints/sprint-cp-*.md`, `sprints/sprint-qs-*.md`, `sprints/master-plan-*.md`).
