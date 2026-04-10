@@ -22,7 +22,8 @@ class DuplicationCheck(BaseCheck):
     def _run_jscpd(self, project_path: str) -> list[Issue]:
         output_dir = os.path.join(project_path, QUALITY_DIR, "jscpd")
         os.makedirs(output_dir, exist_ok=True)
-        ignore_pattern = ",".join(sorted(IGNORE_DIRS))
+        ignore_globs = [f"**/{d}/**" for d in sorted(IGNORE_DIRS)]
+        ignore_pattern = ",".join(ignore_globs)
         try:
             subprocess.run(
                 [
@@ -55,6 +56,9 @@ class DuplicationCheck(BaseCheck):
             second = dup.get("secondFile", {})
             f1 = first.get("name", "?")
             f2 = second.get("name", "?")
+            # Dateien in ignorierten Verzeichnissen ueberspringen
+            if self._in_ignored_dir(f1) or self._in_ignored_dir(f2):
+                continue
             lines = dup.get("lines", 0)
             # Same-File-Duplikate sind lokale Patterns, kein DRY-Verstoss
             same_file = f1 == f2
@@ -105,6 +109,11 @@ class DuplicationCheck(BaseCheck):
                     fix_prompt=f"Funktion '{name}' existiert in {', '.join(unique[:3])}. Konsolidiere in ein Modul.",
                 ))
         return issues
+
+    @staticmethod
+    def _in_ignored_dir(filepath: str) -> bool:
+        parts = filepath.replace("\\", "/").split("/")
+        return any(p in IGNORE_DIRS for p in parts)
 
     @staticmethod
     def _extract_name(text: str) -> str:

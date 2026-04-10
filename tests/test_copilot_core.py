@@ -42,7 +42,7 @@ class TestPersistence:
         monkeypatch.setattr(copilot_marker_service, "PROJECTS_DIR", str(tmp_path))
         monkeypatch.setattr("services.copilot_service._resolve_plan_title", lambda plan_id: "Master Plan April")
 
-        _write_marker(str(handoff_path), Marker(
+        test_marker = Marker(
             marker_id="144",
             titel="Week-Daten fixen + Usage Reports Seite",
             plan_id="144",
@@ -57,7 +57,13 @@ class TestPersistence:
             checks=["Report stimmt", "Week-Ansicht passt"],
             last_session="sess_123",
             updated_at="2026-04-04T12:00:00+00:00",
-        ))
+        )
+        _write_marker(str(handoff_path), test_marker)
+        # DB-first: core_get_marker patchen, damit er den Marker aus handoff.md liefert
+        monkeypatch.setattr(
+            "services.workflow_core_service.get_marker",
+            lambda project, mid: test_marker if mid == "144" else None,
+        )
         context_path.write_text(
             "# Marker-Kontext\n\n"
             "- marker_id: 144\n"
@@ -91,7 +97,7 @@ class TestPersistence:
         monkeypatch.setattr(copilot_marker_service, "PROJECTS_DIR", str(tmp_path))
         monkeypatch.setattr("services.copilot_service._resolve_plan_title", lambda plan_id: "Master Plan April")
 
-        _write_marker(str(project_dir / "handoff.md"), Marker(
+        inject_marker = Marker(
             marker_id="144",
             titel="Week-Daten fixen + Usage Reports Seite",
             plan_id="144",
@@ -104,7 +110,12 @@ class TestPersistence:
             prompt_suggestion="Nutze echte Week-Daten",
             risiko="Abweichende Summen",
             checks=["Report stimmt"],
-        ))
+        )
+        _write_marker(str(project_dir / "handoff.md"), inject_marker)
+        monkeypatch.setattr(
+            "services.workflow_core_service.get_marker",
+            lambda project, mid: inject_marker if mid == "144" else None,
+        )
         (project_dir / "marker-context.md").write_text(
             "# Marker-Kontext\n\n"
             "- marker_id: 144\n"

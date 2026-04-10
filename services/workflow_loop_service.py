@@ -3,10 +3,10 @@ Aggregiert den Workflow-Loop fuer die Projekt-Control-Plane.
 """
 from datetime import datetime, timezone
 
-from services.copilot_marker_service import _load_markers_with_regeneration
 from services.governance_service import get_governance_gate
 from services.path_resolver import resolve_project_path
 from services.db_service import execute
+from services.workflow_core_service import get_markers as core_get_markers
 from services.workflow_state_service import (
     get_allowed_transitions,
     get_workflow_states_for_project,
@@ -34,7 +34,7 @@ def build_workflow_loop_data(project_name):
     if not project_path:
         raise FileNotFoundError(project_name)
 
-    markers = list(_load_markers_with_regeneration(project_name) or [])
+    markers = list(core_get_markers(project_name) or [])
     plan_titles = _load_plan_titles(project_name)
 
     # Sync: Marker-Status aus handoff.md in persistierten Workflow-State uebernehmen
@@ -369,8 +369,10 @@ def _workflow_group(workflow_status):
     workflow_status = str(workflow_status or "").strip()
     if workflow_status == "blocked":
         return "blocked"
-    if workflow_status in ("active", "write_back", "rating"):
+    if workflow_status == "active":
         return "active"
+    if workflow_status in ("write_back", "rating"):
+        return "waiting"
     return "waiting"
 
 

@@ -46,7 +46,7 @@ def test_build_workflow_loop_data_with_active_and_pending_rating(monkeypatch, tm
     ]
 
     monkeypatch.setattr("services.workflow_loop_service.resolve_project_path", lambda name: str(project_dir))
-    monkeypatch.setattr("services.workflow_loop_service._load_markers_with_regeneration", lambda project: markers)
+    monkeypatch.setattr("services.workflow_loop_service.core_get_markers", lambda project: markers)
     monkeypatch.setattr(
         "services.workflow_loop_service.execute",
         lambda query, params=None, fetch=False, fetchone=False: [
@@ -82,7 +82,7 @@ def test_build_workflow_loop_data_without_markers(monkeypatch, tmp_path):
     project_dir.mkdir()
 
     monkeypatch.setattr("services.workflow_loop_service.resolve_project_path", lambda name: str(project_dir))
-    monkeypatch.setattr("services.workflow_loop_service._load_markers_with_regeneration", lambda project: [])
+    monkeypatch.setattr("services.workflow_loop_service.core_get_markers", lambda project: [])
     monkeypatch.setattr("services.workflow_loop_service.execute", lambda *args, **kwargs: [])
     monkeypatch.setattr(
         "services.workflow_loop_service.get_governance_gate",

@@ -69,6 +69,9 @@ Kein Build-Schritt, keine Tests, kein Linting konfiguriert. Abhaengigkeiten in `
 - `session_import.py` - JSONL-Parser fuer Claude Sessions und zentraler Sync-Orchestrator (Hash-basierter Cache)
 - `services/importers/` - Modulare Tool-Importer fuer Codex, Gemini, OpenCode und Kilo
 - `session_import_multi.py` - Kompatibilitaetsmodul, re-exportiert die modularen Importer
+- `db_marker_schema.py` - ADR-001: `markers`-Tabelle + `executor_tool` in `marker_workflow_states`
+- `marker_importer.py` - ADR-001: Idempotenter Import aus handoff.md in DB
+- `workflow_core_service.py` - ADR-001: Zentrale Domaenenschicht fuer Marker-Zugriff (DB-first)
 - `session_import_utils.py` - Shared Helpers: `parse_ts()`, `sanitize_content_json()`
 - `session_export.py` - Export: JSON, MD, HTML, XLSX, TXT
 - `account_discovery.py` - Erkennt AI-Assistenten-Accounts (Claude, Codex, Gemini)
@@ -90,6 +93,33 @@ Kein Build-Schritt, keine Tests, kein Linting konfiguriert. Abhaengigkeiten in `
 ## Verbote
 
 - **Kein `python3 -c` und kein eigenes `psycopg2.connect()`** fuer DB-Zugriffe oder Tests. Ausschliesslich die vorhandenen DB-Funktionen und Service-Schicht im Projekt nutzen. DB-Struktur durch Code-Lesen verstehen, nicht durch Abfragen ans Running-System.
+- **Bestehenden manuell geschriebenen Text nie kuerzen, umformulieren oder zusammenfassen.** Gilt fuer `next-session.md`, `handoff.md`, `CLAUDE.md`, `AGENTS.md`, `GEMINI.md` und alle Sprint-Dokumente unter `sprints/`. Nur ergaenzen (neue Bloecke/Zeilen anfuegen) oder in klar markierten generierten Bloecken (`<!-- DASHBOARD-GENERATED:START ... -->`) ueberschreiben. Unmarkierter Text gilt als manuell und ist schreibgeschuetzt.
+
+## Schreib-Policies pro Datei
+
+| Datei | Policy | Bedeutung |
+|---|---|---|
+| `next-session.md` | **append-only** | Neue Bloecke/Historie anfuegen, bestehende Zeilen nie aendern oder loeschen |
+| `handoff.md` | **generated-blocks-only** | Nur `<!-- DASHBOARD-GENERATED:START -->` Bereiche ueberschreiben, Rest ist tabu |
+| `CLAUDE.md`, `AGENTS.md`, `GEMINI.md` | **generated-blocks-only** | Nur markierte Bereiche ueberschreiben, manueller Text ist geschuetzt |
+| `sprints/*.md` | **append-only** | Nachtraege anfuegen (z.B. ADR-Verweise), bestehenden Text nie aendern |
+| `marker-context.md` | **nie eigenmaechtig** | Nur auf ausdruecklichen Auftrag (siehe Fokusauftrag) |
+
+### Block-Marker-Konvention
+
+```markdown
+<!-- MANUAL:START owner=joseph -->
+...manuell geschriebener Kontext, fuer Executor/Services schreibgeschuetzt...
+<!-- MANUAL:END -->
+
+<!-- DASHBOARD-GENERATED:START source=workflow_core updated=2026-04-10 -->
+...automatisch generierter Inhalt, darf nur vom zustaendigen Service ueberschrieben werden...
+<!-- DASHBOARD-GENERATED:END -->
+```
+
+- `MANUAL`-Bloecke: fuer jeden Executor und Service schreibgeschuetzt, keine Ausnahme.
+- `DASHBOARD-GENERATED`-Bloecke: duerfen nur vom im `source`-Attribut genannten Service ueberschrieben werden.
+- Unmarkierter Text: gilt als manuell (= geschuetzt), bis explizit als generiert markiert.
 
 ## Wichtige Patterns
 
@@ -116,6 +146,7 @@ Kein Build-Schritt, keine Tests, kein Linting konfiguriert. Abhaengigkeiten in `
 - **Plan-Sections:** `plan_sections` Tabelle fuer Level-2-Cards (Abschnitte/Specs innerhalb eines Plans). CRUD via `plan_section_service.py`. Board-Spalten nutzen `status` (backlog/ready/in_progress/review/done/blocked), NICHT `workflow_stage`. `/copilot?plan_id=X` zeigt das Section-Board, `/plans` bleibt Level 1.
 - **LLM Commands mit Handoff-Kontext:** Platzhalter `{{handoff_data}}`, `{{sections_data}}`, `{{plan_id}}` in `prompts/*.md` verfuegbar. Context Resolver in `llm_command_service.py` laedt diese aus der DB.
 - **Workflow-State-System (Sprint Workflow-v2):** Persistente Marker-Workflow-States in `marker_workflow_states` Tabelle. Service-Schicht in `services/workflow_state_service.py` mit expliziten Transition-Regeln (`ALLOWED_TRANSITIONS`), Audit-Trail in `workflow_transitions` Tabelle. Schema lazy via `ensure_workflow_state_schema()`. REST-API in `routes/workflow_routes.py`. Sync aus handoff.md erfolgt automatisch beim Workflow-Loop-Abruf (`_sync_markers_to_workflow` in `workflow_loop_service.py`). Statuses: `planned`, `ready`, `active`, `write_back`, `rating`, `done`, `blocked`.
+- **Marker-DB (ADR-001):** Marker-Definitionen in `markers`-Tabelle (DB-first). Schema in `services/db_marker_schema.py`, lazy via `ensure_marker_schema()`. Importer in `services/marker_importer.py` (idempotent, `import_markers_from_handoff()`, `import_all_projects()`). Zentrale Domaenenschicht in `services/workflow_core_service.py` mit `get_markers()`, `get_marker()`, `update_marker_field()`, `update_marker_state()`, `get_handoff_view()`. Alle Lese-Pfade in `copilot_marker_service.py` nutzen `_resolve_marker()` / `_resolve_markers()` (DB-first mit handoff.md-Fallback). Schreib-Pfade aktualisieren handoff.md (Mirror) UND DB (Dual-Write). Auto-Import: Core importiert automatisch aus handoff.md wenn DB leer. `executor_tool` VARCHAR(30) in `marker_workflow_states` fuer Multi-CLI-Tracking.
 
 - **Dead-Code-Erkennung (Quality Scanner):** 3 neue Checks in `auto_coder/checks/`: `dead_frontend.py` (verwaiste JS/CSS + CSS-Klassen), `dead_dependencies.py` (ungenutzte Python/npm Deps), `dead_code.py` (ungenutzte Imports + verwaiste .py-Dateien, AST-basiert). Shared Helpers in `_dead_code_utils.py`. Issues haben `confidence` (high/medium/low) und `evidence` Felder. Projekt-Ignore via `.dead-code-ignore`. V1 erkennt bewusst keine ungenutzten Funktionen/Klassen (Flask-False-Positives), das ist V2.
 

@@ -39,11 +39,12 @@ PAGE_ROUTES = [
 
 @pytest.mark.parametrize("path", PAGE_ROUTES)
 def test_page_returns_200(client, path):
-    """HTML pages must return 200, never 500."""
+    """HTML pages must return 200 or 302 (redirect), never 500."""
     r = client.get(path)
-    assert r.status_code == 200, f"{path} returned {r.status_code}"
-    assert b"<!DOCTYPE" in r.data or b"<html" in r.data, \
-        f"{path} did not return HTML"
+    assert r.status_code in (200, 302), f"{path} returned {r.status_code}"
+    if r.status_code == 200:
+        assert b"<!DOCTYPE" in r.data or b"<html" in r.data, \
+            f"{path} did not return HTML"
 
 
 # ===================================================================

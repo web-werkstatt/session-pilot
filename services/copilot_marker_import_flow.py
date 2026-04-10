@@ -10,6 +10,17 @@ from services.copilot_marker_format import Marker, parse_markers, _write_marker
 from services.markdown_routine_service import scan_markdown_structure
 
 
+def _sync_to_db(handoff_path):
+    """Synchronisiert neue/geaenderte Marker aus handoff.md in die DB."""
+    try:
+        project_name = os.path.basename(os.path.dirname(handoff_path))
+        if project_name:
+            from services.marker_importer import import_markers_from_handoff
+            import_markers_from_handoff(project_name)
+    except Exception:
+        pass
+
+
 _PLAN_ID_LINE_RE = re.compile(r"plan-id:\*+\s*(?P<plan_id>[^\s*]+)|plan-id:\s*(?P<plan_id_plain>[^\s*]+)", re.IGNORECASE)
 _TASK_BULLET_RE = re.compile(r"^\s*[-*]\s+(?:\[[ xX]\]\s+)?(?P<task>.+?)\s*$")
 
@@ -225,14 +236,18 @@ def sprinttomarkers(sprint_path, plan_id, handoff_path):
     plan_id = str(plan_id).strip()
     if not plan_id:
         raise ValueError("plan_id ist erforderlich")
-    return _upsert_task_markers(_extract_tasks_from_sprint(sprint_path, plan_id), plan_id, handoff_path)
+    result = _upsert_task_markers(_extract_tasks_from_sprint(sprint_path, plan_id), plan_id, handoff_path)
+    _sync_to_db(handoff_path)
+    return result
 
 
 def sprinttomarkers_from_content(content, plan_id, handoff_path, source_label="db_plan"):
     plan_id = str(plan_id).strip()
     if not plan_id:
         raise ValueError("plan_id ist erforderlich")
-    return _upsert_task_markers(_extract_tasks_from_content(str(content or ""), plan_id, source_label), plan_id, handoff_path)
+    result = _upsert_task_markers(_extract_tasks_from_content(str(content or ""), plan_id, source_label), plan_id, handoff_path)
+    _sync_to_db(handoff_path)
+    return result
 
 
 def plan_to_marker(plan_id, handoff_path, *, title, context_summary="", next_action="", status="todo", source_label="db_plan"):
@@ -270,4 +285,5 @@ def plan_to_marker(plan_id, handoff_path, *, title, context_summary="", next_act
             updated_at=datetime.now(timezone.utc).isoformat(),
         )
     _write_marker(handoff_path, marker)
+    _sync_to_db(handoff_path)
     return [marker]

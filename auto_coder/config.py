@@ -45,6 +45,9 @@ IGNORE_DIRS = {
     "dist", "build", ".venv", "env", ".env",
     ".claude", ".jscpd", "backups", "_archive",
     ".next", ".nuxt", ".svelte-kit",
+    # AI-CLI-Tool-Verzeichnisse (eigene node_modules, Caches)
+    ".kilo", ".codex", ".aider", ".serena", ".playwright-mcp",
+    ".pytest_cache",
 }
 
 MAX_HISTORY_ENTRIES = 90

@@ -245,6 +245,12 @@ def ensure_workflow_state_schema():
     ensure_workflow_state_schema_impl(execute)
 
 
+def ensure_marker_schema():
+    """ADR-001: Marker-Definitionen DB-first."""
+    from services.db_marker_schema import ensure_marker_schema_impl
+    ensure_marker_schema_impl(execute)
+
+
 _ai_scope_ready = False
 _ai_scope_lock = threading.Lock()
 
@@ -304,7 +310,6 @@ def ensure_model_quality_view():
         execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_mv_model_quality_model ON mv_model_quality(model)")
         _model_quality_ready = True
 
-
 def refresh_model_quality_view():
     """Refresh der Materialized View (concurrent wenn moeglich)"""
     try:
@@ -315,7 +320,6 @@ def refresh_model_quality_view():
 
 _file_touch_ready = False
 _file_touch_lock = threading.Lock()
-
 
 def ensure_file_touch_schema():
     """Sprint 10: Per-File AI-Heatmap Tabelle"""
@@ -386,10 +390,8 @@ def ensure_file_touch_schema():
         """)
         _file_touch_ready = True
 
-
 _project_identity_ready = False
 _project_identity_lock = threading.Lock()
-
 
 def ensure_project_identity_schema():
     """SPEC-PROJECT-MEMORY-001: Projekt-Identity-Tabelle"""
@@ -419,10 +421,8 @@ def ensure_project_identity_schema():
         execute("CREATE INDEX IF NOT EXISTS idx_projects_path ON projects(path)")
         _project_identity_ready = True
 
-
 _audit_schema_ready = False
 _audit_schema_lock = threading.Lock()
-
 
 def ensure_audit_schema():
     """SPEC-AUDIT-001: Tabellen fuer Spec-Audit-System"""

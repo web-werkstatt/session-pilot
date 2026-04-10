@@ -101,9 +101,9 @@ def build_marker_chat_context(project_id=None, marker_id=None, handoff_path=None
     from services.copilot_marker_service import (
         _get_handoff_path,
         get_marker_context,
-        parse_markers,
         read_marker_context,
     )
+    from services.workflow_core_service import get_marker as core_get_marker
 
     frontend = frontend_context if isinstance(frontend_context, dict) else {}
     marker_meta = {}
@@ -125,28 +125,28 @@ def build_marker_chat_context(project_id=None, marker_id=None, handoff_path=None
     handoff_marker = None
     if resolved_marker_id:
         try:
-            if handoff_path and resolved_handoff_path and os.path.exists(resolved_handoff_path):
-                for candidate in parse_markers(resolved_handoff_path):
-                    if candidate.marker_id == resolved_marker_id:
-                        handoff_marker = {
-                            "marker_id": candidate.marker_id,
-                            "plan_id": candidate.plan_id,
-                            "sprint_tag": candidate.sprint_tag,
-                            "spec_tag": candidate.spec_tag,
-                            "titel": candidate.titel,
-                            "status": candidate.status,
-                            "ziel": candidate.ziel,
-                            "naechster_schritt": candidate.naechster_schritt,
-                            "risiko": candidate.risiko,
-                            "checks": candidate.checks,
-                            "prompt": candidate.prompt,
-                            "prompt_suggestion": candidate.prompt_suggestion,
-                            "last_session": candidate.last_session,
-                            "updated_at": candidate.updated_at,
-                        }
-                        break
-            elif resolved_project_id:
-                handoff_marker = get_marker_context(resolved_project_id, resolved_marker_id)
+            # DB-first: Marker aus Core lesen
+            if resolved_project_id:
+                candidate = core_get_marker(resolved_project_id, resolved_marker_id)
+                if candidate:
+                    handoff_marker = {
+                        "marker_id": candidate.marker_id,
+                        "plan_id": candidate.plan_id,
+                        "sprint_tag": candidate.sprint_tag,
+                        "spec_tag": candidate.spec_tag,
+                        "titel": candidate.titel,
+                        "status": candidate.status,
+                        "ziel": candidate.ziel,
+                        "naechster_schritt": candidate.naechster_schritt,
+                        "risiko": candidate.risiko,
+                        "checks": candidate.checks,
+                        "prompt": candidate.prompt,
+                        "prompt_suggestion": candidate.prompt_suggestion,
+                        "last_session": candidate.last_session,
+                        "updated_at": candidate.updated_at,
+                    }
+                else:
+                    handoff_marker = get_marker_context(resolved_project_id, resolved_marker_id)
         except Exception:
             handoff_marker = None
 
