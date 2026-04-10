@@ -3,7 +3,7 @@ import json
 import os
 import re
 
-from services.copilot_marker_service import parse_markers
+from services.copilot_marker_format import parse_markers
 from services.db_service import ensure_plan_structure_schema, ensure_session_review_schema, execute
 from services.markdown_routine_service import scan_markdown_structure
 from services.path_resolver import resolve_project_path
@@ -13,6 +13,19 @@ from services.plan_structure_helpers import (
     marker_summary,
     serialize_session_row,
 )
+
+
+def _get_markers_with_fallback(pid, hp=None):
+    """DB-first mit handoff.md-Fallback."""
+    try:
+        from services.workflow_core_service import get_markers
+        m = get_markers(pid)
+        if m:
+            return m
+    except Exception:
+        pass
+    return parse_markers(hp) if hp and os.path.exists(hp) else []
+
 def _slugify(value):
     slug = re.sub(r"[^a-z0-9]+", "-", str(value or "").strip().lower()).strip("-")
     return slug or "item"
@@ -425,7 +438,7 @@ def get_plan_structure(project_id, handoff_path=None):
         (project_id,),
         fetch=True,
     ) or []
-    markers = parse_markers(handoff_path) if handoff_path and os.path.exists(handoff_path) else []
+    markers = _get_markers_with_fallback(project_id, handoff_path)
 
     items = []
     for sprint in sprint_rows:
@@ -456,10 +469,10 @@ def get_plan_structure(project_id, handoff_path=None):
 
 
 def get_tagged_plan_structure(content, handoff_path=None, source_path=""):
-    markers = parse_markers(handoff_path) if handoff_path and os.path.exists(handoff_path) else []
     project_id = ""
-    if handoff_path and os.path.exists(handoff_path):
+    if handoff_path:
         project_id = os.path.basename(os.path.dirname(handoff_path))
+    markers = _get_markers_with_fallback(project_id, handoff_path)
     return derive_tagged_plan_sections(content, markers, source_path=source_path, project_id=project_id)
 
 
@@ -479,7 +492,8 @@ def get_sprint_plan_detail(sprint_plan_id, handoff_path=None):
         (sprint_plan_id,),
         fetch=True,
     ) or []
-    markers = parse_markers(handoff_path) if handoff_path and os.path.exists(handoff_path) else []
+    _proj_id = os.path.basename(os.path.dirname(handoff_path)) if handoff_path else ""
+    markers = _get_markers_with_fallback(_proj_id, handoff_path)
     sprint_markers = [
         m for m in markers
         if str(getattr(m, "sprint_tag", "") or "").strip().lstrip("#") == str(sprint["plan_id"]).strip()
