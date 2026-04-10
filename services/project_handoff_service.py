@@ -8,6 +8,7 @@ handoff.md ist abgeleitetes Produkt, liegt immer unter:
 Kein anderer Code darf Handoff-Dateien direkt via Pfad schreiben.
 Alles muss ueber write_handoff(project_id) laufen.
 """
+import logging
 import os
 from datetime import timezone
 
@@ -16,6 +17,8 @@ from services.copilot_marker_format import parse_markers
 from services.copilot_marker_service import Marker, _serialize_marker
 from services.db_service import execute, ensure_plans_schema
 from services.path_resolver import resolve_project_path
+
+log = logging.getLogger(__name__)
 
 
 def get_handoff_path(project_id):
@@ -199,7 +202,16 @@ def write_handoff(project_id):
         md = build_empty_handoff_markdown(project_id)
 
     filepath = get_handoff_path(project_id)
-    with open(filepath, "w", encoding="utf-8") as f:
-        f.write(md)
+
+    # ADR-001 Prio 2: Schreibzugriff ueber Write-Guard absichern
+    from services.write_guard import safe_write
+    result = safe_write(filepath, md, "project_handoff_service")
+    if not result.allowed:
+        log.warning(
+            "Write-Guard blocked handoff write for %s: %s",
+            project_id,
+            [v.description for v in result.violations],
+        )
+        return None, None
 
     return filepath, md
