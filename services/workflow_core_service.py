@@ -147,26 +147,56 @@ def update_marker_state(project_name, marker_id, new_status, executor_tool=None)
 
 
 def get_handoff_view(project_name):
-    """Read-Model fuer handoff.md-Regenerierung.
+    """Read-Model fuer handoff.md-Regenerierung + Policy-Kontext.
 
-    Liefert alle Marker eines Projekts als Dicts mit allen Feldern,
-    sortiert nach plan_id und marker_id.
+    Liefert ein Dict:
+    - `markers`: Liste aller Marker eines Projekts als Dicts (sortiert nach
+      plan_id, marker_id), angereichert mit Workflow-State.
+    - `active_policies`: Map `role_id -> {tool_id, rank, confidence}` aus
+      der Policy-Schicht. Pro Rolle wird die primary Policy (niedrigster
+      rank) gewaehlt. Leer wenn Policy-Schicht nicht verfuegbar oder keine
+      Policies approved sind.
+
+    Hinweis: Format wurde in ADR-002 Stufe 1b (Commit 9) von einer Liste
+    auf ein Dict geaendert. Bis zu diesem Commit hatte die Funktion keinen
+    produktiven Aufrufer.
     """
     markers = get_markers(project_name)
-    result = []
+    marker_list = []
     for m in markers:
         if m is None:
             continue
         data = asdict(m)
-        # Workflow-State anreichern
         state = get_workflow_state(project_name, m.marker_id)
         if state:
             data["workflow_status"] = state.get("workflow_status", "planned")
             data["owner"] = state.get("owner", "")
             data["blocked_reason"] = state.get("blocked_reason", "")
             data["executor_tool"] = state.get("executor_tool", "")
-        result.append(data)
-    return result
+        marker_list.append(data)
+
+    active_policies = {}
+    try:
+        from services.policy_service import get_active_policies
+        for p in get_active_policies() or []:
+            rid = p.get("role_id")
+            if not rid:
+                continue
+            current = active_policies.get(rid)
+            new_rank = p.get("rank") or 99
+            if current is None or new_rank < (current.get("rank") or 99):
+                active_policies[rid] = {
+                    "tool_id": p.get("tool_id"),
+                    "rank": p.get("rank"),
+                    "confidence": p.get("confidence"),
+                }
+    except Exception as exc:
+        log.info("Policy-Schicht fuer handoff_view nicht verfuegbar: %s", exc)
+
+    return {
+        "markers": marker_list,
+        "active_policies": active_policies,
+    }
 
 
 MARKERS_SECTION_HEADING = "## Copilot Markers"
