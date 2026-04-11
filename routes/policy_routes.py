@@ -1,5 +1,5 @@
 """
-ADR-002 Stufe 1b: REST-Endpoints fuer die Policy-Schicht.
+ADR-002 Stufe 1b: REST-Endpoints + UI fuer die Policy-Schicht.
 
 Acht Endpoints:
 - GET  /api/policies/roles
@@ -18,7 +18,7 @@ Verwirrung fuehren koennten.
 """
 import logging
 
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, render_template, request
 
 from services.policy_service import (
     apply_suggestion,
@@ -33,6 +33,16 @@ from services.policy_review_service import review_policies
 log = logging.getLogger(__name__)
 
 policy_bp = Blueprint("policy", __name__)
+
+
+# ---------------------------------------------------------------------------
+# UI
+# ---------------------------------------------------------------------------
+
+@policy_bp.route("/policies", methods=["GET"])
+def policies_page():
+    """Rendert die Policy-Uebersicht-Seite."""
+    return render_template("policies.html", active_page="policies")
 
 
 # ---------------------------------------------------------------------------

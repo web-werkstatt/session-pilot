@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}Policies — Project Dashboard{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/policies.css">
+{% endblock %}
+
+{% block content %}
+<div class="policies-page">
+    <header class="policies-header">
+        <div>
+            <h1 class="policies-title">Policies</h1>
+            <p class="policies-subtitle">
+                Rollen, Tool-Profile und deren Zuweisungen als DB-gefuehrte Governance-Schicht.
+                Perplexity liefert Vorschlaege, Joseph entscheidet.
+            </p>
+        </div>
+        <div class="policies-actions">
+            <button class="btn-secondary" type="button" id="policies-seed-btn">Seed-Defaults anlegen</button>
+            <button class="btn-primary" type="button" id="policies-review-btn">Review anfordern</button>
+        </div>
+    </header>
+
+    <div class="policies-status" id="policies-status"></div>
+
+    <section class="policies-section">
+        <header class="policies-section-header">
+            <h2>Pending Suggestions</h2>
+            <span class="policies-section-hint">Perplexity-Vorschlaege, die auf Deine Entscheidung warten</span>
+        </header>
+        <div id="policies-suggestions" class="policies-list policies-list--suggestions">
+            <div class="policies-empty">Wird geladen...</div>
+        </div>
+    </section>
+
+    <section class="policies-section">
+        <header class="policies-section-header">
+            <h2>Aktive Policies</h2>
+            <span class="policies-section-hint">Zuweisungen Rolle → Tool, versioniert, nur approved</span>
+        </header>
+        <div id="policies-assignments" class="policies-list">
+            <div class="policies-empty">Wird geladen...</div>
+        </div>
+    </section>
+
+    <section class="policies-section policies-section--grid">
+        <div class="policies-subsection">
+            <header class="policies-section-header">
+                <h2>Rollen</h2>
+                <span class="policies-section-hint">Arbeits-Rollen als Datensatz</span>
+            </header>
+            <div id="policies-roles" class="policies-list">
+                <div class="policies-empty">Wird geladen...</div>
+            </div>
+        </div>
+
+        <div class="policies-subsection">
+            <header class="policies-section-header">
+                <h2>Tool-Profile</h2>
+                <span class="policies-section-hint">CLI / Modell / Provider</span>
+            </header>
+            <div id="policies-tool-profiles" class="policies-list">
+                <div class="policies-empty">Wird geladen...</div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<script src="/static/js/policies.js"></script>
+{% endblock %}
