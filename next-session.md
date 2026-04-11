@@ -151,3 +151,37 @@ Dashboard laeuft als systemd-Service auf Port 5055, Backup taeglich 12:30.
 
 ### Nicht im Scope (Prio 5b / Follow-up)
 - `copilot_marker_service._write_marker` behaelt vorerst Direct-Write-Path (bypasst write_guard). Core-Mirror ueberschreibt nachgelagert, Content-kompatibel. Vollstaendiger Umbau auf Core-Single-Writer erfordert `last_execution_at` in `update_marker_field.allowed`-Set + Refactoring der Tests in `test_copilot_marker_service_core.py` / `test_copilot_marker_service_flow.py`, die `_write_marker` direkt nutzen.
+
+## Session 2026-04-11 (Nachmittag) - Workflow-v2 UX Follow-up + Asset-Split + ADR-001 Prio 6 DONE
+
+### Was wurde erledigt
+- **Uncommitted-Aufraeumen:** vier logische Commits aus dem Working-Tree geloest (Sprint Workflow-v2 UX Follow-up war als DONE dokumentiert, aber nie committet; handoff.md wurde automatisch durch Prio-5 Mirror erweitert; CLAUDE.md META-Block + Gap-Analyse waren unkommittet).
+- **Asset-Split wegen Dateigroessen-Limits:** `static/css/workflow-loop.css` (773 Zeilen) in vier thematische Dateien aufgeteilt (`workflow-loop-shell.css` 188, `workflow-loop-cards.css` 108, `workflow-loop-forms.css` 190, `workflow-loop-summary.css` 284). `static/js/workflow-loop.js` (767 Zeilen) auf `window.WorkflowLoop`-Namespace verteilt: `state.js` (67), `cards.js` (191), `board.js` (156), `modal.js` (98), `actions.js` (203), Orchestrator `workflow-loop.js` (68). Template `templates/project_detail.html` (339 Zeilen) um Documents-Tab als `templates/_project_documents_tab.html` entlastet, jetzt 246 Zeilen. Live-verifiziert via Chrome-DevTools MCP: Workflow-Tab rendert Intro/Ring/Summary/Card-Gruppen/Board korrekt, null Console-Errors.
+- **ADR-001 Prio 6 Core:** `services/tool_profile_adapter_service.py` (374 Zeilen). Zwei Schreibpfade: Bootstrap (Atomic-Write mit File-Lock + TOCTOU-Re-Check, fuer Erst-Setup ohne bestehenden Block) und Update (ueber `write_guard.safe_write`). `_guard_protected_unchanged` verifiziert im Bootstrap-Pfad, dass MANUAL/UNMARKED-Zeilen 1:1 erhalten bleiben. `build_dashboard_block` deterministisch mit festem `updated`-Parameter fuer Idempotenz-Tests.
+- **ADR-001 Prio 6 REST:** In `routes/project_routes.py` zwei Endpoints ergaenzt: `GET /api/project/<name>/tool-profile/preview` (Dry-Run mit Unified-Diff pro Tool) und `POST /api/project/<name>/tool-profile/regenerate` (schreibt, liefert 409 bei Write-Guard-Verletzung). `_tool_profile_meta` liest `project.json` fuer Typ/Description.
+- **ADR-001 Prio 6 UI:** Topbar-Button "Tool Files" in `project_detail.html`. `static/js/tool-profile-adapter.js` (123 Zeilen) erzeugt den Modal dynamisch per `document.body.appendChild`, laedt die Preview beim Oeffnen, zeigt Diff + Mode-Badge (`Erst-Setup` / `Update` / `Keine Aenderungen`) pro Tool-Datei, "Regenerate schreiben"-Button fuehrt den POST-Call aus. Live getestet: Modal zeigt korrekt die drei Diffs fuer CLAUDE.md/AGENTS.md/GEMINI.md mit Bootstrap-Badge.
+- **14 neue Tests** in `tests/test_tool_profile_adapter.py`: 11 fuer den Core-Service (Deterministik, Bootstrap mit 200 manuellen Zeilen intakt, Idempotenz, Update-Replacement, Preview-Dry-Run, regenerate_all ueber alle Tools, unknown-Tool, fremder generated Block) + 3 fuer die REST-Endpoints (Preview-Diffs, idempotenter Regenerate-Flow, 404 fuer unbekanntes Projekt).
+- **659/659 Tests gruen** (+14 neue), null Regressionen.
+- **4 Commits**, nach Gitea gepusht:
+  - `526f5cd` Sprint: Workflow-v2 UX Follow-up + Asset-Split + ADR-001 Nachtraege
+  - `6e977e3` Docs: META-Transparenz-Anforderungen + Managed Agents Gap Analysis
+  - `7ab334a` Feature: ADR-001 Prio 6 — tool_profile_adapter_service (Core)
+  - `4a326d6` Feature: ADR-001 Prio 6 — Tool-Profile Adapter REST + UI
+
+### Akzeptanzkriterien Ticket 4 (Sprint ADR-001 Welle 1)
+- Bestehende CLAUDE.md mit 200 manuellen Zeilen nach Update intakt: erfuellt (`test_bootstrap_preserves_200_manual_lines`)
+- DASHBOARD-GENERATED-Block korrekt eingefuegt/aktualisiert: erfuellt (Bootstrap- und Update-Pfad)
+- Dry-Run zeigt Diff ohne zu schreiben: erfuellt (`preview_update` + GET-Endpoint, live verifiziert)
+- UI-Button funktional mit Preview-Dialog: erfuellt (Topbar-Button "Tool Files", Modal mit Diff-Anzeige, live verifiziert)
+- Idempotent (zweites Regenerate erzeugt keinen Diff): erfuellt (`test_second_regenerate_is_idempotent`, REST-idempotent-Test)
+
+### Naechste Aufgabe
+**ADR-001 Welle 1 abgeschlossen.** ADR-001 Prio 7 (Capability-/Skill-Modell, unabhaengig) und Prio 8 (Perplexity-Review-Layer ueber generierte Artefakte, Abhaengigkeit Prio 5+6) sind die logischen Folgen. Alternativ offene GUI/UX-Punkte aus dem Workflow-v2-Follow-up:
+- Dead-Code-Hint im Workflow-Tab mit eigenem Icon und Kategorie-Breakdown rendern (`static/js/workflow-loop-cards.js` oder `board.js`, `static/css/workflow-loop-forms.css`)
+- `dead_code_summary` aus `signals` als kompakte Info-Karte im Workflow-Tab
+- Owner separat editierbar machen, auch ohne Statuswechsel
+- Microcopy der Marker-Gruppen und CTA-Reihenfolge feinjustieren
+
+### Nicht im Scope (Follow-up)
+- Block-Inhalt der `DASHBOARD-GENERATED`-Section ist aktuell minimal (Projekt-Name, Tool, Typ, Description, Stand). Marker-Count, Plan-Count, Quality-Score koennten ergaenzt werden, brauchen aber DB-Queries aus `_tool_profile_meta` und sind in `build_dashboard_block` vorbereitet (`meta["marker_count"]`, `meta["plan_count"]`, `meta["quality_score"]` werden bereits gerendert, wenn gesetzt).
+- GitHub-Mirror nicht gepusht (Verkaufsschutz laut Memory-Regel).
