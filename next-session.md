@@ -209,3 +209,51 @@ Dashboard laeuft als systemd-Service auf Port 5055, Backup taeglich 12:30.
 - Ein Writer pro Marker, mehrere Reviewer moeglich.
 - Reviewer nie derselbe Provider wie Executor.
 - Stufe 1a ist Proof-of-Concept vor Stufe 1b — nach Commit 3 kann Joseph pausieren und testen.
+
+## Session 2026-04-11 (Spaet-Abend) — ADR-002 Stufe 1a + 1b vollstaendig
+
+### Alle Commits der Session
+
+| # | Commit | Hash | Inhalt |
+|---|---|---|---|
+| 1 | Doku-Rahmen | `04fb9d2` | ADR-002 + Sprint-Plan + 3 append-only Nachtraege |
+| 2 | Setup-Reviewer Core | `92c8f49` | services/tool_setup_review/ modular (6 Submodule), project_reviews-Schema, 22 Tests |
+| 3 | Setup-Reviewer REST + UI | `887031c` | POST/GET tool-setup/review, UI im Tool-Files-Modal (erste Button-Version) |
+| 3b | UX Fix | `a09f415` | Badge + Banner statt zweitem Primaer-Button, 288-Zeilen-Rewrite von setup-reviewer.js |
+| — | Prompt-Schaerfung | `e59f978` | setup_reviewer.md: Verbot geratener Befehle in suggested_blocks, Severity-Kalibrierung, keine Citations |
+| 3c | UX Fix Refresh-Link | `1b66445` | Refresh-Link im Banner immer sichtbar, nicht nur bei veraltet/fehlerhaft |
+| 4 | Policy-Schema + Service | `7c42773` | 4 DB-Tabellen (roles, tool_profiles, role_tool_policies, policy_review_suggestions), 14 Tests |
+| 5 | Seed-Defaults | `c16f1be` | 6 Rollen + 5 Tool-Profile, idempotent, preserviert Joseph-Edits, 6 Tests |
+| 6 | Policy-Reviewer | `bdd31d5` | Perplexity-Policy-Reviewer mit context_hash-Dedup, prompts/policy_reviewer.md, 13 Tests |
+| 7 | Policy-REST | `dcef99a` | 8 Endpoints unter /api/policies/*, 12 Tests |
+| 8 | Policy-UI | `733289b` | Seite /policies mit 4 Sektionen, Inline Approve/Reject, Nav-Eintrag in base.html |
+| 9 | workflow_core Integration | `9923d82` | get_handoff_view liefert markers + active_policies, policy_stats.get_session_stats_per_tool, 13 Tests |
+
+### Was ist jetzt produktiv
+
+- **/policies** live unter `http://localhost:5055/policies` — zeigt Rollen, Tool-Profile, aktive Policies, Pending Suggestions; triggerbar: Seed-Defaults und Review
+- **Setup-Reviewer** als Badge am Tool-Files-Button + Banner im Modal jedes Projekts; Refresh-Link dauerhaft sichtbar
+- **Perplexity-Policy-Reviewer** via REST-Endpoint POST /api/policies/review; persistiert in `policy_review_suggestions` mit approval-Workflow
+- **`workflow_core_service.get_handoff_view`** liefert jetzt `{markers, active_policies}` als Dict; alte Liste-Semantik gebrochen, aber war nirgends produktiv aufgerufen
+- **Policy-Stats-Helper** als Vorbereitung fuer Stufe 3 (echte Session-Evidence im Policy-Reviewer)
+
+### Tests
+
+- **746 / 746 gruen** (Start der Session: 681, ueber den Tag auf 746, also +65 neue Tests)
+- Alle Tests mit In-Memory-DB-Fakes, keine echte PostgreSQL-Abhaengigkeit
+- Backend-zentriert, UI wird live ueber Chrome/curl verifiziert
+
+### Parkzettel fuer Stufe 2+
+
+- **context_hash enthaelt nicht die Prompt-Version.** Prompt-Schaerfungen greifen bei gespeicherten Reviews erst nach `force=True`. Fix: Prompt-Hash in den context_hash einbeziehen. Klein, aber nicht jetzt.
+- **`policy_stats.get_session_stats_per_tool`** aggregiert `sessions.account`, nicht `tool_profiles.tool_id`. Mapping `account → tool_id` kommt in Stufe 3, wenn mehrere Tool-Profile pro account sinnvoll unterschieden werden muessen.
+- **Marker-Schema ohne `role_id` / `assigned_tool`**. Aktuell kann ein Marker nicht an eine Rolle gebunden werden. Stufe 3-Thema (Marker-Dispatch).
+- **Tool-Profile-Strengths/Weaknesses leer** bei Seed. Sollen durch Review-Historie entstehen, nicht spekulativ gesetzt werden. Stufe 3 liefert die Daten.
+- **Perplexity-Policy-Reviewer aktuell ohne Session-Evidence** im Input. Das Feld `session_stats_per_tool` wird im Prompt erwaehnt, aber noch nicht ins context-JSON gesteckt. Stufe 3.
+
+### Offen / Hausaufgaben fuer die naechste Session
+
+- Echter Live-Test des Policy-Reviewers (POST /api/policies/review) analog zum Setup-Reviewer-Testlauf, um den Prompt-Output zu bewerten und ggf. nachzuschaerfen
+- UX-Feinschliff der /policies-Seite (aktuell minimal-funktional, nicht poliert)
+- Entscheidung, ob context_hash-Prompt-Version-Parkzettel jetzt abgeraeumt werden soll oder weiter geparkt bleibt
+- Stufe 2-Roadmap: Cross-Project-Review-Widget, Batch-Reviews, Scheduled Reviews, Artefakt-Reviewer
