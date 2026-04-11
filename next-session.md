@@ -257,3 +257,15 @@ Dashboard laeuft als systemd-Service auf Port 5055, Backup taeglich 12:30.
 - UX-Feinschliff der /policies-Seite (aktuell minimal-funktional, nicht poliert)
 - Entscheidung, ob context_hash-Prompt-Version-Parkzettel jetzt abgeraeumt werden soll oder weiter geparkt bleibt
 - Stufe 2-Roadmap: Cross-Project-Review-Widget, Batch-Reviews, Scheduled Reviews, Artefakt-Reviewer
+
+## Session 2026-04-11 (Nachtrag Dispatch/Execute) — ADR-002 erweitert
+
+### Was wurde erledigt
+- **ADR-002 Nachtrag angelegt** (`sprints/adr-002-ai-control-plane-multi-llm-reviewer.md`, append-only): Dispatch/Execute als explizite vierte Schicht neben Observe/Review/Steer. Neue Grundregel: *„Ein Tool arbeitet nicht, weil ein Review existiert, sondern weil ein freigegebenes Assignment mit klarer Zustaendigkeit und Scope erzeugt wurde."* Konzeptionelle `work_assignments`-Entitaet mit Feldkatalog und Lebenszyklus. Drei Dispatch-Varianten (manuell, pull, push) mit klarem Kurzfrist-Bekenntnis zu manuell. Vier Autonomie-Stufen L0-L3 mit bindender Grundregel: Automatisierung erlaubt fuer L0-L2, L3 immer approval-pflichtig. Commit `04d0f7c`.
+- **Status-Uebersicht ADR-002 Stufe 1 als Markdown** (`sprints/status-adr002-stufe1-abschluss.md`) angelegt und committet (`8796fdd`). Dokumentiert Observe/Review/Steer live, Stufen 2-4 offen, Parkzettel aus Stufe 1b.
+- **Status-HTML-Variante** (`sprints/status-adr002-stufe1-uebersicht.html`) wurde erstellt und lokal erweitert: inline SVG-Architektur-Grafik mit vier Schicht-Blocks (OBSERVE/REVIEW/STEER/DISPATCH), fuenf Datenboxen inkl. neu `work_assignments` und `session_ratings`, Rueckkanal-Pfeil als Zyklus, Dauer-Tabelle mit neuer Zeile „Stufe 2a — Dispatch-Einstieg". Status: **lokal, noch nicht committet** (1024 Zeilen ueberschreiten 300er HTML-Limit aus Dateigroessen-Disziplin).
+
+### Offen / Hausaufgaben fuer die naechste Session
+- **HTML-Status-Datei entscheiden:** Aufteilung in HTML+CSS+SVG (um unter das 300er HTML-Limit zu kommen), dauerhaft lokal lassen, oder Sondererlaubnis im Pre-Commit-Hook fuer `sprints/status-*.html`.
+- **Stufe 2a — Dispatch-Einstieg** als erster Implementierungsschritt nach ADR-002-Nachtrag. Scope: `work_assignments`-Tabelle, manuelles Assignment via UI (Variante A), erste Pull-Variante fuer bekannte Tools, Autonomie-Level L0-L2. Push-Modus bleibt in Stufe 3.
+- Vor Implementierung: kleine Spezifikation (welche Felder wirklich in der ersten Tabelle, wie UI-Ablauf manuell, welcher Pull-Endpoint-Vertrag) als eigener Implementierungs-ADR oder Sprint-Plan.
