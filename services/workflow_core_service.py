@@ -3,20 +3,29 @@ ADR-001: Zentrale Domaenenschicht fuer Marker-Zugriff (DB-first).
 
 Alle Marker-Lese- und Schreiboperationen laufen ueber diesen Service.
 workflow_loop_service und copilot_marker_service delegieren hierher.
+
+Prio 5 (Write-Back): Schreibende Core-Operationen triggern anschliessend
+einen Mirror-Write in handoff.md ueber den Write-Guard. Die DB bleibt
+kanonische Quelle, handoff.md ist abgeleiteter Mirror.
 """
 import json
 import logging
+import os
 from dataclasses import asdict
 
-from services.copilot_marker_format import Marker
+from config import PROJECTS_DIR
+from services.copilot_marker_format import Marker, _serialize_marker
 from services.db_service import ensure_marker_schema, execute
 from services.marker_importer import import_markers_from_handoff
+from services.path_resolver import resolve_project_path
 from services.workflow_state_service import (
     get_workflow_state,
     sync_marker_to_workflow,
 )
 
 log = logging.getLogger(__name__)
+
+MIRROR_WRITER_SOURCE = "workflow_core_service"
 
 
 def get_markers(project_name, plan_id=None):
@@ -97,7 +106,9 @@ def update_marker_field(project_name, marker_id, **fields):
             WHERE project_name = %s AND marker_id = %s""",
         tuple(params),
     )
-    return get_marker(project_name, marker_id)
+    marker = get_marker(project_name, marker_id)
+    _trigger_mirror_write(project_name)
+    return marker
 
 
 def update_marker_state(project_name, marker_id, new_status, executor_tool=None):
@@ -144,6 +155,8 @@ def get_handoff_view(project_name):
     markers = get_markers(project_name)
     result = []
     for m in markers:
+        if m is None:
+            continue
         data = asdict(m)
         # Workflow-State anreichern
         state = get_workflow_state(project_name, m.marker_id)
@@ -154,6 +167,132 @@ def get_handoff_view(project_name):
             data["executor_tool"] = state.get("executor_tool", "")
         result.append(data)
     return result
+
+
+MARKERS_SECTION_HEADING = "## Copilot Markers"
+
+
+def write_handoff_mirror(project_name):
+    """Regeneriert handoff.md aus DB-Markern (Core -> Mirror).
+
+    ADR-001 Prio 5: Die DB ist kanonische Quelle. Dieser Write-Back laedt
+    alle Marker des Projekts aus der DB, serialisiert sie deterministisch
+    und schreibt das Ergebnis ueber den Write-Guard nach
+    <project>/handoff.md.
+
+    Manueller Text oberhalb von "## Copilot Markers" (YAML-Frontmatter,
+    Projekt-Titel, Einleitung) bleibt erhalten. Nur die Marker-Sektion
+    wird neu generiert.
+
+    Idempotent: Bei gleichem DB-Zustand erzeugen Folgeaufrufe keinen Diff.
+
+    Args:
+        project_name: Projekt-Slug (z.B. "project_dashboard").
+
+    Returns:
+        Tuple (filepath, markdown) bei Erfolg, sonst (None, None).
+    """
+    from services.write_guard import safe_write
+
+    project_name = str(project_name or "").strip()
+    if not project_name:
+        return None, None
+
+    project_root = resolve_project_path(project_name) or os.path.join(PROJECTS_DIR, project_name)
+    if not os.path.isdir(project_root):
+        return None, None
+
+    handoff_path = os.path.join(project_root, "handoff.md")
+
+    # Uebergangsphase: Falls handoff.md Marker enthaelt, die noch nicht in der
+    # DB stehen (z.B. manuell angelegte), werden sie per idempotentem Import
+    # in den Core gehoben, bevor wir von DB zurueckspielen. So werden sie
+    # nicht durch die Regenerierung gedroppt. import_markers_from_handoff
+    # ist ein Upsert und loescht nie.
+    if os.path.exists(handoff_path):
+        try:
+            import_markers_from_handoff(project_name)
+        except Exception as exc:  # pragma: no cover - defensive
+            log.warning("Pre-Mirror-Import fehlgeschlagen fuer %s: %s", project_name, exc)
+
+    markers = get_markers(project_name)
+    preamble = _read_preamble(handoff_path, project_name)
+    marker_section = _build_marker_section(markers)
+    markdown = preamble + marker_section
+
+    result = safe_write(handoff_path, markdown, MIRROR_WRITER_SOURCE)
+    if not result.allowed:
+        log.warning(
+            "Mirror-Write-Back blockiert fuer %s: %s",
+            project_name,
+            [v.description for v in result.violations],
+        )
+        return None, None
+
+    return handoff_path, markdown
+
+
+def _read_preamble(handoff_path, project_name):
+    """Liest den Text bis inklusive "## Copilot Markers" aus einer vorhandenen
+    handoff.md. Falls die Datei nicht existiert oder die Section fehlt, wird
+    ein frischer Standard-Header erzeugt.
+    """
+    try:
+        with open(handoff_path, "r", encoding="utf-8") as f:
+            content = f.read()
+    except (FileNotFoundError, OSError):
+        return _build_default_preamble(project_name)
+
+    idx = content.find(MARKERS_SECTION_HEADING)
+    if idx < 0:
+        return _build_default_preamble(project_name)
+
+    # Alles bis inklusive "## Copilot Markers\n" einschliesslich trailing newline
+    end = idx + len(MARKERS_SECTION_HEADING)
+    # Trailing newline sicherstellen
+    tail = content[end:end + 1]
+    if tail == "\n":
+        end += 1
+    return content[:end] + "\n"
+
+
+def _build_default_preamble(project_name):
+    """Erzeugt den Standard-Preamble wenn keine handoff.md existiert."""
+    return (
+        "---\n"
+        "handoff:\n"
+        f'  project_id: "{project_name}"\n'
+        '  state_format: "copilot_markers_v1"\n'
+        "---\n"
+        "\n"
+        f"# Handoff fuer Projekt {project_name}\n"
+        "\n"
+        f"{MARKERS_SECTION_HEADING}\n"
+        "\n"
+    )
+
+
+def _build_marker_section(markers):
+    """Baut den Marker-Bereich: alle Marker serialisiert + trailing newline."""
+    valid = [m for m in (markers or []) if m is not None]
+    if not valid:
+        return "\n_(noch keine Marker vorhanden)_\n"
+
+    sorted_markers = sorted(valid, key=lambda m: (str(m.plan_id or ""), str(m.marker_id or "")))
+    blocks = [_serialize_marker(m).rstrip() for m in sorted_markers]
+    return "\n" + "\n\n".join(blocks) + "\n"
+
+
+def _trigger_mirror_write(project_name):
+    """Best-effort Mirror-Write nach Core-Schreiboperation.
+
+    Fehler werden geloggt, aber nicht propagiert — die DB bleibt
+    die kanonische Quelle auch wenn der Mirror temporaer fehlschlaegt.
+    """
+    try:
+        write_handoff_mirror(project_name)
+    except Exception as exc:  # pragma: no cover - defensive
+        log.warning("Mirror-Write-Back fehlgeschlagen fuer %s: %s", project_name, exc)
 
 
 def _fetch_markers_from_db(project_name, plan_id=None):
