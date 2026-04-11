@@ -9,6 +9,7 @@
 <button class="topbar-btn" onclick="exportProject('html')" title="HTML Export">HTML</button>
 <button class="topbar-btn" onclick="exportProject('md')" title="Markdown Export">MD</button>
 <button class="topbar-btn" onclick="exportProject('json')" title="JSON Export">JSON</button>
+<button class="topbar-btn" type="button" onclick="openToolProfileAdapter()" title="Tool-Profile regenerieren">Tool Files</button>
 <button class="topbar-btn" onclick="openEditModal('{{ project_name }}')" title="Edit">✏️</button>
 {% endblock %}
 
@@ -240,6 +241,7 @@
 <script src="/static/js/workflow-loop-modal.js"></script>
 <script src="/static/js/workflow-loop-actions.js"></script>
 <script src="/static/js/workflow-loop.js"></script>
+<script src="/static/js/tool-profile-adapter.js"></script>
 <script src="/static/js/project-detail.js"></script>
 <script src="/static/js/dashboard-modals.js"></script>
 

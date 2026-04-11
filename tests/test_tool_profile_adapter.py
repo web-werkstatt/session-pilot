@@ -177,6 +177,70 @@ def test_unknown_tool_is_rejected(project_dir):
     assert result.mode == "noop"
 
 
+def test_rest_preview_endpoint_returns_diffs(project_dir, client, monkeypatch):
+    """REST: GET /api/project/<name>/tool-profile/preview liefert Diffs pro Tool."""
+    import routes.project_routes as project_routes
+    monkeypatch.setattr(project_routes, "resolve_project_path", lambda name: project_dir)
+    monkeypatch.setattr(
+        "services.project_scanner.load_project_json",
+        lambda path: {"project_type": "service", "description": "demo"},
+    )
+
+    response = client.get("/api/project/demo/tool-profile/preview")
+    assert response.status_code == 200
+    payload = response.get_json()
+    assert payload["project"] == "demo"
+    assert len(payload["results"]) == 3
+    tools = {r["tool"] for r in payload["results"]}
+    assert tools == {"claude", "codex", "gemini"}
+    for r in payload["results"]:
+        assert r["written"] is False
+        assert r["mode"] == "bootstrap"
+        assert "DASHBOARD-GENERATED" in r["diff"]
+
+    # Preview darf nichts geschrieben haben
+    assert not os.path.exists(os.path.join(project_dir, "CLAUDE.md"))
+
+
+def test_rest_regenerate_endpoint_writes_files(project_dir, client, monkeypatch):
+    """REST: POST /api/project/<name>/tool-profile/regenerate schreibt."""
+    import routes.project_routes as project_routes
+    monkeypatch.setattr(project_routes, "resolve_project_path", lambda name: project_dir)
+    monkeypatch.setattr(
+        "services.project_scanner.load_project_json",
+        lambda path: {"project_type": "service"},
+    )
+
+    response = client.post("/api/project/demo/tool-profile/regenerate")
+    assert response.status_code == 200
+    payload = response.get_json()
+    assert payload["ok"] is True
+    for r in payload["results"]:
+        assert r["written"] is True
+        assert r["mode"] == "bootstrap"
+
+    for filename in ("CLAUDE.md", "AGENTS.md", "GEMINI.md"):
+        assert os.path.exists(os.path.join(project_dir, filename))
+
+    # Zweiter POST-Lauf ist idempotent: alles noop
+    response = client.post("/api/project/demo/tool-profile/regenerate")
+    payload = response.get_json()
+    for r in payload["results"]:
+        assert r["mode"] == "noop"
+        assert r["written"] is False
+
+
+def test_rest_regenerate_unknown_project_404(client, monkeypatch):
+    import routes.project_routes as project_routes
+    monkeypatch.setattr(project_routes, "resolve_project_path", lambda name: None)
+
+    response = client.get("/api/project/ghost/tool-profile/preview")
+    assert response.status_code == 404
+
+    response = client.post("/api/project/ghost/tool-profile/regenerate")
+    assert response.status_code == 404
+
+
 def test_existing_foreign_generated_block_is_preserved(project_dir):
     """Fremder DASHBOARD-GENERATED Block (andere source) darf nicht beruehrt werden."""
     target = os.path.join(project_dir, "CLAUDE.md")

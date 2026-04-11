@@ -279,6 +279,65 @@ Generated on {datetime.now().strftime('%Y-%m-%d %H:%M')} — Project Dashboard
     return jsonify({"error": f"Unknown format: {fmt}"}), 400
 
 
+def _tool_profile_meta(project_path):
+    """Baut die Metadaten fuer den DASHBOARD-GENERATED-Block."""
+    from services.project_scanner import load_project_json
+    pjson = load_project_json(project_path) or {}
+    return {
+        "type": pjson.get("project_type") or pjson.get("type"),
+        "description": pjson.get("description"),
+    }
+
+
+def _tool_profile_serialize(result):
+    """Konvertiert ToolUpdateResult in ein JSON-taugliches Dict."""
+    return {
+        "tool": result.tool,
+        "filename": os.path.basename(result.filepath) if result.filepath else "",
+        "mode": result.mode,
+        "written": result.written,
+        "diff": result.diff,
+        "violations": list(result.violations),
+        "error": result.error,
+    }
+
+
+@project_bp.route('/api/project/<path:name>/tool-profile/preview')
+def preview_tool_profile(name):
+    """Dry-Run: zeigt Diff pro Tool-Datei, schreibt nichts."""
+    from services.tool_profile_adapter_service import regenerate_all
+    project_path = resolve_project_path(name)
+    if not project_path:
+        return jsonify({"error": "Project not found"}), 404
+
+    meta = _tool_profile_meta(project_path)
+    results = regenerate_all(project_path, name, meta, dry_run=True)
+    return jsonify({
+        "project": name,
+        "results": [_tool_profile_serialize(r) for r in results],
+    })
+
+
+@project_bp.route('/api/project/<path:name>/tool-profile/regenerate', methods=['POST'])
+def regenerate_tool_profile(name):
+    """Schreibt DASHBOARD-GENERATED-Bloecke in CLAUDE.md/AGENTS.md/GEMINI.md."""
+    from services.tool_profile_adapter_service import regenerate_all
+    project_path = resolve_project_path(name)
+    if not project_path:
+        return jsonify({"error": "Project not found"}), 404
+
+    meta = _tool_profile_meta(project_path)
+    results = regenerate_all(project_path, name, meta, dry_run=False)
+    serialized = [_tool_profile_serialize(r) for r in results]
+    all_ok = all(r["written"] or r["mode"] == "noop" for r in serialized)
+    status = 200 if all_ok else 409
+    return jsonify({
+        "project": name,
+        "results": serialized,
+        "ok": all_ok,
+    }), status
+
+
 @project_bp.route('/api/project/<path:name>/archive', methods=['POST'])
 def archive_project(name):
     """Archiviert oder stellt ein Projekt wieder her"""

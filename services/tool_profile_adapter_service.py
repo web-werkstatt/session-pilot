@@ -22,7 +22,7 @@ import os
 import tempfile
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from services.block_marker_parser import (
     BlockType,
@@ -64,7 +64,7 @@ class ToolUpdateResult:
 def build_dashboard_block(
     project_name: str,
     tool: str,
-    meta: Optional[Dict[str, object]] = None,
+    meta: Optional[Dict[str, Any]] = None,
     *,
     updated: Optional[str] = None,
 ) -> str:
@@ -244,7 +244,7 @@ def preview_update(
     project_path: str,
     tool: str,
     project_name: str,
-    meta: Optional[Dict[str, object]] = None,
+    meta: Optional[Dict[str, Any]] = None,
     *,
     updated: Optional[str] = None,
 ) -> ToolUpdateResult:
@@ -280,7 +280,7 @@ def apply_update(
     project_path: str,
     tool: str,
     project_name: str,
-    meta: Optional[Dict[str, object]] = None,
+    meta: Optional[Dict[str, Any]] = None,
     *,
     updated: Optional[str] = None,
 ) -> ToolUpdateResult:
@@ -359,7 +359,7 @@ def _guard_protected_unchanged(
 def regenerate_all(
     project_path: str,
     project_name: str,
-    meta: Optional[Dict[str, object]] = None,
+    meta: Optional[Dict[str, Any]] = None,
     *,
     updated: Optional[str] = None,
     dry_run: bool = False,
