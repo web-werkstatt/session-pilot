@@ -133,3 +133,21 @@ Dashboard laeuft als systemd-Service auf Port 5055, Backup taeglich 12:30.
 - **2026-04-08:** Read-only-GETs gehaertet, Workflow-Loop v1 implementiert und getestet.
 - **2026-04-07:** Sprint SB DONE, Closeout (M1-M14), Tag `v1.3-final`
 - **Davor:** siehe `next-session-archiv.md` und `master-plan-2026-04-01.md`
+
+## Session 2026-04-11 - ADR-001 Prio 5 DONE
+
+### Was wurde erledigt
+- **ADR-001 Prio 5:** `write_handoff_mirror(project_name)` in `services/workflow_core_service.py` — regeneriert handoff.md aus DB-Markern via `write_guard.safe_write` mit Source `workflow_core_service`
+- `_read_preamble` bewahrt YAML-Frontmatter + Text oberhalb von `## Copilot Markers` (kein Flip von `stage`/`scope` zwischen `project_handoff_service` und Mirror)
+- `_build_marker_section` sortiert deterministisch nach `(plan_id, marker_id)`, idempotent bei gleichem DB-State
+- Pre-Import via `import_markers_from_handoff` schuetzt manuell angelegte Marker (z.B. `test-cockpit-2026-04-05`) vor Drop bei Regenerierung
+- `_trigger_mirror_write` laeuft best-effort am Ende von `update_marker_field` (und transitiv `update_marker_state`), Mirror-Fehler propagieren nicht (DB bleibt Source of Truth)
+- 10 neue Tests in `tests/test_workflow_core_mirror.py`: Empty-Projekt, DB-Marker, Preamble-Preservation, Idempotenz, Deterministic-Ordering, unknown-Projekt, beide Trigger-Pfade, Mirror-Fehler-Isolation, write_guard-Source-Check
+- 645/645 Tests gruen, null Regressionen
+- Issue #21, Commit `24a19b3`
+
+### Naechste Aufgabe
+**ADR-001 Prio 6:** `services/tool_profile_adapter_service.py` fuer bestehende Projekte (via Write-Guard). Pflegt `DASHBOARD-GENERATED`-Bloecke in `CLAUDE.md`/`AGENTS.md`/`GEMINI.md`, ersetzt nur markierte Bereiche, nutzt `block_marker_parser` + `write_guard.safe_write`. Abhaengigkeit Prio 2+5 erfuellt. Akzeptanzkriterien siehe `sprints/sprint-adr001-welle1-db-first-core.md` Ticket 4.
+
+### Nicht im Scope (Prio 5b / Follow-up)
+- `copilot_marker_service._write_marker` behaelt vorerst Direct-Write-Path (bypasst write_guard). Core-Mirror ueberschreibt nachgelagert, Content-kompatibel. Vollstaendiger Umbau auf Core-Single-Writer erfordert `last_execution_at` in `update_marker_field.allowed`-Set + Refactoring der Tests in `test_copilot_marker_service_core.py` / `test_copilot_marker_service_flow.py`, die `_write_marker` direkt nutzen.
