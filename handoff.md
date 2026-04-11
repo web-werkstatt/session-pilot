@@ -3,12 +3,57 @@ handoff:
   project_id: "project_dashboard"
   state_format: "copilot_markers_v1"
   stage: "idea"
-  scope: "8 Plan(s) fuer project_dashboard"
+  scope: "9 Plan(s) fuer project_dashboard"
 ---
 
 # Handoff fuer Projekt project_dashboard
 
 ## Copilot Markers
+
+<!-- MARKER:1853
+{
+  "marker_id": "1853",
+  "titel": "Voll funktionsfaehiges Workflow-System im Project Dashboard",
+  "plan_id": "1853",
+  "status": "in_progress",
+  "ziel": "Voll funktionsfaehiges Workflow-System im Project Dashboard",
+  "naechster_schritt": "Noch nicht definiert",
+  "prompt": "",
+  "prompt_suggestion": "Arbeite an: Voll funktionsfaehiges Workflow-System im Project Dashboard.",
+  "risiko": "",
+  "checks": [
+    "Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen"
+  ],
+  "last_session": "",
+  "updated_at": "2026-04-09T18:02:09.321971+00:00",
+  "execution_score": null,
+  "execution_comment": "",
+  "last_execution_at": "",
+  "sprint_tag": "",
+  "spec_tag": "",
+  "sprint_plan_id": null,
+  "spec_id": null
+}
+-->
+
+## Voll funktionsfaehiges Workflow-System im Project Dashboard · in_progress
+
+**Ziel:** Voll funktionsfaehiges Workflow-System im Project Dashboard
+**Naechster Schritt:** Noch nicht definiert
+**Risiko:** -
+**Execution Score:** -
+**Execution Comment:** -
+**Last Execution:** -
+**Sprint Tag:** -
+**Spec Tag:** -
+
+**Prompt:**
+_(noch nicht gesetzt)_
+
+**Checks:**
+- Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen
+
+---
 
 <!-- MARKER:142
 {

@@ -12,6 +12,9 @@ Install dependencies with `pip3 install -r requirements.txt`. Run locally with `
 ## Coding Style & Naming Conventions
 Use 4-space indentation in Python, snake_case for modules, functions, and variables, and keep route files focused by feature. Match the current frontend style in `static/js/`: plain functions, `var`, and small feature-specific files rather than framework abstractions. Name new route modules `*_routes.py`, keep template and asset names aligned by page or feature, and prefer small service functions over duplicated route logic.
 
+## Language
+For German prose in assistant responses and documentation, use real German characters: `ä`, `ö`, `ü`, `Ä`, `Ö`, `Ü`, and `ß`. Do not transliterate them as `ae`, `oe`, `ue`, or `ss`, except in code, filenames, technical IDs, shell commands, or when preserving existing ASCII-only text.
+
 ## Testing Guidelines
 There is no committed automated test, lint, or build pipeline yet. Before opening a PR, run the affected flow locally, hit the changed endpoint, and review `dashboard.log` for regressions. If you add tests, prefer `pytest`, place them in `tests/test_<feature>.py`, and keep fixtures file-based and minimal.
 

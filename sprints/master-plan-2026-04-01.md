@@ -34,7 +34,7 @@ Messen          Auditieren        Bewerten          Steuern           Copilot
 - **Section-Board** DB-first Level-2-Cards (plan_sections) mit Copilot-Chat pro Section auf /copilot?plan_id=X.
 - **Handoff-Service** Zentraler project_handoff_service.py, projektbezogene handoff-<plan_id>.md Dateien, LLM Command handoff-status.
 - **AI Governance Analytics (Sprints 9-11)** Fehler-Kategorien + AI-Scope-Filter, Per-File Heatmap + Risk-Radar, Modell-Qualitaetsvergleich + Empfehlungs-Engine (Status-Korrektur 2026-04-07, siehe "AI Governance Analytics"-Block).
-- **Marker-Driven Copilot (Sprint 17)** Marker-Block in `handoff.md` als fuehrender Arbeitszustand, `/copilot?plan_id=X` rendert Marker als Cards, Drag&Drop schreibt Status zurueck, `marker-context.md` als expliziter Chat-Kontext (Reality-Check 2026-04-07: faktisch DONE durch P2/P3/P-E3).
+- **Marker-Driven Copilot (Sprint 17)** Marker-Block in `handoff.md` als fuehrender Arbeitszustand, `/copilot?plan_id=X` rendert Marker als Cards, Drag&Drop schreibt Status zurueck, `marker-context.md` als expliziter Chat-Kontext (Reality-Check 2026-04-07: faktisch DONE durch P2/P3/P-E3). *Nachtrag 2026-04-10 (ADR-001): "handoff.md als fuehrender Arbeitszustand" gilt als ueberholt; Marker werden kuenftig DB-first gefuehrt.*
 
 ---
 
@@ -107,18 +107,53 @@ Audit v1 ist funktional, aber isoliert. Offene Verbindungen:
 Das Repo nutzt aktuell parallel DB, Root-JSON-Dateien und Markdown-Artefakte.
 Fuer kleine Konfig- und Seed-Faelle ist das akzeptabel, fuer operative Produktdaten aber zunehmend zu teuer.
 
-Neuer geplanter Architekturpfad:
-- Sprint `QS` legt die DB-first Zielarchitektur fuer operative Zustandsdaten fest
-- Root-JSON-Stores wie Notifications, Favorites, Relations, Ideas und Settings sollen schrittweise in die DB wandern
-- Markdown-Artefakte wie `next-session.md`, `handoff.md` und Sprint-Plaene bleiben bewusst dateibasiert, aber nicht als einzige schwer abfragbare Runtime-Wahrheit
-- Marker-Runtime-State wird als eigener Migrationspfad nach den einfachen JSON-Stores behandelt
+**Architekturentscheidung (ADR-001, 2026-04-10):**
+- Marker-Definitionen und -State werden **DB-first** gefuehrt; `handoff.md` ist Mirror-/Export-Artefakt
+- `workflow_core_service` wird zentrale Domaenenschicht (Plan -> Sprint -> Spec -> Marker -> State)
+- Neuer `tool_profile_adapter_service` pflegt generierte Bloecke in CLAUDE.md/AGENTS.md/GEMINI.md
+- Perplexity-Copilot als Read-Only-Validierungsschicht ueber Core und Artefakte
+- Bestehende Bausteine (Marker-Parser, Workflow-States, Session-Binding, Scaffolding) bleiben erhalten
+- Kompatible Migration: bestehende `handoff.md` werden importiert, Konflikte angezeigt
+
+Geplante Reihenfolge: Marker-DB-Tabelle + Core -> Migration -> Write-Back -> Tool-Adapter -> Capability-Modell -> Perplexity-Review-Layer
 
 Referenz:
+- `sprints/adr-001-db-first-marker-core-tool-adapter.md`
 - `sprints/sprint-qs-db-first-state-consolidation.md`
 
 ---
 
 ## Completed Sprints (diese Session)
+
+### Sprint Workflow-v2 UX Follow-up — Cards reduziert, Details ins Modal — DONE (2026-04-10)
+
+**Ziel:** Die Workflow-Cards auf `/project/project_dashboard?tab=workflow` nach Live-Feedback beruhigen, damit dort keine Mischung aus echten Workflow-Aktionen, Owner-Verwaltung, Rating-Formularen und Write-Back-Checklisten mehr direkt in der Card steht.
+
+**Umgesetzt:**
+- `services/workflow_loop_service.py` gruppiert `rating` und `write_back` jetzt unter `Wartet`; `AKTIV` enthaelt nur noch echte `active`-Execution-Marker.
+- Normale aktive Marker nutzen in `static/js/workflow-loop.js` jetzt einen eigenen kompakten Render-Pfad.
+- Der kompakte Pfad zeigt nur Status, Titel, `Naechster Schritt` und die priorisierten Aktionen `An Write Back geben` plus `Execution oeffnen`/`Thread fortsetzen`.
+- Owner-Badge, Status-Flags und Inline-Editoren wurden aus den Marker-Cards entfernt.
+- Rating, Write-Back-Checkliste und Blocker-Begruendung liegen jetzt in einem Marker-Modal, das ueber Card-Aktionen geoeffnet wird.
+- `static/css/workflow-loop.css` reduziert Abstand und Rundungen der Workflow-Marker-Cards, ergaenzt die `Naechster Schritt`-Mikrostruktur, stylt das Modal und setzt Grid-Cards wieder auf gleiche Hoehe mit unten ausgerichteter Aktionsleiste.
+- `AGENTS.md` ergänzt eine Sprachregel: Deutsche Prosa soll echte Umlaute und `ß` verwenden, außer in Code, Dateinamen, technischen IDs, Shell-Befehlen oder bestehendem ASCII-only-Text.
+
+**Abnahme / Verifikation:**
+- `node --check static/js/workflow-loop.js`
+- `python3 -m py_compile services/workflow_loop_service.py`
+- Service-Status geprueft: `project-dashboard.service` ist aktiv.
+- Service neu gestartet: `sudo systemctl restart project-dashboard`
+- API-Gruppierung ueber `http://192.168.100.93:5055/api/project/project_dashboard/workflow-loop` verifiziert: `AKTIV` enthaelt nur noch `workflow_status: active`, Rating-Cards liegen in `Wartet`.
+
+**Geaenderte Dateien:**
+- `services/workflow_loop_service.py`
+- `static/js/workflow-loop.js`
+- `static/css/workflow-loop.css`
+- `AGENTS.md`
+- `next-session.md`
+- `sprints/master-plan-2026-04-01.md`
+
+**Commit-Hash:** `pending`
 
 ### Sprint Workflow-v2 GUI/UX — Operativer Workflow-Tab mit lebendiger Grafik — DONE (2026-04-09)
 
@@ -985,7 +1020,7 @@ Referenz:
 - `static/css/copilot.css` haertet die Chat-Nachrichten im Panel gegen Overflow ab; lange Antworten und Markdown-Code bleiben innerhalb der Chat-Card
 - `static/css/copilot.css` setzt die relevanten Flex-/Scroll-Container im Chat-Panel auf `min-height: 0`, damit Chat-Boxen beim Scrollen nicht abgeschnitten werden
 - `services/copilot_service.py` persistiert fuer `copilot_runs` jetzt auch Token- und Kostenfelder; `static/js/copilot_board.js` zeigt Modell, Tokens und USD-Kosten unter Assistant-Nachrichten im Chat-Panel an
-- `services/copilot_service.py` baut vor dem LLM-Call serverseitig einen kompakten Marker-Kontext aus `marker-context.md` und `handoff.md`; `handoff.md` bleibt fuehrende Wahrheit, Frontend-Kontext dient nur als Fallback
+- `services/copilot_service.py` baut vor dem LLM-Call serverseitig einen kompakten Marker-Kontext aus `marker-context.md` und `handoff.md`; `handoff.md` bleibt fuehrende Wahrheit, Frontend-Kontext dient nur als Fallback — *Nachtrag 2026-04-10 (ADR-001): "handoff.md fuehrende Wahrheit" gilt als ueberholt; Marker-Quelle wird kuenftig DB-first via workflow_core_service.*
 - `services/copilot_service.py` loest fuer diesen Marker-Kontext jetzt auch den lesbaren Plan-Titel auf; `static/js/copilot_board.js`, `static/js/plans.js` und `templates/copilot_landing.html` zeigen bzw. verwenden den Plan-Namen im Panel und als lesbaren URL-Slug zusaetzlich zur `plan_id`
 
 **Geaenderte Dateien:**
@@ -1507,7 +1542,7 @@ aber nicht verschachteltes `.kilo/node_modules/`.
 **Commit:** uncommitted
 
 ### Sprint P1.1 — Marker-Schema & handoff.md Generator — DONE (2026-04-03)
-**Ziel:** `handoff.md` als fuehrende State-Datei auf ein maschinenlesbares Marker-Format umstellen.
+**Ziel:** `handoff.md` als fuehrende State-Datei auf ein maschinenlesbares Marker-Format umstellen. *Nachtrag 2026-04-10 (ADR-001): "handoff.md als fuehrende State-Datei" gilt als ueberholt; Marker-Definitionen werden kuenftig DB-first gefuehrt, handoff.md wird Mirror-Artefakt.*
 
 **Aenderungen:**
 - Neuer Kernservice `services/copilot_marker_service.py` mit `Marker`-Dataclass, `_serialize_marker()`, `_write_marker()` und `parse_markers()`

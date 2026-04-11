@@ -1,0 +1,108 @@
+.workflow-marker-card {
+    display: grid;
+    gap: 12px;
+    grid-template-rows: auto auto 1fr auto auto;
+    height: 100%;
+    padding: 18px;
+    border-radius: 8px;
+    border: 1px solid rgba(148, 163, 184, 0.14);
+    background: rgba(2, 6, 23, 0.54);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.02);
+}
+
+.workflow-marker-card--compact {
+    gap: 9px;
+    padding: 14px 16px;
+}
+
+.workflow-marker-card--active {
+    border-color: rgba(34, 197, 94, 0.24);
+}
+
+.workflow-marker-card--waiting {
+    border-color: rgba(245, 158, 11, 0.2);
+}
+
+.workflow-marker-card--blocked,
+.workflow-marker-card.is-blocked {
+    border-color: rgba(239, 68, 68, 0.38);
+    box-shadow: inset 0 0 0 1px rgba(239, 68, 68, 0.18);
+}
+
+.workflow-marker-card.is-current {
+    box-shadow:
+        inset 0 0 0 1px rgba(56, 189, 248, 0.26),
+        0 16px 28px rgba(2, 6, 23, 0.22);
+}
+
+.workflow-loop-target-pulse {
+    animation: workflowLoopTargetPulse 1.35s ease;
+}
+
+.workflow-marker-card-top,
+.workflow-marker-actions,
+.workflow-marker-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.workflow-marker-card-top {
+    justify-content: space-between;
+    align-items: center;
+}
+
+.workflow-marker-meta-item {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 10px;
+    border-radius: 8px;
+    background: rgba(30, 41, 59, 0.84);
+    color: rgba(226, 232, 240, 0.88);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.workflow-marker-card-title {
+    margin: 0;
+    color: #f8fafc;
+    font-size: 20px;
+    line-height: 1.25;
+}
+
+.workflow-marker-card-copy {
+    margin: 0;
+    color: rgba(226, 232, 240, 0.78);
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.workflow-marker-card--compact .workflow-marker-card-copy {
+    color: rgba(226, 232, 240, 0.86);
+}
+
+.workflow-marker-card--compact .workflow-marker-card-title {
+    font-size: 18px;
+}
+
+.workflow-marker-card--compact .workflow-marker-card-top {
+    justify-content: flex-start;
+}
+
+.workflow-marker-next-step {
+    display: grid;
+    gap: 4px;
+}
+
+.workflow-marker-next-step-label {
+    color: rgba(148, 163, 184, 0.82);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0;
+    text-transform: uppercase;
+}
+
+.workflow-marker-card--compact .workflow-marker-meta-item {
+    padding: 5px 9px;
+    font-size: 11px;
+}
