@@ -185,3 +185,27 @@ Dashboard laeuft als systemd-Service auf Port 5055, Backup taeglich 12:30.
 ### Nicht im Scope (Follow-up)
 - Block-Inhalt der `DASHBOARD-GENERATED`-Section ist aktuell minimal (Projekt-Name, Tool, Typ, Description, Stand). Marker-Count, Plan-Count, Quality-Score koennten ergaenzt werden, brauchen aber DB-Queries aus `_tool_profile_meta` und sind in `build_dashboard_block` vorbereitet (`meta["marker_count"]`, `meta["plan_count"]`, `meta["quality_score"]` werden bereits gerendert, wenn gesetzt).
 - GitHub-Mirror nicht gepusht (Verkaufsschutz laut Memory-Regel).
+
+## Session 2026-04-11 (Abend) — ADR-002 + Sprint-Plan Stufe 1 (Doku-Rahmen)
+
+### Was wurde erledigt
+- **ADR-002** angelegt: *AI-Control-Plane fuer kooperierende Multi-LLM-Systeme* (`sprints/adr-002-ai-control-plane-multi-llm-reviewer.md`, Status ACCEPTED). Produktdefinition als modellagnostische Control-Plane ueber mehreren LLMs, Fuenf-Ebenen-Architektur (Steuerung/Planung/Umsetzung/Pruefung/Freigabe), Observe-Review-Steer-Schichten, Perplexity als Reviewer-Rolle (provider-agnostisch), DB-first Policy-Schicht fuer Rollen und Tool-Zuweisungen, 10 Kernregeln. Prio 7 aus ADR-001 zurueckgestellt, Prio 8 erweitert und vorgezogen.
+- **Sprint-Plan Stufe 1** angelegt (`sprints/sprint-adr002-stufe1-control-plane.md`): 10 Commits in Stufe 1a (Setup-Reviewer als kleinste funktionierende Control-Plane) + Stufe 1b (Policy-Schicht mit 4 DB-Tabellen, Seed-Defaults, Perplexity-Policy-Reviewer, REST, /policies-UI, workflow_core_service-Integration).
+- **Nachtraege (append-only)** an:
+  - `sprints/adr-001-db-first-marker-core-tool-adapter.md` (Prio 7 zurueckgestellt, Prio 8 durch ADR-002 abgeloest)
+  - `sprints/master-plan-2026-04-01.md` (Produktdefinition als AI-Control-Plane bindend)
+  - diese Datei
+
+### Offene Arbeit (Commits 2-10)
+- **Commit 2 (Stufe 1a):** Setup-Reviewer Core + `project_reviews`-Schema + `context_drift`-Check
+- **Commit 3 (Stufe 1a):** Setup-Reviewer REST + minimale UI-Anzeige im Tool-Files-Modal — Stufe 1a vollstaendig
+- **Commit 4-9 (Stufe 1b):** Policy-Schema, Seed-Defaults (6 Rollen), Perplexity-Policy-Reviewer, REST, `/policies`-UI, `workflow_core_service`-Integration
+- **Commit 10:** Session-Close + Push
+
+### Leitlinien aus den Planungsgespraechen
+- Kein Auto-Write, auch bei hohem Confidence. Joseph entscheidet.
+- Policies sind Daten, keine Konstanten. Keine hart kodierten Best-Practices.
+- Reviewer ist Rolle, nicht Provider. Perplexity = erste Backend-Implementierung.
+- Ein Writer pro Marker, mehrere Reviewer moeglich.
+- Reviewer nie derselbe Provider wie Executor.
+- Stufe 1a ist Proof-of-Concept vor Stufe 1b — nach Commit 3 kann Joseph pausieren und testen.

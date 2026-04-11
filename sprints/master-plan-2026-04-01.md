@@ -1787,3 +1787,34 @@ Zuordnung zu den neuen Sprints:
 | 12 | Governance + Feedback-Loop | C (Light-Version) |
 | 13 | Bidirektionaler LLM-Control | D (MVP-Version) |
 | 14 | Sprint-Flow-Tracking | nach D (eigenstaendig) |
+
+## Nachtrag 2026-04-11 — Produktdefinition als AI-Control-Plane
+
+Die urspruengliche Beschreibung des Systems wird ergaenzt: Der verbindliche
+Produktrahmen ist ab ADR-002 eine **modellagnostische AI-Control-Plane fuer
+kooperierende Multi-LLM-Systeme**. Das System ist kein Single-Tool-Dashboard,
+sondern eine Aufsichts- und Steuerungsschicht ueber beliebigen AI-Coding-Tools.
+
+Das Programm soll den manuellen Copy-&-Paste-Review-Workflow zwischen
+mehreren LLMs und dem Projektkontext ersetzen. Perplexity uebernimmt darin
+die Rolle eines modellagnostischen Reviewers und Policy-Waechters; Joseph
+bleibt finale Autoritaet.
+
+**Konkrete Auswirkungen auf laufende Arbeit:**
+
+- ADR-001 Welle 1 (DONE): bleibt Fundament, keine Aenderung
+- ADR-001 Prio 7 (Capability-Modell): zurueckgestellt, ersetzt durch Policy-Schicht
+- ADR-001 Prio 8 (Perplexity-Review): erweitert und vorgezogen via ADR-002
+- Laufende Sprints (Workflow-v2, Sprint CP, Sprint QS) bleiben gueltig, werden
+  aber unter dem neuen Rahmen reinterpretiert
+
+**Bindende Zielarchitektur:**
+- Observe / Review / Steer als getrennte Schichten
+- Fuenf-Rollen-Modell (Steuerung / Planung / Umsetzung / Pruefung / Freigabe)
+- DB-first Policy-Schicht fuer Rollen, Tool-Profile, Zuweisungen
+- Perplexity als Reviewer-Rolle, Provider-agnostisch
+- Kein Auto-Write, auch bei hohem Confidence
+
+Siehe:
+- `sprints/adr-002-ai-control-plane-multi-llm-reviewer.md` (bindende Architekturentscheidung)
+- `sprints/sprint-adr002-stufe1-control-plane.md` (konkrete Umsetzung Stufe 1)
