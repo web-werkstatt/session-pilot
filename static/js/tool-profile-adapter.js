@@ -96,6 +96,11 @@
         } catch (e) {
             setMessage('Preview fehlgeschlagen: ' + (e && e.message ? e.message : e), 'error');
         }
+
+        // ADR-002 Stufe 1a: Setup-Reviewer-Section im gleichen Modal mounten
+        if (window.setupReviewer && typeof window.setupReviewer.mount === 'function') {
+            window.setupReviewer.mount(PROJECT_NAME);
+        }
     }
 
     async function applyRegenerate() {

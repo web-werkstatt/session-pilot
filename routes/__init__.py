@@ -36,6 +36,7 @@ from routes.copilot_marker_routes import copilot_marker_bp
 from routes.section_routes import section_bp
 from routes.model_eval_routes import model_eval_bp
 from routes.workflow_routes import workflow_bp
+from routes.tool_setup_review_routes import tool_setup_review_bp
 
 
 def register_blueprints(app):
@@ -76,3 +77,4 @@ def register_blueprints(app):
     app.register_blueprint(section_bp)
     app.register_blueprint(model_eval_bp)
     app.register_blueprint(workflow_bp)
+    app.register_blueprint(tool_setup_review_bp)
