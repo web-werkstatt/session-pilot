@@ -228,3 +228,44 @@ Beantworte bei Bedarf (oder wenn der User fragt) folgende Meta-Fragen ehrlich un
 ### 3) Ideale Konfiguration fuer maximale Qualitaet
 - Wenn frei waehlbar: Wie wuerde die Arbeitsweise fuer maximale Qualitaet statt Effizienz konfiguriert (z.B. mehr Chain-of-Thought, mehr Tests, mehr Gegenfragen, mehr Verifikation)?
 - 3–5 klare Regeln fuer diese ideale Arbeitsweise formulieren.
+
+## Dateigroessen-Disziplin (append 2026-04-11)
+
+Die globale Regel `~/.claude/rules/file-size-limits.md` gilt auch hier und wird durch einen Pre-Commit-Hook durchgesetzt. Limits: Python 500, TypeScript/JS 500, TSX/JSX 300, CSS 400, HTML/Astro 300.
+
+### Regel fuer neue Dateien
+
+**Bevor** eine neue Datei geschrieben wird, den erwarteten Umfang schaetzen. Wenn absehbar > 400 Zeilen: **von Anfang an modular aufteilen**, nicht nachtraeglich.
+
+- Service mit mehreren Verantwortlichkeiten → Unterverzeichnis `services/<name>/` mit Modulen wie `collector.py`, `orchestrator.py`, `storage.py`, `__init__.py` als Re-Export-Facade
+- Schema-Datei (`db_*_schema.py`) immer getrennt vom Service (`*_service.py`)
+- Tests pro Modul, nicht eine Mega-Test-Datei
+
+### Regel fuer Erweiterungen bestehender Dateien
+
+**Bevor** Code an eine bestehende Datei angehangen wird, mit `wc -l` die aktuelle Zeilenzahl pruefen. Wenn die Datei schon **> 400 Zeilen** hat, die neue Logik in ein **neues** Modul auslagern, nicht anhaengen. Das gilt besonders fuer `services/db_service.py`, `services/workflow_core_service.py` und andere Aggregator-Module, die leicht ueber das Limit wachsen.
+
+### Beim Hook-Fehler
+
+Wenn der Pre-Commit-Hook wegen Dateigroesse abbricht:
+
+- **Niemals** `git commit --no-verify` nutzen
+- **Niemals** willkuerliche Zeilen loeschen, um unter das Limit zu kommen
+- **Niemals** Kommentare oder Blank Lines opfern
+- Stattdessen: thematisch aufteilen, neue Module anlegen, Imports anpassen, Tests gruen halten
+- Die Aufteilung ist eine eigene Arbeit, die der Benutzer explizit sehen sollte — also **stopp, Vorschlag machen, auf Freigabe warten**, dann refactoren
+
+### Beim Schreiben neuer Reviewer-/Policy-Services (ADR-002)
+
+Neue Services mit mehreren Verantwortlichkeiten (Collector, Orchestrator, Storage, Parser) werden **immer** im Unterverzeichnis angelegt, zum Beispiel:
+
+```
+services/tool_setup_review/
+  __init__.py          # oeffentliche API re-export
+  context_collector.py # Observe-Schicht
+  drift_check.py       # context_drift
+  orchestrator.py      # review_tool_setup
+  storage.py           # save_review, load_review
+```
+
+Das hat den Vorteil, dass jedes Modul unter dem Limit bleibt und dass Tests pro Modul organisiert werden koennen.
