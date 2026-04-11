@@ -97,9 +97,10 @@
             setMessage('Preview fehlgeschlagen: ' + (e && e.message ? e.message : e), 'error');
         }
 
-        // ADR-002 Stufe 1a: Setup-Reviewer-Section im gleichen Modal mounten
-        if (window.setupReviewer && typeof window.setupReviewer.mount === 'function') {
-            window.setupReviewer.mount(PROJECT_NAME);
+        // ADR-002 Stufe 1a: Setup-Reviewer-Banner oben im Modal mounten
+        // (kein zweiter Primaer-Button, nur Status + optionaler Inline-Link)
+        if (window.setupReviewer && typeof window.setupReviewer.mountBanner === 'function') {
+            window.setupReviewer.mountBanner(PROJECT_NAME);
         }
     }
 

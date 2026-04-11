@@ -1,182 +1,288 @@
 (function() {
-    // ADR-002 Stufe 1a: Setup-Reviewer UI-Modul
-    // Ergaenzt das bestehende Tool-Files-Modal um eine Review-Section.
+    // ADR-002 Stufe 1a: Setup-Reviewer UI (Badge + Banner, kein eigener Button)
+    //
+    // Der Review ist Diagnose, nicht Aktion. Darum:
+    // - Status-Badge am Tool-Files-Button (Page-Load)
+    // - Banner oben im Modal (Modal-Open)
+    // - Kein Primaer-CTA, nur ein kleiner Inline-Link "Jetzt aktualisieren"
+    //   wenn der Review fehlt oder veraltet ist.
 
-    var REVIEW_SECTION_ID = 'setupReviewerSection';
-    var REVIEW_BODY_ID = 'setupReviewerBody';
-    var REVIEW_MESSAGE_ID = 'setupReviewerMessage';
-    var REVIEW_BUTTON_ID = 'setupReviewerRunBtn';
+    var BANNER_ID = 'setupReviewerBanner';
+    var BADGE_CLASS = 'tool-files-setup-badge';
 
-    function ensureReviewSection() {
-        var existing = document.getElementById(REVIEW_SECTION_ID);
-        if (existing) return existing;
+    // ------------------------------------------------------------------------
+    // Status-Ableitung
+    // ------------------------------------------------------------------------
 
-        // Anker: das bestehende Tool-Profile-Modal hat ein toolProfileAdapterBody div.
-        // Wir fuegen unsere Review-Section darunter ein.
+    function severityTone(result) {
+        if (!result) {
+            return {label: 'ungeprueft', color: 'rgba(148,163,184,0.82)', dot: '#94a3b8'};
+        }
+        if (result.error) {
+            return {label: 'Reviewer-Fehler', color: '#fca5a5', dot: '#ef4444'};
+        }
+        var drift = result.context_drift && result.context_drift.has_drift;
+        if (drift) {
+            return {label: 'Context-Drift', color: '#fca5a5', dot: '#ef4444'};
+        }
+        var findings = result.findings || [];
+        var errs = findings.filter(function(f) { return f.severity === 'error'; }).length;
+        if (errs > 0) {
+            return {label: errs + ' kritisch', color: '#fca5a5', dot: '#ef4444'};
+        }
+        var warns = findings.filter(function(f) { return f.severity === 'warn'; }).length;
+        if (warns > 0) {
+            return {label: warns + ' Finding(s)', color: '#fcd34d', dot: '#fbbf24'};
+        }
+        if (result.setup_ok === true) {
+            return {label: 'OK', color: '#86efac', dot: '#22c55e'};
+        }
+        return {label: 'ungeprueft', color: 'rgba(148,163,184,0.82)', dot: '#94a3b8'};
+    }
+
+    function relativeAge(updatedAt) {
+        if (!updatedAt) return null;
+        try {
+            var then = new Date(updatedAt).getTime();
+            if (!isFinite(then)) return null;
+            var diffH = Math.floor((Date.now() - then) / 3600000);
+            if (diffH < 1) return 'gerade eben';
+            if (diffH < 24) return 'vor ' + diffH + 'h';
+            return 'vor ' + Math.floor(diffH / 24) + 'd';
+        } catch (e) { return null; }
+    }
+
+    function isStale(updatedAt) {
+        if (!updatedAt) return true;
+        try {
+            var then = new Date(updatedAt).getTime();
+            if (!isFinite(then)) return true;
+            return (Date.now() - then) > 24 * 3600000;
+        } catch (e) { return true; }
+    }
+
+    // ------------------------------------------------------------------------
+    // Badge auf Topbar-Button
+    // ------------------------------------------------------------------------
+
+    function attachStatusBadge(projectName) {
+        var btn = document.querySelector('.topbar-btn[onclick*="openToolProfileAdapter"]');
+        if (!btn) return;
+
+        loadReview(projectName).then(function(result) {
+            renderBadge(btn, result);
+        }).catch(function() {
+            renderBadge(btn, null);
+        });
+    }
+
+    function renderBadge(btn, result) {
+        var tone = severityTone(result);
+        var badge = btn.querySelector('.' + BADGE_CLASS);
+        if (!badge) {
+            badge = document.createElement('span');
+            badge.className = BADGE_CLASS;
+            badge.style.cssText = 'display:inline-block;width:8px;height:8px;border-radius:50%;margin-left:8px;vertical-align:middle;box-shadow:0 0 0 1px rgba(15,23,42,0.6)';
+            btn.appendChild(badge);
+        }
+        badge.style.background = tone.dot;
+        badge.title = 'Setup-Review: ' + tone.label;
+    }
+
+    // ------------------------------------------------------------------------
+    // Banner im Modal
+    // ------------------------------------------------------------------------
+
+    function mountBanner(projectName) {
+        removeBanner();
         var host = document.getElementById('toolProfileAdapterBody');
-        if (!host) return null;
+        if (!host) return;
 
-        var section = document.createElement('div');
-        section.id = REVIEW_SECTION_ID;
-        section.style.cssText = 'border-top:1px solid rgba(148,163,184,0.22);margin-top:18px;padding-top:16px';
-        section.innerHTML = ''
-            + '<header style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px">'
-            + '<div>'
-            + '<div style="font-size:12px;text-transform:uppercase;letter-spacing:0.08em;color:rgba(148,163,184,0.82)">Setup-Reviewer</div>'
-            + '<div style="color:#f8fafc;font-weight:600;font-size:15px">Perplexity prueft die AI-Tool-Einrichtung</div>'
-            + '</div>'
-            + '<button class="btn-save" type="button" id="' + REVIEW_BUTTON_ID + '">Review anfordern</button>'
-            + '</header>'
-            + '<div id="' + REVIEW_BODY_ID + '"></div>'
-            + '<div id="' + REVIEW_MESSAGE_ID + '" style="margin-top:10px;font-size:13px;min-height:18px"></div>';
-        host.parentNode.insertBefore(section, host.nextSibling);
+        var banner = document.createElement('div');
+        banner.id = BANNER_ID;
+        banner.style.cssText = 'margin-bottom:16px';
+        banner.innerHTML = '<div style="color:rgba(148,163,184,0.64);font-size:12px">Lade Review-Stand...</div>';
+        host.parentNode.insertBefore(banner, host);
 
-        section.querySelector('#' + REVIEW_BUTTON_ID).addEventListener('click', triggerReview);
-        return section;
+        loadReview(projectName).then(function(result) {
+            renderBanner(banner, result, projectName);
+        }).catch(function() {
+            renderBanner(banner, null, projectName);
+        });
     }
 
-    function setReviewMessage(text, kind) {
-        var el = document.getElementById(REVIEW_MESSAGE_ID);
-        if (!el) return;
-        el.textContent = text || '';
-        el.style.color = kind === 'error' ? '#fca5a5' : kind === 'success' ? '#86efac' : 'rgba(226,232,240,0.72)';
+    function removeBanner() {
+        var existing = document.getElementById(BANNER_ID);
+        if (existing) existing.remove();
     }
 
-    function severityColor(severity) {
-        if (severity === 'error') return '#fca5a5';
-        if (severity === 'warn') return '#fcd34d';
-        return '#7dd3fc';
-    }
+    function renderBanner(banner, result, projectName) {
+        var tone = severityTone(result);
+        var age = result && result.updated_at ? relativeAge(result.updated_at) : null;
+        var stale = !result || isStale(result && result.updated_at);
 
-    function renderDriftWarning(drift) {
-        if (!drift || !drift.has_drift) return '';
-        var files = (drift.drifted_files || []).map(escapeHtml).join(', ');
-        return ''
-            + '<div style="background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.4);border-radius:8px;padding:10px 12px;margin-bottom:12px">'
-            + '<div style="color:#fca5a5;font-weight:600;font-size:13px;margin-bottom:4px">Context-Drift erkannt</div>'
-            + '<div style="color:rgba(226,232,240,0.82);font-size:12px;line-height:1.5">'
-            + (files ? '<strong>Betroffen:</strong> ' + files + '<br>' : '')
-            + escapeHtml(drift.reason || '')
-            + '</div>'
-            + '</div>';
-    }
+        var driftBar = '';
+        if (result && result.context_drift && result.context_drift.has_drift) {
+            var files = (result.context_drift.drifted_files || []).map(escapeHtml).join(', ');
+            driftBar = ''
+                + '<div style="background:rgba(239,68,68,0.14);border-left:3px solid #ef4444;padding:8px 12px;margin-bottom:10px;font-size:12px;color:#fecaca;border-radius:0 6px 6px 0">'
+                + '<strong>Context-Drift:</strong> '
+                + (files ? files : 'Tool-Dateien divergieren')
+                + (result.context_drift.reason ? ' — <span style="color:rgba(254,202,202,0.72)">' + escapeHtml(result.context_drift.reason) + '</span>' : '')
+                + '</div>';
+        }
 
-    function renderFinding(f) {
-        var color = severityColor(f.severity);
-        var autofix = f.can_autofix
-            ? '<span style="color:#86efac;font-size:11px;margin-left:8px">auto-fixable</span>'
+        var refreshLabel = !result ? 'Jetzt reviewen'
+            : result.error ? 'Erneut versuchen'
+            : stale ? 'Review aktualisieren'
+            : null;
+
+        var refreshLink = refreshLabel
+            ? ' · <a href="#" data-action="refresh-review" style="color:#7dd3fc;text-decoration:underline;font-size:12px">'
+              + escapeHtml(refreshLabel) + '</a>'
             : '';
+
+        var statusText;
+        if (!result) {
+            statusText = 'Kein Review vorhanden';
+        } else if (result.error) {
+            statusText = 'Reviewer-Fehler: ' + escapeHtml(result.error);
+        } else {
+            var count = (result.findings || []).length;
+            statusText = count ? (count + ' Finding(s) · ' + tone.label) : ('Setup-Review: ' + tone.label);
+        }
+
+        var ageSpan = age
+            ? ' <span style="color:rgba(148,163,184,0.6);font-size:12px">· ' + escapeHtml(age) + '</span>'
+            : '';
+
+        var summarySpan = '';
+        if (result && result.summary && !result.error) {
+            summarySpan = '<div style="color:rgba(226,232,240,0.72);font-size:12px;margin-top:4px;line-height:1.5">'
+                + escapeHtml(result.summary) + '</div>';
+        }
+
+        var details = buildDetailsSection(result);
+
+        banner.innerHTML = ''
+            + driftBar
+            + '<div style="background:rgba(15,23,42,0.52);border:1px solid rgba(148,163,184,0.18);border-radius:8px;padding:10px 14px">'
+            + '<div style="display:flex;align-items:center;gap:10px">'
+            + '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:' + tone.dot + ';flex-shrink:0"></span>'
+            + '<div style="flex:1;font-size:13px;color:' + tone.color + '">'
+            + statusText + ageSpan + refreshLink
+            + '</div>'
+            + '</div>'
+            + summarySpan
+            + details
+            + '</div>';
+
+        var link = banner.querySelector('[data-action="refresh-review"]');
+        if (link) {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                triggerReview(banner, projectName);
+            });
+        }
+    }
+
+    function buildDetailsSection(result) {
+        if (!result || result.error) return '';
+        var findings = result.findings || [];
+        var blocks = result.suggested_blocks || {};
+        var hasBlocks = Object.keys(blocks).some(function(k) { return blocks[k] && blocks[k].trim(); });
+        if (!findings.length && !hasBlocks) return '';
+
+        var findingsHtml = findings.length
+            ? '<details style="margin-top:10px"><summary style="cursor:pointer;color:rgba(148,163,184,0.82);font-size:12px">' + findings.length + ' Finding(s) anzeigen</summary>'
+              + '<div style="margin-top:6px">' + findings.map(renderFindingCompact).join('') + '</div></details>'
+            : '';
+
+        var blocksHtml = hasBlocks
+            ? '<details style="margin-top:6px"><summary style="cursor:pointer;color:rgba(148,163,184,0.82);font-size:12px">Vorgeschlagene Bloecke anzeigen</summary>'
+              + '<div style="margin-top:6px">' + renderSuggestedBlocks(blocks) + '</div></details>'
+            : '';
+
+        return findingsHtml + blocksHtml;
+    }
+
+    function renderFindingCompact(f) {
+        var color = f.severity === 'error' ? '#fca5a5' : f.severity === 'warn' ? '#fcd34d' : '#7dd3fc';
         return ''
-            + '<article style="border:1px solid rgba(148,163,184,0.18);border-left:3px solid ' + color + ';border-radius:8px;padding:10px 12px;background:rgba(15,23,42,0.52);margin-bottom:8px">'
-            + '<header style="display:flex;justify-content:space-between;gap:12px;align-items:baseline">'
-            + '<div style="color:#f8fafc;font-weight:600;font-size:14px">' + escapeHtml(f.title || '') + autofix + '</div>'
-            + '<span style="color:' + color + ';font-size:11px;text-transform:uppercase">' + escapeHtml(f.severity || '') + ' · ' + escapeHtml(f.area || '') + '</span>'
-            + '</header>'
-            + '<div style="color:rgba(226,232,240,0.82);font-size:12px;margin-top:6px;line-height:1.5">' + escapeHtml(f.problem || '') + '</div>'
-            + (f.why_it_matters ? '<div style="color:rgba(148,163,184,0.72);font-size:11px;margin-top:4px;font-style:italic">' + escapeHtml(f.why_it_matters) + '</div>' : '')
-            + (f.recommended_change ? '<div style="color:#e2e8f0;font-size:12px;margin-top:6px;padding-top:6px;border-top:1px dashed rgba(148,163,184,0.2)"><strong>Empfehlung:</strong> ' + escapeHtml(f.recommended_change) + '</div>' : '')
-            + '</article>';
+            + '<div style="border-left:2px solid ' + color + ';padding:6px 10px;margin-bottom:4px;background:rgba(2,6,23,0.38);border-radius:0 4px 4px 0;font-size:12px">'
+            + '<div style="color:#f8fafc;font-weight:600">' + escapeHtml(f.title || '') + '</div>'
+            + '<div style="color:rgba(226,232,240,0.72);margin-top:2px">' + escapeHtml(f.problem || '') + '</div>'
+            + (f.recommended_change ? '<div style="color:rgba(148,163,184,0.78);margin-top:2px;font-style:italic">→ ' + escapeHtml(f.recommended_change) + '</div>' : '')
+            + '</div>';
     }
 
     function renderSuggestedBlocks(blocks) {
-        if (!blocks || typeof blocks !== 'object') return '';
-        var entries = Object.keys(blocks).filter(function(k) { return blocks[k] && blocks[k].trim(); });
-        if (!entries.length) return '';
-        return entries.map(function(filename) {
+        return Object.keys(blocks).filter(function(k) {
+            return blocks[k] && blocks[k].trim();
+        }).map(function(filename) {
             return ''
-                + '<details style="margin-top:8px;border:1px solid rgba(148,163,184,0.18);border-radius:8px;background:rgba(15,23,42,0.42)">'
-                + '<summary style="cursor:pointer;padding:8px 12px;color:#f8fafc;font-size:13px;font-weight:600">Vorgeschlagener Block fuer ' + escapeHtml(filename) + '</summary>'
-                + '<pre style="background:rgba(2,6,23,0.64);color:#e2e8f0;padding:10px 12px;border-radius:0 0 8px 8px;max-height:260px;overflow:auto;font-size:11px;line-height:1.45;margin:0">' + escapeHtml(blocks[filename]) + '</pre>'
-                + '</details>';
+                + '<div style="margin-bottom:6px">'
+                + '<div style="color:rgba(226,232,240,0.82);font-size:11px;font-weight:600;margin-bottom:2px">' + escapeHtml(filename) + '</div>'
+                + '<pre style="background:rgba(2,6,23,0.64);color:#e2e8f0;padding:8px 10px;border-radius:6px;max-height:220px;overflow:auto;font-size:11px;line-height:1.45;margin:0">' + escapeHtml(blocks[filename]) + '</pre>'
+                + '</div>';
         }).join('');
     }
 
-    function renderResult(result) {
-        var body = document.getElementById(REVIEW_BODY_ID);
-        if (!body) return;
+    // ------------------------------------------------------------------------
+    // Review ausloesen (via Inline-Link)
+    // ------------------------------------------------------------------------
 
-        if (!result) {
-            body.innerHTML = '<div style="color:rgba(226,232,240,0.64);font-size:13px">Kein Review vorhanden. Klicke "Review anfordern".</div>';
-            return;
+    function triggerReview(banner, projectName) {
+        var link = banner.querySelector('[data-action="refresh-review"]');
+        if (link) {
+            link.textContent = 'laeuft...';
+            link.style.pointerEvents = 'none';
+            link.style.color = 'rgba(148,163,184,0.72)';
         }
 
-        if (result.error === 'query_failed') {
-            body.innerHTML = '<div style="color:#fca5a5">Reviewer-Aufruf fehlgeschlagen: ' + escapeHtml(result.raw_response || '') + '</div>';
-            return;
-        }
-        if (result.error === 'parse_failed') {
-            body.innerHTML = '<div style="color:#fca5a5">Reviewer-Antwort nicht parsbar. Raw-Response gespeichert.</div>';
-            return;
-        }
-
-        var drift = renderDriftWarning(result.context_drift);
-        var summary = result.summary
-            ? '<div style="color:rgba(226,232,240,0.9);font-size:13px;margin-bottom:10px;padding:8px 12px;background:rgba(15,23,42,0.42);border-radius:8px">' + escapeHtml(result.summary) + '</div>'
-            : '';
-
-        var findings = (result.findings || []).map(renderFinding).join('');
-        if (!findings) findings = '<div style="color:rgba(148,163,184,0.72);font-size:12px">Keine Findings.</div>';
-
-        var suggestedBlocks = renderSuggestedBlocks(result.suggested_blocks);
-
-        var meta = ''
-            + '<div style="color:rgba(148,163,184,0.64);font-size:11px;margin-top:10px">'
-            + (result.reviewer_tool ? 'via ' + escapeHtml(result.reviewer_tool) : '')
-            + (result.reviewer_model ? ' (' + escapeHtml(result.reviewer_model) + ')' : '')
-            + (result.priority ? ' · Prioritaet: ' + escapeHtml(result.priority) : '')
-            + '</div>';
-
-        body.innerHTML = drift + summary + findings + suggestedBlocks + meta;
+        api.post('/api/project/' + encodeURIComponent(projectName) + '/tool-setup/review', {})
+            .then(function(data) {
+                renderBanner(banner, data && data.result, projectName);
+                // Badge auf Topbar-Button synchron halten
+                var btn = document.querySelector('.topbar-btn[onclick*="openToolProfileAdapter"]');
+                if (btn) renderBadge(btn, data && data.result);
+            })
+            .catch(function(e) {
+                banner.innerHTML = '<div style="color:#fca5a5;font-size:12px">Review fehlgeschlagen: ' + escapeHtml(e && e.message || String(e)) + '</div>';
+            });
     }
 
-    async function loadExistingReview(projectName) {
-        try {
-            var data = await api.get('/api/project/' + encodeURIComponent(projectName) + '/tool-setup/review');
-            if (data && data.result) {
-                renderResult(data.result);
-                setReviewMessage('Letzter Review: ' + (data.result.updated_at || 'unbekannt'), 'info');
-            } else {
-                renderResult(null);
-                setReviewMessage('', 'info');
-            }
-        } catch (e) {
-            // Kein bestehendes Review ist kein Fehler
-            renderResult(null);
-        }
+    // ------------------------------------------------------------------------
+    // API-Helper
+    // ------------------------------------------------------------------------
+
+    function loadReview(projectName) {
+        return api.get('/api/project/' + encodeURIComponent(projectName) + '/tool-setup/review')
+            .then(function(data) { return data && data.result; });
     }
 
-    async function triggerReview() {
-        if (typeof PROJECT_NAME === 'undefined' || !PROJECT_NAME) return;
-        var btn = document.getElementById(REVIEW_BUTTON_ID);
-        if (btn) btn.disabled = true;
-        setReviewMessage('Review laeuft (Perplexity)...', 'info');
+    // ------------------------------------------------------------------------
+    // Public API
+    // ------------------------------------------------------------------------
 
-        try {
-            var data = await api.post('/api/project/' + encodeURIComponent(PROJECT_NAME) + '/tool-setup/review', {});
-            if (data && data.result) {
-                renderResult(data.result);
-                if (data.result.error) {
-                    setReviewMessage('Review abgeschlossen mit Fehler: ' + data.result.error, 'error');
-                } else if (data.result.dedup_hit) {
-                    setReviewMessage('Dedup: Kontext unveraendert, alter Review wiederverwendet.', 'info');
-                } else {
-                    setReviewMessage('Review gespeichert.', 'success');
-                }
-            }
-        } catch (e) {
-            setReviewMessage('Review fehlgeschlagen: ' + (e && e.message ? e.message : e), 'error');
-        } finally {
-            if (btn) btn.disabled = false;
-        }
-    }
-
-    // Public API: wird von tool-profile-adapter.js beim Oeffnen des Modals aufgerufen
     window.setupReviewer = {
-        mount: function(projectName) {
-            ensureReviewSection();
-            renderResult(null);
-            setReviewMessage('', 'info');
-            loadExistingReview(projectName);
-        }
+        attachStatusBadge: attachStatusBadge,
+        mountBanner: mountBanner
     };
+
+    // ------------------------------------------------------------------------
+    // Auto-Mount des Badges beim Page-Load
+    // ------------------------------------------------------------------------
+
+    function autoMount() {
+        if (typeof PROJECT_NAME !== 'undefined' && PROJECT_NAME) {
+            attachStatusBadge(PROJECT_NAME);
+        }
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', autoMount);
+    } else {
+        autoMount();
+    }
 })();
