@@ -135,7 +135,7 @@
         var refreshLabel = !result ? 'Jetzt reviewen'
             : result.error ? 'Erneut versuchen'
             : stale ? 'Review aktualisieren'
-            : null;
+            : 'Erneut reviewen';
 
         var refreshLink = refreshLabel
             ? ' · <a href="#" data-action="refresh-review" style="color:#7dd3fc;text-decoration:underline;font-size:12px">'
