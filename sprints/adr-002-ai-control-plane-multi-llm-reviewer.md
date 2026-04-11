@@ -282,3 +282,185 @@ Dieses ADR entstand aus einer Serie von Klaerungen zwischen Joseph und Claude Co
 4. Harte Annahmen ueber „welches Tool fuer welche Aufgabe" gehoeren nicht in Code, sondern in versionierte Daten, die durch einen unabhaengigen Reviewer (Perplexity) laufend aktualisiert werden koennen.
 
 Das Ergebnis ist dieses ADR. Prio 7 aus ADR-001 wird bis auf Weiteres zurueckgestellt, Prio 8 wird durch ADR-002 erweitert und vorgezogen.
+
+## Nachtrag 2026-04-11: Dispatch/Execute als explizite Schicht + Autonomie-Regel
+
+### 1. Anlass und Befund
+
+Beim Lesen von Abschnitt 3 („Observe / Review / Steer") wurde klar, dass ADR-002 zwar den Schreibvorgang in Runtime-Artefakte beschreibt (Write-Guard, Tool-Profile-Adapter, Policy-Apply), aber nicht den Schritt, der aus einer freigegebenen Entscheidung einen konkreten Arbeitsauftrag an ein CLI ableitet.
+
+Konkret:
+Steer definiert, was sich wie aendern darf, nutzt bestehende Schreibpfade und verlangt explizite Freigabe. Es sagt aber nicht, welches Tool diesen Auftrag ausfuehrt, wann es beginnt und mit welchem Scope es arbeitet. Die heutige Luecke: Der Uebergang von „Marker X ist fuer Rolle programming freigegeben" zu „Tool Y oeffnet einen Prompt mit Marker-X-Kontext und beginnt zu arbeiten" ist nirgends formal modelliert.
+
+Ohne diese Schicht kann die Control-Plane beobachten, bewerten und freigeben, aber sie kann keine Arbeitszuweisung an CLIs aussprechen. Sie bleibt Review-Ebene, keine Arbeitssteuerung.
+
+### 2. Erweiterte Domaenenfolge: Observe → Review → Steer → Dispatch → Execute
+
+Die bisherige Dreiteilung
+
+Observe → Review → Steer
+
+wird um eine explizite vierte Domaene erweitert:
+
+Observe → Review → Steer → Dispatch → Execute
+
+Observe sammelt Kontext (Sessions, Marker, Artefakte).
+
+Review bewertet Vorschlaege/Aenderungen, ggf. multi-LLM.
+
+Steer definiert, welche Aenderungen an welchen Artefakten prinzipiell erlaubt sind (Write-Guard, Policy-Apply).
+
+Dispatch erzeugt einen Arbeitsauftrag fuer ein konkretes Tool mit klar definiertem Scope und Risiko-Label.
+
+Execute ist die tatsaechliche Ausfuehrung im Tool/CLI und die Rueckschreibung in Artefakte ueber bestehende Schreibpfade.
+
+Damit gilt als Grundregel:
+
+Ein Tool arbeitet nicht, weil ein Review existiert, sondern weil ein freigegebenes Assignment mit klarer Zustaendigkeit und Scope erzeugt wurde.
+
+### 3. work_assignments als neue Datenentitaet
+
+Zur Abbildung von Dispatch wird eine neue, eigenstaendige Datenentitaet `work_assignments` eingefuehrt. Sie ist konzeptionell Teil des Datenlayers der Control-Plane (neben `project_reviews`, `policies`, Marker-Workflow-Zustaenden usw.).
+
+Zweck:
+`work_assignments` halten fest, welches Tool fuer welchen Marker / Scope mit welchem Risiko-Label und welchem Autonomie-Level arbeiten darf, und in welchem Zustandsverlauf sich dieser Auftrag befindet.
+
+Minimaler Feldumfang (konzeptionell, kein Schema):
+
+- `assignment_id` — eindeutige ID.
+- `marker_id` — Bezug auf den Marker / Task / Sprint-Abschnitt.
+- `role` — Rolle, fuer die der Auftrag formuliert wurde (z.B. programming, analysis).
+- `executor_tool` — das konkret adressierte Tool/CLI (z.B. codex, kilo_code).
+- `scope_ref` — Referenz auf den Arbeitsumfang (Dateiliste, Code-Region, Dokument-Segment, Marker-Scope).
+- `input_payload_ref` — Referenz auf das Input-Paket fuer das Tool (Prompts, Kontext, Parameter), nicht der Inhalt selbst.
+- `risk_level` — qualitative Einstufung (low, medium, high) nach Policy-Regelwerk.
+- `automation_level` — Autonomie-Stufe (siehe Abschnitt 5).
+- `approval_required` — boolesches Flag, ob vor Dispatch eine explizite Freigabe noetig ist.
+- `approval_state` — proposed, approved, rejected, revoked.
+- `dispatch_mode` — manual, pull, push (siehe Abschnitt 4).
+- `allowed_write_scope` — Begrenzung, wo das Tool schreiben darf (z.B. nur bestimmte Dateien oder Marker-Boundaries).
+- `timeout_at` — Zeitpunkt, ab dem der Auftrag als veraltet gilt.
+- `claimed_at` / `claimed_by` — wann/wodurch der Auftrag von einem Tool aufgenommen wurde.
+- `completed_at` — Abschlusszeitpunkt.
+- `result_ref` — Referenz auf Ergebnis-Artefakte / Logs / Reviews.
+
+Die konkrete Ausformung (SQL-Tabellen, Indizes, Event-Sourcing vs. klassische Tabelle) ist nicht Teil dieses Nachtrags und bleibt nachgelagerten Implementierungs-ADRs vorbehalten. Wichtig ist hier die Existenz der Entitaet und ihr Lebenszyklus.
+
+Lebenszyklus (konzeptionell):
+
+- `proposed` — aus einem Review/Steer heraus vorgeschlagener Auftrag, noch nicht freigegeben.
+- `approved` — Auftrag ist durch Joseph oder eine autorisierte Rolle freigegeben (oder Policy-basiert automatisch genehmigt, wenn erlaubt).
+- `dispatched` — Auftrag wurde aktiv einem Tool zugestellt oder zur Abholung bereitgestellt.
+- `claimed` / `running` — ein Tool hat den Auftrag uebernommen und arbeitet.
+- `completed` — Arbeit ist abgeschlossen; Ergebnis ist in Artefakten/Reviews referenziert.
+- `failed` / `expired` / `escalated` — Auftrag gescheitert, abgelaufen oder zur manuellen Klaerung eskaliert.
+
+### 4. Dispatch-Varianten: manuell, Pull, Push
+
+Dispatch wird als eigene Operation gefuehrt, die sich in drei Varianten manifestieren kann. Alle drei erzeugen denselben Typ von `work_assignment`, unterscheiden sich aber darin, wie der Auftrag beim Tool ankommt.
+
+**A. Manuell (Assignment durch Joseph)**
+
+Joseph waehlt in UI/CLI einen Marker oder Scope, laesst sich Review/Steer-Output anzeigen und erstellt daraus explizit ein `work_assignment` fuer ein bestimmtes Tool.
+
+Das Tool erhaelt keinen automatischen Start; Joseph startet das CLI selbst und uebergibt Kontext (Stufe 1b/2).
+
+Dies ist der heutige Status quo (Copy-Paste, manuelles Oeffnen) — nun aber modelliert.
+
+**B. Pull (Tool holt sich Aufgaben)**
+
+Tools/CLIs fragen aktiv nach „offenen, zu mir passenden work_assignments" (z.B. nach Rolle, Tool-Profil, Status approved).
+
+Das Control-Plane-Backend beantwortet diese Pull-Anfrage und liefert ein Assignment mit Input-Payload-Ref.
+
+Das Tool entscheidet, wann es den Auftrag annimmt (claimed) und beginnt (running).
+
+**C. Push (System stoesst Tool-Run an)**
+
+Die Control-Plane triggert aktiv einen Tool-Run, sobald ein `work_assignment` die Kriterien fuer automatischen Dispatch erfuellt (z.B. low risk, automation_level erlaubt Push).
+
+Das CLI wird extern gestartet oder ueber eine laufende Session angesprochen.
+
+Fuer dein System gilt:
+
+Kurzfristig ist A bindend, B ist Zielbild fuer hoehere Autonomie-Stufen, C bleibt explizit nachgelagerte Option und erfordert separate Freigabe/ADRs.
+
+### 5. Autonomie-Regel: Risikobasierte Automatisierung
+
+Die Autonomie-Regel wird direkt an Dispatch gekoppelt. Fuer jede Operation wird festgelegt, ob und unter welchen Bedingungen sie automatisch gestartet werden darf.
+
+Leitfrage:
+
+„Ist diese Operation niedrig riskant, reversibel, klar eingegrenzt und gut messbar?"
+
+Wenn ja, kann eine automatische Behandlung sinnvoll sein; wenn nein, ist mindestens eine Approval-, Escalation- oder Timeout-Regel notwendig.
+
+#### 5.1 Autonomie-Stufen
+
+Das System kennt vier Autonomie-Stufen, die pro `work_assignment` (Feld `automation_level`) gesetzt werden:
+
+**Level 0 — Observe Only**
+
+Nur Lesen: Observe, Sync, Analyse, Status-Abfragen.
+
+Keine Schreibrechte, kein Dispatch-Start.
+
+Beispiele: Log-Aggregation, Metrik-Berechnung, Code-Scanning ohne Write-Back.
+
+**Level 1 — Draft / Prepare (kein automatischer Dispatch)**
+
+Tools duerfen Entwuerfe erzeugen (z.B. Code-Diffs, PR-Vorlagen, Doc-Entwuerfe), aber keine eigenstaendigen Schreiboperationen ausfuehren.
+
+`work_assignments` koennen erstellt werden, aber `approval_required = true` und `dispatch_mode = manual`.
+
+Beispiele: Draft-Refactorings, Vorschlaege fuer Testfaelle, Architektur-Notizen.
+
+**Level 2 — Low-Risk Dispatch (teilweise automatisch)**
+
+Automatisierung ist erlaubt fuer niedrig riskante, reversible, klar eingegrenzte und messbare Operationen.
+
+`work_assignments` mit `risk_level = low` und `automation_level = 2` duerfen per Pull oder (konfiguriert) per Push automatisch angenommen werden, sofern `allowed_write_scope` eng definiert ist.
+
+Beispiele: Lint-Runs, Formatter, kleine Konsistenz-Fixes in bekannten Dateien, mechanische Aenderungen mit klaren Rollback-Moeglichkeiten.
+
+**Level 3 — High-Impact / Policy-aktivierend (immer approval-pflichtig)**
+
+Alle Operationen mit grossem Schreibumfang, Architekturwirkung oder Produktwirkung.
+
+`approval_required = true`, `dispatch_mode = manual`. Keine automatische Ausfuehrung.
+
+Beispiele: Architekturwechsel, Migrations, aktivierende Policy-Aenderungen, Cross-Tool-Neurouting.
+
+#### 5.2 Bindende Grundregel
+
+Fuer ADR-002 gilt damit:
+
+Automatisierung ist erlaubt fuer Observe-, Sync-, Draft- und Low-Risk-Dispatch-Vorgaenge (Level 0–2); alle policy-aktivierenden oder weitreichend schreibenden Vorgaenge (Level 3) bleiben approval-pflichtig.
+
+Jeder `work_assignment` muss ein `risk_level` und ein `automation_level` tragen. Das Zusammenspiel aus beidem entscheidet, ob:
+
+- der Auftrag automatisch in den Zustand `approved` wechseln darf,
+- der Auftrag automatisch im Pull/Push-Modus `dispatched` werden darf oder
+- eine explizite Freigabe durch Joseph erforderlich ist.
+
+### 6. Auswirkungen auf bestehende Artefakte
+
+**HTML-Grafik (Systemuebersicht)**
+
+- Zwischen Control-Plane und AI-Tools wird ein zusaetzlicher Block DISPATCH eingefuegt.
+- Neben `policies` wird die Datenbox `work_assignments` ergaenzt.
+- Der Rueckkanal von den AI-Tools zu Observe wird als echter Zyklus (Tools → Artefakte → Observe) visualisiert, nicht nur angedeutet.
+
+**Stufen-/Timeline-Tabelle**
+
+Die Implementierung von Dispatch (`work_assignments`, manuelle Assignment-Erzeugung, erste Pull-Variante) wird als eigene Ausbaustufe gefuehrt (z.B. Stufe 2a), basierend auf der bestehenden Stufe 1a/1b (Reviews, Policies, Approval-Pfad).
+
+**Bestehende Stufen bleiben gueltig**
+
+- Stufe 1b (Control-Plane fuer Reviews + Policies + Approval) bleibt unveraendert gueltig und ist Voraussetzung fuer Dispatch.
+- Der Nachtrag erweitert die Produktvision, widerspricht ihr aber nicht.
+
+**Keine sofortigen Schema-Aenderungen**
+
+- Dieser Nachtrag definiert Konzept und Regeln, nicht das finale Datenmodell.
+- Konkrete Tabellen, Felder und eventuelle Anpassungen an `marker_workflow_states` (z.B. `assigned_tool`) werden in nachgelagerten ADRs beschrieben.
