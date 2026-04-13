@@ -4,6 +4,67 @@
 
 ---
 
+## Session 2026-04-13 (Nacht 5) — CWO Phase 1b Ticket 1.11 + Guidance
+
+### Was wurde erledigt
+- **CWO Ticket 1.11:** Review-Button + Bewertungs-Anzeige
+  - `static/js/context-window-optimizer-review.js` (176 Zeilen): Review-UI als eigenes Modul (`window.cwoReview`)
+  - Review-Link (lila, `#c084fc`) in CWO-Status-Zeile: "Review anfordern" / "Erneut reviewen"
+  - Perplexity-Review Panel: Confidence-Badge (gruen/gelb/rot), Safe/Unsafe-Indikator, Summary-Text
+  - Token-Assessment Vorher/Nachher: `10.0K → 8.5K −15%` mit Farb-Rating
+  - Migration-Assessments (collapsible): safe=gruen, unsafe=rot, needs_review=gelb mit Begruendung
+  - Dedup-Feedback: "Review aktuell — keine Aenderung seit letztem Review"
+  - Loading-State + Error-Handling
+- **Guidance-Zeile:** Kontextabhaengiger Naechster-Schritt-Hinweis im CWO-Panel
+  - 6 Zustaende: Start (blau), Fehler (rot), Veraltet (gelb), Empfehlung (lila), Achtung (rot), Bereit (gruen)
+  - `buildGuidance()` + `resolveGuidanceHint()` in `context-window-optimizer.js`
+  - Browser-verifiziert: "Bereit" bei project_dashboard, "Start" bei proj_webideas24
+- **Architektur:** Review-Logik in eigene Datei ausgelagert (Hauptdatei 428 Z., Review 176 Z.)
+
+### Git Commits
+```
+e16d24f Feature: CWO Phase 1b Ticket 1.11 - UI Review-Button + Bewertungs-Anzeige + Guidance
+```
+
+---
+
+## Session 2026-04-13 (Nacht 4) — CWO Phase 1b Tickets 1.9+1.10
+
+### Was wurde erledigt
+- **CWO Ticket 1.9:** Perplexity-Prompt (`prompts/context_window_optimizer.md`, 160 Zeilen)
+  - Bewertet Migration-Map auf Sicherheit: safe/unsafe/needs_review pro Sektion
+  - Erkennt Verbots-Charakter (muss im Root bleiben), Load-Mode-Angemessenheit, fehlende Zugangswege
+  - JSON-Output: migration_assessments, token_assessment, overall_confidence, findings_review
+  - Pattern identisch mit setup_reviewer/policy_reviewer: nur JSON, keine Citations
+- **CWO Ticket 1.10:** Reviewer-Modul + REST-Endpoints
+  - `services/context_window_optimizer/reviewer.py` (170 Zeilen): review_project() mit query_fn-Injection, context_hash-Dedup, Code-Fence-toleranter JSON-Parser, Error-Persistierung
+  - `services/context_window_optimizer/storage.py` erweitert: save_review() + load_review()
+  - `routes/context_window_optimizer_routes.py` erweitert: POST/GET /api/project/<name>/cwo/review
+- **Alle Tests bestanden:** Import, Prompt-Laden, JSON-Parser, Build-Input, Hash-Dedup, DB-Roundtrip, REST-Endpoints
+
+### Git Commits
+```
+89aedfd Feature: CWO Phase 1b Tickets 1.9+1.10 - Perplexity-Prompt + Reviewer-Modul
+```
+
+---
+
+## Session 2026-04-13 (Nacht 3) — CWO Phase 1 Ticket 1.8
+
+### Was wurde erledigt
+- **CWO Ticket 1.8:** UI-Analyse-Anzeige im Tool-Files-Modal
+  - `static/js/context-window-optimizer.js` (270 Zeilen): Token-Budget-Badge am Topbar-Button, CWO-Panel mit Status-Zeile, Findings, Migration-Map-Tabelle, File-Inventory-Tabelle
+  - `static/js/tool-profile-adapter.js` erweitert: `window.cwo.mountPanel()` Aufruf
+- **Sprint-Plan aktualisiert:** Navigation-Entscheidung fuer Phase 2 — CWO-Seite unter STEUERN
+- **Phase 1a komplett:** Alle 8 Tickets (1.1-1.8) implementiert und im Browser verifiziert
+
+### Git Commits
+```
+9c29536 Feature: CWO Phase 1 Ticket 1.8 - UI Analyse-Anzeige im Tool-Files-Modal
+```
+
+---
+
 ## Session 2026-04-13 (Nacht 2) — CWO Phase 1 Tickets 1.6+1.7
 
 ### Was wurde erledigt

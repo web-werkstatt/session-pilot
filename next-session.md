@@ -1,8 +1,8 @@
 # Projekt-Dashboard - Naechste Session
 
-> **Letzte Aktualisierung:** 2026-04-13 (CWO Ticket 1.11 + Guidance)
-> **Status:** CWO Phase 1b komplett. Review-UI + Guidance-Zeile live. Gesamte Phase 1 (Tickets 1.1-1.11) abgeschlossen.
-> **Naechste Aufgabe:** Policy-Reviewer Live-Test oder CWO Phase 2 (Aktionen mit Approval)
+> **Letzte Aktualisierung:** 2026-04-13 (Session 6: Policy-Reviewer Live-Test + Finding-Decisions)
+> **Status:** Policy-Reviewer live getestet + 2 Dedup-Bugs gefixt. Finding-Decisions Feature komplett (Approve/Dismiss/Ignore fuer alle Reviewer-Findings).
+> **Naechste Aufgabe:** Policy-Suggestions im UI bewerten, dann Prompt-Verbesserungen basierend auf Dismiss-Daten
 
 ---
 
@@ -46,7 +46,8 @@ CLAUDE.md/AGENTS.md/GEMINI.md. Perplexity-Copilot wird Read-Only-Validierungssch
 - [x] **CWO Phase 1b Ticket 1.9:** Perplexity-Prompt erstellen (`prompts/context_window_optimizer.md`)
 - [x] **CWO Phase 1b Ticket 1.10:** Reviewer-Modul (Perplexity-Call + Dedup) (`reviewer.py`)
 - [x] **CWO Phase 1b Ticket 1.11:** UI: Review-Button + Bewertungs-Anzeige + Guidance-Zeile
-- [ ] **Policy-Reviewer Live-Test:** POST /api/policies/review gegen Perplexity testen
+- [x] **Policy-Reviewer Live-Test:** POST /api/policies/review gegen Perplexity getestet + 2 Dedup-Bugs gefixt
+- [x] **Finding-Decisions:** Approve/Dismiss/Ignore pro Finding (Setup-Reviewer + CWO), DB + Service + REST + UI
 - [ ] Dead Code V2: Ungenutzte Funktionen/Klassen mit Flask-Decorator-Erkennung
 - [ ] ADR-002 Stufe 2a: Dispatch-Einstieg (work_assignments-Tabelle)
 
@@ -74,6 +75,8 @@ CLAUDE.md/AGENTS.md/GEMINI.md. Perplexity-Copilot wird Read-Only-Validierungssch
 | **ADR-002 Stufe 1a+1b** | **DONE — Setup-Reviewer, Policy-Schicht, Perplexity, /policies** |
 | **Context-Window-Optimierung** | **DONE — CLAUDE.md modularisiert, master-plan-summary, Unterverz.-CLAUDE.md** |
 | **CWO Phase 1a (Analyse)** | **DONE — 8 Checks, Orchestrator, REST-API, UI (Badge+Panel)** |
+| **CWO Phase 1b (Review)** | **DONE — Perplexity-Prompt, Reviewer-Modul, Review-UI + Guidance** |
+| **Finding-Decisions** | **DONE — Approve/Dismiss/Ignore pro Finding (Setup-Reviewer + CWO)** |
 | Backup taeglich | DONE — Cron 12:30, 7-Tage-Rotation |
 
 ## Was nicht da ist (= Deferred)
@@ -99,100 +102,55 @@ Dashboard laeuft als systemd-Service auf Port 5055, Backup taeglich 12:30.
 - **DB:** PostgreSQL `project_dashboard`, Schema-Migrationen lazy via `ensure_*_schema()`
 - **Marker-Context:** `marker-context.md` im Root ist Runtime-Datei (gitignored), CLAUDE.md-Regel: nie eigenmaechtig veraendern
 
-## Session 2026-04-13 (Nacht 3) — CWO Phase 1 Ticket 1.8
+## Session 2026-04-13 (Session 6) — Policy-Reviewer Live-Test + Finding-Decisions
 
 ### Was wurde erledigt
-- **CWO Ticket 1.8:** UI-Analyse-Anzeige im Tool-Files-Modal
-  - `static/js/context-window-optimizer.js` (270 Zeilen): Token-Budget-Badge am Topbar-Button (gruen/gelb/rot/blau), CWO-Panel mit Status-Zeile, Findings (collapsible, farbcodiert nach Severity), Migration-Map-Tabelle (Sektion/Ziel/Load-Mode/Tokens/Risiko), File-Inventory-Tabelle (nach Token-Verbrauch sortiert), "Erneut analysieren"-Link (POST mit force:true)
-  - `static/js/tool-profile-adapter.js` erweitert: `window.cwo.mountPanel()` Aufruf
-  - `templates/project_detail.html`: Script-Tag eingefuegt
-- **Sprint-Plan aktualisiert:** Navigation-Entscheidung fuer Phase 2 — CWO-Seite unter STEUERN (neben Quality), nicht unter Planning/Workflow
-- **Phase 1a komplett:** Alle 8 Tickets (1.1-1.8) implementiert und im Browser verifiziert
+- **CWO Sprint-Plan aktualisiert:** Phase 1a+1b als DONE markiert in `sprints/sprint-cwo-context-window-optimizer.md`
+- **Policy-Reviewer Live-Test:** POST `/api/policies/review` erfolgreich gegen Perplexity Sonar getestet
+  - Seed-Defaults geladen (6 Rollen, 5 Tool-Profile)
+  - Perplexity liefert sinnvolle Policy-Vorschlaege (3 aktive Suggestions pending)
+  - Approval/Reject-Flow funktioniert end-to-end
+- **Bug gefixt: Multi-Suggestion-Dedup** — `record_suggestion()` in `policy_service.py` deduplizierte nur nach `context_hash`, sodass pro Review-Call nur die erste Suggestion persistiert wurde. Jetzt: `context_hash + suggestion_type + payload`
+- **Bug gefixt: Review-Level-Dedup fehlte** — Policy-Reviewer rief Perplexity bei jedem Klick erneut auf. Neu: `_find_cached_review()` in `policy_review_service.py` prueft pending Suggestions vor dem API-Call, `force`-Parameter uebergeht den Cache. Route in `policy_routes.py` angepasst.
+- **Feature: Dismiss pro Finding** — Entscheidungs-Flow fuer alle Reviewer-Findings (Setup-Reviewer + CWO):
+  - DB: `finding_decisions` Tabelle mit SHA256-Fingerprint, Status, Dismiss-Reason, Context-Signature
+  - Service: `finding_decision_service.py` — Fingerprint-Berechnung, Enrichment, Reaktivierung bei Kontext-Aenderung
+  - REST: POST `/api/project/<name>/findings/decide`, GET `decisions`, POST `reset`
+  - UI: Akzeptieren/Dismiss/Einmal-ignorieren-Buttons pro Finding, Dismiss-Dialog mit 4 Reason-Presets (bewusst so, Runtime-Datei, kein Projektziel, dupliziert) + Freitext
+  - Dismissed Findings verschwinden, Counter zeigt "X dismissed", Reaktivierung bei Kontext-Aenderung
+  - Browser-verifiziert im Tool-Files-Modal
 
 ### Git Commits
 ```
-9c29536 Feature: CWO Phase 1 Ticket 1.8 - UI Analyse-Anzeige im Tool-Files-Modal
+2d0a7c9 Fix: Policy-Reviewer Dedup — Multi-Suggestion-Persistierung + Review-Level-Cache
+567e88b Feature: Dismiss pro Finding — Entscheidungs-Flow fuer Review-Findings
 ```
 
 ### Geaenderte/neue Dateien
 | Datei | Aenderung |
 |-------|-----------|
-| `static/js/context-window-optimizer.js` | Neu: Badge + Panel + API-Calls (270 Z.) |
-| `static/js/tool-profile-adapter.js` | Erweitert: CWO-Panel-Mount |
-| `templates/project_detail.html` | Script-Tag eingefuegt |
-| `sprints/sprint-cwo-context-window-optimizer.md` | Navigation-Entscheidung Phase 2 ergaenzt |
-
----
-
-## Session 2026-04-13 (Nacht 4) — CWO Phase 1b Tickets 1.9+1.10
-
-### Was wurde erledigt
-- **CWO Ticket 1.9:** Perplexity-Prompt (`prompts/context_window_optimizer.md`, 160 Zeilen)
-  - Bewertet Migration-Map auf Sicherheit: safe/unsafe/needs_review pro Sektion
-  - Erkennt Verbots-Charakter (muss im Root bleiben), Load-Mode-Angemessenheit, fehlende Zugangswege
-  - JSON-Output: migration_assessments, token_assessment, overall_confidence, findings_review
-  - Pattern identisch mit setup_reviewer/policy_reviewer: nur JSON, keine Citations
-- **CWO Ticket 1.10:** Reviewer-Modul + REST-Endpoints
-  - `services/context_window_optimizer/reviewer.py` (170 Zeilen): review_project() mit query_fn-Injection, context_hash-Dedup, Code-Fence-toleranter JSON-Parser, Error-Persistierung
-  - `services/context_window_optimizer/storage.py` erweitert: save_review() (UPDATE perplexity_review/confidence/hash) + load_review()
-  - `routes/context_window_optimizer_routes.py` erweitert: POST/GET /api/project/<name>/cwo/review
-  - `__init__.py` erweitert: Re-Exports review_project, save_review, load_review
-- **Scope-Diskussion:** David Tielke Context-Engineering-Regeln als Referenz, Check #10 (de-facto always-loaded Detection) als kuenftiges Ticket identifiziert, master-plan-summary.md als Luecke im Token-Budget erkannt
-- **Alle Tests bestanden:** Import, Prompt-Laden, JSON-Parser, Build-Input, Hash-Dedup, DB-Roundtrip, REST-Endpoints
-
-### Git Commits
-```
-89aedfd Feature: CWO Phase 1b Tickets 1.9+1.10 - Perplexity-Prompt + Reviewer-Modul
-```
-
-### Geaenderte/neue Dateien
-| Datei | Aenderung |
-|-------|-----------|
-| `prompts/context_window_optimizer.md` | Neu: Perplexity-Prompt (160 Z.) |
-| `services/context_window_optimizer/reviewer.py` | Neu: review_project() + Helpers (170 Z.) |
-| `services/context_window_optimizer/storage.py` | Erweitert: save_review(), load_review() |
-| `services/context_window_optimizer/__init__.py` | Re-Exports ergaenzt |
-| `routes/context_window_optimizer_routes.py` | POST/GET /cwo/review Endpoints |
-
----
-
-## Session 2026-04-13 (Nacht 5) — CWO Phase 1b Ticket 1.11 + Guidance
-
-### Was wurde erledigt
-- **CWO Ticket 1.11:** Review-Button + Bewertungs-Anzeige
-  - `static/js/context-window-optimizer-review.js` (176 Zeilen): Review-UI als eigenes Modul (`window.cwoReview`)
-  - Review-Link (lila, `#c084fc`) in CWO-Status-Zeile: "Review anfordern" / "Erneut reviewen"
-  - Perplexity-Review Panel: Confidence-Badge (gruen/gelb/rot), Safe/Unsafe-Indikator, Summary-Text
-  - Token-Assessment Vorher/Nachher: `10.0K → 8.5K −15%` mit Farb-Rating
-  - Migration-Assessments (collapsible): safe=gruen, unsafe=rot, needs_review=gelb mit Begruendung
-  - Dedup-Feedback: "Review aktuell — keine Aenderung seit letztem Review"
-  - Loading-State + Error-Handling
-- **Guidance-Zeile:** Kontextabhaengiger Naechster-Schritt-Hinweis im CWO-Panel
-  - 6 Zustaende: Start (blau), Fehler (rot), Veraltet (gelb), Empfehlung (lila), Achtung (rot), Bereit (gruen)
-  - `buildGuidance()` + `resolveGuidanceHint()` in `context-window-optimizer.js`
-  - Browser-verifiziert: "Bereit" bei project_dashboard, "Start" bei proj_webideas24
-- **Architektur:** Review-Logik in eigene Datei ausgelagert (Hauptdatei 428 Z., Review 176 Z.)
-- **UX-Feedback:** GUI-Guidance-Pattern als Memory gespeichert, Dashboard-weites Pattern als kuenftiges Ticket
-
-### Git Commits
-```
-e16d24f Feature: CWO Phase 1b Ticket 1.11 - UI Review-Button + Bewertungs-Anzeige + Guidance
-```
-
-### Geaenderte/neue Dateien
-| Datei | Aenderung |
-|-------|-----------|
-| `static/js/context-window-optimizer-review.js` | Neu: Review-UI Modul (176 Z.) |
-| `static/js/context-window-optimizer.js` | Erweitert: Guidance, Review-Integration, ratingTone-Export (349→428 Z.) |
-| `templates/project_detail.html` | Script-Tag fuer Review-JS |
+| `services/db_finding_decisions_schema.py` | Neu: finding_decisions Tabelle (~55 Z.) |
+| `services/finding_decision_service.py` | Neu: Fingerprint, Enrichment, Decisions (~195 Z.) |
+| `routes/finding_decision_routes.py` | Neu: decide/decisions/reset Endpoints (~115 Z.) |
+| `static/js/finding-decisions.js` | Neu: Buttons + Dismiss-Dialog (~155 Z.) |
+| `static/css/finding-decisions.css` | Neu: Styling Buttons, Dialog, Badges (~130 Z.) |
+| `services/policy_service.py` | Fix: Dedup auf context_hash + type + payload |
+| `services/policy_review_service.py` | Neu: _find_cached_review(), force-Parameter |
+| `routes/policy_routes.py` | Erweitert: force-Parameter durchreichen |
+| `services/tool_setup_review/storage.py` | Erweitert: Enrichment in load_review() |
+| `services/context_window_optimizer/storage.py` | Erweitert: Enrichment in load_analysis() |
+| `static/js/setup-reviewer.js` | Erweitert: Buttons + dismissed-Counter |
+| `static/js/context-window-optimizer.js` | Erweitert: Buttons + dismissed-Counter |
+| `sprints/sprint-cwo-context-window-optimizer.md` | Phase 1a+1b als DONE markiert |
 
 ---
 
 ## Naechste Session
 
 ### Aufgaben
-- [ ] Sprint-Plan: `sprints/sprint-cwo-context-window-optimizer.md` — Phase 1b als DONE markieren
-- [ ] **Policy-Reviewer Live-Test:** POST /api/policies/review gegen Perplexity testen
+- [ ] **Policy-Suggestions bewerten:** 3 pending Suggestions im UI (Perplexity→Research, Hermes→QualityReview, Claude→CodeFix)
+- [ ] Optional: Prompt-Verbesserungen basierend auf Dismiss-Daten (Phase B des Finding-Decision-Plans)
 - [ ] Optional: Check #10 (de-facto always-loaded Detection) als eigenes Ticket planen
 - [ ] Optional: Dashboard-weites Guidance-Pattern fuer Quality, Governance, Workflow
 - [ ] Optional: CWO Phase 2 (Aktionen mit Approval) planen
+- [ ] Optional: Dead Code V2 (Funktionen/Klassen mit Flask-Decorator-Erkennung)
