@@ -102,6 +102,11 @@
         if (window.setupReviewer && typeof window.setupReviewer.mountBanner === 'function') {
             window.setupReviewer.mountBanner(PROJECT_NAME);
         }
+
+        // CWO Sprint Ticket 1.8: Context Window Optimizer Panel
+        if (window.cwo && typeof window.cwo.mountPanel === 'function') {
+            window.cwo.mountPanel(PROJECT_NAME);
+        }
     }
 
     async function applyRegenerate() {
