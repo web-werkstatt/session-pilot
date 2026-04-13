@@ -1,8 +1,8 @@
 # Projekt-Dashboard - Naechste Session
 
-> **Letzte Aktualisierung:** 2026-04-13 (CWO Ticket 1.8)
-> **Status:** CWO Phase 1a komplett (Tickets 1.1-1.8). Alle 8 Checks + Orchestrator + REST-API + UI live.
-> **Naechste Aufgabe:** CWO Phase 1b Ticket 1.9 (Perplexity-Prompt erstellen)
+> **Letzte Aktualisierung:** 2026-04-13 (CWO Tickets 1.9+1.10)
+> **Status:** CWO Phase 1b Tickets 1.9+1.10 fertig. Perplexity-Prompt + Reviewer-Modul + REST-API live.
+> **Naechste Aufgabe:** CWO Phase 1b Ticket 1.11 (UI: Review-Button + Bewertungs-Anzeige)
 
 ---
 
@@ -43,8 +43,8 @@ CLAUDE.md/AGENTS.md/GEMINI.md. Perplexity-Copilot wird Read-Only-Validierungssch
 - [x] **CWO Phase 1 Ticket 1.6:** Orchestrator + Storage (`orchestrator.py`, `storage.py`)
 - [x] **CWO Phase 1 Ticket 1.7:** REST-Endpoints (`routes/context_window_optimizer_routes.py`)
 - [x] **CWO Phase 1 Ticket 1.8:** UI: Badge + Panel im Tool-Files-Modal
-- [ ] **CWO Phase 1b Ticket 1.9:** Perplexity-Prompt erstellen (`prompts/context_window_optimizer.md`)
-- [ ] **CWO Phase 1b Ticket 1.10:** Reviewer-Modul (Perplexity-Call + Dedup) (`reviewer.py`)
+- [x] **CWO Phase 1b Ticket 1.9:** Perplexity-Prompt erstellen (`prompts/context_window_optimizer.md`)
+- [x] **CWO Phase 1b Ticket 1.10:** Reviewer-Modul (Perplexity-Call + Dedup) (`reviewer.py`)
 - [ ] **CWO Phase 1b Ticket 1.11:** UI: Review-Button + Bewertungs-Anzeige (JS-Erweiterung)
 - [ ] **Policy-Reviewer Live-Test:** POST /api/policies/review gegen Perplexity testen
 - [ ] Dead Code V2: Ungenutzte Funktionen/Klassen mit Flask-Decorator-Erkennung
@@ -124,10 +124,45 @@ Dashboard laeuft als systemd-Service auf Port 5055, Backup taeglich 12:30.
 
 ---
 
+## Session 2026-04-13 (Nacht 4) — CWO Phase 1b Tickets 1.9+1.10
+
+### Was wurde erledigt
+- **CWO Ticket 1.9:** Perplexity-Prompt (`prompts/context_window_optimizer.md`, 160 Zeilen)
+  - Bewertet Migration-Map auf Sicherheit: safe/unsafe/needs_review pro Sektion
+  - Erkennt Verbots-Charakter (muss im Root bleiben), Load-Mode-Angemessenheit, fehlende Zugangswege
+  - JSON-Output: migration_assessments, token_assessment, overall_confidence, findings_review
+  - Pattern identisch mit setup_reviewer/policy_reviewer: nur JSON, keine Citations
+- **CWO Ticket 1.10:** Reviewer-Modul + REST-Endpoints
+  - `services/context_window_optimizer/reviewer.py` (170 Zeilen): review_project() mit query_fn-Injection, context_hash-Dedup, Code-Fence-toleranter JSON-Parser, Error-Persistierung
+  - `services/context_window_optimizer/storage.py` erweitert: save_review() (UPDATE perplexity_review/confidence/hash) + load_review()
+  - `routes/context_window_optimizer_routes.py` erweitert: POST/GET /api/project/<name>/cwo/review
+  - `__init__.py` erweitert: Re-Exports review_project, save_review, load_review
+- **Scope-Diskussion:** David Tielke Context-Engineering-Regeln als Referenz, Check #10 (de-facto always-loaded Detection) als kuenftiges Ticket identifiziert, master-plan-summary.md als Luecke im Token-Budget erkannt
+- **Alle Tests bestanden:** Import, Prompt-Laden, JSON-Parser, Build-Input, Hash-Dedup, DB-Roundtrip, REST-Endpoints
+
+### Git Commits
+```
+89aedfd Feature: CWO Phase 1b Tickets 1.9+1.10 - Perplexity-Prompt + Reviewer-Modul
+```
+
+### Geaenderte/neue Dateien
+| Datei | Aenderung |
+|-------|-----------|
+| `prompts/context_window_optimizer.md` | Neu: Perplexity-Prompt (160 Z.) |
+| `services/context_window_optimizer/reviewer.py` | Neu: review_project() + Helpers (170 Z.) |
+| `services/context_window_optimizer/storage.py` | Erweitert: save_review(), load_review() |
+| `services/context_window_optimizer/__init__.py` | Re-Exports ergaenzt |
+| `routes/context_window_optimizer_routes.py` | POST/GET /cwo/review Endpoints |
+
+---
+
 ## Naechste Session
 
 ### Aufgaben
-- [ ] **CWO Phase 1b Ticket 1.9:** Perplexity-Prompt erstellen (`prompts/context_window_optimizer.md`)
-- [ ] **CWO Phase 1b Ticket 1.10:** Reviewer-Modul (`reviewer.py`) — Perplexity-Call + context_hash-Dedup
-- [ ] **CWO Phase 1b Ticket 1.11:** UI: Review-Button + Bewertungs-Anzeige (JS-Erweiterung)
+- [ ] **CWO Phase 1b Ticket 1.11:** UI: Review-Button + Bewertungs-Anzeige (JS-Erweiterung in `static/js/context-window-optimizer.js`)
+  - "Review anfordern"-Button im CWO-Panel (POST /api/project/<name>/cwo/review)
+  - Bewertungs-Anzeige: overall_confidence Badge, migration_assessments Liste (safe/unsafe farbcodiert)
+  - token_assessment Vorher/Nachher-Vergleich
+  - Dedup-Feedback: "Review aktuell" wenn dedup_hit
 - [ ] Sprint-Plan: `sprints/sprint-cwo-context-window-optimizer.md`
+- [ ] Optional: Check #10 (de-facto always-loaded Detection) als eigenes Ticket planen
