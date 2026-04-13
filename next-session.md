@@ -1,8 +1,8 @@
 # Projekt-Dashboard - Naechste Session
 
-> **Letzte Aktualisierung:** 2026-04-13 (CWO Ticket 1.1+1.2)
-> **Status:** CWO Phase 1 gestartet. Ticket 1.1 (DB-Schema+Constants) + 1.2 (Context Collector) komplett. DB-Tabellen live.
-> **Naechste Aufgabe:** CWO Phase 1 Ticket 1.3 (Check-Framework + Token-Budget-Check)
+> **Letzte Aktualisierung:** 2026-04-13 (CWO Tickets 1.3-1.5)
+> **Status:** CWO Phase 1a Analyse-Backend komplett (Tickets 1.1-1.5). Alle 8 Checks implementiert und getestet (202 Findings ueber 106 Projekte).
+> **Naechste Aufgabe:** CWO Phase 1 Ticket 1.6 (Orchestrator + Storage) + 1.7 (REST-Endpoints)
 
 ---
 
@@ -37,7 +37,11 @@ CLAUDE.md/AGENTS.md/GEMINI.md. Perplexity-Copilot wird Read-Only-Validierungssch
 - [x] **Context-Window-Optimierung:** CLAUDE.md modularisiert (271→102 Z.), master-plan-summary, Unterverz.-CLAUDE.md, Skill /project-ops
 - [x] **CWO Phase 1 Ticket 1.1:** DB-Schema + Constants + Grundgeruest (db_cwo_schema, constants, checks/__init__, actions/__init__)
 - [x] **CWO Phase 1 Ticket 1.2:** Context Collector (context_collector.py, Smoke-Test bestanden)
-- [ ] **CWO Phase 1 Ticket 1.3:** Check-Framework + Token-Budget-Check (`sprints/sprint-cwo-context-window-optimizer.md`)
+- [x] **CWO Phase 1 Ticket 1.3:** Check-Framework + Token-Budget-Check (run_all_checks, Auto-Discovery, Severity-Sortierung)
+- [x] **CWO Phase 1 Ticket 1.4:** Dateigroessen-Checks 1-4 (oversize_claude_md, oversize_tool_files, focus_file_size, next_session_growth)
+- [x] **CWO Phase 1 Ticket 1.5:** Struktur-Checks 5-7 (global_rule_duplicates, missing_subdir_claude, extractable_sections)
+- [ ] **CWO Phase 1 Ticket 1.6:** Orchestrator + Storage (`orchestrator.py`, `storage.py`)
+- [ ] **CWO Phase 1 Ticket 1.7:** REST-Endpoints (`routes/context_window_optimizer_routes.py`)
 - [ ] **Policy-Reviewer Live-Test:** POST /api/policies/review gegen Perplexity testen
 - [ ] Dead Code V2: Ungenutzte Funktionen/Klassen mit Flask-Decorator-Erkennung
 - [ ] ADR-002 Stufe 2a: Dispatch-Einstieg (work_assignments-Tabelle)
@@ -90,6 +94,47 @@ Dashboard laeuft als systemd-Service auf Port 5055, Backup taeglich 12:30.
 - **DB:** PostgreSQL `project_dashboard`, Schema-Migrationen lazy via `ensure_*_schema()`
 - **Marker-Context:** `marker-context.md` im Root ist Runtime-Datei (gitignored), CLAUDE.md-Regel: nie eigenmaechtig veraendern
 
+## Session 2026-04-13 (Nacht) — CWO Phase 1 Tickets 1.3-1.5
+
+### Was wurde erledigt
+- **CWO Ticket 1.3:** Check-Framework vervollstaendigt — `run_all_checks()` mit Auto-Discovery via `pkgutil`, Severity-Sortierung (error>warning>info), Fehlerresilienz (Exception → Error-Finding). Token-Budget-Check (Check 8) als erster konkreter Check.
+- **CWO Ticket 1.4:** Dateigroessen-Checks 1-4 — `oversize_claude_md.py` (mit Migration-Map-Heuristik fuer Sektions-Auslagerung), `oversize_tool_files.py` (AGENTS.md/GEMINI.md), `focus_file_size.py` (Fokusauftrag-Dateien mit Summary-Vorschlag), `next_session_growth.py` (Rotations-Vorschlag).
+- **CWO Ticket 1.5:** Struktur-Checks 5-7 — `global_rule_duplicates.py` (Jaccard 3-Wort-Shingles), `missing_subdir_claude.py` (Verzeichnisse mit >=3 Code-Dateien ohne CLAUDE.md), `extractable_sections.py` (Listen-lastige Sektionen mit >10 Items).
+- **Bugfix:** `get_all_checks()` triggert jetzt auch Auto-Discovery (vorher nur `run_all_checks`).
+- **Smoke-Test:** 106 Projekte, 202 Findings, alle Severity-Stufen verifiziert. project_dashboard: 0 Findings (korrekt).
+
+### Geaenderte/neue Dateien
+| Datei | Aenderung |
+|-------|-----------|
+| `services/context_window_optimizer/checks/__init__.py` | Erweitert: run_all_checks(), Auto-Discovery, Severity-Sortierung |
+| `services/context_window_optimizer/checks/token_budget.py` | Neu: Check 8 — Token-Budget Gesamt |
+| `services/context_window_optimizer/checks/oversize_claude_md.py` | Neu: Check 1 — CLAUDE.md Uebergroesse + Migration-Map |
+| `services/context_window_optimizer/checks/oversize_tool_files.py` | Neu: Check 2 — AGENTS.md/GEMINI.md |
+| `services/context_window_optimizer/checks/focus_file_size.py` | Neu: Check 3 — Fokusauftrag-Dateien |
+| `services/context_window_optimizer/checks/next_session_growth.py` | Neu: Check 4 — next-session.md Wachstum |
+| `services/context_window_optimizer/checks/global_rule_duplicates.py` | Neu: Check 5 — Duplikate mit globalen Rules |
+| `services/context_window_optimizer/checks/missing_subdir_claude.py` | Neu: Check 6 — Fehlende Unterverz.-CLAUDE.md |
+| `services/context_window_optimizer/checks/extractable_sections.py` | Neu: Check 7 — Auslagerbare Listen-Sektionen |
+| `services/context_window_optimizer/__init__.py` | Erweitert: Check-Exports (run_all_checks, get_all_checks, CWOFinding etc.) |
+
+### Statistik (106 Projekte)
+| Check | Findings |
+|-------|----------|
+| missing_subdir_claude | 102 |
+| extractable_sections | 46 |
+| oversize_claude_md | 30 |
+| token_budget | 18 |
+| next_session_growth | 5 |
+| oversize_tool_files | 1 |
+| global_rule_duplicates | 0 |
+| focus_file_size | 0 |
+
+### Naechste Session
+- [ ] **CWO Ticket 1.6:** Orchestrator (`orchestrator.py`) — Analyse-Flow: Context Collector → Checks → Findings aggregieren → Storage (DB-Persistierung)
+- [ ] **CWO Ticket 1.7:** REST-Endpoints (`routes/context_window_optimizer_routes.py`) — POST/GET /api/project/<name>/cwo/analyze, POST /api/cwo/analyze-all, GET /api/cwo/overview
+- [ ] Danach: Ticket 1.8 (UI: Badge + Panel im Tool-Files-Modal)
+- [ ] Sprint-Plan: `sprints/sprint-cwo-context-window-optimizer.md`
+
 ## Session 2026-04-13 (Abend) — CWO Phase 1 Ticket 1.1 + 1.2
 
 ### Was wurde erledigt
@@ -111,7 +156,6 @@ Dashboard laeuft als systemd-Service auf Port 5055, Backup taeglich 12:30.
 | `pyrightconfig.json` | Neu: Pyright extraPaths Config |
 
 ### Naechste Session
-- [ ] **CWO Ticket 1.3:** Check-Framework + Token-Budget-Check (`checks/token_budget.py`)
-- [ ] **CWO Ticket 1.4:** Dateigroessen-Checks 1-4 (CLAUDE.md, Tool-Files, Fokusauftrag, next-session)
-- [ ] **CWO Ticket 1.5:** Struktur-Checks 5-7 (Duplikate, fehlende Unterverz.-CLAUDE.md, extrahierbare Sektionen)
+- [ ] **CWO Ticket 1.6:** Orchestrator (`orchestrator.py`) — Analyse-Flow: Context Collector → Checks → Findings aggregieren → Storage
+- [ ] **CWO Ticket 1.7:** REST-Endpoints (`routes/context_window_optimizer_routes.py`) — POST/GET /api/project/<name>/cwo/analyze, POST /api/cwo/analyze-all, GET /api/cwo/overview
 - [ ] Sprint-Plan: `sprints/sprint-cwo-context-window-optimizer.md`
