@@ -70,4 +70,16 @@ def ensure_cwo_schema_impl(execute):
             ADD COLUMN IF NOT EXISTS error VARCHAR(100)
         """)
 
+        # Migration: Review-Metriken-Counter (Issue #23)
+        for col in (
+            "generated_count SMALLINT",
+            "shown_count SMALLINT",
+            "filtered_low_confidence_count SMALLINT DEFAULT 0",
+            "low_confidence_warning BOOLEAN DEFAULT FALSE",
+        ):
+            execute(f"""
+                ALTER TABLE cwo_analyses
+                ADD COLUMN IF NOT EXISTS {col}
+            """)
+
         _cwo_schema_ready = True

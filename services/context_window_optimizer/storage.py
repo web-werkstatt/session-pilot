@@ -172,12 +172,25 @@ def save_review(
     confidence = review_result.get("perplexity_confidence")
     review_hash = review_result.get("review_context_hash")
 
+    # Review-Metriken (Issue #23)
+    filtered_low_conf = review_result.get("filtered_low_confidence_count", 0)
+    low_conf_warning = review_result.get("low_confidence_warning", False)
+
+    # generated/shown: Aus migration_assessments berechnen
+    assessments = (review_json or {}).get("migration_assessments") or []
+    shown_count = len(assessments)
+    generated_count = shown_count + filtered_low_conf
+
     execute(
         """
         UPDATE cwo_analyses
         SET perplexity_review = %s::jsonb,
             perplexity_confidence = %s,
             review_context_hash = %s,
+            generated_count = %s,
+            shown_count = %s,
+            filtered_low_confidence_count = %s,
+            low_confidence_warning = %s,
             updated_at = %s
         WHERE project_name = %s
         """,
@@ -185,6 +198,10 @@ def save_review(
             json.dumps(review_json, ensure_ascii=True) if review_json else None,
             confidence,
             review_hash,
+            generated_count,
+            shown_count,
+            filtered_low_conf,
+            low_conf_warning,
             now,
             project_name,
         ),

@@ -29,6 +29,17 @@ def save_review(
 
     now = (now_fn or _default_now)()
 
+    # Review-Metriken berechnen (Issue #23)
+    findings_list = result.get("findings") or []
+    generated_count = result.get("generated_count")
+    filtered_dismissed = result.get("filtered_dismissed_count", 0)
+    filtered_low_conf = result.get("filtered_low_confidence_count", 0)
+    shown_count = len(findings_list)
+
+    # generated_count: Wenn nicht explizit gesetzt, aus shown + filtered rueckrechnen
+    if generated_count is None:
+        generated_count = shown_count + filtered_dismissed + filtered_low_conf
+
     params = (
         project_name,
         result.get("review_type", REVIEW_TYPE),
@@ -37,7 +48,7 @@ def save_review(
         result.get("setup_ok"),
         result.get("priority"),
         result.get("summary"),
-        json.dumps(result.get("findings") or []),
+        json.dumps(findings_list),
         json.dumps(result.get("suggested_blocks") or {}),
         json.dumps(result.get("project_json_patch")) if result.get("project_json_patch") is not None else None,
         result.get("implementation_scope"),
@@ -47,6 +58,10 @@ def save_review(
         result.get("reviewer_model"),
         result.get("raw_response"),
         result.get("error"),
+        generated_count,
+        shown_count,
+        filtered_dismissed,
+        filtered_low_conf,
         now,
     )
 
@@ -57,13 +72,18 @@ def save_review(
             setup_ok, priority, summary, findings, suggested_blocks,
             project_json_patch, implementation_scope, notes,
             context_drift, context_hash, reviewer_model, raw_response,
-            error, updated_at
+            error,
+            generated_count, shown_count,
+            filtered_dismissed_count, filtered_low_confidence_count,
+            updated_at
         ) VALUES (
             %s, %s, %s, %s::jsonb,
             %s, %s, %s, %s::jsonb, %s::jsonb,
             %s::jsonb, %s, %s::jsonb,
             %s::jsonb, %s, %s, %s,
-            %s, %s
+            %s,
+            %s, %s, %s, %s,
+            %s
         )
         ON CONFLICT (project_name, review_type) DO UPDATE SET
             reviewer_tool = EXCLUDED.reviewer_tool,
@@ -81,6 +101,10 @@ def save_review(
             reviewer_model = EXCLUDED.reviewer_model,
             raw_response = EXCLUDED.raw_response,
             error = EXCLUDED.error,
+            generated_count = EXCLUDED.generated_count,
+            shown_count = EXCLUDED.shown_count,
+            filtered_dismissed_count = EXCLUDED.filtered_dismissed_count,
+            filtered_low_confidence_count = EXCLUDED.filtered_low_confidence_count,
             updated_at = EXCLUDED.updated_at
         """,
         params,

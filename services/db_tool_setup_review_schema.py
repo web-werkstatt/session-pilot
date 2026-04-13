@@ -59,6 +59,18 @@ def ensure_tool_setup_review_schema_impl(execute):
                 ON project_reviews(updated_at DESC)
         """)
 
+        # Migration: Review-Metriken-Counter (Issue #23)
+        for col in (
+            "generated_count SMALLINT",
+            "shown_count SMALLINT",
+            "filtered_dismissed_count SMALLINT DEFAULT 0",
+            "filtered_low_confidence_count SMALLINT DEFAULT 0",
+        ):
+            execute(f"""
+                ALTER TABLE project_reviews
+                ADD COLUMN IF NOT EXISTS {col}
+            """)
+
         _tool_setup_review_schema_ready = True
 
 
