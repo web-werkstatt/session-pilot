@@ -1,58 +1,105 @@
 {% extends "base.html" %}
-{% block title %}Spec Audits{% endblock %}
+{% block title %}Spec Audits — Project Dashboard{% endblock %}
 {% block breadcrumb %}Spec Audits{% endblock %}
 
 {% block head_extra %}
 <link rel="stylesheet" href="/static/css/audit.css?v={{ cache_bust }}">
+<link rel="stylesheet" href="/static/css/audit-results.css?v={{ cache_bust }}">
 {% endblock %}
 
 {% block content %}
-    <!-- Run Audit -->
-    <div class="card audit-run-card">
-        <h3>Audit starten</h3>
-        <div class="audit-run-form">
-            <div class="form-row">
-                <label for="auditSpecId">Spec ID</label>
-                <input type="text" id="auditSpecId" placeholder="z.B. SPEC-AUDIT-001" autocomplete="off">
-            </div>
-            <div class="form-row">
-                <label for="auditInputFacts">Input Facts (JSON)</label>
-                <textarea id="auditInputFacts" rows="4" placeholder='{"changed_files": ["routes/audit_routes.py"]}'></textarea>
-            </div>
-            <div class="form-actions">
-                <button id="btnRunAudit" class="btn btn-primary" onclick="runAudit()">Run Audit</button>
-                <button id="btnLoadLatest" class="btn btn-secondary" onclick="loadLatest()">Latest laden</button>
-            </div>
-            <div id="auditError" class="audit-error" style="display:none"></div>
-            <div id="auditLoading" class="audit-loading" style="display:none">Audit wird ausgefuehrt...</div>
+<div class="audit-page">
+    <header class="audit-page-header">
+        <div>
+            <h1 class="audit-page-title">Spec Audits</h1>
+            <p class="audit-page-subtitle">
+                Prueft ob Code-Aenderungen die Anforderungen einer Spec erfuellen.
+                Waehle eine Spec, gib geaenderte Dateien an und starte den Audit.
+            </p>
         </div>
-    </div>
+    </header>
+
+    <!-- Spec-Uebersicht -->
+    <section class="audit-section">
+        <header class="audit-section-header">
+            <h2>Verfuegbare Specs</h2>
+            <span class="audit-section-hint">Klicke auf eine Spec, um sie zu auditieren</span>
+        </header>
+        <div id="auditSpecList" class="audit-spec-list">
+            <div class="audit-empty">Wird geladen...</div>
+        </div>
+    </section>
+
+    <!-- Audit-Formular -->
+    <section class="audit-section">
+        <header class="audit-section-header">
+            <h2>Audit starten</h2>
+            <span class="audit-section-hint">Welche Dateien wurden geaendert?</span>
+        </header>
+        <div class="card audit-run-card">
+            <div class="audit-run-form">
+                <div class="form-row">
+                    <label for="auditSpecId">Spec</label>
+                    <select id="auditSpecId" class="audit-select">
+                        <option value="">— Spec waehlen —</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <label for="auditChangedFiles">Geaenderte Dateien</label>
+                    <textarea id="auditChangedFiles" rows="3" placeholder="Eine Datei pro Zeile, z.B.&#10;routes/audit_routes.py&#10;audit/service.py"></textarea>
+                    <span class="form-hint">Eine Datei pro Zeile. Der Audit prueft, ob diese Dateien die Spec-Anforderungen abdecken.</span>
+                </div>
+                <div class="form-actions">
+                    <button id="btnRunAudit" class="btn btn-primary" onclick="runAudit()">Audit starten</button>
+                    <button id="btnLoadLatest" class="btn btn-secondary" onclick="loadLatest()">Letztes Ergebnis laden</button>
+                </div>
+                <div id="auditError" class="audit-error" style="display:none"></div>
+                <div id="auditLoading" class="audit-loading" style="display:none">
+                    <span class="audit-spinner"></span> Audit wird ausgefuehrt...
+                </div>
+            </div>
+        </div>
+    </section>
 
     <!-- Result Display -->
     <div id="auditResult" style="display:none">
-        <!-- Header -->
-        <div class="card audit-header-card">
-            <div class="audit-header">
-                <div class="audit-header-main">
-                    <h2 id="resultSpecTitle"></h2>
-                    <span id="resultOverallStatus" class="audit-status-badge"></span>
+        <section class="audit-section">
+            <div class="card audit-header-card">
+                <div class="audit-header">
+                    <div class="audit-header-main">
+                        <h2 id="resultSpecTitle"></h2>
+                        <span id="resultOverallStatus" class="audit-status-badge"></span>
+                    </div>
+                    <div class="audit-header-meta">
+                        <span id="resultSpecId" class="meta-item"></span>
+                        <span id="resultDuration" class="meta-item"></span>
+                        <span id="resultStarted" class="meta-item"></span>
+                        <span id="resultRunId" class="meta-item"></span>
+                    </div>
+                    <div id="resultSummary" class="audit-summary"></div>
                 </div>
-                <div class="audit-header-meta">
-                    <span id="resultSpecId" class="meta-item"></span>
-                    <span id="resultDuration" class="meta-item"></span>
-                    <span id="resultStarted" class="meta-item"></span>
-                    <span id="resultRunId" class="meta-item"></span>
-                </div>
-                <div id="resultSummary" class="audit-summary"></div>
             </div>
-        </div>
+        </section>
 
-        <!-- Requirements -->
-        <div class="card">
-            <h3>Requirements</h3>
+        <section class="audit-section">
+            <header class="audit-section-header">
+                <h2>Anforderungen</h2>
+                <span class="audit-section-hint">Klicke auf eine Zeile fuer Details und Evidence</span>
+            </header>
             <div id="resultRequirements" class="audit-requirements"></div>
-        </div>
+        </section>
     </div>
+
+    <!-- Letzte Runs -->
+    <section class="audit-section">
+        <header class="audit-section-header">
+            <h2>Letzte Audit-Runs</h2>
+        </header>
+        <div id="auditRecentRuns" class="audit-recent-runs">
+            <div class="audit-empty">Wird geladen...</div>
+        </div>
+    </section>
+</div>
 {% endblock %}
 
 {% block scripts %}

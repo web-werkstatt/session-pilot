@@ -86,6 +86,85 @@ def audits_page():
 
 # --- API Endpoints ---
 
+
+@audit_bp.route("/api/audits/specs")
+@api_route
+def api_list_specs():
+    """Liefert alle Specs mit Requirement-Count und letztem Run-Status."""
+    from services.db_service import execute, ensure_audit_schema
+    ensure_audit_schema()
+
+    rows = execute(
+        """
+        SELECT s.spec_id, s.title, s.summary, s.status, s.risk_level,
+               s.updated_at,
+               COUNT(sr.id) AS requirement_count
+        FROM specs s
+        LEFT JOIN spec_requirements sr ON sr.spec_pk = s.id
+        GROUP BY s.id
+        ORDER BY s.updated_at DESC
+        """,
+        fetch=True,
+    ) or []
+
+    specs = []
+    for r in rows:
+        latest_run = load_latest_run_for_spec(r["spec_id"])
+        specs.append({
+            "spec_id": r["spec_id"],
+            "title": r["title"],
+            "summary": r.get("summary"),
+            "status": r.get("status"),
+            "risk_level": r.get("risk_level"),
+            "requirement_count": r["requirement_count"],
+            "updated_at": r["updated_at"].isoformat() if r.get("updated_at") else None,
+            "latest_run": {
+                "run_id": latest_run["id"],
+                "overall_status": latest_run.get("overall_status"),
+                "started_at": latest_run["started_at"].isoformat() if latest_run.get("started_at") else None,
+            } if latest_run else None,
+        })
+
+    return jsonify({"specs": specs}), 200
+
+
+@audit_bp.route("/api/audits/recent")
+@api_route
+def api_recent_runs():
+    """Liefert die letzten 20 Audit-Runs mit Status."""
+    from services.db_service import execute, ensure_audit_schema
+    ensure_audit_schema()
+
+    rows = execute(
+        """
+        SELECT ar.id, ar.spec_id, ar.overall_status,
+               ar.started_at, ar.finished_at, ar.input_facts,
+               s.title AS spec_title
+        FROM audit_runs ar
+        LEFT JOIN specs s ON s.spec_id = ar.spec_id
+        ORDER BY ar.started_at DESC
+        LIMIT 20
+        """,
+        fetch=True,
+    ) or []
+
+    runs = []
+    for r in rows:
+        started = r.get("started_at")
+        finished = r.get("finished_at")
+        duration_ms = int((finished - started).total_seconds() * 1000) if started and finished else None
+        runs.append({
+            "run_id": r["id"],
+            "spec_id": r["spec_id"],
+            "spec_title": r.get("spec_title") or r["spec_id"],
+            "overall_status": r.get("overall_status"),
+            "started_at": started.isoformat() if started else None,
+            "duration_ms": duration_ms,
+        })
+
+    return jsonify({"runs": runs}), 200
+
+
 @audit_bp.route("/api/audits/run", methods=["POST"])
 def api_audit_run():
     """Fuehrt einen Audit-Lauf aus und persistiert das Ergebnis."""
