@@ -35,8 +35,21 @@ from services.context_window_optimizer.constants import (
 from services.context_window_optimizer.context_collector import (
     build_cwo_context,
 )
+from services.context_window_optimizer.checks import (
+    BaseCWOCheck,
+    CWOFinding,
+    MigrationEntry,
+    get_all_checks,
+    run_all_checks,
+)
 
 __all__ = [
+    # Check-Framework
+    "BaseCWOCheck",
+    "CWOFinding",
+    "MigrationEntry",
+    "get_all_checks",
+    "run_all_checks",
     # Context Collector
     "build_cwo_context",
     # Constants
