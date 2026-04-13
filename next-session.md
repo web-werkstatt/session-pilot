@@ -1,8 +1,8 @@
 # Projekt-Dashboard - Naechste Session
 
-> **Letzte Aktualisierung:** 2026-04-13 (CWO Tickets 1.3-1.5)
-> **Status:** CWO Phase 1a Analyse-Backend komplett (Tickets 1.1-1.5). Alle 8 Checks implementiert und getestet (202 Findings ueber 106 Projekte).
-> **Naechste Aufgabe:** CWO Phase 1 Ticket 1.6 (Orchestrator + Storage) + 1.7 (REST-Endpoints)
+> **Letzte Aktualisierung:** 2026-04-13 (CWO Tickets 1.6+1.7)
+> **Status:** CWO Phase 1a komplett (Tickets 1.1-1.7). Orchestrator + Storage + REST-API live. 165 Projekte analysiert, 0 Fehler.
+> **Naechste Aufgabe:** CWO Phase 1 Ticket 1.8 (UI: Badge + Panel im Tool-Files-Modal)
 
 ---
 
@@ -40,8 +40,9 @@ CLAUDE.md/AGENTS.md/GEMINI.md. Perplexity-Copilot wird Read-Only-Validierungssch
 - [x] **CWO Phase 1 Ticket 1.3:** Check-Framework + Token-Budget-Check (run_all_checks, Auto-Discovery, Severity-Sortierung)
 - [x] **CWO Phase 1 Ticket 1.4:** Dateigroessen-Checks 1-4 (oversize_claude_md, oversize_tool_files, focus_file_size, next_session_growth)
 - [x] **CWO Phase 1 Ticket 1.5:** Struktur-Checks 5-7 (global_rule_duplicates, missing_subdir_claude, extractable_sections)
-- [ ] **CWO Phase 1 Ticket 1.6:** Orchestrator + Storage (`orchestrator.py`, `storage.py`)
-- [ ] **CWO Phase 1 Ticket 1.7:** REST-Endpoints (`routes/context_window_optimizer_routes.py`)
+- [x] **CWO Phase 1 Ticket 1.6:** Orchestrator + Storage (`orchestrator.py`, `storage.py`)
+- [x] **CWO Phase 1 Ticket 1.7:** REST-Endpoints (`routes/context_window_optimizer_routes.py`)
+- [ ] **CWO Phase 1 Ticket 1.8:** UI: Badge + Panel im Tool-Files-Modal
 - [ ] **Policy-Reviewer Live-Test:** POST /api/policies/review gegen Perplexity testen
 - [ ] Dead Code V2: Ungenutzte Funktionen/Klassen mit Flask-Decorator-Erkennung
 - [ ] ADR-002 Stufe 2a: Dispatch-Einstieg (work_assignments-Tabelle)
@@ -93,6 +94,39 @@ Dashboard laeuft als systemd-Service auf Port 5055, Backup taeglich 12:30.
 - **Cron-Zeiten:** daily 12:30, weekly Sonntag 13:30 (mittags weil Workstation nachts aus)
 - **DB:** PostgreSQL `project_dashboard`, Schema-Migrationen lazy via `ensure_*_schema()`
 - **Marker-Context:** `marker-context.md` im Root ist Runtime-Datei (gitignored), CLAUDE.md-Regel: nie eigenmaechtig veraendern
+
+## Session 2026-04-13 (Nacht 2) — CWO Phase 1 Tickets 1.6+1.7
+
+### Was wurde erledigt
+- **CWO Ticket 1.6:** Orchestrator (`orchestrator.py`) — `analyze_project()` verbindet Context Collector → Checks → Findings-Aggregation → token_budget_rating → DB-Persistierung. `analyze_all_projects()` fuer Batch. context_hash-Dedup (force-Flag). Storage (`storage.py`) mit Upsert auf `cwo_analyses`, `load_analysis()`, `load_all_analyses()`.
+- **CWO Ticket 1.7:** REST-Endpoints (`routes/context_window_optimizer_routes.py`) — 4 Endpoints: POST/GET `/api/project/<name>/cwo/analyze`, POST `/api/cwo/analyze-all`, GET `/api/cwo/overview` mit `?rating=` Filter.
+- **DB-Migration:** `error`-Spalte in `cwo_analyses` ergaenzt (ALTER TABLE in `db_cwo_schema.py`).
+- **Bugfix:** `scan_projects()` gibt Dict (nicht Liste) zurueck — Orchestrator angepasst.
+
+### Geaenderte/neue Dateien
+| Datei | Aenderung |
+|-------|-----------|
+| `services/context_window_optimizer/orchestrator.py` | Neu: analyze_project(), analyze_all_projects() |
+| `services/context_window_optimizer/storage.py` | Neu: save_analysis(), load_analysis(), load_all_analyses() |
+| `services/context_window_optimizer/__init__.py` | Erweitert: 5 neue Exports (Orchestrator + Storage) |
+| `services/db_cwo_schema.py` | Migration: error-Spalte in cwo_analyses |
+| `routes/context_window_optimizer_routes.py` | Neu: 4 REST-Endpoints (cwo_bp Blueprint) |
+| `routes/__init__.py` | cwo_bp registriert |
+
+### Statistik (165 Projekte)
+| Rating | Anzahl |
+|--------|--------|
+| ok | 146 |
+| info | 19 |
+| warning | 0 |
+| error | 0 |
+
+Top Token-Verbraucher: visual-editor (19.008), proj_progrKI (18.576), irtours-claude-branch (17.514).
+
+### Naechste Session
+- [ ] **CWO Ticket 1.8:** UI: Token-Budget-Badge am Tool-Files-Button + CWO-Panel im Modal (Findings, Migration-Map, File-Inventory)
+- [ ] Sprint-Plan: `sprints/sprint-cwo-context-window-optimizer.md`
+- [ ] Danach: Phase 1b (Tickets 1.9-1.11: Perplexity-Review)
 
 ## Session 2026-04-13 (Nacht) — CWO Phase 1 Tickets 1.3-1.5
 
