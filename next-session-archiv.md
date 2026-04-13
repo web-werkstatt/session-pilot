@@ -4,6 +4,35 @@
 
 ---
 
+## Session 2026-04-13 — Context-Window-Optimierung + CWO Sprint-Plan
+
+### Was wurde erledigt
+- **CLAUDE.md modularisiert:** 271 → 102 Zeilen (-63%). Architektur-Listen in Unterverzeichnis-CLAUDE.md ausgelagert, Dateigroessen-Duplikat entfernt, Patterns auf Verbots-Charakter reduziert, Scheduled Tasks/Backup/META in Skill ausgelagert.
+- **master-plan-summary.md erstellt:** 48-Zeilen-Summary statt 1.820-Zeilen-Vollversion. Fokusauftrag-Regel geaendert.
+- **next-session.md rotiert:** 271 → 95 Zeilen. Session-Historie 2026-04-07 bis 2026-04-11 ins Archiv.
+- **5 Unterverzeichnis-CLAUDE.md erstellt:** `routes/`, `services/`, `static/`, `templates/`, `sprints/` — nativer Claude-Code Lazy-Loading-Mechanismus.
+- **Skill /project-ops erstellt:** Betriebsbefehle, systemd, Scheduled Tasks, Backup on-demand.
+- **Sprint-Plan CWO erstellt:** `sprints/sprint-cwo-context-window-optimizer.md` — 18 Tickets in 3 Phasen.
+- **Einsparung:** Startup-Kontext von ~33.600 auf ~5.600 Tokens (-83%).
+
+### CWO Phase 1 Ticket 1.1 + 1.2 implementiert
+- `services/db_cwo_schema.py`: DB-Schema (cwo_analyses + cwo_action_log), Lazy-Ensure
+- `services/context_window_optimizer/constants.py`: Schwellwerte, Token-Faktoren, Load-Modes, Actions
+- `services/context_window_optimizer/__init__.py`: Re-Export-Facade
+- `services/context_window_optimizer/checks/__init__.py`: Check-Framework (BaseCWOCheck, CWOFinding, MigrationEntry, Registry)
+- `services/context_window_optimizer/actions/__init__.py`: Action-Framework (BaseAction)
+- `services/context_window_optimizer/context_collector.py`: Sammelt Analyse-Kontext pro Projekt
+- `services/db_service.py`: ensure_cwo_schema() registriert
+- `pyrightconfig.json`: Pyright-Config mit extraPaths statt py.typed
+- Smoke-Test: DB-Tabellen erstellt, Collector gegen project_dashboard validiert (8.798 Tokens)
+
+### Git Commits
+```
+bea0131 Feature: Context-Window-Optimierung + CWO Sprint-Plan
+```
+
+---
+
 ## Session 2026-04-11 (Nachtrag Dispatch/Execute) — ADR-002 erweitert
 
 ### Was wurde erledigt

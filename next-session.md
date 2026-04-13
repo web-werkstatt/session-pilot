@@ -1,8 +1,8 @@
 # Projekt-Dashboard - Naechste Session
 
-> **Letzte Aktualisierung:** 2026-04-13 (Context-Window-Optimierung)
-> **Status:** ADR-001 Welle 1 komplett (Prio 1-6). ADR-002 Stufe 1a+1b komplett (Observe/Review/Steer live). 746 Tests gruen.
-> **Naechste Aufgabe:** CWO Phase 1 (Context Window Optimizer) implementieren, oder Policy-Reviewer Live-Test.
+> **Letzte Aktualisierung:** 2026-04-13 (CWO Ticket 1.1+1.2)
+> **Status:** CWO Phase 1 gestartet. Ticket 1.1 (DB-Schema+Constants) + 1.2 (Context Collector) komplett. DB-Tabellen live.
+> **Naechste Aufgabe:** CWO Phase 1 Ticket 1.3 (Check-Framework + Token-Budget-Check)
 
 ---
 
@@ -35,7 +35,9 @@ CLAUDE.md/AGENTS.md/GEMINI.md. Perplexity-Copilot wird Read-Only-Validierungssch
 - [x] **ADR-001 Prio 6:** `tool_profile_adapter_service.py` fuer bestehende Projekte (via Write-Guard)
 - [x] **ADR-002 Stufe 1a+1b:** Setup-Reviewer, Policy-Schicht, Perplexity-Integration (746 Tests)
 - [x] **Context-Window-Optimierung:** CLAUDE.md modularisiert (271→102 Z.), master-plan-summary, Unterverz.-CLAUDE.md, Skill /project-ops
-- [ ] **CWO Phase 1:** Context Window Optimizer als Dashboard-Feature (`sprints/sprint-cwo-context-window-optimizer.md`)
+- [x] **CWO Phase 1 Ticket 1.1:** DB-Schema + Constants + Grundgeruest (db_cwo_schema, constants, checks/__init__, actions/__init__)
+- [x] **CWO Phase 1 Ticket 1.2:** Context Collector (context_collector.py, Smoke-Test bestanden)
+- [ ] **CWO Phase 1 Ticket 1.3:** Check-Framework + Token-Budget-Check (`sprints/sprint-cwo-context-window-optimizer.md`)
 - [ ] **Policy-Reviewer Live-Test:** POST /api/policies/review gegen Perplexity testen
 - [ ] Dead Code V2: Ungenutzte Funktionen/Klassen mit Flask-Decorator-Erkennung
 - [ ] ADR-002 Stufe 2a: Dispatch-Einstieg (work_assignments-Tabelle)
@@ -88,40 +90,28 @@ Dashboard laeuft als systemd-Service auf Port 5055, Backup taeglich 12:30.
 - **DB:** PostgreSQL `project_dashboard`, Schema-Migrationen lazy via `ensure_*_schema()`
 - **Marker-Context:** `marker-context.md` im Root ist Runtime-Datei (gitignored), CLAUDE.md-Regel: nie eigenmaechtig veraendern
 
-## Session 2026-04-13 — Context-Window-Optimierung + CWO Sprint-Plan
+## Session 2026-04-13 (Abend) — CWO Phase 1 Ticket 1.1 + 1.2
 
 ### Was wurde erledigt
-- **CLAUDE.md modularisiert:** 271 → 102 Zeilen (-63%). Architektur-Listen in Unterverzeichnis-CLAUDE.md ausgelagert, Dateigroessen-Duplikat entfernt, Patterns auf Verbots-Charakter reduziert, Scheduled Tasks/Backup/META in Skill ausgelagert.
-- **master-plan-summary.md erstellt:** 48-Zeilen-Summary statt 1.820-Zeilen-Vollversion. Fokusauftrag-Regel geaendert.
-- **next-session.md rotiert:** 271 → 95 Zeilen. Session-Historie 2026-04-07 bis 2026-04-11 ins Archiv.
-- **5 Unterverzeichnis-CLAUDE.md erstellt:** `routes/`, `services/`, `static/`, `templates/`, `sprints/` — nativer Claude-Code Lazy-Loading-Mechanismus.
-- **Skill /project-ops erstellt:** Betriebsbefehle, systemd, Scheduled Tasks, Backup on-demand.
-- **Session-End Skill ergaenzt:** Limit-Regel (max 130 Zeilen) + master-plan-summary-Check.
-- **Globale Rule ergaenzt:** Pre-Commit-Hook-Verhalten + Praevention fuer neue Dateien.
-- **Sprint-Plan CWO erstellt:** `sprints/sprint-cwo-context-window-optimizer.md` — 18 Tickets in 3 Phasen (Analyse, Perplexity-Review, Aktionen). Migrations-Map-Konzept: nichts wird geloescht, alles wird verschoben mit vollstaendiger Zuordnungstabelle.
-- **plan-directory.md aktualisiert:** ADR-002, CWO-Sprint, Backlog-Eintraege.
-- **master-plan-summary.md aktualisiert:** CWO als aktiver Sprint.
-- **Einsparung:** Startup-Kontext von ~33.600 auf ~5.600 Tokens (-83%).
+- **CWO Ticket 1.1:** DB-Schema (`cwo_analyses` + `cwo_action_log`), Constants (Schwellwerte, Token-Faktoren, Load-Modes, Actions), Check-Framework (`BaseCWOCheck`, `CWOFinding`, `MigrationEntry`, Registry), Action-Framework (`BaseAction`), Facade `__init__.py`
+- **CWO Ticket 1.2:** Context Collector (`context_collector.py`) — sammelt Tool-Files, next-session, Fokusauftrag-Dateien, Unterverz.-CLAUDE.md, globale Rules, Sektionsanalyse, Token-Schaetzung. Smoke-Test: 8.798 Tokens fuer project_dashboard.
+- **pyrightconfig.json:** Pyright-Config mit `extraPaths` statt `py.typed` (interne Flask-App, kein PyPI-Package)
+- **DB live:** `ensure_cwo_schema()` in `db_service.py` registriert, Tabellen in PostgreSQL erstellt
 
 ### Geaenderte/neue Dateien
 | Datei | Aenderung |
 |-------|-----------|
-| `CLAUDE.md` | Modularisiert: 271 → 102 Zeilen |
-| `next-session.md` | Rotiert + aktualisiert |
-| `next-session-archiv.md` | Sessions 2026-04-07 bis 2026-04-11 archiviert |
-| `routes/CLAUDE.md` | Neu: Route-Module-Index (33 Z.) |
-| `services/CLAUDE.md` | Neu: Service-Schicht-Index (56 Z.) |
-| `static/CLAUDE.md` | Neu: JS/CSS-Patterns (34 Z.) |
-| `templates/CLAUDE.md` | Neu: Template-Konventionen (16 Z.) |
-| `sprints/CLAUDE.md` | Neu: Sprint-Doku-Index (24 Z.) |
-| `sprints/master-plan-summary.md` | Neu: Kompakter Master-Plan (48 Z.) |
-| `sprints/sprint-cwo-context-window-optimizer.md` | Neu: CWO Sprint-Plan (18 Tickets) |
-| `sprints/plan-directory.md` | Aktualisiert: ADR-002 + CWO |
-| `~/.claude/skills/project-ops/SKILL.md` | Neu: Betriebsbefehle-Skill |
-| `~/.claude/skills/session-end/SKILL.md` | Ergaenzt: Limit-Regel + Summary-Check |
-| `~/.claude/rules/file-size-limits.md` | Ergaenzt: Hook-Verhalten + Praevention |
+| `services/db_cwo_schema.py` | Neu: CWO DB-Schema (2 Tabellen) |
+| `services/context_window_optimizer/__init__.py` | Neu: Re-Export-Facade |
+| `services/context_window_optimizer/constants.py` | Neu: Schwellwerte, Actions, Load-Modes |
+| `services/context_window_optimizer/checks/__init__.py` | Neu: Check-Framework + Datenklassen |
+| `services/context_window_optimizer/actions/__init__.py` | Neu: Action-Framework |
+| `services/context_window_optimizer/context_collector.py` | Neu: Analyse-Kontext-Sammler |
+| `services/db_service.py` | `ensure_cwo_schema()` hinzugefuegt |
+| `pyrightconfig.json` | Neu: Pyright extraPaths Config |
 
 ### Naechste Session
-- [ ] **CWO Phase 1 starten:** `sprints/sprint-cwo-context-window-optimizer.md` Ticket 1.1 (DB-Schema + Constants)
-- [ ] **Oder:** Policy-Reviewer Live-Test (POST /api/policies/review gegen Perplexity)
-- [ ] Sprint-Plan CWO lesen, dann mit Ticket 1.1 beginnen
+- [ ] **CWO Ticket 1.3:** Check-Framework + Token-Budget-Check (`checks/token_budget.py`)
+- [ ] **CWO Ticket 1.4:** Dateigroessen-Checks 1-4 (CLAUDE.md, Tool-Files, Fokusauftrag, next-session)
+- [ ] **CWO Ticket 1.5:** Struktur-Checks 5-7 (Duplikate, fehlende Unterverz.-CLAUDE.md, extrahierbare Sektionen)
+- [ ] Sprint-Plan: `sprints/sprint-cwo-context-window-optimizer.md`
