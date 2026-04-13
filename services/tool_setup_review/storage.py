@@ -126,7 +126,10 @@ def load_review(
                setup_ok, priority, summary, findings, suggested_blocks,
                project_json_patch, implementation_scope, notes,
                context_drift, context_hash, reviewer_model, raw_response,
-               error, created_at, updated_at
+               error,
+               generated_count, shown_count,
+               filtered_dismissed_count, filtered_low_confidence_count,
+               created_at, updated_at
         FROM project_reviews
         WHERE project_name = %s AND review_type = %s
         """,

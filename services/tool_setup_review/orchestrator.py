@@ -194,6 +194,8 @@ def review_tool_setup(
         "reviewer_model": reviewer_model,
         "raw_response": raw_content,
         "error": None,
+        "generated_count": len(raw_findings),
+        "shown_count": len(filtered_findings),
         "filtered_dismissed_count": filtered_dismissed_count,
         "filtered_low_confidence_count": filtered_low_confidence_count,
     }

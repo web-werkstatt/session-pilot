@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block title %}Review-Metriken — Project Dashboard{% endblock %}
+
+{% block head_extra %}
+<link rel="stylesheet" href="/static/css/metrics.css">
+{% endblock %}
+
+{% block content %}
+<div class="metrics-page">
+    <header class="metrics-header">
+        <div>
+            <h1 class="metrics-title">Review-Metriken</h1>
+            <p class="metrics-subtitle">
+                KPIs aus Setup-Reviewer, CWO-Reviewer und Policy-Reviewer.
+                Signal-Ratio, Filter-Wirksamkeit und Finding-Entscheidungen.
+            </p>
+        </div>
+        <div class="metrics-actions">
+            <button class="btn-secondary" type="button" id="metrics-refresh-btn">Aktualisieren</button>
+        </div>
+    </header>
+
+    <div class="metrics-status" id="metrics-status"></div>
+
+    <section class="metrics-kpis" id="metrics-kpis">
+        <div class="metrics-empty">Wird geladen...</div>
+    </section>
+
+    <section class="metrics-section metrics-section--grid">
+        <div class="metrics-subsection">
+            <header class="metrics-section-header">
+                <h2>Setup-Reviews per Projekt</h2>
+            </header>
+            <div class="metrics-chart-wrap">
+                <canvas id="metrics-setup-chart" height="220"></canvas>
+            </div>
+        </div>
+        <div class="metrics-subsection">
+            <header class="metrics-section-header">
+                <h2>Finding-Entscheidungen</h2>
+            </header>
+            <div class="metrics-chart-wrap">
+                <canvas id="metrics-decisions-chart" height="220"></canvas>
+            </div>
+        </div>
+    </section>
+
+    <section class="metrics-section">
+        <header class="metrics-section-header">
+            <h2>Lauteste Findings</h2>
+            <span class="metrics-section-hint">Findings mit den meisten Entscheidungen</span>
+        </header>
+        <div id="metrics-noisiest" class="metrics-table-wrap">
+            <div class="metrics-empty">Wird geladen...</div>
+        </div>
+    </section>
+
+    <section class="metrics-section metrics-section--grid">
+        <div class="metrics-subsection">
+            <header class="metrics-section-header">
+                <h2>Policy-Suggestions</h2>
+            </header>
+            <div id="metrics-policy-stats" class="metrics-stats-box">
+                <div class="metrics-empty">Wird geladen...</div>
+            </div>
+        </div>
+        <div class="metrics-subsection">
+            <header class="metrics-section-header">
+                <h2>CWO-Reviews</h2>
+            </header>
+            <div id="metrics-cwo-stats" class="metrics-stats-box">
+                <div class="metrics-empty">Wird geladen...</div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+<script src="/static/js/metrics.js"></script>
+{% endblock %}

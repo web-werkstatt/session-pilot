@@ -78,6 +78,9 @@ def load_analysis(project_name: str) -> Optional[Dict[str, Any]]:
                findings, migration_map, file_inventory,
                context_hash, perplexity_review, perplexity_confidence,
                review_context_hash, error,
+               generated_count, shown_count,
+               filtered_low_confidence_count,
+               low_confidence_warning,
                created_at, updated_at
         FROM cwo_analyses
         WHERE project_name = %s
@@ -115,6 +118,9 @@ def load_all_analyses() -> List[Dict[str, Any]]:
                findings, migration_map, file_inventory,
                context_hash, perplexity_review, perplexity_confidence,
                review_context_hash, error,
+               generated_count, shown_count,
+               filtered_low_confidence_count,
+               low_confidence_warning,
                created_at, updated_at
         FROM cwo_analyses
         ORDER BY total_tokens DESC
@@ -222,7 +228,11 @@ def load_review(project_name: str) -> Optional[Dict[str, Any]]:
     row = execute(
         """
         SELECT perplexity_review, perplexity_confidence,
-               review_context_hash, updated_at
+               review_context_hash,
+               generated_count, shown_count,
+               filtered_low_confidence_count,
+               low_confidence_warning,
+               updated_at
         FROM cwo_analyses
         WHERE project_name = %s
           AND perplexity_review IS NOT NULL

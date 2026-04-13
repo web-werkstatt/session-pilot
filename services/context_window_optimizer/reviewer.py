@@ -168,6 +168,8 @@ def review_project(
         "error": None,
         "raw_response": raw_content,
         "low_confidence_warning": low_confidence_warning,
+        "generated_count": len(assessments),
+        "shown_count": len(filtered_assessments),
         "filtered_low_confidence_count": filtered_low_confidence_count,
     }
 
