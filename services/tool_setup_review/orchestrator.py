@@ -134,6 +134,47 @@ def review_tool_setup(
         save_review(project_name, result, now_fn=now_fn)
         return result
 
+    # --- Dismiss-Filter + Confidence-Filter (Issue #23) ---
+    from services.finding_decision_service import (
+        compute_finding_fingerprint,
+        compute_context_signature,
+        get_dismissed_fingerprints,
+        is_finding_dismissed,
+        parse_confidence,
+    )
+
+    raw_findings = parsed.get("findings") or []
+    dismissed = get_dismissed_fingerprints(project_name, REVIEW_TYPE)
+    filtered_findings = []
+    filtered_dismissed_count = 0
+    filtered_low_confidence_count = 0
+
+    for f in raw_findings:
+        fp = compute_finding_fingerprint(project_name, REVIEW_TYPE, f)
+        ctx_sig = compute_context_signature(f, REVIEW_TYPE)
+
+        if is_finding_dismissed(fp, ctx_sig, dismissed):
+            filtered_dismissed_count += 1
+            continue
+
+        confidence = parse_confidence(f.get("confidence"))
+        if confidence > 0 and confidence < 50:
+            filtered_low_confidence_count += 1
+            log.info(
+                "Setup-Finding gefiltert (confidence=%d < 50): %s",
+                confidence, f.get("title", "?"),
+            )
+            continue
+
+        filtered_findings.append(f)
+
+    if filtered_dismissed_count or filtered_low_confidence_count:
+        log.info(
+            "Setup-Review %s: %d dismissed, %d low-confidence gefiltert (von %d)",
+            project_name, filtered_dismissed_count,
+            filtered_low_confidence_count, len(raw_findings),
+        )
+
     result = {
         "project_name": project_name,
         "review_type": REVIEW_TYPE,
@@ -141,7 +182,7 @@ def review_tool_setup(
         "setup_ok": parsed.get("setup_ok"),
         "priority": parsed.get("priority"),
         "summary": parsed.get("summary"),
-        "findings": parsed.get("findings") or [],
+        "findings": filtered_findings,
         "suggested_blocks": parsed.get("suggested_blocks") or {},
         "project_json_patch": parsed.get("suggested_project_json_patch"),
         "implementation_scope": parsed.get("implementation_scope"),
@@ -153,6 +194,8 @@ def review_tool_setup(
         "reviewer_model": reviewer_model,
         "raw_response": raw_content,
         "error": None,
+        "filtered_dismissed_count": filtered_dismissed_count,
+        "filtered_low_confidence_count": filtered_low_confidence_count,
     }
     save_review(project_name, result, now_fn=now_fn)
     return result

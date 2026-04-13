@@ -66,6 +66,74 @@ def compute_context_signature(finding: Dict[str, Any], review_type: str) -> str:
 
 
 # ---------------------------------------------------------------------------
+# Dismiss-Filter (vor Persistierung)
+# ---------------------------------------------------------------------------
+
+def get_dismissed_fingerprints(
+    project_name: str, review_type: str,
+) -> Dict[str, str]:
+    """Liefert {fingerprint: context_signature} aller dismissed Findings.
+
+    Caller kann damit:
+    1. Findings mit bekanntem Fingerprint skippen (Dismiss-Filter)
+    2. Bei geaenderter context_signature trotzdem durchlassen (Reaktivierung)
+
+    Thresholds sind vorlaeufig und kalibrierbar (siehe Issue #23).
+    """
+    ensure_finding_decisions_schema()
+    from services.db_service import execute
+
+    rows = execute(
+        """SELECT fingerprint, context_signature
+           FROM finding_decisions
+           WHERE project_name = %s AND review_type = %s
+             AND status = 'dismissed'""",
+        (project_name, review_type),
+        fetch=True,
+    ) or []
+    return {r["fingerprint"]: r.get("context_signature") or "" for r in rows}
+
+
+def is_finding_dismissed(
+    fingerprint: str,
+    context_signature: str,
+    dismissed: Dict[str, str],
+) -> bool:
+    """Prueft ob ein Finding dismissed ist und der Kontext unveraendert.
+
+    Returns True wenn:
+    - Fingerprint in dismissed UND
+    - Context-Signature identisch (kein Grund fuer Reaktivierung)
+    """
+    stored_sig = dismissed.get(fingerprint)
+    if stored_sig is None:
+        return False
+    return stored_sig == context_signature
+
+
+def parse_confidence(value: Any) -> int:
+    """Defensives Confidence-Parsing: int, float, str, None → int.
+
+    Behandelt '45.0', 45.0, None, '' etc. sicher.
+    """
+    if value is None:
+        return 0
+    if isinstance(value, int):
+        return value
+    if isinstance(value, float):
+        return int(value)
+    if isinstance(value, str):
+        value = value.strip()
+        if not value:
+            return 0
+        try:
+            return int(float(value))
+        except (TypeError, ValueError):
+            return 0
+    return 0
+
+
+# ---------------------------------------------------------------------------
 # Enrichment
 # ---------------------------------------------------------------------------
 

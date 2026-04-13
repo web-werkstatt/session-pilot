@@ -122,13 +122,41 @@ def review_project(
         save_review(project_name, result, now_fn=now_fn)
         return result
 
-    # 6. Ergebnis zusammenbauen + persistieren
-    confidence = parsed.get("overall_confidence", 0)
-    if not isinstance(confidence, int):
-        try:
-            confidence = int(confidence)
-        except (TypeError, ValueError):
-            confidence = 0
+    # 6. Ergebnis zusammenbauen + Confidence/Dismiss-Filter (Issue #23)
+    from services.finding_decision_service import parse_confidence
+
+    confidence = parse_confidence(parsed.get("overall_confidence"))
+    low_confidence_warning = confidence > 0 and confidence < 30
+
+    if low_confidence_warning:
+        log.warning(
+            "CWO-Review %s: overall_confidence=%d < 30, low_confidence_warning gesetzt",
+            project_name, confidence,
+        )
+
+    # Migration-Assessments mit Confidence < 50 filtern
+    assessments = parsed.get("migration_assessments") or []
+    filtered_assessments = []
+    filtered_low_confidence_count = 0
+
+    for ma in assessments:
+        ma_conf = parse_confidence(ma.get("confidence"))
+        if ma_conf > 0 and ma_conf < 50:
+            filtered_low_confidence_count += 1
+            log.info(
+                "CWO-Migration-Assessment gefiltert (confidence=%d < 50): %s",
+                ma_conf, ma.get("section_title", "?"),
+            )
+            continue
+        filtered_assessments.append(ma)
+
+    if filtered_low_confidence_count:
+        log.info(
+            "CWO-Review %s: %d low-confidence Assessments gefiltert (von %d)",
+            project_name, filtered_low_confidence_count, len(assessments),
+        )
+
+    parsed["migration_assessments"] = filtered_assessments
 
     result = {
         "project_name": project_name,
@@ -139,6 +167,8 @@ def review_project(
         "reviewer_model": reviewer_model,
         "error": None,
         "raw_response": raw_content,
+        "low_confidence_warning": low_confidence_warning,
+        "filtered_low_confidence_count": filtered_low_confidence_count,
     }
 
     save_review(project_name, result, now_fn=now_fn)

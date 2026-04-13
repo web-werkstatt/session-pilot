@@ -164,15 +164,45 @@ def review_policies(
             "raw_response": raw_content,
         }
 
+    # --- Confidence-Filter + Reject-Dedup (Issue #23) ---
+    from services.finding_decision_service import parse_confidence
+
+    rejected_keys = _get_rejected_suggestion_keys()
+
     persisted: List[Dict[str, Any]] = []
+    filtered_low_confidence_count = 0
+    filtered_rejected_count = 0
+
     for sugg in parsed.get("suggestions") or []:
         suggestion_type = sugg.get("suggestion_type")
         if not suggestion_type:
             continue
+
+        # Confidence-Filter: < 50 verwerfen
+        confidence = parse_confidence(sugg.get("confidence"))
+        if confidence > 0 and confidence < 50:
+            filtered_low_confidence_count += 1
+            log.info(
+                "Policy-Suggestion gefiltert (confidence=%d < 50): %s",
+                confidence, suggestion_type,
+            )
+            continue
+
+        # Reject-Dedup: Bereits rejected Suggestions nicht erneut persistieren
+        payload = sugg.get("payload") or {}
+        dedup_key = f"{suggestion_type}|{json.dumps(payload, sort_keys=True)}"
+        if dedup_key in rejected_keys:
+            filtered_rejected_count += 1
+            log.info(
+                "Policy-Suggestion gefiltert (bereits rejected): %s",
+                suggestion_type,
+            )
+            continue
+
         sid = record_suggestion(
             reviewer_tool=REVIEWER_TOOL_DEFAULT,
             suggestion_type=suggestion_type,
-            payload=sugg.get("payload") or {},
+            payload=payload,
             rationale=sugg.get("rationale"),
             evidence=sugg.get("evidence"),
             context_hash=context_hash,
@@ -180,8 +210,14 @@ def review_policies(
         persisted.append({
             "suggestion_id": sid,
             "suggestion_type": suggestion_type,
-            "payload": sugg.get("payload") or {},
+            "payload": payload,
         })
+
+    if filtered_low_confidence_count or filtered_rejected_count:
+        log.info(
+            "Policy-Review: %d low-confidence, %d rejected gefiltert",
+            filtered_low_confidence_count, filtered_rejected_count,
+        )
 
     return {
         "schema_version": parsed.get("schema_version", 1),
@@ -192,6 +228,8 @@ def review_policies(
         "reviewer_model": reviewer_model,
         "context_hash": context_hash,
         "error": None,
+        "filtered_low_confidence_count": filtered_low_confidence_count,
+        "filtered_rejected_count": filtered_rejected_count,
     }
 
 
@@ -270,3 +308,34 @@ def _find_cached_review(context_hash: str) -> Optional[Dict[str, Any]]:
         "error": None,
         "dedup_hit": True,
     }
+
+
+def _get_rejected_suggestion_keys() -> set:
+    """Liefert ein Set von dedup-Keys fuer alle rejected Suggestions.
+
+    Key-Format: '{suggestion_type}|{payload_json_sorted}'.
+    Damit werden Suggestions, die Joseph bereits abgelehnt hat,
+    nicht erneut persistiert (Issue #23).
+    """
+    from services.db_policy_schema import ensure_policy_schema
+    from services.db_service import execute
+
+    ensure_policy_schema()
+
+    rows = execute(
+        """
+        SELECT suggestion_type, payload
+        FROM policy_review_suggestions
+        WHERE status = 'rejected'
+        """,
+        fetch=True,
+    ) or []
+
+    keys = set()
+    for r in rows:
+        payload = r["payload"]
+        if isinstance(payload, str):
+            payload = json.loads(payload)
+        key = f"{r['suggestion_type']}|{json.dumps(payload, sort_keys=True)}"
+        keys.add(key)
+    return keys
