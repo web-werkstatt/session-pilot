@@ -4,6 +4,53 @@
 
 ---
 
+## Session 2026-04-13 (Session 9) — Sprint-Planung Dispatch
+
+### Was wurde erledigt
+- **Sprint ADR-002 Stufe 2a freigegeben:** `sprints/sprint-adr002-stufe2a-dispatch.md`
+  - Scope: Manuelles Dispatch (A) + Pull-API fuer CLIs (B), Perplexity-Review/Suggest, pro-Tool-Toggles
+  - Push/Webhook (C) bewusst nach Stufe 2b verschoben (braucht HMAC+Timestamp+Nonce+Replay-Schutz)
+  - State-Machine vereinfacht: kein `dispatched`-Zustand in 2a, nur proposed→approved→claimed→completed
+  - Atomic Claim als Pflicht-Akzeptanzkriterium (Race-Condition-Schutz)
+  - 9 Commits geplant (DB-Schema → Service → Perplexity → REST → Settings → UI → Pull-Adapter → Integration → Doku)
+- **master-plan-summary.md** aktualisiert: Stufe 2a FREIGEGEBEN, 2b Backlog
+- **plan-directory.md** aktualisiert: Stufe 2a eingetragen, Backlog auf 2b
+- Kein Code geaendert, reine Planungs-Session
+
+### Geaenderte Dateien
+| Datei | Aenderung |
+|-------|-----------|
+| `sprints/sprint-adr002-stufe2a-dispatch.md` | Neu: Sprint-Plan mit 9 Commits |
+| `sprints/master-plan-summary.md` | Stufe 2a + 2b in Sprint-Tabelle |
+| `sprints/plan-directory.md` | Stufe 2a in Control-Plane-Sektion + Backlog |
+
+---
+
+## Session 2026-04-13 (Session 8) — Metriken-Dashboard + UX-Ueberarbeitung
+
+### Was wurde erledigt
+- **Counter-Bugfixes:** `load_review()`/`load_analysis()` in Setup- und CWO-Storage fehlten Counter-Spalten im SELECT. `generated_count`/`shown_count` auch im Orchestrator-Result-Dict ergaenzt.
+- **Reviews getriggert + verifiziert:** Setup (2 Projekte), CWO und Policy — alle Counter werden korrekt persistiert und via GET zurueckgegeben.
+- **Metriken-Dashboard (`/metrics`):**
+  - Service: `services/review_metrics_service.py` — aggregiert Counter aus project_reviews + cwo_analyses + finding_decisions + policy_review_suggestions
+  - Route: `routes/review_metrics_routes.py` — GET `/metrics` + GET `/api/review-metrics`
+  - UI: KPI-Karten, Stacked-Bar-Chart, Doughnut-Chart, Noisiest-Findings-Tabelle
+- **Policies-Badge:** Oranges Badge im Sidebar-Nav-Link zeigt Anzahl pending Suggestions
+- **CSS-Block-Fix:** `policies.html` extra_css → head_extra
+- **Audits UX komplett ueberarbeitet:** Spec-Cards, Dropdown, Run-Historie, Guidance-Hints
+- **LLM Commands UX komplett ueberarbeitet:** Command-Cards, Purpose-Block, bessere Run-Tabelle
+
+### Git Commits
+```
+8f87a65 Feature: Review-Metriken-Dashboard + Counter-Bugfixes (refs #23)
+d9a5d13 Fix: policies.html CSS-Block von extra_css auf head_extra korrigiert
+b6441a1 Feature: Pending-Badge im Policies-Nav-Link
+bd4c283 Feature: Audits-Seite komplett ueberarbeitet — intelligentere UX/UI
+c08b004 Feature: LLM Commands Seite ueberarbeitet — bessere UX/UI
+```
+
+---
+
 ## Session 2026-04-13 (Session 7) — Rausch-Reduktion: Dismiss-Filter + Confidence-Filter + Metriken
 
 ### Was wurde erledigt

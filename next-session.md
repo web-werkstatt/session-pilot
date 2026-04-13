@@ -1,8 +1,8 @@
 # Projekt-Dashboard - Naechste Session
 
-> **Letzte Aktualisierung:** 2026-04-13 (Session 8: Metriken-Dashboard + UX-Ueberarbeitung)
-> **Status:** Counter-Bugfixes, /metrics Seite live, Audits + LLM Commands UX komplett ueberarbeitet, Policies-Badge im Nav.
-> **Naechste Aufgabe:** Policy-Suggestions im UI bewerten, optional weitere UX-Seiten verbessern
+> **Letzte Aktualisierung:** 2026-04-13 (Session 10: Dispatch-Backend)
+> **Status:** Sprint ADR-002 Stufe 2a Commits 1-5 (Backend) fertig, UI-Commits 6-8 offen.
+> **Naechste Aufgabe:** Sprint 2a Commit 6 — Dispatch-UI im Cockpit-Tab (Marker → Tool → Ergebnis)
 
 ---
 
@@ -57,7 +57,7 @@ CLAUDE.md/AGENTS.md/GEMINI.md. Perplexity-Copilot wird Read-Only-Validierungssch
 - [x] **LLM Commands UX:** Command-Cards mit Icons, Purpose-Block, bessere Run-Tabelle
 - [x] **CSS-Block-Fix:** policies.html extra_css → head_extra (CSS wurde nicht geladen)
 - [ ] Dead Code V2: Ungenutzte Funktionen/Klassen mit Flask-Decorator-Erkennung
-- [ ] ADR-002 Stufe 2a: Dispatch-Einstieg (work_assignments-Tabelle)
+- [ ] **ADR-002 Stufe 2a: Dispatch A+B** — Commits 1-5 (Backend) fertig, Commits 6-9 (UI+Integration+Doku) offen
 
 ### GUI/UX (Codex)
 
@@ -113,64 +113,46 @@ Dashboard laeuft als systemd-Service auf Port 5055, Backup taeglich 12:30.
 - **DB:** PostgreSQL `project_dashboard`, Schema-Migrationen lazy via `ensure_*_schema()`
 - **Marker-Context:** `marker-context.md` im Root ist Runtime-Datei (gitignored), CLAUDE.md-Regel: nie eigenmaechtig veraendern
 
-## Session 2026-04-13 (Session 8) — Metriken-Dashboard + UX-Ueberarbeitung
+## Session 2026-04-13 (Session 10) — Dispatch-Backend (Commits 1-5)
 
 ### Was wurde erledigt
-- **Counter-Bugfixes:** `load_review()`/`load_analysis()` in Setup- und CWO-Storage fehlten Counter-Spalten im SELECT. `generated_count`/`shown_count` auch im Orchestrator-Result-Dict ergaenzt.
-- **Reviews getriggert + verifiziert:** Setup (2 Projekte), CWO und Policy — alle Counter werden korrekt persistiert und via GET zurueckgegeben.
-- **Metriken-Dashboard (`/metrics`):**
-  - Service: `services/review_metrics_service.py` — aggregiert Counter aus project_reviews + cwo_analyses + finding_decisions + policy_review_suggestions
-  - Route: `routes/review_metrics_routes.py` — GET `/metrics` + GET `/api/review-metrics`
-  - UI: KPI-Karten (Signal-Ratio, Noise-Rate, Dismiss-Filter, Decision Dismiss/Approve, Policy Reject), Stacked-Bar-Chart (Setup per Projekt), Doughnut-Chart (Entscheidungen), Noisiest-Findings-Tabelle, Policy- und CWO-Stats-Boxen
-- **Policies-Badge:** Oranges Badge im Sidebar-Nav-Link zeigt Anzahl pending Suggestions, pollt alle 15s zusammen mit Notifications
-- **CSS-Block-Fix:** `policies.html` nutzte `extra_css`-Block der in `base.html` nicht existiert — korrigiert auf `head_extra`
-- **Audits UX komplett ueberarbeitet:**
-  - Erklaerungstext, Spec-Cards mit letztem Run-Status, Dropdown statt Freitext, Dateien eine-pro-Zeile statt JSON, Run-Historie-Tabelle, Guidance-Hints
-  - Neue API-Endpoints: `GET /api/audits/specs`, `GET /api/audits/recent`
-- **LLM Commands UX komplett ueberarbeitet:**
-  - Command-Cards mit Icons, Titel, Purpose und Parameter-Info, Purpose-Block mit Seitenleiste, bessere Run-Tabelle
+- **Commit 1 — DB-Schema:** `services/db_dispatch_schema.py` mit work_assignments (22 Spalten), dispatch_audit_log, dispatch_settings, ALTER tool_profiles (+4 Dispatch-Spalten), Partial-Index fuer Pull-API
+- **Commit 2 — Dispatch-Service Core:** `services/dispatch_service.py` mit komplettem Lifecycle (proposed→approved→claimed→completed/failed/rejected/revoked/expired), Atomic Claim via single UPDATE mit WHERE-Guard (Race-Condition-Schutz), max_concurrent-Check, Audit-Trail
+- **Commit 3 — Perplexity Reviewer:** `prompts/dispatch_reviewer.md` (Review + Suggest Modi) + `services/dispatch_review_service.py` mit context_hash-Dedup, Fake-Query-Support fuer Tests
+- **Commit 4 — REST-Endpoints:** `routes/dispatch_routes.py` (13 Routen) — CRUD, Pull-API mit Bearer-Token-Auth, Perplexity-Trigger, Audit-Log, Settings
+- **Commit 5 — Settings:** dispatch_settings Tabelle mit Hierarchie global→project→tool, nullable Spalten fuer saubere Vererbung
+- **UI-Entscheidung:** Dispatch wird im Cockpit-Tab integriert (nicht eigener Tab) — Workflow: Marker ansehen → Tool zuweisen → Ergebnis sehen
 
 ### Git Commits
 ```
-8f87a65 Feature: Review-Metriken-Dashboard + Counter-Bugfixes (refs #23)
-d9a5d13 Fix: policies.html CSS-Block von extra_css auf head_extra korrigiert
-b6441a1 Feature: Pending-Badge im Policies-Nav-Link
-bd4c283 Feature: Audits-Seite komplett ueberarbeitet — intelligentere UX/UI
-c08b004 Feature: LLM Commands Seite ueberarbeitet — bessere UX/UI
+5fa399c Feature: ADR-002 Stufe 2a Commits 1-5 — Dispatch-Backend komplett
 ```
 
-### Geaenderte/neue Dateien
-| Datei | Aenderung |
-|-------|-----------|
-| `services/review_metrics_service.py` | Neu: Aggregiert Counter-Daten aus allen Reviewern |
-| `routes/review_metrics_routes.py` | Neu: GET /metrics + GET /api/review-metrics |
-| `templates/metrics.html` | Neu: KPI-Karten, Charts, Tabellen |
-| `static/js/metrics.js` | Neu: Chart.js-Integration, KPI-Rendering |
-| `static/css/metrics.css` | Neu: Metrics-Dashboard Styles |
-| `services/tool_setup_review/storage.py` | Fix: Counter-Spalten im SELECT ergaenzt |
-| `services/tool_setup_review/orchestrator.py` | Fix: generated_count/shown_count im Result |
-| `services/context_window_optimizer/storage.py` | Fix: Counter-Spalten in allen 3 load-Funktionen |
-| `services/context_window_optimizer/reviewer.py` | Fix: generated_count/shown_count im Result |
-| `templates/base.html` | Metriken-Nav-Link + Policies-Badge |
-| `static/js/notifications.js` | Policy-Pending-Badge Polling |
-| `static/css/notifications.css` | Nav-Badge Style |
-| `templates/policies.html` | Fix: extra_css → head_extra |
-| `templates/audit.html` | Komplett ueberarbeitet: Spec-Cards, Dropdown, Historie |
-| `routes/audit_routes.py` | Neu: GET /api/audits/specs, GET /api/audits/recent |
-| `static/js/audit.js` | Komplett ueberarbeitet: Cards, Run-Historie, besseres Formular |
-| `static/css/audit.css` + `audit-results.css` | Aufgeteilt (Limit 400 Zeilen) |
-| `templates/llm_commands.html` | Komplett ueberarbeitet: Command-Cards, Guidance |
-| `static/js/llm-commands.js` | Komplett ueberarbeitet: Cards, bessere Struktur |
-| `static/css/llm-commands.css` | Komplett ueberarbeitet: Page-Layout, Cards |
+### Neue Dateien
+| Datei | Zeilen | Zweck |
+|-------|--------|-------|
+| `services/db_dispatch_schema.py` | ~120 | DB-Schema: 3 Tabellen + ALTER tool_profiles |
+| `services/dispatch_service.py` | ~470 | Core-Service: CRUD, Lifecycle, Atomic Claim, Settings |
+| `services/dispatch_review_service.py` | ~280 | Perplexity Review + Suggest |
+| `prompts/dispatch_reviewer.md` | ~80 | System-Prompt fuer Dispatch-Reviewer |
+| `routes/dispatch_routes.py` | ~320 | REST-API Blueprint (13 Endpoints) |
 
 ---
 
 ## Naechste Session
 
-### Aufgaben
-- [ ] **Policy-Suggestions bewerten:** 4 pending Suggestions unter /policies (Badge zeigt es an)
-- [ ] Optional: Weitere Seiten mit gleicher UX-Behandlung (Governance, Quality)
-- [ ] Optional: Mehrstufiger Filter (Policy-Filter: nur Findings mit Handlung + Severity)
-- [ ] Optional: Adaptive Kalibrierung (Schwellen aus Dismiss-/Accept-Daten je Reviewer)
-- [ ] Optional: Dead Code V2 (Funktionen/Klassen mit Flask-Decorator-Erkennung)
-- [ ] Optional: Trend-Chart mit historischen Metriken (erfordert Snapshot-Tabelle)
+### Primaer: Sprint 2a Commits 6-9 (UI + Integration)
+1. Sprint-Plan lesen: `sprints/sprint-adr002-stufe2a-dispatch.md`
+2. **Commit 6:** Dispatch-UI im Cockpit-Tab — Marker-Cards mit "Assign"-Button, Perplexity-Review inline, Approve/Reject direkt an Cards
+3. **Commit 7:** Pull-Adapter Scripts + Perplexity-Gate bei Pull
+4. **Commit 8:** Integration workflow_core + Marker-Binding + Settings-Toggles
+5. **Commit 9:** Doku + Push
+
+### UI-Design-Entscheidung (Commit 6)
+- Dispatch-Aktionen im bestehenden Cockpit-Tab, KEIN eigener Tab
+- Workflow: Marker ansehen → Perplexity Suggest → Approve/Reject → Ergebnis sehen
+- Perplexity liefert Empfehlung (Tool, Scope, Risiko), Joseph akzeptiert
+
+### Sekundaer (wenn Zeit)
+- [ ] Policy-Suggestions bewerten: 4 pending unter /policies
+- [ ] Optional: Dead Code V2, Trend-Chart, Adaptive Kalibrierung
