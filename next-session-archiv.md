@@ -4,6 +4,99 @@
 
 ---
 
+## Session 2026-04-11 (Nachtrag Dispatch/Execute) — ADR-002 erweitert
+
+### Was wurde erledigt
+- ADR-002 Nachtrag: Dispatch/Execute als vierte Schicht, work_assignments-Entitaet, Autonomie-Stufen L0-L3. Commit `04d0f7c`.
+- Status-Uebersicht ADR-002 Stufe 1 als Markdown (`8796fdd`).
+- Status-HTML-Variante lokal (1024 Zeilen, nicht committet).
+
+---
+
+## Session 2026-04-10 (Abend) - ADR-001 Prio 1+3+4: DB-First Marker Core
+
+### Was wurde erledigt
+- `services/db_marker_schema.py` (neu): `markers`-Tabelle + `executor_tool` in `marker_workflow_states`
+- `services/marker_importer.py` (neu): Idempotenter Import aus handoff.md (9 Marker importiert, Re-Run: 0 neue)
+- `services/workflow_core_service.py` (neu): `get_markers()`, `get_marker()`, `update_marker_field()`, `update_marker_state()`, `get_handoff_view()`
+- `services/db_service.py`: `ensure_marker_schema()` Delegate
+- `services/copilot_marker_service.py`: Komplett auf DB-first umgestellt
+- `services/workflow_loop_service.py`: Marker via `core_get_markers()`
+- 598 Tests gruen, 0 Failures
+
+### Architektur-Muster
+- **DB-first mit Fallback:** `_resolve_marker()` / `_resolve_markers()` lesen aus DB, fallen auf handoff.md zurueck
+- **Dual-Write:** Schreib-Operationen aktualisieren handoff.md (Mirror) UND DB
+- **Auto-Import:** Core importiert automatisch aus handoff.md wenn DB leer
+
+## Historie (2026-04-07 bis 2026-04-10)
+
+- **2026-04-10 (Nacht):** ADR-001 Prio 2 implementiert: Block-Marker-Parser + Write-Guard. Code-Review + Refactor. 37 neue Tests, 635 gesamt. Commit `44f52f6`.
+- **2026-04-10:** ADR-001 Prio 1+3+4 implementiert. 598 Tests gruen.
+- **2026-04-10:** ADR-001 erstellt + Sprint-Nachtraege. Perplexity-Copilot als Read-Only-Validierungsschicht.
+- **2026-04-10:** Workflow-Cards entmischt, Sprachregel in AGENTS.md.
+- **2026-04-09:** Workflow-Tab operativ ausgebaut, Session-Detail Back-Navigation, Quality/Governance UX.
+- **2026-04-08:** Sprint CP abgeschlossen, Workflow-Loop v1, 3 Haupttabs.
+- **2026-04-07:** Sprint SB DONE, Closeout (M1-M14), Tag `v1.3-final`
+
+---
+
+## Session 2026-04-11 - ADR-001 Prio 5 DONE
+
+### Was wurde erledigt
+- **ADR-001 Prio 5:** `write_handoff_mirror(project_name)` in `services/workflow_core_service.py`
+- 10 neue Tests, 645/645 gruen. Issue #21, Commit `24a19b3`
+
+---
+
+## Session 2026-04-11 (Nachmittag) - Workflow-v2 UX Follow-up + Asset-Split + ADR-001 Prio 6 DONE
+
+### Was wurde erledigt
+- Asset-Split: workflow-loop CSS (4 Dateien) und JS (6 Module). Template entlastet.
+- ADR-001 Prio 6: `tool_profile_adapter_service.py`, REST-Endpoints, UI-Modal. 659/659 Tests.
+- 4 Commits nach Gitea gepusht.
+
+---
+
+## Session 2026-04-11 (Abend) — ADR-002 + Sprint-Plan Stufe 1 (Doku-Rahmen)
+
+### Was wurde erledigt
+- ADR-002 angelegt: AI-Control-Plane fuer Multi-LLM-Systeme
+- Sprint-Plan Stufe 1 angelegt (10 Commits)
+- Nachtraege an ADR-001, Master-Plan
+
+---
+
+## Session 2026-04-11 (Spaet-Abend) — ADR-002 Stufe 1a + 1b vollstaendig
+
+### Alle Commits
+| # | Commit | Hash | Inhalt |
+|---|---|---|---|
+| 1 | Doku-Rahmen | `04fb9d2` | ADR-002 + Sprint-Plan |
+| 2 | Setup-Reviewer Core | `92c8f49` | services/tool_setup_review/, 22 Tests |
+| 3 | Setup-Reviewer REST + UI | `887031c` | POST/GET, UI im Modal |
+| 3b | UX Fix | `a09f415` | Badge + Banner |
+| — | Prompt-Schaerfung | `e59f978` | setup_reviewer.md |
+| 3c | UX Fix Refresh-Link | `1b66445` | Refresh-Link dauerhaft sichtbar |
+| 4 | Policy-Schema | `7c42773` | 4 DB-Tabellen, 14 Tests |
+| 5 | Seed-Defaults | `c16f1be` | 6 Rollen + 5 Tool-Profile |
+| 6 | Policy-Reviewer | `bdd31d5` | Perplexity-Reviewer, 13 Tests |
+| 7 | Policy-REST | `dcef99a` | 8 Endpoints |
+| 8 | Policy-UI | `733289b` | /policies Seite |
+| 9 | workflow_core | `9923d82` | get_handoff_view + policies |
+
+### Tests
+746/746 gruen (+65 neue ueber den Tag)
+
+### Parkzettel fuer Stufe 2+
+- context_hash ohne Prompt-Version (force=True als Workaround)
+- policy_stats aggregiert account statt tool_id (Stufe 3)
+- Marker-Schema ohne role_id/assigned_tool (Stufe 3)
+- Tool-Profile-Strengths/Weaknesses leer (Stufe 3)
+- Policy-Reviewer ohne Session-Evidence (Stufe 3)
+
+---
+
 ## Session 2026-04-09 (Nachmittag) - Dead Code Detection + Workflow-Integration
 
 ### Was wurde erledigt

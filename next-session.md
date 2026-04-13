@@ -1,8 +1,8 @@
 # Projekt-Dashboard - Naechste Session
 
-> **Letzte Aktualisierung:** 2026-04-10 (ADR-001 Prio 1+2+3+4 implementiert)
-> **Status:** ADR-001 Prio 1-4 komplett. Block-Marker-Schutz (Prio 2) produktiv: Parser, Write-Guard mit Atomic Write + File-Lock, Integration in `project_handoff_service`. 635 Tests gruen.
-> **Naechste Aufgabe:** ADR-001 Prio 5: Write-Back Core -> handoff.md (Mirror, via Write-Guard), dann Prio 6: `tool_profile_adapter_service.py`.
+> **Letzte Aktualisierung:** 2026-04-13 (Context-Window-Optimierung)
+> **Status:** ADR-001 Welle 1 komplett (Prio 1-6). ADR-002 Stufe 1a+1b komplett (Observe/Review/Steer live). 746 Tests gruen.
+> **Naechste Aufgabe:** CWO Phase 1 (Context Window Optimizer) implementieren, oder Policy-Reviewer Live-Test.
 
 ---
 
@@ -31,10 +31,14 @@ CLAUDE.md/AGENTS.md/GEMINI.md. Perplexity-Copilot wird Read-Only-Validierungssch
 - [x] **ADR-001 Prio 2:** `services/block_marker_parser.py` + `services/write_guard.py` (Produktfeature: Block-Marker-Schutz fuer alle Projekte)
 - [x] **ADR-001 Prio 3:** Idempotenter Importer aus handoff.md in DB (`services/marker_importer.py`, `import_all_projects()` bereit)
 - [x] **ADR-001 Prio 4:** `workflow_loop_service` + `copilot_marker_service` + `plan_structure_service` + `copilot_service` auf Core umgebaut
-- [ ] **ADR-001 Prio 5:** Write-Back: Core -> handoff.md (Mirror, via Write-Guard)
-- [ ] **ADR-001 Prio 6:** `tool_profile_adapter_service.py` fuer bestehende Projekte (via Write-Guard)
-- [ ] Dead Code V2: Ungenutzte Funktionen/Klassen mit Flask-Decorator-Erkennung (`auto_coder/checks/dead_code.py`)
-- [ ] Coverage-Input: `coverage.json` als zusaetzliche Evidenz fuer Dead-Code-Kandidaten
+- [x] **ADR-001 Prio 5:** Write-Back: Core -> handoff.md (Mirror, via Write-Guard)
+- [x] **ADR-001 Prio 6:** `tool_profile_adapter_service.py` fuer bestehende Projekte (via Write-Guard)
+- [x] **ADR-002 Stufe 1a+1b:** Setup-Reviewer, Policy-Schicht, Perplexity-Integration (746 Tests)
+- [x] **Context-Window-Optimierung:** CLAUDE.md modularisiert (271→102 Z.), master-plan-summary, Unterverz.-CLAUDE.md, Skill /project-ops
+- [ ] **CWO Phase 1:** Context Window Optimizer als Dashboard-Feature (`sprints/sprint-cwo-context-window-optimizer.md`)
+- [ ] **Policy-Reviewer Live-Test:** POST /api/policies/review gegen Perplexity testen
+- [ ] Dead Code V2: Ungenutzte Funktionen/Klassen mit Flask-Decorator-Erkennung
+- [ ] ADR-002 Stufe 2a: Dispatch-Einstieg (work_assignments-Tabelle)
 
 ### GUI/UX (Codex)
 
@@ -56,7 +60,9 @@ CLAUDE.md/AGENTS.md/GEMINI.md. Perplexity-Copilot wird Read-Only-Validierungssch
 | Governance Light | DONE — `/governance` mit Policy-Levels, Gate-Ampel |
 | Workflow Loop v1 | DONE — Visualisierung, Deep-Links, Signale |
 | **Workflow-v2 Sprint 1** | **DONE — Persistentes Datenmodell, Transition-Regeln, REST-API, Sync** |
-| **ADR-001 Prio 1+2+3+4** | **DONE — Marker-DB, Core-Service, Importer, DB-first, Block-Marker-Schutz mit Write-Guard** |
+| **ADR-001 Welle 1 (Prio 1-6)** | **DONE — Marker-DB, Core, Importer, Write-Guard, Mirror, Tool-Profile-Adapter** |
+| **ADR-002 Stufe 1a+1b** | **DONE — Setup-Reviewer, Policy-Schicht, Perplexity, /policies** |
+| **Context-Window-Optimierung** | **DONE — CLAUDE.md modularisiert, master-plan-summary, Unterverz.-CLAUDE.md** |
 | Backup taeglich | DONE — Cron 12:30, 7-Tage-Rotation |
 
 ## Was nicht da ist (= Deferred)
@@ -66,14 +72,9 @@ Siehe Master-Plan, Block "Deferred Sprints (post-closeout v1.3-final)".
 ## Wie naechste Session starten
 
 1. Dieses File zuerst lesen
-2. ADR lesen: `sprints/adr-001-db-first-marker-core-tool-adapter.md`
-3. Sprint-Plan lesen: `sprints/sprint-adr001-welle1-db-first-core.md` (Ticket 3 DONE, Ticket 4 offen)
-4. Mit ADR-001 Prio 5 starten: Write-Back Core -> handoff.md (Mirror, via Write-Guard)
-
-Architektur-Referenz:
-- `sprints/adr-001-db-first-marker-core-tool-adapter.md` (bindende Architekturentscheidung)
-- `sprints/sprint-qs-db-first-state-consolidation.md` (Migrationsstrategie)
-- `sprints/sprint-workflow-v2-full-system.md` (GUI/UX-Specs)
+2. `sprints/master-plan-summary.md` als Rahmen lesen (statt des vollstaendigen Master-Plans)
+3. Status-Uebersicht lesen: `sprints/status-adr002-stufe1-abschluss.md`
+4. Bei Bedarf ADRs nachlesen: `sprints/adr-001-*.md`, `sprints/adr-002-*.md`
 
 Dashboard laeuft als systemd-Service auf Port 5055, Backup taeglich 12:30.
 
@@ -87,185 +88,40 @@ Dashboard laeuft als systemd-Service auf Port 5055, Backup taeglich 12:30.
 - **DB:** PostgreSQL `project_dashboard`, Schema-Migrationen lazy via `ensure_*_schema()`
 - **Marker-Context:** `marker-context.md` im Root ist Runtime-Datei (gitignored), CLAUDE.md-Regel: nie eigenmaechtig veraendern
 
-## Session 2026-04-10 (Abend) - ADR-001 Prio 1+3+4: DB-First Marker Core
+## Session 2026-04-13 — Context-Window-Optimierung + CWO Sprint-Plan
 
 ### Was wurde erledigt
-- `services/db_marker_schema.py` (neu): `markers`-Tabelle + `executor_tool` in `marker_workflow_states`
-- `services/marker_importer.py` (neu): Idempotenter Import aus handoff.md (9 Marker importiert, Re-Run: 0 neue)
-- `services/workflow_core_service.py` (neu): `get_markers()`, `get_marker()`, `update_marker_field()`, `update_marker_state()`, `get_handoff_view()`
-- `services/db_service.py`: `ensure_marker_schema()` Delegate
-- `services/copilot_marker_service.py`: Komplett auf DB-first umgestellt — `_resolve_marker()` und `_resolve_markers()` als zentrale Resolver, alle 12 Funktionen umgebaut, Inline-Imports konsolidiert
-- `services/workflow_loop_service.py`: Marker via `core_get_markers()`
-- `services/plan_structure_service.py`: `_get_markers_with_fallback()` Helper
-- `services/copilot_service.py`: `core_get_marker()` fuer Chat-Kontext
-- `services/copilot_marker_import_flow.py`: DB-Sync nach Sprint-zu-Marker-Konversion
-- Quality-Scanner: `IGNORE_DIRS` um `.kilo`, `.codex`, `.aider`, `.serena`, `.playwright-mcp` erweitert, jscpd-Globs + Post-Filter
-- Smoke-Test: `/copilot` 302-Redirect als erlaubt
-- 598 Tests gruen, 0 Failures
+- **CLAUDE.md modularisiert:** 271 → 102 Zeilen (-63%). Architektur-Listen in Unterverzeichnis-CLAUDE.md ausgelagert, Dateigroessen-Duplikat entfernt, Patterns auf Verbots-Charakter reduziert, Scheduled Tasks/Backup/META in Skill ausgelagert.
+- **master-plan-summary.md erstellt:** 48-Zeilen-Summary statt 1.820-Zeilen-Vollversion. Fokusauftrag-Regel geaendert.
+- **next-session.md rotiert:** 271 → 95 Zeilen. Session-Historie 2026-04-07 bis 2026-04-11 ins Archiv.
+- **5 Unterverzeichnis-CLAUDE.md erstellt:** `routes/`, `services/`, `static/`, `templates/`, `sprints/` — nativer Claude-Code Lazy-Loading-Mechanismus.
+- **Skill /project-ops erstellt:** Betriebsbefehle, systemd, Scheduled Tasks, Backup on-demand.
+- **Session-End Skill ergaenzt:** Limit-Regel (max 130 Zeilen) + master-plan-summary-Check.
+- **Globale Rule ergaenzt:** Pre-Commit-Hook-Verhalten + Praevention fuer neue Dateien.
+- **Sprint-Plan CWO erstellt:** `sprints/sprint-cwo-context-window-optimizer.md` — 18 Tickets in 3 Phasen (Analyse, Perplexity-Review, Aktionen). Migrations-Map-Konzept: nichts wird geloescht, alles wird verschoben mit vollstaendiger Zuordnungstabelle.
+- **plan-directory.md aktualisiert:** ADR-002, CWO-Sprint, Backlog-Eintraege.
+- **master-plan-summary.md aktualisiert:** CWO als aktiver Sprint.
+- **Einsparung:** Startup-Kontext von ~33.600 auf ~5.600 Tokens (-83%).
 
-### Architektur-Muster
-- **DB-first mit Fallback:** `_resolve_marker()` / `_resolve_markers()` lesen aus DB, fallen auf handoff.md zurueck (Tests ohne DB, Uebergangsphase)
-- **Dual-Write:** Schreib-Operationen aktualisieren handoff.md (Mirror) UND DB
-- **Auto-Import:** Core importiert automatisch aus handoff.md wenn DB leer
+### Geaenderte/neue Dateien
+| Datei | Aenderung |
+|-------|-----------|
+| `CLAUDE.md` | Modularisiert: 271 → 102 Zeilen |
+| `next-session.md` | Rotiert + aktualisiert |
+| `next-session-archiv.md` | Sessions 2026-04-07 bis 2026-04-11 archiviert |
+| `routes/CLAUDE.md` | Neu: Route-Module-Index (33 Z.) |
+| `services/CLAUDE.md` | Neu: Service-Schicht-Index (56 Z.) |
+| `static/CLAUDE.md` | Neu: JS/CSS-Patterns (34 Z.) |
+| `templates/CLAUDE.md` | Neu: Template-Konventionen (16 Z.) |
+| `sprints/CLAUDE.md` | Neu: Sprint-Doku-Index (24 Z.) |
+| `sprints/master-plan-summary.md` | Neu: Kompakter Master-Plan (48 Z.) |
+| `sprints/sprint-cwo-context-window-optimizer.md` | Neu: CWO Sprint-Plan (18 Tickets) |
+| `sprints/plan-directory.md` | Aktualisiert: ADR-002 + CWO |
+| `~/.claude/skills/project-ops/SKILL.md` | Neu: Betriebsbefehle-Skill |
+| `~/.claude/skills/session-end/SKILL.md` | Ergaenzt: Limit-Regel + Summary-Check |
+| `~/.claude/rules/file-size-limits.md` | Ergaenzt: Hook-Verhalten + Praevention |
 
-## Historie
-
-- **2026-04-10 (Nacht):** ADR-001 Prio 2 implementiert: Block-Marker-Parser + Write-Guard als Produktfeature. Code-Review durchgefuehrt (Korrektheit=2, Architektur-Fit=1 im Ausgangszustand), daraufhin gezielter Refactor: `_compare_content()` auf SequenceMatcher umgestellt, APPEND_ONLY auf Prefix-Check vereinfacht, Parser fail-closed bei defekten Markern, SOURCE_ALLOWLIST als Uebergangs-Policy fuer handoff.md, Atomic Write (temp+fsync+rename), File-Lock (fcntl.flock) mit TOCTOU-Schutz. Integration in `project_handoff_service.write_handoff()`. 37 neue Tests, 635 gesamt. Alle 7 Akzeptanzkriterien erfuellt. Commit `44f52f6` (`services/block_marker_parser.py`, `services/write_guard.py`, `services/project_handoff_service.py`, `tests/test_block_marker_parser.py`, `tests/test_write_guard.py`, `tests/test_write_guard_hardening.py`).
-- **2026-04-10:** ADR-001 Prio 1+3+4 implementiert: `markers`-DB-Tabelle, `workflow_core_service`, `marker_importer`. Alle Marker-Lese-/Schreibpfade in `copilot_marker_service`, `workflow_loop_service`, `plan_structure_service`, `copilot_service` auf DB-first mit handoff.md-Fallback umgestellt. Zentrale Resolver `_resolve_marker()` / `_resolve_markers()` eingefuehrt. Quality-Scanner `IGNORE_DIRS` fuer Multi-CLI-Setups (.kilo, .codex, .aider, .serena) erweitert, jscpd-Globs + Post-Filter. 598 Tests gruen (`services/db_marker_schema.py`, `services/marker_importer.py`, `services/workflow_core_service.py`, `services/copilot_marker_service.py`, `services/workflow_loop_service.py`, `auto_coder/config.py`, `auto_coder/checks/duplication.py`).
-- **2026-04-10:** Szenarien-Analyse (4 Szenarien: Neues Projekt, Bestehendes Projekt, Multi-LLM, China-LLMs) durchgefuehrt. Freigabe-Matrix erstellt. 4 Coding-Tickets definiert (Marker-DB, Core-Service, Write-Guard, Tool-Update). Sprint-Plan `sprints/sprint-adr001-welle1-db-first-core.md` und Planverzeichnis `sprints/plan-directory.md` erstellt. Korrekturen aus Review: Wrapper statt Modell fuer China-LLMs, Atomic Write Pattern, Idempotente Re-Generierung.
-- **2026-04-10:** ADR-001 erstellt: DB-First Marker Core + Tool-Adapter + Perplexity-Review-Layer. Sprint-Nachtraege in Sprint 17 (Architekturprinzip ueberholt), Sprint CP (AC5 + Risiko 3 ueberholt), Sprint QS (Status auf Bindend), Master-Plan (Data Persistence Block aktualisiert). Perplexity-Copilot als vorschlagsbasierte Read-Only-Validierungsschicht verankert, Joseph bleibt finale Autoritaet (`sprints/adr-001-db-first-marker-core-tool-adapter.md`, `sprints/sprint-17-*.md`, `sprints/sprint-cp-*.md`, `sprints/sprint-qs-*.md`, `sprints/master-plan-*.md`).
-- **2026-04-10:** Workflow-Cards im Workflow-Tab auf User-Feedback hin entmischt: `rating` und `write_back` werden backendseitig jetzt unter `Wartet` gruppiert, damit unter `AKTIV` nur echte Execution-Marker stehen. Cards zeigen nur noch Status, Titel, `Naechster Schritt`, wenige Meta-Chips und Workflow-Aktionen; Rating, Write-Back-Checkliste und Blocker-Begruendung oeffnen im Marker-Modal. Owner-Badge, Status-Flags und Inline-Editoren wurden aus den Cards entfernt; Grid-Cards sind wieder gleich hoch, die Aktionsleiste sitzt unten (`services/workflow_loop_service.py`, `static/js/workflow-loop.js`, `static/css/workflow-loop.css`).
-- **2026-04-10:** Sprachregel in `AGENTS.md` ergänzt: Deutsche Prosa soll echte Umlaute und `ß` verwenden; ASCII bleibt für Code, Dateinamen, technische IDs, Shell-Befehle und bestehende ASCII-only-Texte erlaubt.
-- **2026-04-09:** Weiterer offener UX-Punkt fuer die naechste Session festgehalten: Die Workflow-Cards sind funktional deutlich weiter, aber visuell noch zu unruhig. Das Problem ist weniger fehlende Daten als fehlende Informationshierarchie. Zu viele gleich starke Elemente konkurrieren in einer Card gleichzeitig (`Status`, `Flags`, `Owner`, `Meta`, `Text`, `Actions`). Fuer die naechste Session sollte deshalb ein reiner Design-Schnitt geplant werden: Kopf nur mit Status + Titel, Mitte nur mit einem klaren `Naechster Schritt`, Fuss nur mit 1 Primaeraktion + 1 Sekundaeraktion; Zusatzinfos wie Owner, Session oder Execution nur noch leise und kritisch nur bei echten Sonderfaellen wie `Blockiert` oder `Rating offen` (`static/js/workflow-loop.js`, `static/css/workflow-loop.css`).
-- **2026-04-09:** Offener UX-Punkt im Workflow-Tab explizit festgehalten: Wenn ein Projekt noch keine Marker hat, bleibt der Workflow derzeit leer und der Nutzer muss gedanklich sowie navigationstechnisch zurueck nach `Planning` oder Copilot springen. Das System ist technisch konsistent, aber als Arbeitsfluss noch nicht geschlossen. Fuer die naechste Denk-/Bauphase sollte deshalb sauber entschieden werden, wie Marker initial entstehen sollen: CTA `Marker aus Planning erzeugen`, manueller `Ersten Marker anlegen`-Pfad oder ein halbautomatischer Bruecken-Flow direkt aus dem leeren Workflow-State. Nichts loeschen, sondern diese Luecke als eigenstaendigen Produktpunkt weiterdenken (`static/js/workflow-loop.js`, `services/workflow_loop_service.py`, `routes/copilot_marker_routes.py`).
-- **2026-04-09:** Workflow-Tab von reiner Anzeige zu operativem Arbeitsbereich ausgebaut: Ringgrafik blieb erhalten, darunter gibt es jetzt gruppierte Marker-Boards (`Aktiv`, `Wartet`, `Blockiert`) mit Owner-Badges, Blocker-Textarea, Write-Back-Checkliste, kompaktem Rating-Widget und echten Inline-Aktionen fuer Starten, Blockieren, Reaktivieren, Write Back und Rating. Das Backend liefert dafuer Marker-Gruppen inklusive erlaubter Transitionen; der Workflow-Sync bewahrt feinere Stati wie `ready`, `write_back` und `rating` jetzt stabiler gegen Handoff-Sync (`static/js/workflow-loop.js`, `static/css/workflow-loop.css`, `services/workflow_loop_service.py`, `services/workflow_state_service.py`).
-- **2026-04-09:** Session-Detailseite entkoppelt den Breadcrumb vom Rueck-CTA (`templates/session_detail.html`, `static/js/session-detail.js`, `static/js/project-planning.js`).
-- **2026-04-09:** Session-Detail-TOC lesbarer gemacht (`static/css/session-detail.css`, `static/js/session-toc.js`).
-- **2026-04-09:** `Projects` im Sidebar-Menue staerkerer aktiver Hintergrund (`static/css/sidebar-submenu.css`).
-- **2026-04-09:** `Quality` auf der Projektseite signalisiert Report-Status direkt im Sekundaerlink (`templates/project_detail.html`, `static/js/project-detail.js`, `static/css/project-detail.css`).
-- **2026-04-09:** Governance-Uebersicht auf Entscheidungslogik vereinfacht (`templates/governance.html`, `static/js/governance.js`, `static/css/governance.css`).
-- **2026-04-09:** `/quality` GUI/UX nachgeschaerft: risikoorientierte Projektliste, Quality Briefing (`templates/quality.html`, `static/js/quality.js`, `static/css/quality.css`).
-- **2026-04-09:** Monorepo-Detailseiten verbessert + `Was kann ich verbessern?` Block (`routes/project_info_routes.py`).
-- **2026-04-09:** Planning fuer Subprojekte + Fortschrittsblock (`services/plan_structure_service.py`, `routes/plans_routes.py`, `static/js/project-planning.js`).
-- **2026-04-09:** Workflow-Loop Intro-Block und Leerzustand gestrafft (`static/js/workflow-loop.js`, `static/js/workflow-loop-svg.js`, `static/css/workflow-loop.css`).
-- **2026-04-08:** Sprint CP fachlich abgeschlossen + deployt. Workflow-Loop v1, Thread-Fortsetzung, Abschluss-Flow.
-- **2026-04-08:** Projektseite auf 3 Haupttabs reduziert (Details, Planning, Workflow). Planning-Tab entmischt.
-- **2026-04-08:** Read-only-GETs gehaertet, Workflow-Loop v1 implementiert und getestet.
-- **2026-04-07:** Sprint SB DONE, Closeout (M1-M14), Tag `v1.3-final`
-- **Davor:** siehe `next-session-archiv.md` und `master-plan-2026-04-01.md`
-
-## Session 2026-04-11 - ADR-001 Prio 5 DONE
-
-### Was wurde erledigt
-- **ADR-001 Prio 5:** `write_handoff_mirror(project_name)` in `services/workflow_core_service.py` — regeneriert handoff.md aus DB-Markern via `write_guard.safe_write` mit Source `workflow_core_service`
-- `_read_preamble` bewahrt YAML-Frontmatter + Text oberhalb von `## Copilot Markers` (kein Flip von `stage`/`scope` zwischen `project_handoff_service` und Mirror)
-- `_build_marker_section` sortiert deterministisch nach `(plan_id, marker_id)`, idempotent bei gleichem DB-State
-- Pre-Import via `import_markers_from_handoff` schuetzt manuell angelegte Marker (z.B. `test-cockpit-2026-04-05`) vor Drop bei Regenerierung
-- `_trigger_mirror_write` laeuft best-effort am Ende von `update_marker_field` (und transitiv `update_marker_state`), Mirror-Fehler propagieren nicht (DB bleibt Source of Truth)
-- 10 neue Tests in `tests/test_workflow_core_mirror.py`: Empty-Projekt, DB-Marker, Preamble-Preservation, Idempotenz, Deterministic-Ordering, unknown-Projekt, beide Trigger-Pfade, Mirror-Fehler-Isolation, write_guard-Source-Check
-- 645/645 Tests gruen, null Regressionen
-- Issue #21, Commit `24a19b3`
-
-### Naechste Aufgabe
-**ADR-001 Prio 6:** `services/tool_profile_adapter_service.py` fuer bestehende Projekte (via Write-Guard). Pflegt `DASHBOARD-GENERATED`-Bloecke in `CLAUDE.md`/`AGENTS.md`/`GEMINI.md`, ersetzt nur markierte Bereiche, nutzt `block_marker_parser` + `write_guard.safe_write`. Abhaengigkeit Prio 2+5 erfuellt. Akzeptanzkriterien siehe `sprints/sprint-adr001-welle1-db-first-core.md` Ticket 4.
-
-### Nicht im Scope (Prio 5b / Follow-up)
-- `copilot_marker_service._write_marker` behaelt vorerst Direct-Write-Path (bypasst write_guard). Core-Mirror ueberschreibt nachgelagert, Content-kompatibel. Vollstaendiger Umbau auf Core-Single-Writer erfordert `last_execution_at` in `update_marker_field.allowed`-Set + Refactoring der Tests in `test_copilot_marker_service_core.py` / `test_copilot_marker_service_flow.py`, die `_write_marker` direkt nutzen.
-
-## Session 2026-04-11 (Nachmittag) - Workflow-v2 UX Follow-up + Asset-Split + ADR-001 Prio 6 DONE
-
-### Was wurde erledigt
-- **Uncommitted-Aufraeumen:** vier logische Commits aus dem Working-Tree geloest (Sprint Workflow-v2 UX Follow-up war als DONE dokumentiert, aber nie committet; handoff.md wurde automatisch durch Prio-5 Mirror erweitert; CLAUDE.md META-Block + Gap-Analyse waren unkommittet).
-- **Asset-Split wegen Dateigroessen-Limits:** `static/css/workflow-loop.css` (773 Zeilen) in vier thematische Dateien aufgeteilt (`workflow-loop-shell.css` 188, `workflow-loop-cards.css` 108, `workflow-loop-forms.css` 190, `workflow-loop-summary.css` 284). `static/js/workflow-loop.js` (767 Zeilen) auf `window.WorkflowLoop`-Namespace verteilt: `state.js` (67), `cards.js` (191), `board.js` (156), `modal.js` (98), `actions.js` (203), Orchestrator `workflow-loop.js` (68). Template `templates/project_detail.html` (339 Zeilen) um Documents-Tab als `templates/_project_documents_tab.html` entlastet, jetzt 246 Zeilen. Live-verifiziert via Chrome-DevTools MCP: Workflow-Tab rendert Intro/Ring/Summary/Card-Gruppen/Board korrekt, null Console-Errors.
-- **ADR-001 Prio 6 Core:** `services/tool_profile_adapter_service.py` (374 Zeilen). Zwei Schreibpfade: Bootstrap (Atomic-Write mit File-Lock + TOCTOU-Re-Check, fuer Erst-Setup ohne bestehenden Block) und Update (ueber `write_guard.safe_write`). `_guard_protected_unchanged` verifiziert im Bootstrap-Pfad, dass MANUAL/UNMARKED-Zeilen 1:1 erhalten bleiben. `build_dashboard_block` deterministisch mit festem `updated`-Parameter fuer Idempotenz-Tests.
-- **ADR-001 Prio 6 REST:** In `routes/project_routes.py` zwei Endpoints ergaenzt: `GET /api/project/<name>/tool-profile/preview` (Dry-Run mit Unified-Diff pro Tool) und `POST /api/project/<name>/tool-profile/regenerate` (schreibt, liefert 409 bei Write-Guard-Verletzung). `_tool_profile_meta` liest `project.json` fuer Typ/Description.
-- **ADR-001 Prio 6 UI:** Topbar-Button "Tool Files" in `project_detail.html`. `static/js/tool-profile-adapter.js` (123 Zeilen) erzeugt den Modal dynamisch per `document.body.appendChild`, laedt die Preview beim Oeffnen, zeigt Diff + Mode-Badge (`Erst-Setup` / `Update` / `Keine Aenderungen`) pro Tool-Datei, "Regenerate schreiben"-Button fuehrt den POST-Call aus. Live getestet: Modal zeigt korrekt die drei Diffs fuer CLAUDE.md/AGENTS.md/GEMINI.md mit Bootstrap-Badge.
-- **14 neue Tests** in `tests/test_tool_profile_adapter.py`: 11 fuer den Core-Service (Deterministik, Bootstrap mit 200 manuellen Zeilen intakt, Idempotenz, Update-Replacement, Preview-Dry-Run, regenerate_all ueber alle Tools, unknown-Tool, fremder generated Block) + 3 fuer die REST-Endpoints (Preview-Diffs, idempotenter Regenerate-Flow, 404 fuer unbekanntes Projekt).
-- **659/659 Tests gruen** (+14 neue), null Regressionen.
-- **4 Commits**, nach Gitea gepusht:
-  - `526f5cd` Sprint: Workflow-v2 UX Follow-up + Asset-Split + ADR-001 Nachtraege
-  - `6e977e3` Docs: META-Transparenz-Anforderungen + Managed Agents Gap Analysis
-  - `7ab334a` Feature: ADR-001 Prio 6 — tool_profile_adapter_service (Core)
-  - `4a326d6` Feature: ADR-001 Prio 6 — Tool-Profile Adapter REST + UI
-
-### Akzeptanzkriterien Ticket 4 (Sprint ADR-001 Welle 1)
-- Bestehende CLAUDE.md mit 200 manuellen Zeilen nach Update intakt: erfuellt (`test_bootstrap_preserves_200_manual_lines`)
-- DASHBOARD-GENERATED-Block korrekt eingefuegt/aktualisiert: erfuellt (Bootstrap- und Update-Pfad)
-- Dry-Run zeigt Diff ohne zu schreiben: erfuellt (`preview_update` + GET-Endpoint, live verifiziert)
-- UI-Button funktional mit Preview-Dialog: erfuellt (Topbar-Button "Tool Files", Modal mit Diff-Anzeige, live verifiziert)
-- Idempotent (zweites Regenerate erzeugt keinen Diff): erfuellt (`test_second_regenerate_is_idempotent`, REST-idempotent-Test)
-
-### Naechste Aufgabe
-**ADR-001 Welle 1 abgeschlossen.** ADR-001 Prio 7 (Capability-/Skill-Modell, unabhaengig) und Prio 8 (Perplexity-Review-Layer ueber generierte Artefakte, Abhaengigkeit Prio 5+6) sind die logischen Folgen. Alternativ offene GUI/UX-Punkte aus dem Workflow-v2-Follow-up:
-- Dead-Code-Hint im Workflow-Tab mit eigenem Icon und Kategorie-Breakdown rendern (`static/js/workflow-loop-cards.js` oder `board.js`, `static/css/workflow-loop-forms.css`)
-- `dead_code_summary` aus `signals` als kompakte Info-Karte im Workflow-Tab
-- Owner separat editierbar machen, auch ohne Statuswechsel
-- Microcopy der Marker-Gruppen und CTA-Reihenfolge feinjustieren
-
-### Nicht im Scope (Follow-up)
-- Block-Inhalt der `DASHBOARD-GENERATED`-Section ist aktuell minimal (Projekt-Name, Tool, Typ, Description, Stand). Marker-Count, Plan-Count, Quality-Score koennten ergaenzt werden, brauchen aber DB-Queries aus `_tool_profile_meta` und sind in `build_dashboard_block` vorbereitet (`meta["marker_count"]`, `meta["plan_count"]`, `meta["quality_score"]` werden bereits gerendert, wenn gesetzt).
-- GitHub-Mirror nicht gepusht (Verkaufsschutz laut Memory-Regel).
-
-## Session 2026-04-11 (Abend) — ADR-002 + Sprint-Plan Stufe 1 (Doku-Rahmen)
-
-### Was wurde erledigt
-- **ADR-002** angelegt: *AI-Control-Plane fuer kooperierende Multi-LLM-Systeme* (`sprints/adr-002-ai-control-plane-multi-llm-reviewer.md`, Status ACCEPTED). Produktdefinition als modellagnostische Control-Plane ueber mehreren LLMs, Fuenf-Ebenen-Architektur (Steuerung/Planung/Umsetzung/Pruefung/Freigabe), Observe-Review-Steer-Schichten, Perplexity als Reviewer-Rolle (provider-agnostisch), DB-first Policy-Schicht fuer Rollen und Tool-Zuweisungen, 10 Kernregeln. Prio 7 aus ADR-001 zurueckgestellt, Prio 8 erweitert und vorgezogen.
-- **Sprint-Plan Stufe 1** angelegt (`sprints/sprint-adr002-stufe1-control-plane.md`): 10 Commits in Stufe 1a (Setup-Reviewer als kleinste funktionierende Control-Plane) + Stufe 1b (Policy-Schicht mit 4 DB-Tabellen, Seed-Defaults, Perplexity-Policy-Reviewer, REST, /policies-UI, workflow_core_service-Integration).
-- **Nachtraege (append-only)** an:
-  - `sprints/adr-001-db-first-marker-core-tool-adapter.md` (Prio 7 zurueckgestellt, Prio 8 durch ADR-002 abgeloest)
-  - `sprints/master-plan-2026-04-01.md` (Produktdefinition als AI-Control-Plane bindend)
-  - diese Datei
-
-### Offene Arbeit (Commits 2-10)
-- **Commit 2 (Stufe 1a):** Setup-Reviewer Core + `project_reviews`-Schema + `context_drift`-Check
-- **Commit 3 (Stufe 1a):** Setup-Reviewer REST + minimale UI-Anzeige im Tool-Files-Modal — Stufe 1a vollstaendig
-- **Commit 4-9 (Stufe 1b):** Policy-Schema, Seed-Defaults (6 Rollen), Perplexity-Policy-Reviewer, REST, `/policies`-UI, `workflow_core_service`-Integration
-- **Commit 10:** Session-Close + Push
-
-### Leitlinien aus den Planungsgespraechen
-- Kein Auto-Write, auch bei hohem Confidence. Joseph entscheidet.
-- Policies sind Daten, keine Konstanten. Keine hart kodierten Best-Practices.
-- Reviewer ist Rolle, nicht Provider. Perplexity = erste Backend-Implementierung.
-- Ein Writer pro Marker, mehrere Reviewer moeglich.
-- Reviewer nie derselbe Provider wie Executor.
-- Stufe 1a ist Proof-of-Concept vor Stufe 1b — nach Commit 3 kann Joseph pausieren und testen.
-
-## Session 2026-04-11 (Spaet-Abend) — ADR-002 Stufe 1a + 1b vollstaendig
-
-### Alle Commits der Session
-
-| # | Commit | Hash | Inhalt |
-|---|---|---|---|
-| 1 | Doku-Rahmen | `04fb9d2` | ADR-002 + Sprint-Plan + 3 append-only Nachtraege |
-| 2 | Setup-Reviewer Core | `92c8f49` | services/tool_setup_review/ modular (6 Submodule), project_reviews-Schema, 22 Tests |
-| 3 | Setup-Reviewer REST + UI | `887031c` | POST/GET tool-setup/review, UI im Tool-Files-Modal (erste Button-Version) |
-| 3b | UX Fix | `a09f415` | Badge + Banner statt zweitem Primaer-Button, 288-Zeilen-Rewrite von setup-reviewer.js |
-| — | Prompt-Schaerfung | `e59f978` | setup_reviewer.md: Verbot geratener Befehle in suggested_blocks, Severity-Kalibrierung, keine Citations |
-| 3c | UX Fix Refresh-Link | `1b66445` | Refresh-Link im Banner immer sichtbar, nicht nur bei veraltet/fehlerhaft |
-| 4 | Policy-Schema + Service | `7c42773` | 4 DB-Tabellen (roles, tool_profiles, role_tool_policies, policy_review_suggestions), 14 Tests |
-| 5 | Seed-Defaults | `c16f1be` | 6 Rollen + 5 Tool-Profile, idempotent, preserviert Joseph-Edits, 6 Tests |
-| 6 | Policy-Reviewer | `bdd31d5` | Perplexity-Policy-Reviewer mit context_hash-Dedup, prompts/policy_reviewer.md, 13 Tests |
-| 7 | Policy-REST | `dcef99a` | 8 Endpoints unter /api/policies/*, 12 Tests |
-| 8 | Policy-UI | `733289b` | Seite /policies mit 4 Sektionen, Inline Approve/Reject, Nav-Eintrag in base.html |
-| 9 | workflow_core Integration | `9923d82` | get_handoff_view liefert markers + active_policies, policy_stats.get_session_stats_per_tool, 13 Tests |
-
-### Was ist jetzt produktiv
-
-- **/policies** live unter `http://localhost:5055/policies` — zeigt Rollen, Tool-Profile, aktive Policies, Pending Suggestions; triggerbar: Seed-Defaults und Review
-- **Setup-Reviewer** als Badge am Tool-Files-Button + Banner im Modal jedes Projekts; Refresh-Link dauerhaft sichtbar
-- **Perplexity-Policy-Reviewer** via REST-Endpoint POST /api/policies/review; persistiert in `policy_review_suggestions` mit approval-Workflow
-- **`workflow_core_service.get_handoff_view`** liefert jetzt `{markers, active_policies}` als Dict; alte Liste-Semantik gebrochen, aber war nirgends produktiv aufgerufen
-- **Policy-Stats-Helper** als Vorbereitung fuer Stufe 3 (echte Session-Evidence im Policy-Reviewer)
-
-### Tests
-
-- **746 / 746 gruen** (Start der Session: 681, ueber den Tag auf 746, also +65 neue Tests)
-- Alle Tests mit In-Memory-DB-Fakes, keine echte PostgreSQL-Abhaengigkeit
-- Backend-zentriert, UI wird live ueber Chrome/curl verifiziert
-
-### Parkzettel fuer Stufe 2+
-
-- **context_hash enthaelt nicht die Prompt-Version.** Prompt-Schaerfungen greifen bei gespeicherten Reviews erst nach `force=True`. Fix: Prompt-Hash in den context_hash einbeziehen. Klein, aber nicht jetzt.
-- **`policy_stats.get_session_stats_per_tool`** aggregiert `sessions.account`, nicht `tool_profiles.tool_id`. Mapping `account → tool_id` kommt in Stufe 3, wenn mehrere Tool-Profile pro account sinnvoll unterschieden werden muessen.
-- **Marker-Schema ohne `role_id` / `assigned_tool`**. Aktuell kann ein Marker nicht an eine Rolle gebunden werden. Stufe 3-Thema (Marker-Dispatch).
-- **Tool-Profile-Strengths/Weaknesses leer** bei Seed. Sollen durch Review-Historie entstehen, nicht spekulativ gesetzt werden. Stufe 3 liefert die Daten.
-- **Perplexity-Policy-Reviewer aktuell ohne Session-Evidence** im Input. Das Feld `session_stats_per_tool` wird im Prompt erwaehnt, aber noch nicht ins context-JSON gesteckt. Stufe 3.
-
-### Offen / Hausaufgaben fuer die naechste Session
-
-- Echter Live-Test des Policy-Reviewers (POST /api/policies/review) analog zum Setup-Reviewer-Testlauf, um den Prompt-Output zu bewerten und ggf. nachzuschaerfen
-- UX-Feinschliff der /policies-Seite (aktuell minimal-funktional, nicht poliert)
-- Entscheidung, ob context_hash-Prompt-Version-Parkzettel jetzt abgeraeumt werden soll oder weiter geparkt bleibt
-- Stufe 2-Roadmap: Cross-Project-Review-Widget, Batch-Reviews, Scheduled Reviews, Artefakt-Reviewer
-
-## Session 2026-04-11 (Nachtrag Dispatch/Execute) — ADR-002 erweitert
-
-### Was wurde erledigt
-- **ADR-002 Nachtrag angelegt** (`sprints/adr-002-ai-control-plane-multi-llm-reviewer.md`, append-only): Dispatch/Execute als explizite vierte Schicht neben Observe/Review/Steer. Neue Grundregel: *„Ein Tool arbeitet nicht, weil ein Review existiert, sondern weil ein freigegebenes Assignment mit klarer Zustaendigkeit und Scope erzeugt wurde."* Konzeptionelle `work_assignments`-Entitaet mit Feldkatalog und Lebenszyklus. Drei Dispatch-Varianten (manuell, pull, push) mit klarem Kurzfrist-Bekenntnis zu manuell. Vier Autonomie-Stufen L0-L3 mit bindender Grundregel: Automatisierung erlaubt fuer L0-L2, L3 immer approval-pflichtig. Commit `04d0f7c`.
-- **Status-Uebersicht ADR-002 Stufe 1 als Markdown** (`sprints/status-adr002-stufe1-abschluss.md`) angelegt und committet (`8796fdd`). Dokumentiert Observe/Review/Steer live, Stufen 2-4 offen, Parkzettel aus Stufe 1b.
-- **Status-HTML-Variante** (`sprints/status-adr002-stufe1-uebersicht.html`) wurde erstellt und lokal erweitert: inline SVG-Architektur-Grafik mit vier Schicht-Blocks (OBSERVE/REVIEW/STEER/DISPATCH), fuenf Datenboxen inkl. neu `work_assignments` und `session_ratings`, Rueckkanal-Pfeil als Zyklus, Dauer-Tabelle mit neuer Zeile „Stufe 2a — Dispatch-Einstieg". Status: **lokal, noch nicht committet** (1024 Zeilen ueberschreiten 300er HTML-Limit aus Dateigroessen-Disziplin).
-
-### Offen / Hausaufgaben fuer die naechste Session
-- **HTML-Status-Datei entscheiden:** Aufteilung in HTML+CSS+SVG (um unter das 300er HTML-Limit zu kommen), dauerhaft lokal lassen, oder Sondererlaubnis im Pre-Commit-Hook fuer `sprints/status-*.html`.
-- **Stufe 2a — Dispatch-Einstieg** als erster Implementierungsschritt nach ADR-002-Nachtrag. Scope: `work_assignments`-Tabelle, manuelles Assignment via UI (Variante A), erste Pull-Variante fuer bekannte Tools, Autonomie-Level L0-L2. Push-Modus bleibt in Stufe 3.
-- Vor Implementierung: kleine Spezifikation (welche Felder wirklich in der ersten Tabelle, wie UI-Ablauf manuell, welcher Pull-Endpoint-Vertrag) als eigener Implementierungs-ADR oder Sprint-Plan.
+### Naechste Session
+- [ ] **CWO Phase 1 starten:** `sprints/sprint-cwo-context-window-optimizer.md` Ticket 1.1 (DB-Schema + Constants)
+- [ ] **Oder:** Policy-Reviewer Live-Test (POST /api/policies/review gegen Perplexity)
+- [ ] Sprint-Plan CWO lesen, dann mit Ticket 1.1 beginnen
