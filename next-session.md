@@ -1,8 +1,8 @@
 # Projekt-Dashboard - Naechste Session
 
-> **Letzte Aktualisierung:** 2026-04-13 (Session 6: Policy-Reviewer Live-Test + Finding-Decisions)
-> **Status:** Policy-Reviewer live getestet + 2 Dedup-Bugs gefixt. Finding-Decisions Feature komplett (Approve/Dismiss/Ignore fuer alle Reviewer-Findings).
-> **Naechste Aufgabe:** Policy-Suggestions im UI bewerten, dann Prompt-Verbesserungen basierend auf Dismiss-Daten
+> **Letzte Aktualisierung:** 2026-04-13 (Session 7: Rausch-Reduktion — Dismiss-Filter + Confidence-Filter + Metriken)
+> **Status:** Reviewer-Rauschen systematisch adressiert: Dismiss-Filter, Confidence-Filter, Reject-Dedup + Counter-Persistierung in bestehenden Review-Tabellen.
+> **Naechste Aufgabe:** Echte Reviews laufen lassen, Counter-Daten sammeln, dann Metrics-Dashboard bauen
 
 ---
 
@@ -48,6 +48,8 @@ CLAUDE.md/AGENTS.md/GEMINI.md. Perplexity-Copilot wird Read-Only-Validierungssch
 - [x] **CWO Phase 1b Ticket 1.11:** UI: Review-Button + Bewertungs-Anzeige + Guidance-Zeile
 - [x] **Policy-Reviewer Live-Test:** POST /api/policies/review gegen Perplexity getestet + 2 Dedup-Bugs gefixt
 - [x] **Finding-Decisions:** Approve/Dismiss/Ignore pro Finding (Setup-Reviewer + CWO), DB + Service + REST + UI
+- [x] **Rausch-Reduktion (Issue #23):** Dismiss-Filter + Confidence-Filter + Reject-Dedup in allen 3 Reviewern
+- [x] **Metriken-Persistierung:** Counter-Spalten in project_reviews + cwo_analyses (generated/shown/filtered)
 - [ ] Dead Code V2: Ungenutzte Funktionen/Klassen mit Flask-Decorator-Erkennung
 - [ ] ADR-002 Stufe 2a: Dispatch-Einstieg (work_assignments-Tabelle)
 
@@ -77,6 +79,7 @@ CLAUDE.md/AGENTS.md/GEMINI.md. Perplexity-Copilot wird Read-Only-Validierungssch
 | **CWO Phase 1a (Analyse)** | **DONE — 8 Checks, Orchestrator, REST-API, UI (Badge+Panel)** |
 | **CWO Phase 1b (Review)** | **DONE — Perplexity-Prompt, Reviewer-Modul, Review-UI + Guidance** |
 | **Finding-Decisions** | **DONE — Approve/Dismiss/Ignore pro Finding (Setup-Reviewer + CWO)** |
+| **Rausch-Reduktion** | **DONE — Dismiss-Filter, Confidence-Filter, Reject-Dedup, Metriken-Counter** |
 | Backup taeglich | DONE — Cron 12:30, 7-Tage-Rotation |
 
 ## Was nicht da ist (= Deferred)
@@ -102,55 +105,52 @@ Dashboard laeuft als systemd-Service auf Port 5055, Backup taeglich 12:30.
 - **DB:** PostgreSQL `project_dashboard`, Schema-Migrationen lazy via `ensure_*_schema()`
 - **Marker-Context:** `marker-context.md` im Root ist Runtime-Datei (gitignored), CLAUDE.md-Regel: nie eigenmaechtig veraendern
 
-## Session 2026-04-13 (Session 6) — Policy-Reviewer Live-Test + Finding-Decisions
+## Session 2026-04-13 (Session 7) — Rausch-Reduktion: Dismiss-Filter + Confidence-Filter + Metriken
 
 ### Was wurde erledigt
-- **CWO Sprint-Plan aktualisiert:** Phase 1a+1b als DONE markiert in `sprints/sprint-cwo-context-window-optimizer.md`
-- **Policy-Reviewer Live-Test:** POST `/api/policies/review` erfolgreich gegen Perplexity Sonar getestet
-  - Seed-Defaults geladen (6 Rollen, 5 Tool-Profile)
-  - Perplexity liefert sinnvolle Policy-Vorschlaege (3 aktive Suggestions pending)
-  - Approval/Reject-Flow funktioniert end-to-end
-- **Bug gefixt: Multi-Suggestion-Dedup** — `record_suggestion()` in `policy_service.py` deduplizierte nur nach `context_hash`, sodass pro Review-Call nur die erste Suggestion persistiert wurde. Jetzt: `context_hash + suggestion_type + payload`
-- **Bug gefixt: Review-Level-Dedup fehlte** — Policy-Reviewer rief Perplexity bei jedem Klick erneut auf. Neu: `_find_cached_review()` in `policy_review_service.py` prueft pending Suggestions vor dem API-Call, `force`-Parameter uebergeht den Cache. Route in `policy_routes.py` angepasst.
-- **Feature: Dismiss pro Finding** — Entscheidungs-Flow fuer alle Reviewer-Findings (Setup-Reviewer + CWO):
-  - DB: `finding_decisions` Tabelle mit SHA256-Fingerprint, Status, Dismiss-Reason, Context-Signature
-  - Service: `finding_decision_service.py` — Fingerprint-Berechnung, Enrichment, Reaktivierung bei Kontext-Aenderung
-  - REST: POST `/api/project/<name>/findings/decide`, GET `decisions`, POST `reset`
-  - UI: Akzeptieren/Dismiss/Einmal-ignorieren-Buttons pro Finding, Dismiss-Dialog mit 4 Reason-Presets (bewusst so, Runtime-Datei, kein Projektziel, dupliziert) + Freitext
-  - Dismissed Findings verschwinden, Counter zeigt "X dismissed", Reaktivierung bei Kontext-Aenderung
-  - Browser-verifiziert im Tool-Files-Modal
+- **Analyse:** Perplexity-Rauschen ist kein Modell-Bug, sondern Systemluecke — fehlende Filter zwischen Modell-Ausgabe und Persistierung
+- **Gitea Issue #23 angelegt:** Rausch-Reduktion: Dismiss-Filter + Confidence-Filter fuer Reviewer
+- **Dismiss-Filter (Schritt 1):**
+  - `get_dismissed_fingerprints()` + `is_finding_dismissed()` in `finding_decision_service.py`
+  - Setup-Reviewer: Dismisste Fingerprints mit unveraenderter context_signature werden vor Persistierung gefiltert
+  - Policy-Reviewer: Rejected Suggestions mit gleichem Payload werden via `_get_rejected_suggestion_keys()` nicht erneut persistiert
+  - CWO-Reviewer: Migration-Assessments mit Confidence < 50 gefiltert, `low_confidence_warning` bei overall < 30
+- **Confidence-Filter (Schritt 2):**
+  - `parse_confidence()` als defensiver Parser (int/float/str/None) in `finding_decision_service.py`
+  - Schwelle >= 50 fuer Setup-Findings und Policy-Suggestions
+  - Schwelle >= 50 fuer CWO-Migration-Assessments, >= 30 fuer CWO-Overall mit Warning-Flag
+  - Thresholds sind vorlaeufig und kalibrierbar — Confidence ist ein Zusatzsignal, kein alleiniges Gate
+- **Metriken-Persistierung:**
+  - Counter-Spalten (generated_count, shown_count, filtered_dismissed_count, filtered_low_confidence_count) in `project_reviews` + `cwo_analyses`
+  - `save_review()` in Setup + CWO berechnet generated_count automatisch und schreibt alle Counter mit
+  - Aggregation per SQL auf vorhandenen Review-Datensaetzen moeglich, keine neue Metrics-Tabelle noetig
 
 ### Git Commits
 ```
-2d0a7c9 Fix: Policy-Reviewer Dedup — Multi-Suggestion-Persistierung + Review-Level-Cache
-567e88b Feature: Dismiss pro Finding — Entscheidungs-Flow fuer Review-Findings
+f040047 Feature: Rausch-Reduktion — Dismiss-Filter + Confidence-Filter fuer Reviewer (fixes #23)
+60163d6 Feature: Review-Metriken in bestehende Tabellen persistieren (refs #23)
 ```
 
 ### Geaenderte/neue Dateien
 | Datei | Aenderung |
 |-------|-----------|
-| `services/db_finding_decisions_schema.py` | Neu: finding_decisions Tabelle (~55 Z.) |
-| `services/finding_decision_service.py` | Neu: Fingerprint, Enrichment, Decisions (~195 Z.) |
-| `routes/finding_decision_routes.py` | Neu: decide/decisions/reset Endpoints (~115 Z.) |
-| `static/js/finding-decisions.js` | Neu: Buttons + Dismiss-Dialog (~155 Z.) |
-| `static/css/finding-decisions.css` | Neu: Styling Buttons, Dialog, Badges (~130 Z.) |
-| `services/policy_service.py` | Fix: Dedup auf context_hash + type + payload |
-| `services/policy_review_service.py` | Neu: _find_cached_review(), force-Parameter |
-| `routes/policy_routes.py` | Erweitert: force-Parameter durchreichen |
-| `services/tool_setup_review/storage.py` | Erweitert: Enrichment in load_review() |
-| `services/context_window_optimizer/storage.py` | Erweitert: Enrichment in load_analysis() |
-| `static/js/setup-reviewer.js` | Erweitert: Buttons + dismissed-Counter |
-| `static/js/context-window-optimizer.js` | Erweitert: Buttons + dismissed-Counter |
-| `sprints/sprint-cwo-context-window-optimizer.md` | Phase 1a+1b als DONE markiert |
+| `services/finding_decision_service.py` | Erweitert: get_dismissed_fingerprints(), is_finding_dismissed(), parse_confidence() |
+| `services/tool_setup_review/orchestrator.py` | Erweitert: Dismiss-Filter + Confidence-Filter vor save_review() |
+| `services/context_window_optimizer/reviewer.py` | Erweitert: Confidence-Filter + low_confidence_warning |
+| `services/policy_review_service.py` | Erweitert: Confidence-Filter + Reject-Dedup + _get_rejected_suggestion_keys() |
+| `services/db_tool_setup_review_schema.py` | Migration: 4 Counter-Spalten in project_reviews |
+| `services/db_cwo_schema.py` | Migration: 4 Counter-Spalten in cwo_analyses |
+| `services/tool_setup_review/storage.py` | Erweitert: Counter in save_review() persistieren |
+| `services/context_window_optimizer/storage.py` | Erweitert: Counter in save_review() persistieren |
 
 ---
 
 ## Naechste Session
 
 ### Aufgaben
-- [ ] **Policy-Suggestions bewerten:** 3 pending Suggestions im UI (Perplexity→Research, Hermes→QualityReview, Claude→CodeFix)
-- [ ] Optional: Prompt-Verbesserungen basierend auf Dismiss-Daten (Phase B des Finding-Decision-Plans)
-- [ ] Optional: Check #10 (de-facto always-loaded Detection) als eigenes Ticket planen
-- [ ] Optional: Dashboard-weites Guidance-Pattern fuer Quality, Governance, Workflow
-- [ ] Optional: CWO Phase 2 (Aktionen mit Approval) planen
+- [ ] **Echte Reviews laufen lassen:** Setup/CWO/Policy Reviews triggern, Counter-Daten verifizieren
+- [ ] **Metrics-Dashboard:** KPI-Karten (Dismiss-Rate, Signal-Ratio, Reappearance-Rate, Duplicate-Dismiss-Rate) + Trend-Chart + "Noisiest Findings"-Tabelle
+- [ ] **Policy-Suggestions bewerten:** 3 pending Suggestions im UI
+- [ ] Optional: Mehrstufiger Filter (Policy-Filter: nur Findings mit Handlung + Severity)
+- [ ] Optional: Adaptive Kalibrierung (Schwellen aus Dismiss-/Accept-Daten je Reviewer)
 - [ ] Optional: Dead Code V2 (Funktionen/Klassen mit Flask-Decorator-Erkennung)

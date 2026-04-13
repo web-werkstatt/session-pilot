@@ -4,6 +4,32 @@
 
 ---
 
+## Session 2026-04-13 (Session 6) — Policy-Reviewer Live-Test + Finding-Decisions
+
+### Was wurde erledigt
+- **CWO Sprint-Plan aktualisiert:** Phase 1a+1b als DONE markiert in `sprints/sprint-cwo-context-window-optimizer.md`
+- **Policy-Reviewer Live-Test:** POST `/api/policies/review` erfolgreich gegen Perplexity Sonar getestet
+  - Seed-Defaults geladen (6 Rollen, 5 Tool-Profile)
+  - Perplexity liefert sinnvolle Policy-Vorschlaege (3 aktive Suggestions pending)
+  - Approval/Reject-Flow funktioniert end-to-end
+- **Bug gefixt: Multi-Suggestion-Dedup** — `record_suggestion()` in `policy_service.py` deduplizierte nur nach `context_hash`, sodass pro Review-Call nur die erste Suggestion persistiert wurde. Jetzt: `context_hash + suggestion_type + payload`
+- **Bug gefixt: Review-Level-Dedup fehlte** — Policy-Reviewer rief Perplexity bei jedem Klick erneut auf. Neu: `_find_cached_review()` in `policy_review_service.py` prueft pending Suggestions vor dem API-Call, `force`-Parameter uebergeht den Cache. Route in `policy_routes.py` angepasst.
+- **Feature: Dismiss pro Finding** — Entscheidungs-Flow fuer alle Reviewer-Findings (Setup-Reviewer + CWO):
+  - DB: `finding_decisions` Tabelle mit SHA256-Fingerprint, Status, Dismiss-Reason, Context-Signature
+  - Service: `finding_decision_service.py` — Fingerprint-Berechnung, Enrichment, Reaktivierung bei Kontext-Aenderung
+  - REST: POST `/api/project/<name>/findings/decide`, GET `decisions`, POST `reset`
+  - UI: Akzeptieren/Dismiss/Einmal-ignorieren-Buttons pro Finding, Dismiss-Dialog mit 4 Reason-Presets (bewusst so, Runtime-Datei, kein Projektziel, dupliziert) + Freitext
+  - Dismissed Findings verschwinden, Counter zeigt "X dismissed", Reaktivierung bei Kontext-Aenderung
+  - Browser-verifiziert im Tool-Files-Modal
+
+### Git Commits
+```
+2d0a7c9 Fix: Policy-Reviewer Dedup — Multi-Suggestion-Persistierung + Review-Level-Cache
+567e88b Feature: Dismiss pro Finding — Entscheidungs-Flow fuer Review-Findings
+```
+
+---
+
 ## Session 2026-04-13 (Nacht 5) — CWO Phase 1b Ticket 1.11 + Guidance
 
 ### Was wurde erledigt
