@@ -1,11 +1,15 @@
 """
-CWO Sprint Ticket 1.7: REST-Endpoints fuer Context Window Optimizer.
+CWO Sprint: REST-Endpoints fuer Context Window Optimizer.
 
 Phase 1a (Read-Only Analyse):
 - POST /api/project/<name>/cwo/analyze — Analyse durchfuehren (context_hash-Dedup)
 - GET  /api/project/<name>/cwo/analyze — Letzte Analyse laden
 - POST /api/cwo/analyze-all            — Alle Projekte analysieren
 - GET  /api/cwo/overview               — Uebersicht: Projekte nach Token-Budget
+
+Phase 1b (Perplexity-Review):
+- POST /api/project/<name>/cwo/review  — Perplexity-Review ausloesen
+- GET  /api/project/<name>/cwo/review  — Letztes Review laden
 """
 import logging
 
@@ -102,6 +106,50 @@ def get_overview():
         "summary": summary,
         "projects": analyses,
     }), 200
+
+
+@cwo_bp.route("/api/project/<path:name>/cwo/review", methods=["POST"])
+@api_route
+def trigger_review(name):
+    """Loest ein Perplexity-Review fuer die bestehende CWO-Analyse aus.
+
+    Voraussetzung: Es muss bereits eine Analyse existieren
+    (via POST /api/project/<name>/cwo/analyze).
+
+    Body (optional): {"force": true} erzwingt Review trotz
+    identischem review_context_hash.
+    """
+    project_path = resolve_project_path(name)
+    if not project_path:
+        return jsonify({"error": "Project not found"}), 404
+
+    body = request.get_json(silent=True) or {}
+    force = bool(body.get("force", False))
+
+    from services.context_window_optimizer import review_project
+
+    result = review_project(name, force=force)
+
+    if result.get("error") == "no_analysis":
+        return jsonify({
+            "error": "No CWO analysis found. Run POST /api/project/<name>/cwo/analyze first."
+        }), 404
+
+    return jsonify({"project": name, "result": result}), 200
+
+
+@cwo_bp.route("/api/project/<path:name>/cwo/review", methods=["GET"])
+@api_route
+def get_review(name):
+    """Liefert das letzte gespeicherte Perplexity-Review ohne neuen Aufruf."""
+    project_path = resolve_project_path(name)
+    if not project_path:
+        return jsonify({"error": "Project not found"}), 404
+
+    from services.context_window_optimizer import load_review
+
+    result = load_review(name)
+    return jsonify({"project": name, "result": result}), 200
 
 
 def _count_by_rating(analyses):

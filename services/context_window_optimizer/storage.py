@@ -140,5 +140,88 @@ def _row_to_dict(row: Any) -> Dict[str, Any]:
     return raw
 
 
+def save_review(
+    project_name: str,
+    review_result: Dict[str, Any],
+    *,
+    now_fn: Optional[Callable] = None,
+) -> None:
+    """Persistiert ein Perplexity-Review in die bestehende cwo_analyses-Zeile.
+
+    Setzt perplexity_review (JSONB), perplexity_confidence (SMALLINT)
+    und review_context_hash (VARCHAR). Die Analyse-Zeile muss bereits
+    existieren (wird durch vorherige analyze_project() angelegt).
+    """
+    from services.db_service import execute, ensure_cwo_schema
+
+    ensure_cwo_schema()
+
+    now = (now_fn or _default_now)()
+
+    review_json = review_result.get("perplexity_review")
+    confidence = review_result.get("perplexity_confidence")
+    review_hash = review_result.get("review_context_hash")
+
+    execute(
+        """
+        UPDATE cwo_analyses
+        SET perplexity_review = %s::jsonb,
+            perplexity_confidence = %s,
+            review_context_hash = %s,
+            updated_at = %s
+        WHERE project_name = %s
+        """,
+        (
+            json.dumps(review_json, ensure_ascii=True) if review_json else None,
+            confidence,
+            review_hash,
+            now,
+            project_name,
+        ),
+    )
+
+
+def load_review(project_name: str) -> Optional[Dict[str, Any]]:
+    """Laedt das letzte Perplexity-Review fuer ein Projekt.
+
+    Returns:
+        Dict mit perplexity_review, perplexity_confidence,
+        review_context_hash oder None wenn kein Review vorhanden.
+    """
+    from services.db_service import execute, ensure_cwo_schema
+
+    ensure_cwo_schema()
+
+    row = execute(
+        """
+        SELECT perplexity_review, perplexity_confidence,
+               review_context_hash, updated_at
+        FROM cwo_analyses
+        WHERE project_name = %s
+          AND perplexity_review IS NOT NULL
+        """,
+        (project_name,),
+        fetchone=True,
+    )
+    if not row:
+        return None
+
+    raw = dict(row)
+    # JSONB normalisieren
+    val = raw.get("perplexity_review")
+    if isinstance(val, (bytes, bytearray)):
+        val = val.decode("utf-8")
+    if isinstance(val, str):
+        try:
+            raw["perplexity_review"] = json.loads(val)
+        except json.JSONDecodeError:
+            pass
+    # Timestamp zu ISO-String
+    ts = raw.get("updated_at")
+    if isinstance(ts, datetime):
+        raw["updated_at"] = ts.isoformat()
+    return raw
+
+
 def _default_now() -> datetime:
     return datetime.now(timezone.utc)
