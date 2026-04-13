@@ -111,7 +111,17 @@ def load_review(
     )
     if not row:
         return None
-    return _row_to_dict(row)
+    result = _row_to_dict(row)
+
+    # Enrichment: Entscheidungsstatus an jedes Finding anhaengen
+    findings = result.get("findings")
+    if findings and isinstance(findings, list):
+        from services.finding_decision_service import enrich_findings_with_decisions
+        result["findings"] = enrich_findings_with_decisions(
+            project_name, review_type, findings,
+        )
+
+    return result
 
 
 def _row_to_dict(row: Any) -> Dict[str, Any]:

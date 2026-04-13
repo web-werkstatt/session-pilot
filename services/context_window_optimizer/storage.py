@@ -87,7 +87,17 @@ def load_analysis(project_name: str) -> Optional[Dict[str, Any]]:
     )
     if not row:
         return None
-    return _row_to_dict(row)
+    result = _row_to_dict(row)
+
+    # Enrichment: Entscheidungsstatus an jedes Finding anhaengen
+    findings = result.get("findings")
+    if findings and isinstance(findings, list):
+        from services.finding_decision_service import enrich_findings_with_decisions
+        result["findings"] = enrich_findings_with_decisions(
+            project_name, "cwo", findings,
+        )
+
+    return result
 
 
 def load_all_analyses() -> List[Dict[str, Any]]:

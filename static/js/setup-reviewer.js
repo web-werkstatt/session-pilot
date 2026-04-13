@@ -162,7 +162,7 @@
                 + escapeHtml(result.summary) + '</div>';
         }
 
-        var details = buildDetailsSection(result);
+        var details = buildDetailsSection(result, projectName);
 
         banner.innerHTML = ''
             + driftBar
@@ -186,17 +186,22 @@
         }
     }
 
-    function buildDetailsSection(result) {
+    function buildDetailsSection(result, projectName) {
         if (!result || result.error) return '';
         var findings = result.findings || [];
+        var visible = findings.filter(function(f) { return !f._hidden; });
+        var dismissed = findings.length - visible.length;
         var blocks = result.suggested_blocks || {};
         var hasBlocks = Object.keys(blocks).some(function(k) { return blocks[k] && blocks[k].trim(); });
-        if (!findings.length && !hasBlocks) return '';
+        if (!visible.length && !dismissed && !hasBlocks) return '';
 
-        var findingsHtml = findings.length
-            ? '<details style="margin-top:10px"><summary style="cursor:pointer;color:rgba(148,163,184,0.82);font-size:12px">' + findings.length + ' Finding(s) anzeigen</summary>'
-              + '<div style="margin-top:6px">' + findings.map(renderFindingCompact).join('') + '</div></details>'
-            : '';
+        var countLabel = visible.length + ' Finding(s) anzeigen';
+        if (dismissed > 0) countLabel += ' · ' + dismissed + ' dismissed';
+
+        var findingsHtml = visible.length
+            ? '<details style="margin-top:10px"><summary style="cursor:pointer;color:rgba(148,163,184,0.82);font-size:12px">' + countLabel + '</summary>'
+              + '<div style="margin-top:6px">' + visible.map(function(f) { return renderFindingCompact(f, projectName); }).join('') + '</div></details>'
+            : (dismissed > 0 ? '<div style="margin-top:10px;color:rgba(148,163,184,0.52);font-size:11px">' + dismissed + ' Finding(s) dismissed</div>' : '');
 
         var blocksHtml = hasBlocks
             ? '<details style="margin-top:6px"><summary style="cursor:pointer;color:rgba(148,163,184,0.82);font-size:12px">Vorgeschlagene Bloecke anzeigen</summary>'
@@ -206,13 +211,15 @@
         return findingsHtml + blocksHtml;
     }
 
-    function renderFindingCompact(f) {
+    function renderFindingCompact(f, projectName) {
         var color = f.severity === 'error' ? '#fca5a5' : f.severity === 'warn' ? '#fcd34d' : '#7dd3fc';
+        var buttons = window.findingDecisions ? window.findingDecisions.renderActionButtons(f, projectName) : '';
         return ''
             + '<div style="border-left:2px solid ' + color + ';padding:6px 10px;margin-bottom:4px;background:rgba(2,6,23,0.38);border-radius:0 4px 4px 0;font-size:12px">'
             + '<div style="color:#f8fafc;font-weight:600">' + escapeHtml(f.title || '') + '</div>'
             + '<div style="color:rgba(226,232,240,0.72);margin-top:2px">' + escapeHtml(f.problem || '') + '</div>'
             + (f.recommended_change ? '<div style="color:rgba(148,163,184,0.78);margin-top:2px;font-style:italic">→ ' + escapeHtml(f.recommended_change) + '</div>' : '')
+            + buttons
             + '</div>';
     }
 

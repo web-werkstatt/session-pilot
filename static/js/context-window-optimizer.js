@@ -131,7 +131,7 @@
 
         // Details
         var guidanceHtml = buildGuidance(result, reviewData);
-        var findingsHtml = buildFindingsSection(result);
+        var findingsHtml = buildFindingsSection(result, projectName);
         var migrationHtml = buildMigrationSection(result);
         var inventoryHtml = buildInventorySection(result);
         var reviewHtml = window.cwoReview.buildSection(reviewData);
@@ -227,12 +227,15 @@
     // Findings (Collapsible)
     // --------------------------------------------------------------------
 
-    function buildFindingsSection(result) {
+    function buildFindingsSection(result, projectName) {
         if (!result || result.error) return '';
         var findings = result.findings || [];
         if (!findings.length) return '';
 
-        var html = findings.map(function(f) {
+        var visible = findings.filter(function(f) { return !f._hidden; });
+        var dismissed = findings.length - visible.length;
+
+        var html = visible.map(function(f) {
             var color = SEVERITY_COLORS[f.severity] || '#7dd3fc';
             var tokensHint = f.estimated_tokens
                 ? ' <span style="color:rgba(148,163,184,0.6)">(' + formatTokens(f.estimated_tokens) + ' Tokens)</span>'
@@ -240,17 +243,26 @@
             var recommendation = f.recommendation
                 ? '<div style="color:rgba(148,163,184,0.78);margin-top:2px;font-style:italic">' + escapeHtml(f.recommendation) + '</div>'
                 : '';
+            var buttons = window.findingDecisions ? window.findingDecisions.renderActionButtons(f, projectName) : '';
             return ''
                 + '<div style="border-left:2px solid ' + color + ';padding:6px 10px;margin-bottom:4px;background:rgba(2,6,23,0.38);border-radius:0 4px 4px 0;font-size:12px">'
                 + '<div style="color:#f8fafc;font-weight:600">' + escapeHtml(f.title || '') + tokensHint + '</div>'
                 + '<div style="color:rgba(226,232,240,0.72);margin-top:2px">' + escapeHtml(f.detail || '') + '</div>'
                 + recommendation
+                + buttons
                 + '</div>';
         }).join('');
 
+        var countLabel = visible.length + ' Finding(s) anzeigen';
+        if (dismissed > 0) countLabel += ' · ' + dismissed + ' dismissed';
+
+        if (!visible.length && dismissed > 0) {
+            return '<div style="margin-top:10px;color:rgba(148,163,184,0.52);font-size:11px">' + dismissed + ' Finding(s) dismissed</div>';
+        }
+
         return '<details style="margin-top:10px">'
             + '<summary style="cursor:pointer;color:rgba(148,163,184,0.82);font-size:12px">'
-            + findings.length + ' Finding(s) anzeigen</summary>'
+            + countLabel + '</summary>'
             + '<div style="margin-top:6px">' + html + '</div>'
             + '</details>';
     }
