@@ -75,10 +75,11 @@
         panel.innerHTML = '<div style="color:rgba(148,163,184,0.64);font-size:12px">Lade CWO-Analyse...</div>';
         host.parentNode.insertBefore(panel, host);
 
-        loadAnalysis(projectName).then(function(result) {
-            renderPanel(panel, result, projectName);
-        }).catch(function() {
-            renderPanel(panel, null, projectName);
+        Promise.all([
+            loadAnalysis(projectName).catch(function() { return null; }),
+            window.cwoReview.load(projectName).catch(function() { return null; })
+        ]).then(function(results) {
+            renderPanel(panel, results[0], results[1], projectName);
         });
     }
 
@@ -87,7 +88,7 @@
         if (existing) existing.remove();
     }
 
-    function renderPanel(panel, result, projectName) {
+    function renderPanel(panel, result, reviewData, projectName) {
         var hasResult = result && !result.error && result.token_budget_rating;
         var tone = hasResult ? ratingTone(result.token_budget_rating) : TONE_UNKNOWN;
 
@@ -112,6 +113,13 @@
         var analyzeLink = ' · <a href="#" data-action="cwo-analyze" style="color:#7dd3fc;text-decoration:underline;font-size:12px">'
             + escapeHtml(analyzeLabel) + '</a>';
 
+        // Review-Link (nur wenn Analyse vorhanden)
+        var reviewLabel = reviewData && reviewData.perplexity_review ? 'Erneut reviewen' : 'Review anfordern';
+        var reviewLink = hasResult
+            ? ' · <a href="#" data-action="cwo-review" style="color:#c084fc;text-decoration:underline;font-size:12px">'
+              + escapeHtml(reviewLabel) + '</a>'
+            : '';
+
         // Age
         var ageSpan = '';
         if (result && result.updated_at) {
@@ -122,21 +130,25 @@
         }
 
         // Details
+        var guidanceHtml = buildGuidance(result, reviewData);
         var findingsHtml = buildFindingsSection(result);
         var migrationHtml = buildMigrationSection(result);
         var inventoryHtml = buildInventorySection(result);
+        var reviewHtml = window.cwoReview.buildSection(reviewData);
 
         panel.innerHTML = ''
             + '<div style="background:rgba(15,23,42,0.52);border:1px solid rgba(148,163,184,0.18);border-radius:8px;padding:10px 14px">'
             + '<div style="display:flex;align-items:center;gap:10px">'
             + '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:' + tone.dot + ';flex-shrink:0"></span>'
             + '<div style="flex:1;font-size:13px;color:' + tone.color + '">'
-            + escapeHtml(statusText) + ageSpan + analyzeLink
+            + escapeHtml(statusText) + ageSpan + analyzeLink + reviewLink
             + '</div>'
             + '</div>'
+            + guidanceHtml
             + findingsHtml
             + migrationHtml
             + inventoryHtml
+            + reviewHtml
             + '</div>';
 
         var link = panel.querySelector('[data-action="cwo-analyze"]');
@@ -146,6 +158,69 @@
                 triggerAnalysis(panel, projectName);
             });
         }
+        var rvLink = panel.querySelector('[data-action="cwo-review"]');
+        if (rvLink) {
+            rvLink.addEventListener('click', function(e) {
+                e.preventDefault();
+                window.cwoReview.trigger(panel, projectName);
+            });
+        }
+    }
+
+    // --------------------------------------------------------------------
+    // Guidance (kontextabhaengiger Naechster-Schritt-Hinweis)
+    // --------------------------------------------------------------------
+
+    function buildGuidance(result, reviewData) {
+        var hint = resolveGuidanceHint(result, reviewData);
+        if (!hint) return '';
+        return '<div style="margin-top:8px;padding:6px 10px;background:rgba(99,102,241,0.08);border-left:3px solid ' + hint.color + ';border-radius:0 4px 4px 0;font-size:12px;color:rgba(226,232,240,0.88)">'
+            + '<span style="color:' + hint.color + ';font-weight:600;margin-right:6px">' + escapeHtml(hint.label) + '</span>'
+            + escapeHtml(hint.text)
+            + '</div>';
+    }
+
+    function resolveGuidanceHint(result, reviewData) {
+        // 1. Keine Analyse
+        if (!result || (!result.token_budget_rating && !result.error)) {
+            return {label: 'Start:', text: 'Analyse starten, um den Token-Verbrauch zu pruefen.', color: '#7dd3fc'};
+        }
+        // 2. Analyse-Fehler
+        if (result.error) {
+            return {label: 'Fehler:', text: 'Analyse fehlgeschlagen — erneut versuchen oder Logs pruefen.', color: '#fca5a5'};
+        }
+        // 3. Analyse alt (>24h)
+        if (result.updated_at) {
+            var ageH = (Date.now() - new Date(result.updated_at).getTime()) / 3600000;
+            if (ageH > 24) {
+                var days = Math.floor(ageH / 24);
+                return {label: 'Veraltet:', text: 'Analyse ist ' + days + ' Tag(e) alt — bei Aenderungen erneut analysieren.', color: '#fbbf24'};
+            }
+        }
+        // 4. Analyse da, kein Review
+        var review = reviewData && reviewData.perplexity_review;
+        if (!review) {
+            var fc = result.finding_counts || {};
+            var total = (fc.error || 0) + (fc.warning || 0) + (fc.info || 0);
+            if (total > 0) {
+                return {label: 'Empfehlung:', text: total + ' Finding(s) erkannt — Review bewertet die Sicherheit der Migrationen.', color: '#c084fc'};
+            }
+            return {label: 'Naechster Schritt:', text: 'Review anfordern fuer eine unabhaengige Bewertung durch Perplexity.', color: '#c084fc'};
+        }
+        // 5. Review da, unsafe
+        var assessments = review.migration_assessments || [];
+        var unsafeCount = 0;
+        for (var i = 0; i < assessments.length; i++) {
+            if (assessments[i].assessment === 'unsafe') unsafeCount++;
+        }
+        if (unsafeCount > 0) {
+            return {label: 'Achtung:', text: unsafeCount + ' unsichere Migration(en) — pruefe die Begruendungen im Detail.', color: '#fca5a5'};
+        }
+        // 6. Review da, alles safe
+        if (review.overall_safe) {
+            return {label: 'Bereit:', text: 'Alle Migrationen sicher. In Phase 2 koennen Aktionen ausgefuehrt werden.', color: '#86efac'};
+        }
+        return null;
     }
 
     // --------------------------------------------------------------------
@@ -286,7 +361,10 @@
         api.post('/api/project/' + encodeURIComponent(projectName) + '/cwo/analyze', {force: true})
             .then(function(data) {
                 var result = data && data.result;
-                renderPanel(panel, result, projectName);
+                // Review nach Neuanalyse neu laden (Hash hat sich ggf. geaendert)
+                window.cwoReview.load(projectName).catch(function() { return null; }).then(function(rv) {
+                    renderPanel(panel, result, rv, projectName);
+                });
                 // Badge synchron halten
                 var btn = document.querySelector('.topbar-btn[onclick*="openToolProfileAdapter"]');
                 if (btn) renderBadge(btn, result);
@@ -328,7 +406,8 @@
 
     window.cwo = {
         attachBadge: attachBadge,
-        mountPanel: mountPanel
+        mountPanel: mountPanel,
+        ratingTone: ratingTone
     };
 
     // --------------------------------------------------------------------
