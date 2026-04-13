@@ -1,38 +1,67 @@
 {% extends "base.html" %}
-{% block title %}LLM Command Hub{% endblock %}
-{% block breadcrumb %}LLM Command Hub{% endblock %}
+{% block title %}LLM Commands — Project Dashboard{% endblock %}
+{% block breadcrumb %}LLM Commands{% endblock %}
 
 {% block head_extra %}
 <link rel="stylesheet" href="/static/css/llm-commands.css?v={{ cache_bust }}">
 {% endblock %}
 
 {% block content %}
-    <!-- Command Runner -->
-    <div class="card llm-run-card">
-        <h3>Command ausfuehren</h3>
-        <div class="llm-run-form">
-            <div class="form-row">
-                <label for="cmdSelect">Command</label>
-                <select id="cmdSelect" onchange="onCommandSelect()">
-                    <option value="">-- Command waehlen --</option>
-                </select>
-            </div>
-            <div id="cmdPurpose" class="cmd-purpose" style="display:none"></div>
-            <div id="cmdParams"></div>
-            <div class="form-row" id="userTextRow" style="display:none">
-                <label for="cmdUserText">Zusaetzlicher Kontext (optional)</label>
-                <textarea id="cmdUserText" rows="2" placeholder="Optionaler Freitext..."></textarea>
-            </div>
-            <div class="form-actions">
-                <button id="btnRunCmd" class="btn btn-primary" onclick="runCommand()" disabled>Run Command</button>
-            </div>
-            <div id="cmdError" class="cmd-error" style="display:none"></div>
-            <div id="cmdLoading" class="cmd-loading" style="display:none">Command wird ausgefuehrt...</div>
+<div class="llm-page">
+    <header class="llm-page-header">
+        <div>
+            <h1 class="llm-page-title">LLM Commands</h1>
+            <p class="llm-page-subtitle">
+                Vordefinierte Prompts mit Projekt-Kontext an ein LLM senden.
+                Waehle einen Command, gib das Projekt an und erhalte eine strukturierte Analyse.
+            </p>
         </div>
-    </div>
+    </header>
+
+    <!-- Command-Karten -->
+    <section class="llm-section">
+        <header class="llm-section-header">
+            <h2>Verfuegbare Commands</h2>
+            <span class="llm-section-hint">Klicke auf einen Command, um ihn auszufuehren</span>
+        </header>
+        <div id="cmdCards" class="llm-cmd-cards">
+            <div class="llm-empty">Wird geladen...</div>
+        </div>
+    </section>
+
+    <!-- Command Runner -->
+    <section class="llm-section">
+        <header class="llm-section-header">
+            <h2>Command ausfuehren</h2>
+            <span class="llm-section-hint" id="cmdSelectedHint"></span>
+        </header>
+        <div class="card llm-run-card">
+            <div class="llm-run-form">
+                <div class="form-row">
+                    <label for="cmdSelect">Command</label>
+                    <select id="cmdSelect" class="llm-select" onchange="onCommandSelect()">
+                        <option value="">— Command waehlen —</option>
+                    </select>
+                </div>
+                <div id="cmdPurpose" class="cmd-purpose" style="display:none"></div>
+                <div id="cmdParams"></div>
+                <div class="form-row" id="userTextRow" style="display:none">
+                    <label for="cmdUserText">Zusaetzlicher Kontext (optional)</label>
+                    <textarea id="cmdUserText" rows="2" placeholder="Optionaler Freitext, z.B. Fokus auf bestimmte Aspekte..."></textarea>
+                </div>
+                <div class="form-actions">
+                    <button id="btnRunCmd" class="btn btn-primary" onclick="runCommand()" disabled>Command ausfuehren</button>
+                </div>
+                <div id="cmdError" class="cmd-error" style="display:none"></div>
+                <div id="cmdLoading" class="cmd-loading" style="display:none">
+                    <span class="llm-spinner"></span> Command wird ausgefuehrt...
+                </div>
+            </div>
+        </div>
+    </section>
 
     <!-- Result -->
-    <div id="cmdResult" class="card" style="display:none">
+    <div id="cmdResult" class="card llm-result-card" style="display:none">
         <div class="cmd-result-header">
             <h3>Ergebnis</h3>
             <span id="cmdResultMeta" class="cmd-result-meta"></span>
@@ -41,10 +70,16 @@
     </div>
 
     <!-- Recent Runs -->
-    <div class="card">
-        <h3>Letzte Runs</h3>
-        <div id="recentRuns" class="recent-runs">Laden...</div>
-    </div>
+    <section class="llm-section">
+        <header class="llm-section-header">
+            <h2>Letzte Runs</h2>
+            <span class="llm-section-hint">Klicke auf eine Zeile fuer die vollstaendige Ausgabe</span>
+        </header>
+        <div id="recentRuns" class="llm-recent-runs">
+            <div class="llm-empty">Wird geladen...</div>
+        </div>
+    </section>
+</div>
 {% endblock %}
 
 {% block scripts %}
