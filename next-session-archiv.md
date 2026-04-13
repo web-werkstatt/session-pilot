@@ -4,6 +4,44 @@
 
 ---
 
+## Session 2026-04-13 (Nacht 2) — CWO Phase 1 Tickets 1.6+1.7
+
+### Was wurde erledigt
+- **CWO Ticket 1.6:** Orchestrator (`orchestrator.py`) — `analyze_project()` verbindet Context Collector → Checks → Findings-Aggregation → token_budget_rating → DB-Persistierung. `analyze_all_projects()` fuer Batch. context_hash-Dedup (force-Flag). Storage (`storage.py`) mit Upsert auf `cwo_analyses`, `load_analysis()`, `load_all_analyses()`.
+- **CWO Ticket 1.7:** REST-Endpoints (`routes/context_window_optimizer_routes.py`) — 4 Endpoints: POST/GET `/api/project/<name>/cwo/analyze`, POST `/api/cwo/analyze-all`, GET `/api/cwo/overview` mit `?rating=` Filter.
+- **DB-Migration:** `error`-Spalte in `cwo_analyses` ergaenzt (ALTER TABLE in `db_cwo_schema.py`).
+- **Bugfix:** `scan_projects()` gibt Dict (nicht Liste) zurueck — Orchestrator angepasst.
+
+### Statistik (165 Projekte)
+| Rating | Anzahl |
+|--------|--------|
+| ok | 146 |
+| info | 19 |
+| warning | 0 |
+| error | 0 |
+
+---
+
+## Session 2026-04-13 (Nacht) — CWO Phase 1 Tickets 1.3-1.5
+
+### Was wurde erledigt
+- **CWO Ticket 1.3:** Check-Framework vervollstaendigt — `run_all_checks()` mit Auto-Discovery via `pkgutil`, Severity-Sortierung (error>warning>info), Fehlerresilienz (Exception → Error-Finding). Token-Budget-Check (Check 8) als erster konkreter Check.
+- **CWO Ticket 1.4:** Dateigroessen-Checks 1-4 — `oversize_claude_md.py`, `oversize_tool_files.py`, `focus_file_size.py`, `next_session_growth.py`.
+- **CWO Ticket 1.5:** Struktur-Checks 5-7 — `global_rule_duplicates.py` (Jaccard), `missing_subdir_claude.py`, `extractable_sections.py`.
+- **Smoke-Test:** 106 Projekte, 202 Findings, alle Severity-Stufen verifiziert.
+
+---
+
+## Session 2026-04-13 (Abend) — CWO Phase 1 Ticket 1.1 + 1.2
+
+### Was wurde erledigt
+- **CWO Ticket 1.1:** DB-Schema (`cwo_analyses` + `cwo_action_log`), Constants, Check-Framework, Action-Framework, Facade `__init__.py`
+- **CWO Ticket 1.2:** Context Collector (`context_collector.py`) — sammelt Tool-Files, next-session, Fokusauftrag-Dateien, Unterverz.-CLAUDE.md, globale Rules, Sektionsanalyse, Token-Schaetzung. Smoke-Test: 8.798 Tokens fuer project_dashboard.
+- **pyrightconfig.json:** Pyright-Config mit `extraPaths`
+- **DB live:** `ensure_cwo_schema()` in `db_service.py` registriert
+
+---
+
 ## Session 2026-04-13 — Context-Window-Optimierung + CWO Sprint-Plan
 
 ### Was wurde erledigt
