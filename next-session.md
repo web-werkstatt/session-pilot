@@ -1,8 +1,8 @@
 # Projekt-Dashboard - Naechste Session
 
-> **Letzte Aktualisierung:** 2026-04-13 (CWO Tickets 1.9+1.10)
-> **Status:** CWO Phase 1b Tickets 1.9+1.10 fertig. Perplexity-Prompt + Reviewer-Modul + REST-API live.
-> **Naechste Aufgabe:** CWO Phase 1b Ticket 1.11 (UI: Review-Button + Bewertungs-Anzeige)
+> **Letzte Aktualisierung:** 2026-04-13 (CWO Ticket 1.11 + Guidance)
+> **Status:** CWO Phase 1b komplett. Review-UI + Guidance-Zeile live. Gesamte Phase 1 (Tickets 1.1-1.11) abgeschlossen.
+> **Naechste Aufgabe:** Policy-Reviewer Live-Test oder CWO Phase 2 (Aktionen mit Approval)
 
 ---
 
@@ -45,7 +45,7 @@ CLAUDE.md/AGENTS.md/GEMINI.md. Perplexity-Copilot wird Read-Only-Validierungssch
 - [x] **CWO Phase 1 Ticket 1.8:** UI: Badge + Panel im Tool-Files-Modal
 - [x] **CWO Phase 1b Ticket 1.9:** Perplexity-Prompt erstellen (`prompts/context_window_optimizer.md`)
 - [x] **CWO Phase 1b Ticket 1.10:** Reviewer-Modul (Perplexity-Call + Dedup) (`reviewer.py`)
-- [ ] **CWO Phase 1b Ticket 1.11:** UI: Review-Button + Bewertungs-Anzeige (JS-Erweiterung)
+- [x] **CWO Phase 1b Ticket 1.11:** UI: Review-Button + Bewertungs-Anzeige + Guidance-Zeile
 - [ ] **Policy-Reviewer Live-Test:** POST /api/policies/review gegen Perplexity testen
 - [ ] Dead Code V2: Ungenutzte Funktionen/Klassen mit Flask-Decorator-Erkennung
 - [ ] ADR-002 Stufe 2a: Dispatch-Einstieg (work_assignments-Tabelle)
@@ -156,13 +156,43 @@ Dashboard laeuft als systemd-Service auf Port 5055, Backup taeglich 12:30.
 
 ---
 
+## Session 2026-04-13 (Nacht 5) — CWO Phase 1b Ticket 1.11 + Guidance
+
+### Was wurde erledigt
+- **CWO Ticket 1.11:** Review-Button + Bewertungs-Anzeige
+  - `static/js/context-window-optimizer-review.js` (176 Zeilen): Review-UI als eigenes Modul (`window.cwoReview`)
+  - Review-Link (lila, `#c084fc`) in CWO-Status-Zeile: "Review anfordern" / "Erneut reviewen"
+  - Perplexity-Review Panel: Confidence-Badge (gruen/gelb/rot), Safe/Unsafe-Indikator, Summary-Text
+  - Token-Assessment Vorher/Nachher: `10.0K → 8.5K −15%` mit Farb-Rating
+  - Migration-Assessments (collapsible): safe=gruen, unsafe=rot, needs_review=gelb mit Begruendung
+  - Dedup-Feedback: "Review aktuell — keine Aenderung seit letztem Review"
+  - Loading-State + Error-Handling
+- **Guidance-Zeile:** Kontextabhaengiger Naechster-Schritt-Hinweis im CWO-Panel
+  - 6 Zustaende: Start (blau), Fehler (rot), Veraltet (gelb), Empfehlung (lila), Achtung (rot), Bereit (gruen)
+  - `buildGuidance()` + `resolveGuidanceHint()` in `context-window-optimizer.js`
+  - Browser-verifiziert: "Bereit" bei project_dashboard, "Start" bei proj_webideas24
+- **Architektur:** Review-Logik in eigene Datei ausgelagert (Hauptdatei 428 Z., Review 176 Z.)
+- **UX-Feedback:** GUI-Guidance-Pattern als Memory gespeichert, Dashboard-weites Pattern als kuenftiges Ticket
+
+### Git Commits
+```
+e16d24f Feature: CWO Phase 1b Ticket 1.11 - UI Review-Button + Bewertungs-Anzeige + Guidance
+```
+
+### Geaenderte/neue Dateien
+| Datei | Aenderung |
+|-------|-----------|
+| `static/js/context-window-optimizer-review.js` | Neu: Review-UI Modul (176 Z.) |
+| `static/js/context-window-optimizer.js` | Erweitert: Guidance, Review-Integration, ratingTone-Export (349→428 Z.) |
+| `templates/project_detail.html` | Script-Tag fuer Review-JS |
+
+---
+
 ## Naechste Session
 
 ### Aufgaben
-- [ ] **CWO Phase 1b Ticket 1.11:** UI: Review-Button + Bewertungs-Anzeige (JS-Erweiterung in `static/js/context-window-optimizer.js`)
-  - "Review anfordern"-Button im CWO-Panel (POST /api/project/<name>/cwo/review)
-  - Bewertungs-Anzeige: overall_confidence Badge, migration_assessments Liste (safe/unsafe farbcodiert)
-  - token_assessment Vorher/Nachher-Vergleich
-  - Dedup-Feedback: "Review aktuell" wenn dedup_hit
-- [ ] Sprint-Plan: `sprints/sprint-cwo-context-window-optimizer.md`
+- [ ] Sprint-Plan: `sprints/sprint-cwo-context-window-optimizer.md` — Phase 1b als DONE markieren
+- [ ] **Policy-Reviewer Live-Test:** POST /api/policies/review gegen Perplexity testen
 - [ ] Optional: Check #10 (de-facto always-loaded Detection) als eigenes Ticket planen
+- [ ] Optional: Dashboard-weites Guidance-Pattern fuer Quality, Governance, Workflow
+- [ ] Optional: CWO Phase 2 (Aktionen mit Approval) planen
