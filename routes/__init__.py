@@ -41,6 +41,7 @@ from routes.policy_routes import policy_bp
 from routes.context_window_optimizer_routes import cwo_bp
 from routes.finding_decision_routes import finding_decisions_bp
 from routes.review_metrics_routes import review_metrics_bp
+from routes.dispatch_routes import dispatch_bp
 
 
 def register_blueprints(app):
@@ -86,3 +87,4 @@ def register_blueprints(app):
     app.register_blueprint(cwo_bp)
     app.register_blueprint(finding_decisions_bp)
     app.register_blueprint(review_metrics_bp)
+    app.register_blueprint(dispatch_bp)
