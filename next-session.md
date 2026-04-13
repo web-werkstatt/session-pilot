@@ -1,8 +1,8 @@
 # Projekt-Dashboard - Naechste Session
 
-> **Letzte Aktualisierung:** 2026-04-13 (Session 7: Rausch-Reduktion — Dismiss-Filter + Confidence-Filter + Metriken)
-> **Status:** Reviewer-Rauschen systematisch adressiert: Dismiss-Filter, Confidence-Filter, Reject-Dedup + Counter-Persistierung in bestehenden Review-Tabellen.
-> **Naechste Aufgabe:** Echte Reviews laufen lassen, Counter-Daten sammeln, dann Metrics-Dashboard bauen
+> **Letzte Aktualisierung:** 2026-04-13 (Session 8: Metriken-Dashboard + UX-Ueberarbeitung)
+> **Status:** Counter-Bugfixes, /metrics Seite live, Audits + LLM Commands UX komplett ueberarbeitet, Policies-Badge im Nav.
+> **Naechste Aufgabe:** Policy-Suggestions im UI bewerten, optional weitere UX-Seiten verbessern
 
 ---
 
@@ -50,6 +50,12 @@ CLAUDE.md/AGENTS.md/GEMINI.md. Perplexity-Copilot wird Read-Only-Validierungssch
 - [x] **Finding-Decisions:** Approve/Dismiss/Ignore pro Finding (Setup-Reviewer + CWO), DB + Service + REST + UI
 - [x] **Rausch-Reduktion (Issue #23):** Dismiss-Filter + Confidence-Filter + Reject-Dedup in allen 3 Reviewern
 - [x] **Metriken-Persistierung:** Counter-Spalten in project_reviews + cwo_analyses (generated/shown/filtered)
+- [x] **Metriken-Dashboard:** /metrics Seite mit KPI-Karten, Charts, Noisiest-Findings-Tabelle (refs #23)
+- [x] **Counter-Bugfixes:** load-Funktionen + Orchestrator-Result-Dicts um Counter-Spalten ergaenzt
+- [x] **Policies-Badge:** Pending-Count als oranges Badge im Nav-Link, pollt alle 15s
+- [x] **Audits UX:** Spec-Cards, Dropdown statt Freitext, Run-Historie, Guidance-Hints
+- [x] **LLM Commands UX:** Command-Cards mit Icons, Purpose-Block, bessere Run-Tabelle
+- [x] **CSS-Block-Fix:** policies.html extra_css → head_extra (CSS wurde nicht geladen)
 - [ ] Dead Code V2: Ungenutzte Funktionen/Klassen mit Flask-Decorator-Erkennung
 - [ ] ADR-002 Stufe 2a: Dispatch-Einstieg (work_assignments-Tabelle)
 
@@ -80,6 +86,8 @@ CLAUDE.md/AGENTS.md/GEMINI.md. Perplexity-Copilot wird Read-Only-Validierungssch
 | **CWO Phase 1b (Review)** | **DONE — Perplexity-Prompt, Reviewer-Modul, Review-UI + Guidance** |
 | **Finding-Decisions** | **DONE — Approve/Dismiss/Ignore pro Finding (Setup-Reviewer + CWO)** |
 | **Rausch-Reduktion** | **DONE — Dismiss-Filter, Confidence-Filter, Reject-Dedup, Metriken-Counter** |
+| **Metriken-Dashboard** | **DONE — /metrics mit KPI-Karten, Charts, Noisiest-Findings, Stats-Boxen** |
+| **UX-Ueberarbeitung** | **DONE — Audits + LLM Commands: Kontext, Cards, Guidance, Historie** |
 | Backup taeglich | DONE — Cron 12:30, 7-Tage-Rotation |
 
 ## Was nicht da ist (= Deferred)
@@ -105,52 +113,64 @@ Dashboard laeuft als systemd-Service auf Port 5055, Backup taeglich 12:30.
 - **DB:** PostgreSQL `project_dashboard`, Schema-Migrationen lazy via `ensure_*_schema()`
 - **Marker-Context:** `marker-context.md` im Root ist Runtime-Datei (gitignored), CLAUDE.md-Regel: nie eigenmaechtig veraendern
 
-## Session 2026-04-13 (Session 7) — Rausch-Reduktion: Dismiss-Filter + Confidence-Filter + Metriken
+## Session 2026-04-13 (Session 8) — Metriken-Dashboard + UX-Ueberarbeitung
 
 ### Was wurde erledigt
-- **Analyse:** Perplexity-Rauschen ist kein Modell-Bug, sondern Systemluecke — fehlende Filter zwischen Modell-Ausgabe und Persistierung
-- **Gitea Issue #23 angelegt:** Rausch-Reduktion: Dismiss-Filter + Confidence-Filter fuer Reviewer
-- **Dismiss-Filter (Schritt 1):**
-  - `get_dismissed_fingerprints()` + `is_finding_dismissed()` in `finding_decision_service.py`
-  - Setup-Reviewer: Dismisste Fingerprints mit unveraenderter context_signature werden vor Persistierung gefiltert
-  - Policy-Reviewer: Rejected Suggestions mit gleichem Payload werden via `_get_rejected_suggestion_keys()` nicht erneut persistiert
-  - CWO-Reviewer: Migration-Assessments mit Confidence < 50 gefiltert, `low_confidence_warning` bei overall < 30
-- **Confidence-Filter (Schritt 2):**
-  - `parse_confidence()` als defensiver Parser (int/float/str/None) in `finding_decision_service.py`
-  - Schwelle >= 50 fuer Setup-Findings und Policy-Suggestions
-  - Schwelle >= 50 fuer CWO-Migration-Assessments, >= 30 fuer CWO-Overall mit Warning-Flag
-  - Thresholds sind vorlaeufig und kalibrierbar — Confidence ist ein Zusatzsignal, kein alleiniges Gate
-- **Metriken-Persistierung:**
-  - Counter-Spalten (generated_count, shown_count, filtered_dismissed_count, filtered_low_confidence_count) in `project_reviews` + `cwo_analyses`
-  - `save_review()` in Setup + CWO berechnet generated_count automatisch und schreibt alle Counter mit
-  - Aggregation per SQL auf vorhandenen Review-Datensaetzen moeglich, keine neue Metrics-Tabelle noetig
+- **Counter-Bugfixes:** `load_review()`/`load_analysis()` in Setup- und CWO-Storage fehlten Counter-Spalten im SELECT. `generated_count`/`shown_count` auch im Orchestrator-Result-Dict ergaenzt.
+- **Reviews getriggert + verifiziert:** Setup (2 Projekte), CWO und Policy — alle Counter werden korrekt persistiert und via GET zurueckgegeben.
+- **Metriken-Dashboard (`/metrics`):**
+  - Service: `services/review_metrics_service.py` — aggregiert Counter aus project_reviews + cwo_analyses + finding_decisions + policy_review_suggestions
+  - Route: `routes/review_metrics_routes.py` — GET `/metrics` + GET `/api/review-metrics`
+  - UI: KPI-Karten (Signal-Ratio, Noise-Rate, Dismiss-Filter, Decision Dismiss/Approve, Policy Reject), Stacked-Bar-Chart (Setup per Projekt), Doughnut-Chart (Entscheidungen), Noisiest-Findings-Tabelle, Policy- und CWO-Stats-Boxen
+- **Policies-Badge:** Oranges Badge im Sidebar-Nav-Link zeigt Anzahl pending Suggestions, pollt alle 15s zusammen mit Notifications
+- **CSS-Block-Fix:** `policies.html` nutzte `extra_css`-Block der in `base.html` nicht existiert — korrigiert auf `head_extra`
+- **Audits UX komplett ueberarbeitet:**
+  - Erklaerungstext, Spec-Cards mit letztem Run-Status, Dropdown statt Freitext, Dateien eine-pro-Zeile statt JSON, Run-Historie-Tabelle, Guidance-Hints
+  - Neue API-Endpoints: `GET /api/audits/specs`, `GET /api/audits/recent`
+- **LLM Commands UX komplett ueberarbeitet:**
+  - Command-Cards mit Icons, Titel, Purpose und Parameter-Info, Purpose-Block mit Seitenleiste, bessere Run-Tabelle
 
 ### Git Commits
 ```
-f040047 Feature: Rausch-Reduktion — Dismiss-Filter + Confidence-Filter fuer Reviewer (fixes #23)
-60163d6 Feature: Review-Metriken in bestehende Tabellen persistieren (refs #23)
+8f87a65 Feature: Review-Metriken-Dashboard + Counter-Bugfixes (refs #23)
+d9a5d13 Fix: policies.html CSS-Block von extra_css auf head_extra korrigiert
+b6441a1 Feature: Pending-Badge im Policies-Nav-Link
+bd4c283 Feature: Audits-Seite komplett ueberarbeitet — intelligentere UX/UI
+c08b004 Feature: LLM Commands Seite ueberarbeitet — bessere UX/UI
 ```
 
 ### Geaenderte/neue Dateien
 | Datei | Aenderung |
 |-------|-----------|
-| `services/finding_decision_service.py` | Erweitert: get_dismissed_fingerprints(), is_finding_dismissed(), parse_confidence() |
-| `services/tool_setup_review/orchestrator.py` | Erweitert: Dismiss-Filter + Confidence-Filter vor save_review() |
-| `services/context_window_optimizer/reviewer.py` | Erweitert: Confidence-Filter + low_confidence_warning |
-| `services/policy_review_service.py` | Erweitert: Confidence-Filter + Reject-Dedup + _get_rejected_suggestion_keys() |
-| `services/db_tool_setup_review_schema.py` | Migration: 4 Counter-Spalten in project_reviews |
-| `services/db_cwo_schema.py` | Migration: 4 Counter-Spalten in cwo_analyses |
-| `services/tool_setup_review/storage.py` | Erweitert: Counter in save_review() persistieren |
-| `services/context_window_optimizer/storage.py` | Erweitert: Counter in save_review() persistieren |
+| `services/review_metrics_service.py` | Neu: Aggregiert Counter-Daten aus allen Reviewern |
+| `routes/review_metrics_routes.py` | Neu: GET /metrics + GET /api/review-metrics |
+| `templates/metrics.html` | Neu: KPI-Karten, Charts, Tabellen |
+| `static/js/metrics.js` | Neu: Chart.js-Integration, KPI-Rendering |
+| `static/css/metrics.css` | Neu: Metrics-Dashboard Styles |
+| `services/tool_setup_review/storage.py` | Fix: Counter-Spalten im SELECT ergaenzt |
+| `services/tool_setup_review/orchestrator.py` | Fix: generated_count/shown_count im Result |
+| `services/context_window_optimizer/storage.py` | Fix: Counter-Spalten in allen 3 load-Funktionen |
+| `services/context_window_optimizer/reviewer.py` | Fix: generated_count/shown_count im Result |
+| `templates/base.html` | Metriken-Nav-Link + Policies-Badge |
+| `static/js/notifications.js` | Policy-Pending-Badge Polling |
+| `static/css/notifications.css` | Nav-Badge Style |
+| `templates/policies.html` | Fix: extra_css → head_extra |
+| `templates/audit.html` | Komplett ueberarbeitet: Spec-Cards, Dropdown, Historie |
+| `routes/audit_routes.py` | Neu: GET /api/audits/specs, GET /api/audits/recent |
+| `static/js/audit.js` | Komplett ueberarbeitet: Cards, Run-Historie, besseres Formular |
+| `static/css/audit.css` + `audit-results.css` | Aufgeteilt (Limit 400 Zeilen) |
+| `templates/llm_commands.html` | Komplett ueberarbeitet: Command-Cards, Guidance |
+| `static/js/llm-commands.js` | Komplett ueberarbeitet: Cards, bessere Struktur |
+| `static/css/llm-commands.css` | Komplett ueberarbeitet: Page-Layout, Cards |
 
 ---
 
 ## Naechste Session
 
 ### Aufgaben
-- [ ] **Echte Reviews laufen lassen:** Setup/CWO/Policy Reviews triggern, Counter-Daten verifizieren
-- [ ] **Metrics-Dashboard:** KPI-Karten (Dismiss-Rate, Signal-Ratio, Reappearance-Rate, Duplicate-Dismiss-Rate) + Trend-Chart + "Noisiest Findings"-Tabelle
-- [ ] **Policy-Suggestions bewerten:** 3 pending Suggestions im UI
+- [ ] **Policy-Suggestions bewerten:** 4 pending Suggestions unter /policies (Badge zeigt es an)
+- [ ] Optional: Weitere Seiten mit gleicher UX-Behandlung (Governance, Quality)
 - [ ] Optional: Mehrstufiger Filter (Policy-Filter: nur Findings mit Handlung + Severity)
 - [ ] Optional: Adaptive Kalibrierung (Schwellen aus Dismiss-/Accept-Daten je Reviewer)
 - [ ] Optional: Dead Code V2 (Funktionen/Klassen mit Flask-Decorator-Erkennung)
+- [ ] Optional: Trend-Chart mit historischen Metriken (erfordert Snapshot-Tabelle)

@@ -4,6 +4,33 @@
 
 ---
 
+## Session 2026-04-13 (Session 7) — Rausch-Reduktion: Dismiss-Filter + Confidence-Filter + Metriken
+
+### Was wurde erledigt
+- **Analyse:** Perplexity-Rauschen ist kein Modell-Bug, sondern Systemluecke — fehlende Filter zwischen Modell-Ausgabe und Persistierung
+- **Gitea Issue #23 angelegt:** Rausch-Reduktion: Dismiss-Filter + Confidence-Filter fuer Reviewer
+- **Dismiss-Filter (Schritt 1):**
+  - `get_dismissed_fingerprints()` + `is_finding_dismissed()` in `finding_decision_service.py`
+  - Setup-Reviewer: Dismisste Fingerprints mit unveraenderter context_signature werden vor Persistierung gefiltert
+  - Policy-Reviewer: Rejected Suggestions mit gleichem Payload werden via `_get_rejected_suggestion_keys()` nicht erneut persistiert
+  - CWO-Reviewer: Migration-Assessments mit Confidence < 50 gefiltert, `low_confidence_warning` bei overall < 30
+- **Confidence-Filter (Schritt 2):**
+  - `parse_confidence()` als defensiver Parser (int/float/str/None) in `finding_decision_service.py`
+  - Schwelle >= 50 fuer Setup-Findings und Policy-Suggestions
+  - Schwelle >= 50 fuer CWO-Migration-Assessments, >= 30 fuer CWO-Overall mit Warning-Flag
+  - Thresholds sind vorlaeufig und kalibrierbar — Confidence ist ein Zusatzsignal, kein alleiniges Gate
+- **Metriken-Persistierung:**
+  - Counter-Spalten (generated_count, shown_count, filtered_dismissed_count, filtered_low_confidence_count) in `project_reviews` + `cwo_analyses`
+  - `save_review()` in Setup + CWO berechnet generated_count automatisch und schreibt alle Counter mit
+
+### Git Commits
+```
+f040047 Feature: Rausch-Reduktion — Dismiss-Filter + Confidence-Filter fuer Reviewer (fixes #23)
+60163d6 Feature: Review-Metriken in bestehende Tabellen persistieren (refs #23)
+```
+
+---
+
 ## Session 2026-04-13 (Session 6) — Policy-Reviewer Live-Test + Finding-Decisions
 
 ### Was wurde erledigt
