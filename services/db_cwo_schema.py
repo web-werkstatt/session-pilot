@@ -64,4 +64,10 @@ def ensure_cwo_schema_impl(execute):
             "ON cwo_action_log(status)"
         )
 
+        # Migration: error-Spalte nachtraeglich hinzufuegen (Ticket 1.6)
+        execute("""
+            ALTER TABLE cwo_analyses
+            ADD COLUMN IF NOT EXISTS error VARCHAR(100)
+        """)
+
         _cwo_schema_ready = True

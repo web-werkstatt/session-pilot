@@ -42,6 +42,15 @@ from services.context_window_optimizer.checks import (
     get_all_checks,
     run_all_checks,
 )
+from services.context_window_optimizer.orchestrator import (
+    analyze_all_projects,
+    analyze_project,
+)
+from services.context_window_optimizer.storage import (
+    load_all_analyses,
+    load_analysis,
+    save_analysis,
+)
 
 __all__ = [
     # Check-Framework
@@ -50,6 +59,13 @@ __all__ = [
     "MigrationEntry",
     "get_all_checks",
     "run_all_checks",
+    # Orchestrator
+    "analyze_project",
+    "analyze_all_projects",
+    # Storage
+    "save_analysis",
+    "load_analysis",
+    "load_all_analyses",
     # Context Collector
     "build_cwo_context",
     # Constants
