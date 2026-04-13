@@ -247,6 +247,11 @@ Begruendung: CWO ist ein Quality-Check fuer Context-Windows (automatisierte Chec
 - LLM-gestuetzte Summary-Generierung (statt H2-Extraktion)
 - Perplexity-gestuetzte Sektions-Klassifikation (Verbots-Charakter vs. selbst-entdeckbar)
 
+## Status-Nachtrag
+
+- **2026-04-13:** Phase 1a (Tickets 1.1-1.8) DONE — Analyse, Orchestrator, REST-API, UI (Badge+Panel) live
+- **2026-04-13:** Phase 1b (Tickets 1.9-1.11) DONE — Perplexity-Prompt, Reviewer-Modul, Review-UI + Guidance live
+
 ## Verifikation
 
 1. CWO auf `project_dashboard` laufen lassen — sollte niedrigen Score zeigen (bereits optimiert)

@@ -102,12 +102,18 @@ def get_suggestions():
 def trigger_policy_review():
     """Triggert einen Policy-Review via Perplexity.
 
+    Body (optional): {"force": true} erzwingt Review trotz
+    identischem context_hash (ueberspringt Review-Level-Dedup).
+
     Persistiert neue Suggestions in policy_review_suggestions.
     query_failed und parse_failed werden als 200-Result mit error-Feld
     zurueckgegeben (analog zum Setup-Reviewer).
     """
+    body = request.get_json(silent=True) or {}
+    force = bool(body.get("force", False))
+
     try:
-        result = review_policies()
+        result = review_policies(force=force)
     except Exception as exc:
         log.exception("Policy-Review fehlgeschlagen")
         return (

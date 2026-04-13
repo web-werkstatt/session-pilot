@@ -89,13 +89,19 @@ def _policy_summary(policy: Dict[str, Any]) -> Dict[str, Any]:
 # Review: Orchestrator
 # ---------------------------------------------------------------------------
 
-def review_policies(query_fn: Optional[Callable] = None) -> Dict[str, Any]:
+def review_policies(
+    query_fn: Optional[Callable] = None,
+    *,
+    force: bool = False,
+) -> Dict[str, Any]:
     """Fuehrt einen Policy-Review aus.
 
     Args:
         query_fn: Optional. Reviewer-Query-Function. Default ist
                   services.perplexity_service.query_perplexity. Tests
                   injizieren eine Fake-Function.
+        force: Wenn True, wird auch bei identischem context_hash
+               neu reviewed (ueberspringt Review-Level-Dedup).
 
     Returns:
         Dict mit summary, persistierten Suggestions (mit suggestion_id)
@@ -107,6 +113,13 @@ def review_policies(query_fn: Optional[Callable] = None) -> Dict[str, Any]:
 
     context = build_policy_review_context()
     context_hash = _compute_context_hash(context)
+
+    # Review-Level-Dedup: Wenn bereits Suggestions mit identischem
+    # context_hash existieren, Perplexity-Call ueberspringen.
+    if not force:
+        cached = _find_cached_review(context_hash)
+        if cached is not None:
+            return cached
 
     system_prompt = _load_system_prompt()
     user_content = json.dumps(context, ensure_ascii=True, indent=2, sort_keys=True)
@@ -210,3 +223,50 @@ def _parse_reviewer_response(content: str) -> Dict[str, Any]:
     if not isinstance(parsed, dict):
         raise ValueError("Reviewer antwortete nicht mit JSON-Objekt")
     return parsed
+
+
+def _find_cached_review(context_hash: str) -> Optional[Dict[str, Any]]:
+    """Prueft ob bereits pending Suggestions mit identischem context_hash existieren.
+
+    Gibt ein vollstaendiges Review-Result zurueck (analog zum normalen Return-Format)
+    oder None wenn kein Cache-Treffer vorliegt.
+    """
+    from services.db_policy_schema import ensure_policy_schema
+    from services.db_service import execute
+
+    ensure_policy_schema()
+
+    rows = execute(
+        """
+        SELECT suggestion_id, suggestion_type, payload
+        FROM policy_review_suggestions
+        WHERE context_hash = %s AND status = 'pending'
+        ORDER BY suggestion_id
+        """,
+        (context_hash,),
+        fetch=True,
+    )
+    log.info("Policy-Review Dedup-Check: hash=%s, found=%d rows", context_hash[:12], len(rows) if rows else 0)
+    if not rows:
+        return None
+
+    suggestions = [
+        {
+            "suggestion_id": r["suggestion_id"],
+            "suggestion_type": r["suggestion_type"],
+            "payload": r["payload"] if isinstance(r["payload"], dict) else json.loads(r["payload"]),
+        }
+        for r in rows
+    ]
+
+    return {
+        "schema_version": 1,
+        "summary": "Review mit identischem Kontext bereits vorhanden.",
+        "suggestions": suggestions,
+        "notes": [],
+        "reviewer_tool": REVIEWER_TOOL_DEFAULT,
+        "reviewer_model": None,
+        "context_hash": context_hash,
+        "error": None,
+        "dedup_hit": True,
+    }

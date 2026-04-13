@@ -259,9 +259,12 @@ def record_suggestion(
         existing = execute(
             """
             SELECT suggestion_id FROM policy_review_suggestions
-            WHERE context_hash = %s AND status = 'pending'
+            WHERE context_hash = %s
+              AND suggestion_type = %s
+              AND payload = %s::jsonb
+              AND status = 'pending'
             """,
-            (context_hash,),
+            (context_hash, suggestion_type, json.dumps(payload)),
             fetchone=True,
         )
         if existing:
