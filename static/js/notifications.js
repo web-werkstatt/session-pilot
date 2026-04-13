@@ -7,7 +7,11 @@ var notificationPollTimer = null;
 // Badge-Polling alle 15 Sekunden
 function startNotificationPolling() {
     pollNotificationCount();
-    notificationPollTimer = setInterval(pollNotificationCount, 15000);
+    pollPolicyPendingCount();
+    notificationPollTimer = setInterval(function() {
+        pollNotificationCount();
+        pollPolicyPendingCount();
+    }, 15000);
 }
 
 function pollNotificationCount() {
@@ -18,6 +22,22 @@ function pollNotificationCount() {
             if (data.unread > 0) {
                 badge.textContent = data.unread > 99 ? '99+' : data.unread;
                 badge.style.display = 'flex';
+            } else {
+                badge.style.display = 'none';
+            }
+        })
+        .catch(function() {});
+}
+
+function pollPolicyPendingCount() {
+    var badge = document.getElementById('policyPendingBadge');
+    if (!badge) return;
+    api.get('/api/policies/suggestions?status=pending')
+        .then(function(data) {
+            var count = (data.suggestions || []).length;
+            if (count > 0) {
+                badge.textContent = count;
+                badge.style.display = 'inline-flex';
             } else {
                 badge.style.display = 'none';
             }
