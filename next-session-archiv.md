@@ -4,6 +4,67 @@
 
 ---
 
+## Session 2026-04-14 (Session 12) — Unified Cockpit Phase 4
+
+### Was wurde erledigt
+- **Workflow-Uebersicht im Cockpit:** Kompakte Info zwischen Progress-Bar und Board
+- SVG-Ring (240px, reuse workflow-loop-svg.js) mit 5 farbigen Steps
+- Current/Next-Marker als anklickbare Pill-Badges (oeffnet Panel)
+- Signal-Dots (Governance, Quality, Audit) im Header
+- Kollapsibel via Toggle-Button
+- Projekt-Modus: `_loadPlanInfo`/`_loadSections` nutzen Cockpit-API wenn PLAN_ID null
+- Plan-Switcher-Funktionen nach `copilot-board-shared.js` extrahiert (Dateigroessen-Limit)
+- `workflow-loop-summary.css` im Cockpit geladen (SVG-Node-Farben)
+
+### Git Commits
+```
+3e6b696 Feature: Unified Cockpit Phase 4 — Workflow-Uebersicht im Cockpit
+```
+
+### Neue Dateien
+| Datei | Zeilen | Zweck |
+|-------|--------|-------|
+| `templates/_cockpit_workflow_overview.html` | 18 | Partial: Ring, Pills, Signals |
+| `static/css/cockpit-workflow.css` | 131 | Compact Layout, Pill-Badges, Kollaps |
+| `static/js/cockpit-workflow.js` | 141 | Cockpit-API laden, Ring/Pills/Signals rendern |
+
+---
+
+## Session 2026-04-14 (Session 11) — Dispatch-UI + Unified Cockpit Phase 1-3
+
+### Was wurde erledigt
+
+**Dispatch-UI (ADR-002 Stufe 2a Commit 6):**
+- Dispatch-Tab in Projekt-Detail-Seite + Cockpit-Panel
+- Kompletter Lifecycle: proposed → approved → claimed → completed
+
+**Unified Cockpit Phase 1-3:**
+- Phase 1: `routes/cockpit_routes.py` — aggregierter Endpoint
+- Phase 2: Workflow-Loop JS parametrisiert
+- Phase 3: Cockpit-Route `/copilot?project=<name>`
+
+### Git Commits
+```
+00be649 Feature: ADR-002 Stufe 2a Commit 6 — Dispatch-UI im Cockpit
+ec4e138 Feature: Dispatch-Tab im Cockpit-Panel integriert
+a514bcb Feature: Unified Cockpit Phase 1-3 — Backend + JS-Parametrisierung + Route
+113ffdf Docs: Sprint-Plan Unified Cockpit (Phase 1-3 done, 4-7 offen)
+```
+
+---
+
+## Session 2026-04-13 (Session 10) — Dispatch-Backend (Commits 1-5)
+
+### Was wurde erledigt
+- Commits 1-5: DB-Schema, Dispatch-Service Core, Perplexity Reviewer, REST-Endpoints, Settings
+
+### Git Commits
+```
+5fa399c Feature: ADR-002 Stufe 2a Commits 1-5 — Dispatch-Backend komplett
+```
+
+---
+
 ## Session 2026-04-13 (Session 9) — Sprint-Planung Dispatch
 
 ### Was wurde erledigt

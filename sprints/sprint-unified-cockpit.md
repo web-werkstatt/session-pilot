@@ -235,3 +235,13 @@ hinzugefuegt und bestehende Features konsolidiert.
 - Commit 3 (Route): `/copilot?project=` akzeptiert, Projekt aus Plan abgeleitet
 - Git-Commit: `a514bcb` (alle 3 Phasen zusammen)
 - Abwaertskompatibilitaet verifiziert: Workflow-Tab auf Projekt-Detail-Seite unveraendert
+
+### Session 2026-04-14 (Commit 4)
+
+- Commit 4 (Workflow-Uebersicht): SVG-Ring 240px, Current/Next-Pills, Signal-Dots, Kollaps-Toggle
+- Neue Dateien: `_cockpit_workflow_overview.html`, `cockpit-workflow.css`, `cockpit-workflow.js`
+- Projekt-Modus-Fix: `_loadPlanInfo`/`_loadSections` nutzen Cockpit-API wenn PLAN_ID null
+- Plan-Switcher nach `copilot-board-shared.js` extrahiert (copilot_board.js: 495→477 Zeilen)
+- `workflow-loop-summary.css` im Cockpit geladen (SVG-Farben fehlten initial)
+- Git-Commit: `3e6b696`
+- Alle 5 Akzeptanzkriterien verifiziert im Browser

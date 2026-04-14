@@ -1,8 +1,8 @@
 # Projekt-Dashboard - Naechste Session
 
-> **Letzte Aktualisierung:** 2026-04-14 (Session 11: Dispatch-UI + Unified Cockpit Phase 1-3)
-> **Status:** Dispatch-UI fertig (Commit 6). Neuer Sprint "Unified Cockpit" gestartet (Phase 1-3 done).
-> **Naechste Aufgabe:** Unified Cockpit Phase 4 — Workflow-Uebersicht im Cockpit
+> **Letzte Aktualisierung:** 2026-04-14 (Session 12: Unified Cockpit Phase 4)
+> **Status:** Workflow-Uebersicht im Cockpit fertig (SVG-Ring, Pills, Signals). Phase 1-4 done.
+> **Naechste Aufgabe:** Unified Cockpit Phase 5 — Board auf Projekt-Datenquelle + Workflow-Badges
 
 ---
 
@@ -60,7 +60,9 @@ CLAUDE.md/AGENTS.md/GEMINI.md. Perplexity-Copilot wird Read-Only-Validierungssch
 - [x] **ADR-002 Stufe 2a Commit 6:** Dispatch-UI in Projekt-Detail + Cockpit-Panel
 - [ ] **ADR-002 Stufe 2a Commits 7-9:** Pull-Adapter, Integration, Doku (offen)
 - [x] **Unified Cockpit Phase 1-3:** Backend-API, JS-Parametrisierung, Route (project= Param)
-- [ ] **Unified Cockpit Phase 4-7:** Workflow-Uebersicht, Board-Umstellung, Section-Demotion, Cleanup
+- [x] **Unified Cockpit Phase 4:** Workflow-Uebersicht im Cockpit (SVG-Ring, Pills, Signals, Toggle)
+- [ ] **Unified Cockpit Phase 5-6:** Board-Umstellung auf Projekt-Datenquelle, Section-Demotion + Plan-Filter
+- [ ] **Unified Cockpit Phase 7:** Projekt-Detail bereinigen (DEFERRED)
 
 ### GUI/UX (Codex)
 
@@ -116,39 +118,39 @@ Dashboard laeuft als systemd-Service auf Port 5055, Backup taeglich 12:30.
 - **DB:** PostgreSQL `project_dashboard`, Schema-Migrationen lazy via `ensure_*_schema()`
 - **Marker-Context:** `marker-context.md` im Root ist Runtime-Datei (gitignored), CLAUDE.md-Regel: nie eigenmaechtig veraendern
 
-## Session 2026-04-13 (Session 10) — Dispatch-Backend (Commits 1-5)
+## Session 2026-04-14 (Session 12) — Unified Cockpit Phase 4
 
 ### Was wurde erledigt
-- **Commit 1 — DB-Schema:** `services/db_dispatch_schema.py` mit work_assignments (22 Spalten), dispatch_audit_log, dispatch_settings, ALTER tool_profiles (+4 Dispatch-Spalten), Partial-Index fuer Pull-API
-- **Commit 2 — Dispatch-Service Core:** `services/dispatch_service.py` mit komplettem Lifecycle (proposed→approved→claimed→completed/failed/rejected/revoked/expired), Atomic Claim via single UPDATE mit WHERE-Guard (Race-Condition-Schutz), max_concurrent-Check, Audit-Trail
-- **Commit 3 — Perplexity Reviewer:** `prompts/dispatch_reviewer.md` (Review + Suggest Modi) + `services/dispatch_review_service.py` mit context_hash-Dedup, Fake-Query-Support fuer Tests
-- **Commit 4 — REST-Endpoints:** `routes/dispatch_routes.py` (13 Routen) — CRUD, Pull-API mit Bearer-Token-Auth, Perplexity-Trigger, Audit-Log, Settings
-- **Commit 5 — Settings:** dispatch_settings Tabelle mit Hierarchie global→project→tool, nullable Spalten fuer saubere Vererbung
-- **UI-Entscheidung:** Dispatch wird im Cockpit-Tab integriert (nicht eigener Tab) — Workflow: Marker ansehen → Tool zuweisen → Ergebnis sehen
+- **Workflow-Uebersicht im Cockpit** (Commit 4): Kompakte Info zwischen Progress-Bar und Board
+  - SVG-Ring (240px, reuse `workflow-loop-svg.js`) mit 5 farbigen Steps
+  - Current/Next-Marker als anklickbare Pill-Badges (oeffnet Panel)
+  - Signal-Dots (Governance, Quality, Audit) im Header
+  - Kollapsibel via Toggle-Button
+- **Projekt-Modus-Fix:** `_loadPlanInfo`/`_loadSections` nutzen Cockpit-API wenn PLAN_ID null
+- **Refactoring:** Plan-Switcher nach `copilot-board-shared.js` extrahiert (copilot_board.js: 495→477 Z.)
+- **CSS-Fix:** `workflow-loop-summary.css` im Cockpit geladen (SVG-Node-Farben fehlten)
 
 ### Git Commits
 ```
-5fa399c Feature: ADR-002 Stufe 2a Commits 1-5 — Dispatch-Backend komplett
+3e6b696 Feature: Unified Cockpit Phase 4 — Workflow-Uebersicht im Cockpit
 ```
 
 ### Neue Dateien
 | Datei | Zeilen | Zweck |
 |-------|--------|-------|
-| `services/db_dispatch_schema.py` | ~120 | DB-Schema: 3 Tabellen + ALTER tool_profiles |
-| `services/dispatch_service.py` | ~470 | Core-Service: CRUD, Lifecycle, Atomic Claim, Settings |
-| `services/dispatch_review_service.py` | ~280 | Perplexity Review + Suggest |
-| `prompts/dispatch_reviewer.md` | ~80 | System-Prompt fuer Dispatch-Reviewer |
-| `routes/dispatch_routes.py` | ~320 | REST-API Blueprint (13 Endpoints) |
+| `templates/_cockpit_workflow_overview.html` | 18 | Partial: Ring, Pills, Signals |
+| `static/css/cockpit-workflow.css` | 131 | Compact Layout, Pill-Badges, Kollaps |
+| `static/js/cockpit-workflow.js` | 141 | Cockpit-API laden, Ring/Pills/Signals rendern |
 
 ---
 
 ## Naechste Session
 
-### Primaer: Unified Cockpit Phase 4-6
+### Primaer: Unified Cockpit Phase 5-6
 1. Sprint-Plan lesen: `sprints/sprint-unified-cockpit.md`
-2. **Commit 4:** Workflow-Uebersicht im Cockpit (kompakter SVG-Ring + Summary-Zeile)
-3. **Commit 5:** Board auf Projekt-Datenquelle umstellen (alle Marker, Workflow-Badges)
-4. **Commit 6:** Sprint-Sections demoten + Plan-Filter-Dropdown
+2. **Commit 5:** Board auf Projekt-Datenquelle umstellen (alle Marker, Workflow-Badges, Assignment-Badge)
+3. **Commit 6:** Sprint-Sections demoten + Plan-Filter-Dropdown
+4. `copilot_board.js` muss dabei umstrukturiert werden (Helpers extrahieren)
 
 ### Sekundaer: Dispatch Sprint 2a Commits 7-9
 - **Commit 7:** Pull-Adapter Scripts + Perplexity-Gate bei Pull
@@ -158,38 +160,3 @@ Dashboard laeuft als systemd-Service auf Port 5055, Backup taeglich 12:30.
 ### Tertiaer (wenn Zeit)
 - [ ] Policy-Suggestions bewerten: 4 pending unter /policies
 - [ ] Optional: Dead Code V2, Trend-Chart, Adaptive Kalibrierung
-
-## Session 2026-04-14 (Session 11) — Dispatch-UI + Unified Cockpit Infrastruktur
-
-### Was wurde erledigt
-
-**Dispatch-UI (ADR-002 Stufe 2a Commit 6):**
-- Dispatch-Tab in Projekt-Detail-Seite: Marker-Liste, Assign-Formular (Tool/Role/Risk/Scope), Perplexity-Review-Button, Approve/Reject/Claim/Complete Lifecycle
-- Dispatch-Tab im Cockpit-Panel: Kompaktes Assign-Formular, Assignment-Anzeige pro Marker
-- Neue Endpoints: `GET /api/dispatch/markers`, `POST .../claim` (Manual)
-- Quality-Tab aus project-detail.js extrahiert (Dateigroessen-Limit)
-- Kompletter Lifecycle im Browser getestet: proposed → approved → claimed → completed
-
-**Unified Cockpit Phase 1-3 (neuer Sprint):**
-- **Phase 1:** `routes/cockpit_routes.py` — aggregierter Endpoint `GET /api/cockpit/project/<name>` (Markers + Workflow + Plans)
-- **Phase 2:** Workflow-Loop JS parametrisiert — `WL.projectName` + `WL.getProjectName()` mit `PROJECT_NAME`-Fallback, `WL.onPlanningClick` Callback
-- **Phase 3:** Cockpit-Route akzeptiert `?project=<name>` — Projekt-Modus (neu) + Plan-Modus (abwaertskompatibel)
-
-**Architekturentscheidung:** Cockpit wird zum einzigen operativen Arbeitsplatz, Projekt-zentriert statt Plan-zentriert. Bestehendes Design bleibt.
-
-### Git Commits
-```
-00be649 Feature: ADR-002 Stufe 2a Commit 6 — Dispatch-UI im Cockpit
-ec4e138 Feature: Dispatch-Tab im Cockpit-Panel integriert
-a514bcb Feature: Unified Cockpit Phase 1-3 — Backend + JS-Parametrisierung + Route
-113ffdf Docs: Sprint-Plan Unified Cockpit (Phase 1-3 done, 4-7 offen)
-```
-
-### Neue Dateien
-| Datei | Zeilen | Zweck |
-|-------|--------|-------|
-| `static/css/dispatch.css` | ~387 | Dispatch-Panel Styles (Dark-Theme) |
-| `static/js/dispatch.js` | ~500 | Dispatch Frontend (Projekt-Detail + Cockpit-Panel) |
-| `static/js/project-quality.js` | ~128 | Quality-Tab (extrahiert) |
-| `routes/cockpit_routes.py` | ~73 | Aggregierter Cockpit-Projekt-API |
-| `sprints/sprint-unified-cockpit.md` | ~237 | Sprint-Plan Unified Cockpit |
