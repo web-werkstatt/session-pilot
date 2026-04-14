@@ -213,7 +213,23 @@ def pull_next():
 
     # Perplexity-Gate: Review triggern falls noch nicht vorhanden
     if not result.get("perplexity_review"):
-        result["perplexity_pending"] = True
+        from services.dispatch_service import get_perplexity_mode
+        pmode = get_perplexity_mode(project_name=result.get("project_name"))
+
+        if pmode != "off":
+            # Review asynchron anstoßen (fire-and-forget, blockiert nicht)
+            try:
+                from services.dispatch_review_service import review_assignment
+                review_result = review_assignment(result["assignment_id"])
+                if review_result.get("error") is None:
+                    result["perplexity_review"] = review_result.get("review")
+                    result["perplexity_pending"] = False
+                else:
+                    result["perplexity_pending"] = True
+            except Exception:
+                result["perplexity_pending"] = True
+        else:
+            result["perplexity_pending"] = False
 
     return jsonify(result)
 
