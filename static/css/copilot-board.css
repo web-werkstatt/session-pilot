@@ -37,6 +37,23 @@
     color: var(--cn-text-muted);
 }
 
+.sprint-sections-head-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.sprint-sections-toggle {
+    padding: 4px 6px;
+    min-height: unset;
+    line-height: 1;
+    transition: transform 0.2s ease;
+}
+
+.sprint-sections-toggle.is-collapsed {
+    transform: rotate(-90deg);
+}
+
 .sprint-sections-strip {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));

@@ -22,6 +22,8 @@ var _planSections = [];
 var _currentPlanSectionId = null;
 var _initialMarkerId = null;
 var _initialPanelTab = null;
+var _activePlanFilter = null;
+var _sprintSectionsCollapsed = true;
 
 document.addEventListener('DOMContentLoaded', function() {
     var params = new URLSearchParams(window.location.search);
@@ -106,6 +108,7 @@ function _loadSections() {
             }
             _renderSprintSections();
             _renderProgress();
+            _renderPlanFilter();
             if (typeof lucide !== 'undefined') lucide.createIcons();
         })
         .catch(function(err) {
@@ -141,9 +144,10 @@ function _filterMarkersForWorkspace(markers) {
 
 /* === Progress Bar === */
 function _renderProgress() {
-    var total = allSections.length;
-    var done = allSections.filter(function(s) { return s.status === 'done'; }).length;
-    var blocked = allSections.filter(function(s) { return s.status === 'blocked'; }).length;
+    var sections = _getVisibleSections();
+    var total = sections.length;
+    var done = sections.filter(function(s) { return s.status === 'done'; }).length;
+    var blocked = sections.filter(function(s) { return s.status === 'blocked'; }).length;
     var pct = total > 0 ? Math.round((done / total) * 100) : 0;
 
     document.getElementById('progressBar').style.width = pct + '%';
@@ -160,7 +164,7 @@ function _renderBoard() {
 
     var grouped = {};
     BOARD_COLUMNS.forEach(function(col) { grouped[col.status] = []; });
-    allSections.forEach(function(sec) {
+    _getVisibleSections().forEach(function(sec) {
         var st = sec.status || 'todo';
         if (grouped[st]) grouped[st].push(sec);
         else grouped.todo.push(sec);
@@ -249,15 +253,16 @@ function _normalizeCompareText(text) {
 }
 
 function _findMarkersForPlanSection(section) {
+    var pool = _activePlanFilter ? _getVisibleSections() : allSections;
     if (section && section.sprint_tag) {
-        return allSections.filter(function(marker) {
+        return pool.filter(function(marker) {
             if ((marker.sprint_tag || '') !== section.sprint_tag) return false;
             return true;
         });
     }
     var sectionText = _normalizeCompareText(section.title + ' ' + section.summary);
     var taskTexts = (section.tasks || []).map(_normalizeCompareText);
-    return allSections.filter(function(marker) {
+    return pool.filter(function(marker) {
         var markerText = _normalizeCompareText((marker.titel || '') + ' ' + (marker.ziel || ''));
         if (!markerText) return false;
         if (taskTexts.some(function(task) { return task && (markerText.indexOf(task) >= 0 || task.indexOf(markerText) >= 0); })) {
@@ -283,6 +288,7 @@ function _renderSprintSections() {
     var panel = document.getElementById('sprintSectionsPanel');
     var strip = document.getElementById('sprintSectionsStrip');
     var meta = document.getElementById('sprintSectionsMeta');
+    var toggle = document.getElementById('sprintSectionsToggle');
     if (!panel || !strip) return;
 
     if (!_planSections.length) {
@@ -292,6 +298,8 @@ function _renderSprintSections() {
 
     panel.style.display = 'block';
     meta.textContent = _planSections.length + ' Sections';
+    strip.style.display = _sprintSectionsCollapsed ? 'none' : '';
+    if (toggle) toggle.classList.toggle('is-collapsed', _sprintSectionsCollapsed);
     strip.innerHTML = _planSections.map(function(section) {
         var markers = _findMarkersForPlanSection(section);
         var state = _sectionSyncState(section, markers);
@@ -313,6 +321,80 @@ function _renderSprintSections() {
             + '<div class="sprint-section-chips">' + chips + '</div>'
             + '</button>';
     }).join('');
+}
+
+/* === Plan Filter + Collapse === */
+function _getVisibleSections() {
+    if (!_activePlanFilter) return allSections;
+    var filterId = String(_activePlanFilter);
+    return allSections.filter(function(sec) {
+        return String(sec.plan_id || '') === filterId;
+    });
+}
+
+function _renderPlanFilter() {
+    var dot = document.getElementById('planFilterDot');
+    var sel = document.getElementById('planFilterSelect');
+    if (!dot || !sel) return;
+    if (!COCKPIT_PROJECT || PLAN_ID || !_cockpitPlans || _cockpitPlans.length < 2) {
+        dot.style.display = 'none';
+        sel.style.display = 'none';
+        return;
+    }
+    dot.style.display = '';
+    sel.style.display = '';
+    var html = '<option value="">Alle Pl\u00e4ne (' + allSections.length + ')</option>';
+    _cockpitPlans.forEach(function(p) {
+        var count = allSections.filter(function(s) { return String(s.plan_id || '') === String(p.id); }).length;
+        var selected = String(p.id) === String(_activePlanFilter) ? ' selected' : '';
+        html += '<option value="' + escapeHtml(String(p.id)) + '"' + selected + '>'
+            + escapeHtml(p.title || ('Plan #' + p.id)) + ' (' + count + ')</option>';
+    });
+    sel.innerHTML = html;
+}
+
+function setPlanFilter(planIdStr) {
+    _activePlanFilter = planIdStr ? String(planIdStr) : null;
+    if (_activePlanFilter) {
+        api.get('/api/plans/' + encodeURIComponent(_activePlanFilter))
+            .then(function(plan) {
+                _planSections = _derivePlanSections(plan);
+                _sprintSectionsCollapsed = false;
+                _reRenderFiltered();
+            })
+            .catch(function() {
+                _planSections = [];
+                _sprintSectionsCollapsed = true;
+                _reRenderFiltered();
+            });
+    } else {
+        _planSections = [];
+        _sprintSectionsCollapsed = true;
+        _reRenderFiltered();
+    }
+}
+
+function _reRenderFiltered() {
+    var visible = _getVisibleSections();
+    if (visible.length === 0) {
+        document.getElementById('sectionsBoard').style.display = 'none';
+        document.getElementById('emptyState').style.display = 'block';
+    } else {
+        document.getElementById('emptyState').style.display = 'none';
+        _renderBoard();
+    }
+    _renderSprintSections();
+    _renderProgress();
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+function toggleSprintSections() {
+    _sprintSectionsCollapsed = !_sprintSectionsCollapsed;
+    var strip = document.getElementById('sprintSectionsStrip');
+    var toggle = document.getElementById('sprintSectionsToggle');
+    if (strip) strip.style.display = _sprintSectionsCollapsed ? 'none' : '';
+    if (toggle) toggle.classList.toggle('is-collapsed', _sprintSectionsCollapsed);
+    if (!_sprintSectionsCollapsed && typeof lucide !== 'undefined') lucide.createIcons();
 }
 
 function openPlanSection(sectionId) {

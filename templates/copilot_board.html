@@ -32,6 +32,8 @@
                 </div>
                 <span class="copilot-ws-dot" aria-hidden="true"></span>
                 <span class="copilot-current-plan-title" id="currentPlanTitle">Plan laden...</span>
+                <span class="copilot-ws-dot" aria-hidden="true" id="planFilterDot" style="display:none;"></span>
+                <select class="copilot-plan-filter-select" id="planFilterSelect" style="display:none;" onchange="setPlanFilter(this.value)"><option value="">Alle Pl&auml;ne</option></select>
             </div>
             <div class="copilot-ws-actions">
                 <button class="ui-button ui-button--ghost" onclick="importSprintMarkers()">
@@ -70,16 +72,7 @@
 
     <div class="board-split-view">
         <div class="board-main">
-            <div class="sprint-sections-panel ui-panel" id="sprintSectionsPanel" style="display:none;">
-                <div class="sprint-sections-head">
-                    <div>
-                        <div class="sprint-sections-kicker">Sprint Sections</div>
-                        <div class="sprint-sections-title">Quellabschnitte aus dem Plan und ihre Marker</div>
-                    </div>
-                    <div class="sprint-sections-meta" id="sprintSectionsMeta"></div>
-                </div>
-                <div class="sprint-sections-strip" id="sprintSectionsStrip"></div>
-            </div>
+            {% include "_cockpit_sprint_sections.html" %}
             <div id="sectionsBoard" class="plans-board" style="display:none;"></div>
 
             <div id="loading" class="loading">

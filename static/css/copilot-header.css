@@ -136,3 +136,32 @@
     background: var(--cn-border);
     margin: 4px 8px;
 }
+
+/* Plan Filter */
+.copilot-plan-filter-select {
+    min-height: 30px;
+    padding: 2px 8px;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid var(--cn-border);
+    border-radius: var(--cn-radius-sm);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--cn-text);
+    cursor: pointer;
+    max-width: 220px;
+}
+
+.copilot-plan-filter-select:hover {
+    background: rgba(255,255,255,0.05);
+    border-color: var(--cn-border-alt);
+}
+
+.copilot-plan-filter-select:focus {
+    outline: none;
+    border-color: var(--cn-accent);
+}
+
+.copilot-plan-filter-select option {
+    background: var(--cn-bg-card);
+    color: var(--cn-text);
+}
