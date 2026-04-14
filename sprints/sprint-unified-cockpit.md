@@ -1,7 +1,7 @@
 # Sprint: Unified Cockpit — Konsolidierung der operativen Oberflaeche
 
 Stand: 2026-04-14
-Status: **IN PROGRESS** (Phase 1-5 fertig, Phase 6-7 offen)
+Status: **IN PROGRESS** (Phase 1-6 fertig, Phase 7 deferred)
 Grundlage: ADR-002 Stufe 2a (Dispatch), Unified-Cockpit-Plan (`~/.claude/plans/soft-discovering-horizon.md`)
 
 ## Ziel
@@ -261,3 +261,15 @@ hinzugefuegt und bestehende Features konsolidiert.
 - Abwaertskompatibilitaet: `?plan_id=N` funktioniert unveraendert (0 Fehler)
 - Git-Commit: `d9993d3`
 - Alle 5 Akzeptanzkriterien verifiziert im Browser
+
+### Session 2026-04-14 (Commit 6)
+
+- Commit 6 (Sprint-Sections demoten + Plan-Filter): Sections kollapsiert by default, Toggle-Button
+- Plan-Filter-Dropdown im Header: "Alle Plaene (15)" + 6 aktive Plaene mit Marker-Counts
+- `setPlanFilter()` laedt Plan-Daten, filtert Board + Progress ohne Reload, auto-expand Sections
+- `_getVisibleSections()` als zentrale Filter-Funktion fuer Board, Progress, Section-Matching
+- Sprint-Sections-Panel als Partial extrahiert (`_cockpit_sprint_sections.html`)
+- copilot_board.js: 339→421 Zeilen, copilot_board.html: 300→292 Zeilen (nach Partial-Extraktion)
+- Abwaertskompatibilitaet: `?plan_id=N` funktioniert unveraendert, Sections dort ebenfalls collapsed
+- Git-Commit: `cad2c7d`
+- Alle 4 Akzeptanzkriterien verifiziert im Browser

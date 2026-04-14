@@ -32,7 +32,7 @@ CLAUDE.md/AGENTS.md/GEMINI.md. Perplexity-Copilot wird Read-Only-Validierungssch
 - [x] Unified Cockpit Phase 1-5: Backend, JS-Param, Route, Workflow-Ring, Board+Badges
 - [ ] Dead Code V2: Ungenutzte Funktionen/Klassen mit Flask-Decorator-Erkennung
 - [ ] **ADR-002 Stufe 2a Commits 7-9:** Pull-Adapter, Integration, Doku (offen)
-- [ ] **Unified Cockpit Phase 6:** Sprint-Sections demoten + Plan-Filter-Dropdown
+- [x] **Unified Cockpit Phase 6:** Sprint-Sections demoten + Plan-Filter-Dropdown
 - [ ] **Unified Cockpit Phase 7:** Projekt-Detail bereinigen (DEFERRED)
 
 ### GUI/UX (Codex)
@@ -51,7 +51,7 @@ CLAUDE.md/AGENTS.md/GEMINI.md. Perplexity-Copilot wird Read-Only-Validierungssch
 | Basis-Features | DONE — Sessions, Plans, Quality, Governance, Backup |
 | Workflow-System | DONE — Loop v1+v2, ADR-001 (Marker-DB, Core, Write-Guard) |
 | AI-Control-Plane | DONE — ADR-002 Stufe 1 (Reviewer, Policies, Perplexity, CWO, Metriken) |
-| **Unified Cockpit Phase 1-5** | **DONE — Projekt-API, JS-Param, Route, Workflow-Ring, Board+Badges** |
+| **Unified Cockpit Phase 1-6** | **DONE — Projekt-API, JS-Param, Route, Workflow-Ring, Board+Badges, Plan-Filter** |
 
 ## Was nicht da ist (= Deferred)
 
