@@ -1,24 +1,13 @@
 /**
- * Dispatch Panel — ADR-002 Stufe 2a Commit 6
- *
- * Manuelles Dispatch aus dem Cockpit (Projekt-Detail-Seite).
- * Marker ansehen → Tool zuweisen → Perplexity Review → Approve/Reject
- *
- * Erwartet globale Variablen: PROJECT_NAME (aus Template)
+ * Dispatch — ADR-002 Stufe 2a
+ * Projekt-Detail-Tab + Cockpit-Panel-Modus.
  * Nutzt: api.get/post (api.js), escapeHtml (base.js)
  */
-
 var Dispatch = (function() {
     'use strict';
+    var _markers = [], _assignments = [], _toolProfiles = [], _roles = [];
+    var _loaded = false, _activeFormMarkerId = null;
 
-    var _markers = [];
-    var _assignments = [];
-    var _toolProfiles = [];
-    var _roles = [];
-    var _loaded = false;
-    var _activeFormMarkerId = null;
-
-    // ── Public: Tab laden ──
     function load() {
         if (_loaded) {
             refresh();
@@ -62,66 +51,40 @@ var Dispatch = (function() {
         } catch (e) { /* silent */ }
     }
 
-    // ── Render ──
+    function _filterByState(arr, states) {
+        return arr.filter(function(a) { return states.indexOf(a.approval_state) !== -1; });
+    }
+    var _ACTIVE_STATES = ['proposed', 'approved', 'claimed'];
+    var _TERMINAL_STATES = ['completed', 'failed', 'rejected', 'revoked', 'expired'];
+
     function _render() {
         var el = document.getElementById('dispatchBody');
         if (!el) return;
-
         var html = '<div class="dispatch-panel">';
-
-        // Active/Pending Assignments
-        var activeAssignments = _assignments.filter(function(a) {
-            return ['proposed', 'approved', 'claimed'].indexOf(a.approval_state) !== -1;
-        });
-        if (activeAssignments.length > 0) {
-            html += '<div>';
-            html += '<h3 class="dispatch-section-title">Active Assignments (' + activeAssignments.length + ')</h3>';
-            html += '<div class="dispatch-assignment-list">';
-            activeAssignments.forEach(function(a) {
-                html += _renderAssignmentCard(a);
-            });
+        var active = _filterByState(_assignments, _ACTIVE_STATES);
+        if (active.length > 0) {
+            html += '<div><h3 class="dispatch-section-title">Active Assignments (' + active.length + ')</h3><div class="dispatch-assignment-list">';
+            active.forEach(function(a) { html += _renderAssignmentCard(a); });
             html += '</div></div>';
         }
-
-        // Marker-Liste mit Assign-Buttons
-        var assignableMarkers = _markers.filter(function(m) {
-            return m.status !== 'done';
-        });
-        html += '<div>';
-        html += '<h3 class="dispatch-section-title">Markers</h3>';
-        html += '<p class="dispatch-section-subtitle">' + assignableMarkers.length + ' offene Marker — Tool zuweisen per "Assign"</p>';
-        if (assignableMarkers.length > 0) {
+        var open = _markers.filter(function(m) { return m.status !== 'done'; });
+        html += '<div><h3 class="dispatch-section-title">Markers</h3>';
+        html += '<p class="dispatch-section-subtitle">' + open.length + ' offene Marker — Tool zuweisen per "Assign"</p>';
+        if (open.length > 0) {
             html += '<div class="dispatch-marker-list">';
-            assignableMarkers.forEach(function(m) {
-                html += _renderMarkerRow(m);
-            });
+            open.forEach(function(m) { html += _renderMarkerRow(m); });
             html += '</div>';
-        } else {
-            html += '<div class="dispatch-empty">Keine offenen Marker vorhanden.</div>';
         }
-        html += '<div id="dispatchFormContainer"></div>';
-        html += '</div>';
-
-        // Completed/terminal assignments
-        var terminalAssignments = _assignments.filter(function(a) {
-            return ['completed', 'failed', 'rejected', 'revoked', 'expired'].indexOf(a.approval_state) !== -1;
-        });
-        if (terminalAssignments.length > 0) {
-            html += '<div>';
-            html += '<h3 class="dispatch-section-title">History (' + terminalAssignments.length + ')</h3>';
-            html += '<div class="dispatch-assignment-list">';
-            terminalAssignments.slice(0, 20).forEach(function(a) {
-                html += _renderAssignmentCard(a);
-            });
+        html += '<div id="dispatchFormContainer"></div></div>';
+        var terminal = _filterByState(_assignments, _TERMINAL_STATES);
+        if (terminal.length > 0) {
+            html += '<div><h3 class="dispatch-section-title">History (' + terminal.length + ')</h3><div class="dispatch-assignment-list">';
+            terminal.slice(0, 20).forEach(function(a) { html += _renderAssignmentCard(a); });
             html += '</div></div>';
         }
-
         html += '</div>';
         el.innerHTML = html;
-
-        if (_activeFormMarkerId) {
-            _showForm(_activeFormMarkerId);
-        }
+        if (_activeFormMarkerId) _showForm(_activeFormMarkerId);
     }
 
     function _renderMarkerRow(m) {
@@ -201,33 +164,17 @@ var Dispatch = (function() {
 
     function _renderReview(review) {
         if (!review || review.error) {
-            var errMsg = (review && review.error) ? escapeHtml(String(review.error)) : 'Review error';
-            return '<div class="dispatch-review-box"><div class="dispatch-review-header">Perplexity Review — Error</div><div class="dispatch-review-row">' + errMsg + '</div></div>';
+            return '<div class="dispatch-review-box"><div class="dispatch-review-header">Perplexity Review — Error</div><div class="dispatch-review-row">' + escapeHtml(String((review && review.error) || 'error')) + '</div></div>';
         }
-
-        var html = '<div class="dispatch-review-box">';
-        html += '<div class="dispatch-review-header">Perplexity Review</div>';
-
-        if (review.risk_assessment) {
-            html += '<div class="dispatch-review-row"><span class="dispatch-review-label">Risk:</span> ' + escapeHtml(String(review.risk_assessment)) + '</div>';
-        }
+        var html = '<div class="dispatch-review-box"><div class="dispatch-review-header">Perplexity Review</div>';
+        if (review.risk_assessment) html += '<div class="dispatch-review-row"><span class="dispatch-review-label">Risk:</span> ' + escapeHtml(String(review.risk_assessment)) + '</div>';
         if (review.tool_fit_score !== undefined) {
-            var fitColor = review.tool_fit_score >= 70 ? '#22c55e' : review.tool_fit_score >= 40 ? '#f59e0b' : '#ef4444';
-            html += '<div class="dispatch-review-row"><span class="dispatch-review-label">Tool Fit:</span> <span style="color:' + fitColor + ';font-weight:600">' + review.tool_fit_score + '/100</span></div>';
+            var fc = review.tool_fit_score >= 70 ? '#22c55e' : review.tool_fit_score >= 40 ? '#f59e0b' : '#ef4444';
+            html += '<div class="dispatch-review-row"><span class="dispatch-review-label">Tool Fit:</span> <span style="color:' + fc + ';font-weight:600">' + review.tool_fit_score + '/100</span></div>';
         }
-        if (review.scope_issues && review.scope_issues.length > 0) {
-            html += '<div class="dispatch-review-row"><span class="dispatch-review-label">Scope Issues:</span> ' + escapeHtml(review.scope_issues.join(', ')) + '</div>';
-        }
-        if (review.recommendation) {
-            var recClass = 'dispatch-review-recommendation--' + review.recommendation;
-            html += '<div class="dispatch-review-row"><span class="dispatch-review-label">Recommendation:</span> <span class="dispatch-review-recommendation ' + recClass + '">' + escapeHtml(review.recommendation) + '</span></div>';
-        }
-        if (review.reasoning) {
-            html += '<div class="dispatch-review-row" style="margin-top:4px;font-size:11px;color:rgba(148,163,184,0.6)">' + escapeHtml(String(review.reasoning)) + '</div>';
-        }
-
-        html += '</div>';
-        return html;
+        if (review.recommendation) html += '<div class="dispatch-review-row"><span class="dispatch-review-label">Rec:</span> <span class="dispatch-review-recommendation dispatch-review-recommendation--' + review.recommendation + '">' + escapeHtml(review.recommendation) + '</span></div>';
+        if (review.reasoning) html += '<div class="dispatch-review-row" style="font-size:11px;color:rgba(148,163,184,0.6)">' + escapeHtml(String(review.reasoning)) + '</div>';
+        return html + '</div>';
     }
 
     // ── Formular ──
@@ -348,69 +295,175 @@ var Dispatch = (function() {
         }
     }
 
-    async function approve(id) {
-        try {
-            await api.post('/api/dispatch/assignments/' + id + '/approve');
-            refresh();
-        } catch (e) {
-            alert('Fehler: ' + (e.message || e));
-        }
-    }
+    function _refreshAll() { refresh(); _refreshPanel(); }
 
+    async function approve(id) {
+        try { await api.post('/api/dispatch/assignments/' + id + '/approve'); _refreshAll(); }
+        catch (e) { alert('Fehler: ' + (e.message || e)); }
+    }
     async function reject(id) {
         var reason = prompt('Ablehnungsgrund (optional):');
-        try {
-            await api.post('/api/dispatch/assignments/' + id + '/reject', { reason: reason || null });
-            refresh();
-        } catch (e) {
-            alert('Fehler: ' + (e.message || e));
-        }
+        try { await api.post('/api/dispatch/assignments/' + id + '/reject', { reason: reason || null }); _refreshAll(); }
+        catch (e) { alert('Fehler: ' + (e.message || e)); }
     }
-
     async function revoke(id) {
         var reason = prompt('Widerruf-Grund (optional):');
-        try {
-            await api.post('/api/dispatch/assignments/' + id + '/revoke', { reason: reason || null });
-            refresh();
-        } catch (e) {
-            alert('Fehler: ' + (e.message || e));
-        }
+        try { await api.post('/api/dispatch/assignments/' + id + '/revoke', { reason: reason || null }); _refreshAll(); }
+        catch (e) { alert('Fehler: ' + (e.message || e)); }
     }
-
     async function claim(id) {
-        try {
-            await api.post('/api/dispatch/assignments/' + id + '/claim', { claimed_by: 'joseph' });
-            refresh();
-        } catch (e) {
-            alert('Fehler: ' + (e.message || e));
-        }
+        try { await api.post('/api/dispatch/assignments/' + id + '/claim', { claimed_by: 'joseph' }); _refreshAll(); }
+        catch (e) { alert('Fehler: ' + (e.message || e)); }
     }
-
     async function complete(id) {
-        try {
-            await api.post('/api/dispatch/assignments/' + id + '/complete', {});
-            refresh();
-        } catch (e) {
-            alert('Fehler: ' + (e.message || e));
-        }
+        try { await api.post('/api/dispatch/assignments/' + id + '/complete', {}); _refreshAll(); }
+        catch (e) { alert('Fehler: ' + (e.message || e)); }
     }
-
     async function fail(id) {
         var reason = prompt('Fehlergrund:');
-        try {
-            await api.post('/api/dispatch/assignments/' + id + '/fail', { reason: reason || null });
-            refresh();
-        } catch (e) {
-            alert('Fehler: ' + (e.message || e));
+        try { await api.post('/api/dispatch/assignments/' + id + '/fail', { reason: reason || null }); _refreshAll(); }
+        catch (e) { alert('Fehler: ' + (e.message || e)); }
+    }
+    async function review(id) {
+        try { await api.post('/api/dispatch/assignments/' + id + '/review'); _refreshAll(); }
+        catch (e) { alert('Review-Fehler: ' + (e.message || e)); }
+    }
+
+    // ── Cockpit-Panel ──
+    var _panelMarkerId = null, _panelProjectName = null, _panelAssignments = [];
+
+    function loadPanel(markerId, projectName) {
+        _panelMarkerId = markerId;
+        _panelProjectName = projectName;
+        var content = document.getElementById('panelDispatchContent');
+        var loading = document.getElementById('panelDispatchLoading');
+        if (!content) return;
+        if (loading) loading.style.display = 'flex';
+        content.innerHTML = '';
+
+        var promises = [
+            api.get('/api/dispatch/assignments?project=' + encodeURIComponent(projectName)),
+        ];
+        if (_toolProfiles.length === 0) {
+            promises.push(api.get('/api/policies/tool-profiles'));
+            promises.push(api.get('/api/policies/roles'));
+        }
+
+        Promise.all(promises).then(function(results) {
+            if (loading) loading.style.display = 'none';
+            var all = (results[0] && results[0].assignments) || [];
+            _panelAssignments = all;
+            if (results[1]) _toolProfiles = (results[1] && results[1].tool_profiles) || [];
+            if (results[2]) _roles = (results[2] && results[2].roles) || [];
+            _renderPanel(content, markerId);
+        }).catch(function(e) {
+            if (loading) loading.style.display = 'none';
+            content.innerHTML = '<div class="dispatch-empty">Fehler: ' + escapeHtml(String(e.message || e)) + '</div>';
+        });
+    }
+
+    function _refreshPanel() {
+        if (_panelMarkerId && _panelProjectName) {
+            loadPanel(_panelMarkerId, _panelProjectName);
         }
     }
 
-    async function review(id) {
+    function _renderPanel(container, markerId) {
+        var markerAssignments = _panelAssignments.filter(function(a) {
+            return a.marker_id === markerId;
+        });
+        var active = markerAssignments.filter(function(a) {
+            return ['proposed', 'approved', 'claimed'].indexOf(a.approval_state) !== -1;
+        });
+        var terminal = markerAssignments.filter(function(a) {
+            return ['completed', 'failed', 'rejected', 'revoked', 'expired'].indexOf(a.approval_state) !== -1;
+        });
+
+        var html = '';
+
+        if (active.length > 0) {
+            html += '<h4 class="dispatch-section-title" style="font-size:13px;margin-top:8px">Active (' + active.length + ')</h4>';
+            html += '<div class="dispatch-assignment-list">';
+            active.forEach(function(a) { html += _renderAssignmentCard(a); });
+            html += '</div>';
+        }
+
+        // Assign-Button
+        if (active.length === 0) {
+            html += '<div style="padding:12px 0">';
+            html += '<button class="dispatch-btn dispatch-btn--primary" onclick="Dispatch.openPanelForm()">Assign Tool to this Marker</button>';
+            html += '</div>';
+        }
+
+        // Form container
+        html += '<div id="dispatchPanelFormContainer"></div>';
+
+        if (terminal.length > 0) {
+            html += '<h4 class="dispatch-section-title" style="font-size:13px;margin-top:16px">History (' + terminal.length + ')</h4>';
+            html += '<div class="dispatch-assignment-list">';
+            terminal.slice(0, 5).forEach(function(a) { html += _renderAssignmentCard(a); });
+            html += '</div>';
+        }
+
+        if (markerAssignments.length === 0) {
+            html += '<div class="dispatch-empty">Kein Assignment. Klicke "Assign" oben.</div>';
+        }
+        container.innerHTML = html;
+    }
+
+    function _showFormInContainer(container) {
+        var html = '<div class="dispatch-form-overlay active" style="margin-top:8px">';
+        html += '<div class="dispatch-form-header">';
+        html += '<span class="dispatch-form-title">Assign Tool</span>';
+        html += '<button class="dispatch-form-close" onclick="Dispatch.closePanelForm()">&times;</button>';
+        html += '</div>';
+        html += '<div class="dispatch-form-grid">';
+
+        html += '<div class="dispatch-form-group">';
+        html += '<label>Tool</label><select id="dispatchFormTool"><option value="">-- Select --</option>';
+        (_toolProfiles || []).filter(function(p) { return p.active !== false; }).forEach(function(p) {
+            html += '<option value="' + escapeHtml(p.tool_id) + '">' + escapeHtml(p.tool_id) + '</option>';
+        });
+        html += '</select></div>';
+
+        html += '<div class="dispatch-form-group">';
+        html += '<label>Risk</label><select id="dispatchFormRisk"><option value="low">Low</option><option value="medium" selected>Medium</option><option value="high">High</option></select></div>';
+
+        html += '</div>';
+        html += '<div class="dispatch-form-actions">';
+        html += '<button class="dispatch-btn dispatch-btn--ghost" onclick="Dispatch.closePanelForm()">Cancel</button>';
+        html += '<button class="dispatch-btn dispatch-btn--primary" onclick="Dispatch.createPanelAssignment()">Create</button>';
+        html += '</div></div>';
+        container.innerHTML = html;
+    }
+
+    function openPanelForm() {
+        var container = document.getElementById('dispatchPanelFormContainer');
+        if (!container || !_panelMarkerId) return;
+        _showFormInContainer(container);
+    }
+
+    function closePanelForm() {
+        var container = document.getElementById('dispatchPanelFormContainer');
+        if (container) container.innerHTML = '';
+    }
+
+    async function createPanelAssignment() {
+        var tool = document.getElementById('dispatchFormTool');
+        if (!tool || !tool.value) { alert('Bitte Tool auswaehlen.'); return; }
+        var riskEl = document.getElementById('dispatchFormRisk');
         try {
-            await api.post('/api/dispatch/assignments/' + id + '/review');
-            refresh();
+            await api.post('/api/dispatch/assignments', {
+                project_name: _panelProjectName,
+                marker_id: _panelMarkerId,
+                executor_tool: tool.value,
+                risk_level: riskEl ? riskEl.value : 'medium',
+                dispatch_mode: 'manual',
+            });
+            closePanelForm();
+            _refreshPanel();
         } catch (e) {
-            alert('Review-Fehler: ' + (e.message || e));
+            alert('Fehler: ' + (e.message || e));
         }
     }
 
@@ -439,5 +492,9 @@ var Dispatch = (function() {
         complete: complete,
         fail: fail,
         review: review,
+        loadPanel: loadPanel,
+        openPanelForm: openPanelForm,
+        closePanelForm: closePanelForm,
+        createPanelAssignment: createPanelAssignment,
     };
 })();

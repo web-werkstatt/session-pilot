@@ -50,6 +50,14 @@ function switchPanelTab(tab) {
     document.querySelectorAll('.panel-tab-body').forEach(function(b) {
         b.classList.toggle('active', b.id === 'tab' + tab.charAt(0).toUpperCase() + tab.slice(1));
     });
+    if (tab === 'dispatch' && typeof Dispatch !== 'undefined') {
+        if (_currentSection && _currentSection.marker_id) {
+            Dispatch.loadPanel(_currentSection.marker_id, _currentProjectId);
+        } else {
+            var dc = document.getElementById('panelDispatchContent');
+            if (dc) dc.innerHTML = '<div class="dispatch-empty">Waehle einen AI Task (Marker) um Dispatch zu nutzen.</div>';
+        }
+    }
 }
 
 function askCopilot() {

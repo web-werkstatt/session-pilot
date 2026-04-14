@@ -13,6 +13,7 @@
 <link rel="stylesheet" href="/static/css/copilot-chat.css?v={{ cache_bust }}">
 <link rel="stylesheet" href="/static/css/copilot-marker-errors.css?v={{ cache_bust }}">
 <link rel="stylesheet" href="/static/css/copilot-board.css?v={{ cache_bust }}">
+<link rel="stylesheet" href="/static/css/dispatch.css?v={{ cache_bust }}">
 {% endblock %}
 {% block content %}
     <div class="copilot-ws-header ui-panel">
@@ -118,6 +119,9 @@
                     </button>
                     <button class="panel-tab ui-button ui-button--ghost" data-tab="source" onclick="switchPanelTab('source')">
                         <i data-lucide="scroll-text" class="icon icon-xs"></i> Source
+                    </button>
+                    <button class="panel-tab ui-button ui-button--ghost" data-tab="dispatch" onclick="switchPanelTab('dispatch')">
+                        <i data-lucide="send" class="icon icon-xs"></i> Dispatch
                     </button>
                 </div>
 
@@ -229,6 +233,15 @@
                     </div>
                 </div>
 
+                <div class="panel-tab-body" id="tabDispatch">
+                    <div class="panel-dispatch" id="panelDispatch">
+                        <div class="dispatch-loading" id="panelDispatchLoading" style="display:none">
+                            <div class="spinner" style="width:16px;height:16px"></div> Loading...
+                        </div>
+                        <div id="panelDispatchContent"></div>
+                    </div>
+                </div>
+
                 <div class="panel-tab-body" id="tabSource">
                     <div class="panel-source" id="panelSource">
                         <div class="panel-source-empty" id="panelSourceEmpty">
@@ -275,4 +288,5 @@
 <script src="/static/js/copilot_board.js?v={{ cache_bust }}"></script>
 <script src="/static/js/copilot-section-modal.js?v={{ cache_bust }}"></script>
 <script src="/static/js/copilot-board-panel.js?v={{ cache_bust }}"></script>
+<script src="/static/js/dispatch.js?v={{ cache_bust }}"></script>
 {% endblock %}
