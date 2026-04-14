@@ -126,3 +126,48 @@ Dashboard laeuft als systemd-Service auf Port 5055, Backup taeglich 12:30.
 - [ ] Policy-Suggestions bewerten: 4 pending unter /policies
 - [ ] Dead Code V2: Ungenutzte Funktionen/Klassen mit Flask-Decorator-Erkennung
 - [ ] dispatch.js IIFE zu Module-Pattern refactoren (aktuell 425 Z., Panel-Code eng gekoppelt)
+
+---
+
+## Session 2026-04-14 (Session 16) — Dispatch Commit 9 + GitHub-Mirror + Container-CI
+
+### Was wurde erledigt
+- **Commit 9 Dispatch Sprint 2a (DONE):**
+  - `services/CLAUDE.md` erweitert: Dispatch-Schicht (db_dispatch_schema, dispatch_service, dispatch_review_service)
+  - `sprints/master-plan-summary.md` Nachtrag: Stufe 2a → DONE (lokal, gitignored)
+  - `DISPATCH_PULL_API_KEY` generiert + in `.env`, Service neugestartet
+  - Live-Test: CRUD 200 (12 Assignments), Pull-API Auth + Tool-Profile-Gate verifiziert
+  - Gitea-Push: `9542252`
+- **GitHub-Mirror-Panne + Recovery:**
+  - Force-push hat versehentlich den Mirror-Cleanup-Commit `2dc5d43` ueberschrieben (25 Dateien inkl. tests/, session-notes wieder oeffentlich) — kein Secret-Leak (`.env` gitignored)
+  - Neuer Cleanup-Commit `0badb71` auf `github/main`: tests/, sprints/, CLAUDE.md/AGENTS.md, handoff.md, next-session.md entfernt, `prompts/` + `pyrightconfig.json` behalten
+  - Clone + Import-Smoke-Test erfolgreich — Self-Install lauffaehig
+- **Container-CI:**
+  - Manueller Push: `ghcr.io/.../session-pilot:0badb71,2026.04.14,latest` (495 MB, aus Cleanup-SHA)
+  - `.github/workflows/publish-container.yml` angelegt: Multi-Tag-Build bei push/main + v*.*.* (Tags: `latest`, `YYYY.MM.DD`, `sha-<short>`, semver)
+  - Cherry-Pick auf `github/main`: `c40a78c`
+  - UI-Fix "Manage Actions access" → Repo `session-pilot` = Write → Workflow laeuft autonom
+  - Aktuelles `latest` = `sha-c40a78c` (Workflow-gebaut)
+
+### Git Commits
+```
+9542252 Docs: ADR-002 Stufe 2a Commit 9 — Dispatch-Schicht in services/CLAUDE.md
+1811c9b CI: GitHub Actions Workflow fuer Container-Publish nach ghcr.io
+c40a78c (github/main only) = 1811c9b cherry-picked auf 0badb71
+```
+
+### Neue Dateien
+| Datei | Zweck |
+|-------|-------|
+| `.github/workflows/publish-container.yml` | Auto-Build + Push nach ghcr.io bei push/main + v-Tag |
+
+### Neue Memory
+- `feedback_github_mirror_cleanup.md` — Mirror = Self-Install-Version, Cleanup-Workflow via Temp-Branch + `git rm --cached`, Liste der zu entfernenden Pfade, `gh run rerun` + UI-Fix-Pfad
+
+### Offen / Hinweise
+- Dependabot: 9 Vulnerabilities (3 high, 5 moderate, 1 low) auf GitHub-Mirror — separate Aufgabe
+- Node.js 20 deprecation warning in Workflow (unkritisch bis Sep 2026, Actions v4/v5/v6 upgraden wenn verfuegbar)
+- Kuenftige GitHub-Pushes brauchen weiterhin Temp-Branch + Cherry-Pick (Cleanup-Commit lebt nur auf GitHub)
+
+### Naechste Session
+Primaer offen aus vorheriger Liste: **Unified Cockpit Phase 7** (Projekt-Detail bereinigen) oder **Dead Code V2**. Policy-Suggestions + dispatch.js-Refactor bleiben Tertiaer.
