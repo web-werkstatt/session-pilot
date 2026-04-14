@@ -4,6 +4,32 @@
 
 ---
 
+## Session 2026-04-14 (Session 13) — Unified Cockpit Phase 5
+
+### Was wurde erledigt
+- **Board auf Projekt-Datenquelle** (Commit 5): `/copilot?project=<name>` zeigt alle 15 Marker
+  - Cockpit-API um `assignments` erweitert (`routes/cockpit_routes.py`)
+  - `_loadSections` speichert `_workflowStates`, `_activeAssignments`, `_cockpitPlans`
+  - Workflow-Badges auf Cards (Aktiv/Bereit/Write Back/Rating offen) — 11 von 15
+  - Plan-Herkunft-Labels auf Cards (lila, nur im Projekt-Modus)
+  - Assignment-Badges auf Cards (bereit, aktuell keine aktiven Assignments)
+  - Workflow-Status-Badge im Panel-Header (Meta-Zeile)
+- **Refactoring:** `_buildCard` + Drag&Drop nach `copilot-board-cards.js` extrahiert (copilot_board.js: 478→339 Z.)
+- **Refactoring:** `_formatTokenCount`/`_formatUsd` nach `copilot-board-shared.js` verschoben (panel.js: 495→490 Z.)
+- **Abwaertskompatibilitaet:** `?plan_id=N` funktioniert unveraendert
+
+### Git Commits
+```
+d9993d3 Feature: Unified Cockpit Phase 5 — Board auf Projekt-Datenquelle + Workflow-Badges
+```
+
+### Neue Dateien
+| Datei | Zeilen | Zweck |
+|-------|--------|-------|
+| `static/js/copilot-board-cards.js` | 226 | Card-Rendering, Badges, Drag&Drop |
+
+---
+
 ## Session 2026-04-14 (Session 12) — Unified Cockpit Phase 4
 
 ### Was wurde erledigt

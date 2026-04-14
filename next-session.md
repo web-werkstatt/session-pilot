@@ -1,8 +1,8 @@
 # Projekt-Dashboard - Naechste Session
 
-> **Letzte Aktualisierung:** 2026-04-14 (Session 13: Unified Cockpit Phase 5)
-> **Status:** Board zeigt alle Projekt-Marker mit Workflow-Badges, Plan-Labels, Assignment-Badges. Phase 1-5 done.
-> **Naechste Aufgabe:** Unified Cockpit Phase 6 — Sprint-Sections demoten + Plan-Filter-Dropdown
+> **Letzte Aktualisierung:** 2026-04-14 (Session 14: Unified Cockpit Phase 6)
+> **Status:** Plan-Filter-Dropdown + Sprint-Sections Collapse. Unified Cockpit Phase 1-6 done.
+> **Naechste Aufgabe:** Dispatch Sprint 2a Commits 7-9 oder Unified Cockpit Phase 7 (Projekt-Detail bereinigen)
 
 ---
 
@@ -76,45 +76,41 @@ Dashboard laeuft als systemd-Service auf Port 5055, Backup taeglich 12:30.
 - **DB:** PostgreSQL `project_dashboard`, Schema-Migrationen lazy via `ensure_*_schema()`
 - **Marker-Context:** `marker-context.md` im Root ist Runtime-Datei (gitignored), CLAUDE.md-Regel: nie eigenmaechtig veraendern
 
-## Session 2026-04-14 (Session 13) — Unified Cockpit Phase 5
+## Session 2026-04-14 (Session 14) — Unified Cockpit Phase 6
 
 ### Was wurde erledigt
-- **Board auf Projekt-Datenquelle** (Commit 5): `/copilot?project=<name>` zeigt alle 15 Marker
-  - Cockpit-API um `assignments` erweitert (`routes/cockpit_routes.py`)
-  - `_loadSections` speichert `_workflowStates`, `_activeAssignments`, `_cockpitPlans`
-  - Workflow-Badges auf Cards (Aktiv/Bereit/Write Back/Rating offen) — 11 von 15
-  - Plan-Herkunft-Labels auf Cards (lila, nur im Projekt-Modus)
-  - Assignment-Badges auf Cards (bereit, aktuell keine aktiven Assignments)
-  - Workflow-Status-Badge im Panel-Header (Meta-Zeile)
-- **Refactoring:** `_buildCard` + Drag&Drop nach `copilot-board-cards.js` extrahiert (copilot_board.js: 478→339 Z.)
-- **Refactoring:** `_formatTokenCount`/`_formatUsd` nach `copilot-board-shared.js` verschoben (panel.js: 495→490 Z.)
-- **Abwaertskompatibilitaet:** `?plan_id=N` funktioniert unveraendert
+- **Sprint-Sections demoted** (Commit 6): Starten kollapsiert, Toggle-Button (Chevron -90° wenn collapsed)
+- **Plan-Filter-Dropdown** im Header: "Alle Plaene (15)" + 6 aktive Plaene mit Marker-Counts
+- **Client-side Filtering:** Board + Progress reagieren sofort auf Filter, kein Seiten-Reload
+- **Auto-Expand:** Bei aktivem Filter werden Plan-Sections geladen und Sections expanded
+- **Partial extrahiert:** `_cockpit_sprint_sections.html` (Template: 300→292 Zeilen)
+- **Abwaertskompatibilitaet:** `?plan_id=N` funktioniert unveraendert, Sections dort ebenfalls collapsed
 
 ### Git Commits
 ```
-d9993d3 Feature: Unified Cockpit Phase 5 — Board auf Projekt-Datenquelle + Workflow-Badges
+cad2c7d Feature: Unified Cockpit Phase 6 — Sprint-Sections demoten + Plan-Filter-Dropdown
+044d583 Docs: Session 14 — Unified Cockpit Phase 6, Sprint-Status aktualisiert
 ```
 
 ### Neue Dateien
 | Datei | Zeilen | Zweck |
 |-------|--------|-------|
-| `static/js/copilot-board-cards.js` | 226 | Card-Rendering, Badges, Drag&Drop |
+| `templates/_cockpit_sprint_sections.html` | 13 | Sprint-Sections Partial |
 
 ---
 
 ## Naechste Session
 
-### Primaer: Unified Cockpit Phase 6
-1. Sprint-Plan lesen: `sprints/sprint-unified-cockpit.md`
-2. **Commit 6:** Sprint-Sections demoten + Plan-Filter-Dropdown
-3. Sprint-Sections starten kollapsiert, Toggle zum Ein-/Ausklappen
-4. Plan-Filter-Dropdown im Header: "Alle Plaene" (Default) + Liste aktiver Plaene
-
-### Sekundaer: Dispatch Sprint 2a Commits 7-9
+### Primaer: Dispatch Sprint 2a Commits 7-9
 - **Commit 7:** Pull-Adapter Scripts + Perplexity-Gate bei Pull
 - **Commit 8:** Integration workflow_core + Marker-Binding + Settings-Toggles
 - **Commit 9:** Doku + Push
 
+### Sekundaer: Unified Cockpit Phase 7 (DEFERRED)
+- Projekt-Detail bereinigen: Workflow-Tab → Zusammenfassung + Cockpit-Link
+- Dispatch-Tab entfernen oder durch Link zum Cockpit ersetzen
+
 ### Tertiaer (wenn Zeit)
 - [ ] Policy-Suggestions bewerten: 4 pending unter /policies
-- [ ] Optional: Dead Code V2, Trend-Chart, Adaptive Kalibrierung
+- [ ] Dead Code V2: Ungenutzte Funktionen/Klassen mit Flask-Decorator-Erkennung
+- [ ] Optional: Trend-Chart, Adaptive Kalibrierung
