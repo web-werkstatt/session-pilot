@@ -233,3 +233,53 @@
 .badge-sec-in_progress  { background: rgba(96,165,250,0.15); color: #93c5fd; border-color: rgba(96,165,250,0.2); }
 .badge-sec-done         { background: rgba(74,222,128,0.15); color: #86efac; border-color: rgba(74,222,128,0.2); }
 .badge-sec-blocked      { background: rgba(248,113,113,0.15); color: #fca5a5; border-color: rgba(248,113,113,0.2); }
+
+/* === Card Badges — Workflow, Plan-Herkunft, Assignment === */
+.card-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    height: 18px;
+    padding: 0 6px;
+    font-size: 10px;
+    font-weight: 600;
+    border-radius: var(--cn-radius-full);
+    border: 1px solid transparent;
+    white-space: nowrap;
+    line-height: 1;
+}
+
+.card-badge--neutral  { background: rgba(113,113,122,0.15); color: #a1a1aa; border-color: rgba(113,113,122,0.2); }
+.card-badge--info     { background: rgba(96,165,250,0.15); color: #93c5fd; border-color: rgba(96,165,250,0.2); }
+.card-badge--success  { background: rgba(74,222,128,0.15); color: #86efac; border-color: rgba(74,222,128,0.2); }
+.card-badge--warning  { background: rgba(251,191,36,0.15); color: #fcd34d; border-color: rgba(251,191,36,0.2); }
+.card-badge--danger   { background: rgba(248,113,113,0.15); color: #fca5a5; border-color: rgba(248,113,113,0.2); }
+
+.card-badge--plan {
+    background: rgba(139,92,246,0.12);
+    color: #c4b5fd;
+    border-color: rgba(139,92,246,0.2);
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.card-badge--assign {
+    background: rgba(56,189,248,0.12);
+    color: #7dd3fc;
+    border-color: rgba(56,189,248,0.2);
+}
+
+.card-badge .icon {
+    width: 10px;
+    height: 10px;
+    flex-shrink: 0;
+}
+
+/* Execution Rating Hint */
+.card-execution-rating {
+    font-size: 10px;
+    color: var(--cn-text-muted);
+    margin-bottom: 6px;
+    font-style: italic;
+}

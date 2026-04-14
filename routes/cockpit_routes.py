@@ -43,13 +43,38 @@ def get_cockpit_project_data(name):
     # Aktive Plaene fuer dieses Projekt
     plans = _get_project_plans(name)
 
+    # Aktive Assignments (Dispatch) fuer dieses Projekt
+    assignments = _get_active_assignments(name)
+
     return jsonify({
         "project_id": name,
         "markers": markers,
         "marker_count": len(markers),
         "workflow": workflow,
         "plans": plans,
+        "assignments": assignments,
     })
+
+
+def _get_active_assignments(project_name):
+    """Aktive Dispatch-Assignments als dict {marker_id: assignment}."""
+    try:
+        from services.dispatch_service import list_assignments
+        rows = list_assignments(project_name=project_name)
+        result = {}
+        for row in rows:
+            state = row.get("approval_state", "")
+            if state in ("proposed", "approved", "claimed"):
+                mid = str(row.get("marker_id") or "")
+                if mid and mid not in result:
+                    result[mid] = {
+                        "executor_tool": row.get("executor_tool", ""),
+                        "approval_state": state,
+                        "role_id": row.get("role_id", ""),
+                    }
+        return result
+    except Exception:
+        return {}
 
 
 def _get_project_plans(project_name):

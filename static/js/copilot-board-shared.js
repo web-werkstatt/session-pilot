@@ -130,3 +130,17 @@ function togglePlanSwitcher() {
 function switchPlan(planId, planTitle) {
     window.location.href = _buildCopilotUrl(planId, planTitle);
 }
+
+function _formatTokenCount(value) {
+    var num = Number(value || 0);
+    if (!isFinite(num)) return '0';
+    return num.toLocaleString('de-DE');
+}
+
+function _formatUsd(value) {
+    var num = Number(value || 0);
+    if (!isFinite(num)) return '$0.00';
+    if (num < 0.01) return '$' + num.toFixed(4);
+    if (num < 1) return '$' + num.toFixed(2);
+    return '$' + num.toFixed(2);
+}

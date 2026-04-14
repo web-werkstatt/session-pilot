@@ -25,6 +25,13 @@ function openSectionPanel(sectionId, tab) {
     var planLabel = sec.plan_title || (_planInfo && _planInfo.title) || ('Plan ' + (sec.plan_id || String(PLAN_ID)));
     metaHtml += ' &middot; ' + escapeHtml(planLabel);
     metaHtml += ' &middot; ' + escapeHtml(sec.is_activatable ? 'freigegeben' : (sec.gate_reason || 'gesperrt'));
+    // Workflow-Status Badge im Panel-Header
+    var wfLabel = typeof _getWorkflowLabelForMarker === 'function' ? _getWorkflowLabelForMarker(sec.marker_id) : '';
+    if (wfLabel) {
+        var wfStatus = _getWorkflowStatusForMarker(sec.marker_id);
+        var wfTone = (typeof WORKFLOW_STATUS_TONES !== 'undefined' && WORKFLOW_STATUS_TONES[wfStatus]) || 'neutral';
+        metaHtml += ' &middot; <span class="card-badge card-badge--wf card-badge--' + wfTone + '">' + escapeHtml(wfLabel) + '</span>';
+    }
     document.getElementById('panelSectionMeta').innerHTML = metaHtml;
 
     switchPanelTab(tab || _activePanelTab || 'chat');
@@ -182,19 +189,7 @@ function _buildChatUsageHtml(role, usageMeta) {
     return parts.length ? parts.join(' · ') : '';
 }
 
-function _formatTokenCount(value) {
-    var num = Number(value || 0);
-    if (!isFinite(num)) return '0';
-    return num.toLocaleString('de-DE');
-}
-
-function _formatUsd(value) {
-    var num = Number(value || 0);
-    if (!isFinite(num)) return '$0.00';
-    if (num < 0.01) return '$' + num.toFixed(4);
-    if (num < 1) return '$' + num.toFixed(2);
-    return '$' + num.toFixed(2);
-}
+/* _formatTokenCount, _formatUsd → copilot-board-shared.js */
 
 function _scrollChat() {
     var container = document.getElementById('panelChatMessages');
