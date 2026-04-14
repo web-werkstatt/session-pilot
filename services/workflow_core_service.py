@@ -70,6 +70,37 @@ def get_marker(project_name, marker_id):
     return _row_to_marker(row) if row else None
 
 
+def get_marker_detail(project_name, marker_id):
+    """Liest einen Marker mit zugehoerigen Dispatch-Assignments.
+
+    Returns:
+        Dict mit Marker-Daten + assignments-Liste, oder None.
+    """
+    marker = get_marker(project_name, marker_id)
+    if not marker:
+        return None
+
+    data = asdict(marker)
+
+    try:
+        from services.dispatch_service import list_assignments
+        assignments = []
+        for a in list_assignments(project_name=project_name):
+            if str(a.get("marker_id") or "") == str(marker_id):
+                assignments.append({
+                    "assignment_id": a.get("assignment_id"),
+                    "executor_tool": a.get("executor_tool", ""),
+                    "approval_state": a.get("approval_state", ""),
+                    "risk_level": a.get("risk_level", "medium"),
+                    "dispatch_mode": a.get("dispatch_mode", "manual"),
+                })
+        data["assignments"] = assignments
+    except Exception:
+        data["assignments"] = []
+
+    return data
+
+
 def update_marker_field(project_name, marker_id, **fields):
     """Aktualisiert einzelne Felder eines Markers in der DB.
 
@@ -193,9 +224,27 @@ def get_handoff_view(project_name):
     except Exception as exc:
         log.info("Policy-Schicht fuer handoff_view nicht verfuegbar: %s", exc)
 
+    # Aktive Assignments pro Marker
+    active_assignments = {}
+    try:
+        from services.dispatch_service import list_assignments
+        for state in ("proposed", "approved", "claimed"):
+            for a in list_assignments(project_name=project_name, status=state):
+                mid = str(a.get("marker_id") or "")
+                if mid and mid not in active_assignments:
+                    active_assignments[mid] = {
+                        "assignment_id": a.get("assignment_id"),
+                        "executor_tool": a.get("executor_tool", ""),
+                        "approval_state": a.get("approval_state", ""),
+                        "risk_level": a.get("risk_level", "medium"),
+                    }
+    except Exception as exc:
+        log.info("Dispatch-Assignments fuer handoff_view nicht ladbar: %s", exc)
+
     return {
         "markers": marker_list,
         "active_policies": active_policies,
+        "active_assignments": active_assignments,
     }
 
 

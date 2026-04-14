@@ -16,6 +16,7 @@
 <link rel="stylesheet" href="/static/css/workflow-loop-summary.css?v={{ cache_bust }}">
 <link rel="stylesheet" href="/static/css/cockpit-workflow.css?v={{ cache_bust }}">
 <link rel="stylesheet" href="/static/css/dispatch.css?v={{ cache_bust }}">
+<link rel="stylesheet" href="/static/css/dispatch-settings.css?v={{ cache_bust }}">
 {% endblock %}
 {% block content %}
     <div class="copilot-ws-header ui-panel">
@@ -119,6 +120,7 @@
                     </button>
                     <button class="panel-tab ui-button ui-button--ghost" data-tab="dispatch" onclick="switchPanelTab('dispatch')">
                         <i data-lucide="send" class="icon icon-xs"></i> Dispatch
+                        <span class="panel-tab-badge" id="dispatchBadge" style="display:none"></span>
                     </button>
                 </div>
 
@@ -288,5 +290,7 @@
 <script src="/static/js/copilot_board.js?v={{ cache_bust }}"></script>
 <script src="/static/js/copilot-section-modal.js?v={{ cache_bust }}"></script>
 <script src="/static/js/copilot-board-panel.js?v={{ cache_bust }}"></script>
+<script src="/static/js/dispatch-render.js?v={{ cache_bust }}"></script>
 <script src="/static/js/dispatch.js?v={{ cache_bust }}"></script>
+<script src="/static/js/dispatch-settings.js?v={{ cache_bust }}"></script>
 {% endblock %}

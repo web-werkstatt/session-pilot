@@ -191,12 +191,31 @@ def _build_signals(project_name, markers, next_marker):
             "hint": ", ".join(parts[:3]) if parts else f"{dead_total} Findings",
         })
 
+    # Dispatch-Status pro Marker + Hints fuer unzugewiesene Marker
+    try:
+        from services.dispatch_service import get_dispatch_status_map
+        dispatch_status = get_dispatch_status_map(project_name)
+    except Exception:
+        dispatch_status = {}
+    for marker in markers:
+        mid = marker.marker_id
+        if marker.status in ("in_progress", "todo"):
+            ds = dispatch_status.get(mid)
+            if not ds:
+                _append_hint(hints, seen, {
+                    "marker_id": mid,
+                    "label": "Dispatch",
+                    "level": "low",
+                    "hint": "Kein Tool zugewiesen",
+                })
+
     return {
         "governance_status": gate.get("status") or "unknown",
         "audit_status": (audit_status or "unknown").lower(),
         "quality_score": quality_score if quality_score is not None else None,
         "dead_code_summary": dead_code if dead_code else None,
-        "priority_hints": hints[:6],
+        "dispatch_status": dispatch_status,
+        "priority_hints": hints[:8],
     }
 
 
@@ -340,53 +359,44 @@ def _serialize_marker_card(project_name, marker, plan_titles, workflow_states, c
     }
 
 
+_FALLBACK_TRANSITIONS = {
+    "planned": ["blocked", "ready"], "ready": ["active", "blocked", "planned"],
+    "active": ["blocked", "write_back"], "write_back": ["active", "blocked", "rating"],
+    "rating": ["active", "done"], "done": ["active"],
+    "blocked": ["planned", "ready", "active"],
+}
+
+
 def _fallback_allowed_transitions(workflow_status):
-    fallback = {
-        "planned": ["blocked", "ready"],
-        "ready": ["active", "blocked", "planned"],
-        "active": ["blocked", "write_back"],
-        "write_back": ["active", "blocked", "rating"],
-        "rating": ["active", "done"],
-        "done": ["active"],
-        "blocked": ["planned", "ready", "active"],
-    }
-    return fallback.get(str(workflow_status or "").strip(), [])
+    return _FALLBACK_TRANSITIONS.get(str(workflow_status or "").strip(), [])
 
 
 def _derive_card_status(marker, gate_ready):
-    if marker.status == "in_progress":
-        return "active"
-    if marker.status == "blocked":
-        return "blocked"
-    if marker.status == "done":
-        return "rating" if marker.execution_score is None else "done"
-    if marker.status == "todo":
-        return "ready" if gate_ready else "planned"
+    st = marker.status
+    if st == "in_progress": return "active"
+    if st == "blocked": return "blocked"
+    if st == "done": return "rating" if marker.execution_score is None else "done"
+    if st == "todo": return "ready" if gate_ready else "planned"
     return "planned"
 
 
+_WORKFLOW_GROUPS = {"blocked": "blocked", "active": "active",
+                    "write_back": "waiting", "rating": "waiting"}
+
+
 def _workflow_group(workflow_status):
-    workflow_status = str(workflow_status or "").strip()
-    if workflow_status == "blocked":
-        return "blocked"
-    if workflow_status == "active":
-        return "active"
-    if workflow_status in ("write_back", "rating"):
-        return "waiting"
-    return "waiting"
+    return _WORKFLOW_GROUPS.get(str(workflow_status or "").strip(), "waiting")
+
+
+_WORKFLOW_LABELS = {
+    "planned": "Noch nicht bereit", "ready": "Bereit zum Start",
+    "active": "Aktiv in Execution", "write_back": "Write Back offen",
+    "rating": "Rating offen", "done": "Sauber abgeschlossen", "blocked": "Blockiert",
+}
 
 
 def _workflow_status_label(workflow_status):
-    labels = {
-        "planned": "Noch nicht bereit",
-        "ready": "Bereit zum Start",
-        "active": "Aktiv in Execution",
-        "write_back": "Write Back offen",
-        "rating": "Rating offen",
-        "done": "Sauber abgeschlossen",
-        "blocked": "Blockiert",
-    }
-    return labels.get(str(workflow_status or "").strip(), workflow_status or "Unbekannt")
+    return _WORKFLOW_LABELS.get(str(workflow_status or "").strip(), workflow_status or "Unbekannt")
 
 
 def _append_marker_hints(hints, seen, marker):
@@ -437,17 +447,10 @@ def _derive_gate_reason(marker):
 
 def _step_cta_label(step_id, current_marker, next_marker):
     if step_id == "rating":
-        if current_marker and current_marker.get("rating_pending"):
-            return "Rating nachholen"
-        return "Verlauf ansehen"
-    if step_id == "write_back":
-        return "Abschluss vorbereiten"
-    if step_id == "execution":
-        return "Thread fortsetzen" if current_marker else "Execution oeffnen"
-    if step_id == "active":
-        return "Execution oeffnen"
-    if next_marker and next_marker.get("gate_status") == "blocked":
-        return "Marker pruefen"
+        return "Rating nachholen" if current_marker and current_marker.get("rating_pending") else "Verlauf ansehen"
+    if step_id == "write_back": return "Abschluss vorbereiten"
+    if step_id == "execution": return "Thread fortsetzen" if current_marker else "Execution oeffnen"
+    if step_id == "active": return "Execution oeffnen"
     return "Marker pruefen"
 
 

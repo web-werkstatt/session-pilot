@@ -474,3 +474,24 @@ def get_perplexity_mode(
     """Effektiver Perplexity-Modus (off | review_only | suggest)."""
     settings = get_effective_settings(project_name=project_name)
     return settings.get("perplexity_mode", "review_only")
+
+
+def get_dispatch_status_map(
+    project_name: str,
+) -> Dict[str, Dict[str, Any]]:
+    """Baut dispatch_status Map: marker_id -> {assignment_id, executor_tool, approval_state, risk_level}.
+
+    Zeigt pro Marker ob ein aktives (non-terminal) Assignment existiert.
+    """
+    result: Dict[str, Dict[str, Any]] = {}
+    for state in ("proposed", "approved", "claimed"):
+        for a in list_assignments(project_name=project_name, status=state):
+            mid = str(a.get("marker_id") or "")
+            if mid and mid not in result:
+                result[mid] = {
+                    "assignment_id": a.get("assignment_id"),
+                    "executor_tool": a.get("executor_tool", ""),
+                    "approval_state": a.get("approval_state", ""),
+                    "risk_level": a.get("risk_level", "medium"),
+                }
+    return result

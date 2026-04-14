@@ -1,0 +1,117 @@
+/* Dispatch Settings + Badge — ADR-002 Stufe 2a Commit 8 */
+
+/* ── Settings ── */
+.dispatch-settings-toggle {
+    padding-top: 8px;
+}
+
+.dispatch-settings {
+    padding: 16px;
+    border-radius: 10px;
+    border: 1px solid rgba(148, 163, 184, 0.15);
+    background: rgba(15, 23, 42, 0.7);
+}
+
+.dispatch-settings-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.dispatch-settings-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #f8fafc;
+}
+
+.dispatch-settings-subtitle {
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(148, 163, 184, 0.6);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 16px 0 8px;
+}
+
+.dispatch-settings-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 0;
+}
+
+.dispatch-settings-label {
+    font-size: 13px;
+    color: rgba(226, 232, 240, 0.8);
+    min-width: 140px;
+}
+
+.dispatch-settings-select {
+    padding: 6px 10px;
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    border-radius: 6px;
+    background: rgba(2, 6, 23, 0.6);
+    color: #e2e8f0;
+    font-size: 13px;
+    font-family: inherit;
+}
+
+.dispatch-settings-select:focus {
+    outline: none;
+    border-color: rgba(56, 189, 248, 0.4);
+}
+
+.dispatch-settings-tool-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 6px 0;
+}
+
+.dispatch-settings-tool-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(226, 232, 240, 0.9);
+    min-width: 140px;
+}
+
+.dispatch-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    color: rgba(148, 163, 184, 0.7);
+    cursor: pointer;
+}
+
+.dispatch-toggle input[type="checkbox"] {
+    accent-color: #38bdf8;
+}
+
+.dispatch-settings-concurrent {
+    font-size: 11px;
+    color: rgba(148, 163, 184, 0.5);
+}
+
+.dispatch-settings-empty {
+    font-size: 12px;
+    color: rgba(148, 163, 184, 0.4);
+    padding: 8px 0;
+}
+
+/* ── Badge-Counter (Panel-Tab + Projekt-Detail) ── */
+.panel-tab-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 9px;
+    background: rgba(56, 189, 248, 0.2);
+    color: #38bdf8;
+    font-size: 10px;
+    font-weight: 700;
+    margin-left: 4px;
+}

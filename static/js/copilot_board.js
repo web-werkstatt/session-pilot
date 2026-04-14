@@ -91,6 +91,17 @@ function _loadSections() {
             }
             if (data.assignments) {
                 _activeAssignments = data.assignments;
+                // Dispatch-Badge aktualisieren
+                var badge = document.getElementById('dispatchBadge');
+                var count = Object.keys(data.assignments).length;
+                if (badge) {
+                    if (count > 0) {
+                        badge.textContent = String(count);
+                        badge.style.display = '';
+                    } else {
+                        badge.style.display = 'none';
+                    }
+                }
             }
             if (data.plans) {
                 _cockpitPlans = data.plans;
