@@ -1,8 +1,8 @@
 # Projekt-Dashboard - Naechste Session
 
-> **Letzte Aktualisierung:** 2026-04-14 (Session 14: Unified Cockpit Phase 6)
-> **Status:** Plan-Filter-Dropdown + Sprint-Sections Collapse. Unified Cockpit Phase 1-6 done.
-> **Naechste Aufgabe:** Dispatch Sprint 2a Commits 7-9 oder Unified Cockpit Phase 7 (Projekt-Detail bereinigen)
+> **Letzte Aktualisierung:** 2026-04-14 (Session 15: Dispatch Sprint 2a Commits 7-8)
+> **Status:** Dispatch Pull-Adapter + Perplexity-Gate + Integration. Commits 7+8 done, Commit 9 offen.
+> **Naechste Aufgabe:** Dispatch Sprint 2a Commit 9 (Doku + Push) oder Unified Cockpit Phase 7
 
 ---
 
@@ -31,7 +31,9 @@ CLAUDE.md/AGENTS.md/GEMINI.md. Perplexity-Copilot wird Read-Only-Validierungssch
 - [x] ADR-002 Stufe 2a Commit 6: Dispatch-UI in Cockpit-Panel
 - [x] Unified Cockpit Phase 1-5: Backend, JS-Param, Route, Workflow-Ring, Board+Badges
 - [ ] Dead Code V2: Ungenutzte Funktionen/Klassen mit Flask-Decorator-Erkennung
-- [ ] **ADR-002 Stufe 2a Commits 7-9:** Pull-Adapter, Integration, Doku (offen)
+- [x] **ADR-002 Stufe 2a Commit 7:** Pull-Adapter + Perplexity-Gate
+- [x] **ADR-002 Stufe 2a Commit 8:** Integration workflow_core + Settings-Toggles
+- [ ] **ADR-002 Stufe 2a Commit 9:** Doku + Push (offen)
 - [x] **Unified Cockpit Phase 6:** Sprint-Sections demoten + Plan-Filter-Dropdown
 - [ ] **Unified Cockpit Phase 7:** Projekt-Detail bereinigen (DEFERRED)
 
@@ -52,6 +54,7 @@ CLAUDE.md/AGENTS.md/GEMINI.md. Perplexity-Copilot wird Read-Only-Validierungssch
 | Workflow-System | DONE — Loop v1+v2, ADR-001 (Marker-DB, Core, Write-Guard) |
 | AI-Control-Plane | DONE — ADR-002 Stufe 1 (Reviewer, Policies, Perplexity, CWO, Metriken) |
 | **Unified Cockpit Phase 1-6** | **DONE — Projekt-API, JS-Param, Route, Workflow-Ring, Board+Badges, Plan-Filter** |
+| **Dispatch Sprint 2a (7-8)** | **DONE — Pull-Adapter, Perplexity-Gate, workflow_core Integration, Settings-Toggles** |
 
 ## Was nicht da ist (= Deferred)
 
@@ -76,35 +79,44 @@ Dashboard laeuft als systemd-Service auf Port 5055, Backup taeglich 12:30.
 - **DB:** PostgreSQL `project_dashboard`, Schema-Migrationen lazy via `ensure_*_schema()`
 - **Marker-Context:** `marker-context.md` im Root ist Runtime-Datei (gitignored), CLAUDE.md-Regel: nie eigenmaechtig veraendern
 
-## Session 2026-04-14 (Session 14) — Unified Cockpit Phase 6
+## Session 2026-04-14 (Session 15) — Dispatch Sprint 2a Commits 7-8
 
 ### Was wurde erledigt
-- **Sprint-Sections demoted** (Commit 6): Starten kollapsiert, Toggle-Button (Chevron -90° wenn collapsed)
-- **Plan-Filter-Dropdown** im Header: "Alle Plaene (15)" + 6 aktive Plaene mit Marker-Counts
-- **Client-side Filtering:** Board + Progress reagieren sofort auf Filter, kein Seiten-Reload
-- **Auto-Expand:** Bei aktivem Filter werden Plan-Sections geladen und Sections expanded
-- **Partial extrahiert:** `_cockpit_sprint_sections.html` (Template: 300→292 Zeilen)
-- **Abwaertskompatibilitaet:** `?plan_id=N` funktioniert unveraendert, Sections dort ebenfalls collapsed
+- **Commit 7 — Pull-Adapter + Perplexity-Gate:**
+  - Pull-API Perplexity-Gate gehaertet: automatischer Review-Trigger bei fehlender Review
+  - `scripts/dispatch_pull_adapter.py` (364 Z.) — Referenz-Implementierung mit One-Shot/Daemon
+  - `scripts/dispatch_pull_adapter_claude.sh` (106 Z.) — Claude-Code Shell-Wrapper
+- **Commit 8 — Integration + Settings-Toggles:**
+  - `get_handoff_view()` liefert `active_assignments` Map pro Marker
+  - Neues Signal `dispatch_status` + Hint-Typ `dispatch` im Workflow-Loop
+  - Settings-Section im Dispatch-Panel (Perplexity-Modus, Tool-Toggles, Suggest-Button)
+  - Badge-Counter fuer aktive Assignments im Cockpit-Tab
+  - JS aufgeteilt: `dispatch-render.js`, `dispatch-settings.js` (Dateigroessen-Limit)
 
 ### Git Commits
 ```
-cad2c7d Feature: Unified Cockpit Phase 6 — Sprint-Sections demoten + Plan-Filter-Dropdown
-044d583 Docs: Session 14 — Unified Cockpit Phase 6, Sprint-Status aktualisiert
+3d88d24 Feature: ADR-002 Stufe 2a Commit 7 — Pull-Adapter + Perplexity-Gate
+3d03c32 Feature: ADR-002 Stufe 2a Commit 8 — Integration workflow_core + Settings-Toggles
 ```
 
 ### Neue Dateien
 | Datei | Zeilen | Zweck |
 |-------|--------|-------|
-| `templates/_cockpit_sprint_sections.html` | 13 | Sprint-Sections Partial |
+| `scripts/dispatch_pull_adapter.py` | 364 | Pull-Adapter Referenz-Implementierung |
+| `scripts/dispatch_pull_adapter_claude.sh` | 106 | Claude-Code Shell-Wrapper |
+| `static/js/dispatch-render.js` | 118 | Card/Review Render-Funktionen (extrahiert) |
+| `static/js/dispatch-settings.js` | 109 | Settings-Panel Logik (extrahiert) |
+| `static/css/dispatch-settings.css` | 117 | Settings-Styles + Badge |
 
 ---
 
 ## Naechste Session
 
-### Primaer: Dispatch Sprint 2a Commits 7-9
-- **Commit 7:** Pull-Adapter Scripts + Perplexity-Gate bei Pull
-- **Commit 8:** Integration workflow_core + Marker-Binding + Settings-Toggles
-- **Commit 9:** Doku + Push
+### Primaer: Dispatch Sprint 2a Commit 9 (Doku + Push)
+- `services/CLAUDE.md` erweitern: Dispatch-Schicht dokumentieren
+- `sprints/master-plan-summary.md` aktualisieren: Stufe 2a als DONE
+- Service neustarten + Live-Test der Pull-API + Settings-Toggles
+- Push auf Gitea
 
 ### Sekundaer: Unified Cockpit Phase 7 (DEFERRED)
 - Projekt-Detail bereinigen: Workflow-Tab → Zusammenfassung + Cockpit-Link
@@ -113,4 +125,4 @@ cad2c7d Feature: Unified Cockpit Phase 6 — Sprint-Sections demoten + Plan-Filt
 ### Tertiaer (wenn Zeit)
 - [ ] Policy-Suggestions bewerten: 4 pending unter /policies
 - [ ] Dead Code V2: Ungenutzte Funktionen/Klassen mit Flask-Decorator-Erkennung
-- [ ] Optional: Trend-Chart, Adaptive Kalibrierung
+- [ ] dispatch.js IIFE zu Module-Pattern refactoren (aktuell 425 Z., Panel-Code eng gekoppelt)

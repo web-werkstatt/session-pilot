@@ -4,6 +4,25 @@
 
 ---
 
+## Session 2026-04-14 (Session 14) — Unified Cockpit Phase 6
+
+### Was wurde erledigt
+- **Sprint-Sections demoted** (Commit 6): Starten kollapsiert, Toggle-Button (Chevron -90° wenn collapsed)
+- **Plan-Filter-Dropdown** im Header: "Alle Plaene (15)" + 6 aktive Plaene mit Marker-Counts
+- **Client-side Filtering:** Board + Progress reagieren sofort auf Filter, kein Seiten-Reload
+- **Auto-Expand:** Bei aktivem Filter werden Plan-Sections geladen und Sections expanded
+- **Partial extrahiert:** `_cockpit_sprint_sections.html` (Template: 300→292 Zeilen)
+- **Abwaertskompatibilitaet:** `?plan_id=N` funktioniert unveraendert, Sections dort ebenfalls collapsed
+
+### Git Commits
+```
+cad2c7d Feature: Unified Cockpit Phase 6 — Sprint-Sections demoten + Plan-Filter-Dropdown
+044d583 Docs: Session 14 — Unified Cockpit Phase 6, Sprint-Status aktualisiert
+ff023a5 Docs: Session 14 — Unified Cockpit Phase 6, next-session konsolidiert
+```
+
+---
+
 ## Session 2026-04-14 (Session 13) — Unified Cockpit Phase 5
 
 ### Was wurde erledigt
