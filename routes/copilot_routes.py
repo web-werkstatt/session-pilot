@@ -32,13 +32,29 @@ def _resolve_project_id(project_id=None, plan_id=None):
 @copilot_bp.route("/copilot")
 def copilot_page():
     plan_id = request.args.get("plan_id", type=int)
+    project = request.args.get("project", "").strip()
+
+    # Projekt-Modus: /copilot?project=<name> (optional mit plan_id als Filter)
+    if project:
+        return render_template(
+            "copilot_board.html", active_page="copilot",
+            plan_id=plan_id or 0, project_name=project,
+        )
+
+    # Plan-Modus: /copilot?plan_id=N (bestehend, abwaertskompatibel)
     if plan_id:
-        return render_template("copilot_board.html", active_page="copilot", plan_id=plan_id)
-    # Ohne plan_id: Redirect zum letzten aktiven Plan oder /plans
+        # Projekt aus Plan ableiten
+        project_name = _resolve_project_from_plan(plan_id)
+        return render_template(
+            "copilot_board.html", active_page="copilot",
+            plan_id=plan_id, project_name=project_name or "",
+        )
+
+    # Ohne Parameter: Redirect zum letzten aktiven Plan oder Landing
     from services.db_service import execute
     try:
         last = execute("""
-            SELECT id FROM project_plans
+            SELECT id, project_name FROM project_plans
             WHERE status IN ('active', 'draft')
             ORDER BY updated_at DESC NULLS LAST LIMIT 1
         """, fetchone=True)
@@ -47,6 +63,19 @@ def copilot_page():
     except Exception:
         pass
     return render_template("copilot_landing.html", active_page="copilot")
+
+
+def _resolve_project_from_plan(plan_id):
+    """Projekt-Name aus einem Plan ableiten."""
+    from services.db_service import execute
+    try:
+        row = execute(
+            "SELECT project_name FROM project_plans WHERE id = %s",
+            (plan_id,), fetchone=True,
+        )
+        return str(row["project_name"]).strip() if row and row.get("project_name") else ""
+    except Exception:
+        return ""
 
 
 @copilot_bp.route("/api/copilot/stats")

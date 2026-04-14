@@ -1,6 +1,7 @@
 (function() {
     var WL = window.WorkflowLoop = window.WorkflowLoop || {};
 
+    WL.projectName = null;
     WL.data = null;
     WL.ui = {
         loadingByMarker: {},
@@ -58,8 +59,12 @@
         return marker.status || 'Todo';
     };
 
+    WL.getProjectName = function() {
+        return WL.projectName || (typeof PROJECT_NAME !== 'undefined' ? PROJECT_NAME : '');
+    };
+
     WL.copilotUrl = function(planId, markerId, tab) {
-        var url = '/copilot?plan_id=' + encodeURIComponent(planId) + '&project=' + encodeURIComponent(PROJECT_NAME);
+        var url = '/copilot?plan_id=' + encodeURIComponent(planId) + '&project=' + encodeURIComponent(WL.getProjectName());
         if (markerId) url += '&marker_id=' + encodeURIComponent(markerId);
         if (tab) url += '&tab=' + encodeURIComponent(tab);
         return url;

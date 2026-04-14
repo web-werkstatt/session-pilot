@@ -75,7 +75,7 @@
         try {
             if (action === 'start') {
                 await api.post('/api/copilot/markers/' + encodeURIComponent(markerId) + '/activate', {
-                    project_id: PROJECT_NAME,
+                    project_id: WL.getProjectName(),
                     plan_id: marker.plan_id,
                     context_path: 'marker-context.md'
                 });
@@ -88,7 +88,7 @@
                 var blockedReason = WL.blockerValue(marker).trim();
                 if (!blockedReason) throw new Error('Bitte kurz begruenden, warum der Marker blockiert ist.');
                 await api.patch('/api/copilot/markers/' + encodeURIComponent(markerId) + '/status', {
-                    project_id: PROJECT_NAME,
+                    project_id: WL.getProjectName(),
                     plan_id: marker.plan_id,
                     status: 'blocked'
                 });
@@ -101,7 +101,7 @@
             } else if (action === 'reactivate') {
                 var nextStatus = marker.gate_status === 'ready' ? 'ready' : 'planned';
                 await api.patch('/api/copilot/markers/' + encodeURIComponent(markerId) + '/status', {
-                    project_id: PROJECT_NAME,
+                    project_id: WL.getProjectName(),
                     plan_id: marker.plan_id,
                     status: 'todo'
                 });
@@ -130,7 +130,7 @@
                 var score = Number(WL.ui.ratingScores[markerId] || marker.execution_score || 0);
                 if (!score || score < 1 || score > 5) throw new Error('Bitte eine Bewertung von 1 bis 5 auswaehlen.');
                 await api.post('/api/marker/' + encodeURIComponent(markerId) + '/execution-rating', {
-                    project_id: PROJECT_NAME,
+                    project_id: WL.getProjectName(),
                     plan_id: marker.plan_id,
                     execution_score: score,
                     execution_comment: WL.ui.ratingComments[markerId] || marker.execution_comment || ''
@@ -152,7 +152,7 @@
     };
 
     WL.transition = function(markerId, toStatus, extra) {
-        return api.post('/api/project/' + encodeURIComponent(PROJECT_NAME) + '/workflow-state/' + encodeURIComponent(markerId) + '/transition', Object.assign({
+        return api.post('/api/project/' + encodeURIComponent(WL.getProjectName()) + '/workflow-state/' + encodeURIComponent(markerId) + '/transition', Object.assign({
             to_status: toStatus,
             triggered_by: 'workflow_loop_ui'
         }, extra || {}));

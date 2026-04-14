@@ -282,7 +282,7 @@
 {% endblock %}
 {% block scripts %}
 <script src="/static/js/marked.min.js"></script>
-<script>var PLAN_ID = {{ plan_id }};</script>
+<script>var PLAN_ID = {{ plan_id or 'null' }};var COCKPIT_PROJECT = "{{ project_name or '' }}";</script>
 <script src="/static/js/copilot-board-shared.js?v={{ cache_bust }}"></script>
 <script src="/static/js/copilot-marker-errors.js?v={{ cache_bust }}"></script>
 <script src="/static/js/copilot_board.js?v={{ cache_bust }}"></script>

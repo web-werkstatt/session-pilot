@@ -171,18 +171,27 @@
             + '</article>';
     }
 
-    WL.summaryButtonHtml = function(ctaLabel, data) {
-        if (ctaLabel === 'Planning oeffnen') {
-            return '<button class="workflow-loop-cta" type="button" onclick="switchProjectTabByName(\'plans\')">Planning oeffnen</button>';
+    WL.onPlanningClick = null;
+
+    function _planningBtnHtml(cssClass) {
+        if (WL.onPlanningClick) {
+            return '<button class="' + cssClass + '" type="button" onclick="WorkflowLoop.onPlanningClick()">Planning oeffnen</button>';
         }
+        if (typeof switchProjectTabByName === 'function') {
+            return '<button class="' + cssClass + '" type="button" onclick="switchProjectTabByName(\'plans\')">Planning oeffnen</button>';
+        }
+        var pn = WL.getProjectName();
+        return '<a class="' + cssClass + '" href="/project/' + encodeURIComponent(pn) + '?tab=plans">Planning oeffnen</a>';
+    }
+
+    WL.summaryButtonHtml = function(ctaLabel, data) {
+        if (ctaLabel === 'Planning oeffnen') return _planningBtnHtml('workflow-loop-cta');
         var marker = data.current_marker && data.current_marker.marker_id ? data.current_marker : data.next_marker;
         return WL.markerButtonHtml(ctaLabel, marker);
     };
 
     WL.markerButtonHtml = function(ctaLabel, marker) {
-        if (!marker || !marker.plan_id) {
-            return '<button class="workflow-loop-inline-btn" type="button" onclick="switchProjectTabByName(\'plans\')">Planning oeffnen</button>';
-        }
+        if (!marker || !marker.plan_id) return _planningBtnHtml('workflow-loop-inline-btn');
         var mode = 'chat';
         if (ctaLabel === 'Rating nachholen') mode = 'history';
         var url = WL.copilotUrl(marker.plan_id, marker.marker_id, mode);

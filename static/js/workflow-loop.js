@@ -17,9 +17,11 @@
             + '</div>';
     }
 
-    async function loadWorkflowLoop() {
+    async function loadWorkflowLoop(projectName) {
+        if (projectName) WL.projectName = projectName;
+        var pn = WL.getProjectName();
         var shell = document.getElementById('workflowLoopShell');
-        if (!shell) return;
+        if (!shell || !pn) return;
 
         shell.classList.remove('is-error');
         shell.classList.remove('is-empty');
@@ -27,7 +29,7 @@
 
         try {
             ensureLayout(shell);
-            WL.data = await api.get('/api/project/' + encodeURIComponent(PROJECT_NAME) + '/workflow-loop');
+            WL.data = await api.get('/api/project/' + encodeURIComponent(pn) + '/workflow-loop');
             renderWorkflowLoop(shell, WL.data || {});
         } catch (e) {
             shell.classList.add('is-error');
