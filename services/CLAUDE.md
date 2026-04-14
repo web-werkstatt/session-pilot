@@ -48,6 +48,18 @@
 | `policy_review_service.py` | Perplexity-Policy-Reviewer mit context_hash-Dedup |
 | `tool_setup_review/` | Modularer Setup-Reviewer (Collector, Drift-Check, Orchestrator, Storage) |
 
+## Dispatch-Schicht (ADR-002 Stufe 2a)
+
+| Service | Zweck |
+|---------|-------|
+| `db_dispatch_schema.py` | 2 DB-Tabellen: `marker_assignments` (Queue), `dispatch_reviews` (Perplexity-Gate) |
+| `dispatch_service.py` | Assignment-CRUD, Pull-API mit Perplexity-Gate (Auto-Trigger bei fehlender Review), Status-Transitions |
+| `dispatch_review_service.py` | Perplexity-Review-Trigger, context_hash-Dedup, Veto/Approve-Logik |
+
+**Integration:** `workflow_core_service.get_handoff_view()` liefert `active_assignments` pro Marker. `workflow_loop_service` erzeugt Signal `dispatch_status` + Hint-Typ `dispatch`. Dispatch-UI ist in Cockpit-Panel + Settings-Section integriert.
+
+**Pull-Adapter:** Externe Executoren holen Assignments per `/api/dispatch/pull?executor_tool=<tool>`. Perplexity-Gate verhindert Pull ohne gueltige Review. Referenz-Implementierungen: `scripts/dispatch_pull_adapter.py` (Python, One-Shot/Daemon) + `scripts/dispatch_pull_adapter_claude.sh` (Shell-Wrapper).
+
 ## Patterns
 
 - **DB-first mit Fallback:** Lese-Pfade nutzen DB, fallen auf handoff.md zurueck
