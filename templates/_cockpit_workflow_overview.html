@@ -1,0 +1,18 @@
+{# Kompakte Workflow-Uebersicht — zwischen Progress-Bar und Board #}
+<div class="cockpit-wf-overview ui-panel" id="cockpitWorkflowOverview" style="display:none;">
+    <div class="cockpit-wf-header">
+        <button class="ui-button ui-button--ghost cockpit-wf-toggle-btn" id="cockpitWfToggleBtn" type="button" onclick="toggleCockpitWorkflow()">
+            <i data-lucide="activity" class="icon icon-xs"></i>
+            <span>Workflow</span>
+            <i data-lucide="chevron-down" class="icon icon-xs cockpit-wf-chevron" id="cockpitWfChevron"></i>
+        </button>
+        <div class="cockpit-wf-signals" id="cockpitWfSignals"></div>
+    </div>
+    <div class="cockpit-wf-body" id="cockpitWfBody">
+        <div class="cockpit-wf-ring" id="cockpitWfRing"></div>
+        <div class="cockpit-wf-info">
+            <div class="cockpit-wf-step-label" id="cockpitWfStepLabel"></div>
+            <div class="cockpit-wf-markers" id="cockpitWfMarkers"></div>
+        </div>
+    </div>
+</div>

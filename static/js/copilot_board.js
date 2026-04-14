@@ -31,6 +31,7 @@ document.addEventListener('DOMContentLoaded', function() {
         .finally(function() {
             _loadSections();
             _loadPlanSwitcher();
+            if (COCKPIT_PROJECT && typeof loadCockpitWorkflow === 'function') loadCockpitWorkflow();
         });
     document.addEventListener('click', function(e) {
         var dd = document.getElementById('planSwitcherDD');
@@ -43,6 +44,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
 /* === Plan Info === */
 function _loadPlanInfo() {
+    // Projekt-Modus: kein Plan geladen, Projekt aus COCKPIT_PROJECT
+    if (!PLAN_ID && COCKPIT_PROJECT) {
+        _currentProjectId = COCKPIT_PROJECT;
+        _planSections = [];
+        document.getElementById('planSwitcherLabel').textContent = 'Plan switch';
+        document.getElementById('currentPlanTitle').textContent = COCKPIT_PROJECT;
+        return Promise.resolve();
+    }
     return api.get('/api/plans/' + PLAN_ID)
         .then(function(plan) {
             _planInfo = plan;
@@ -64,41 +73,14 @@ function _loadPlanInfo() {
         });
 }
 
-/* === Plan Switcher === */
-function _loadPlanSwitcher() {
-    api.get('/api/copilot/stats')
-        .then(function(data) {
-            var plans = data.active_plans || [];
-            var dd = document.getElementById('planSwitcherDD');
-            var html = '';
-            plans.forEach(function(p) {
-                var cls = p.id === PLAN_ID ? ' active' : '';
-                html += '<button class="copilot-plan-switch-item' + cls + '" onclick="switchPlan(' + p.id + ', \'' + _escapeJsString(p.title || ('Plan ' + p.id)) + '\')">'
-                    + escapeHtml(p.title || 'Plan #' + p.id)
-                    + '<small>' + escapeHtml(p.project_name || '') + ' &middot; ' + (p.status || '') + '</small>'
-                    + '</button>';
-            });
-            if (plans.length > 0) {
-                html += '<div class="copilot-plan-switch-divider"></div>';
-            }
-            html += '<button class="copilot-plan-switch-item" onclick="window.location.href=\'/plans\'">Show all plans &rarr;</button>';
-            dd.innerHTML = html;
-        })
-        .catch(function() {});
-}
-
-function togglePlanSwitcher() {
-    var dd = document.getElementById('planSwitcherDD');
-    dd.style.display = dd.style.display === 'none' ? 'block' : 'none';
-}
-
-function switchPlan(planId, planTitle) {
-    window.location.href = _buildCopilotUrl(planId, planTitle);
-}
+/* _loadPlanSwitcher, togglePlanSwitcher, switchPlan → copilot-board-shared.js */
 
 /* === Sections laden === */
 function _loadSections() {
-    api.get(_buildMarkerApiUrl())
+    var url = (!PLAN_ID && COCKPIT_PROJECT)
+        ? '/api/cockpit/project/' + encodeURIComponent(COCKPIT_PROJECT)
+        : _buildMarkerApiUrl();
+    api.get(url)
         .then(function(data) {
             allSections = _filterMarkersForWorkspace((data.markers || []).map(_normalizeMarker));
             var parseErrors = Array.isArray(data.parse_errors) ? data.parse_errors : [];

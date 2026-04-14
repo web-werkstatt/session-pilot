@@ -13,6 +13,8 @@
 <link rel="stylesheet" href="/static/css/copilot-chat.css?v={{ cache_bust }}">
 <link rel="stylesheet" href="/static/css/copilot-marker-errors.css?v={{ cache_bust }}">
 <link rel="stylesheet" href="/static/css/copilot-board.css?v={{ cache_bust }}">
+<link rel="stylesheet" href="/static/css/workflow-loop-summary.css?v={{ cache_bust }}">
+<link rel="stylesheet" href="/static/css/cockpit-workflow.css?v={{ cache_bust }}">
 <link rel="stylesheet" href="/static/css/dispatch.css?v={{ cache_bust }}">
 {% endblock %}
 {% block content %}
@@ -63,6 +65,8 @@
             <span id="progressReview">0 Review</span>
         </div>
     </div>
+
+    {% include "_cockpit_workflow_overview.html" %}
 
     <div class="board-split-view">
         <div class="board-main">
@@ -285,6 +289,8 @@
 <script>var PLAN_ID = {{ plan_id or 'null' }};var COCKPIT_PROJECT = "{{ project_name or '' }}";</script>
 <script src="/static/js/copilot-board-shared.js?v={{ cache_bust }}"></script>
 <script src="/static/js/copilot-marker-errors.js?v={{ cache_bust }}"></script>
+<script src="/static/js/workflow-loop-svg.js?v={{ cache_bust }}"></script>
+<script src="/static/js/cockpit-workflow.js?v={{ cache_bust }}"></script>
 <script src="/static/js/copilot_board.js?v={{ cache_bust }}"></script>
 <script src="/static/js/copilot-section-modal.js?v={{ cache_bust }}"></script>
 <script src="/static/js/copilot-board-panel.js?v={{ cache_bust }}"></script>

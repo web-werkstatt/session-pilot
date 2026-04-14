@@ -98,3 +98,35 @@ function _deriveSprintPath() {
     var markerPlanId = _currentMarkerPlanId || String(PLAN_ID);
     return markerPlanId;
 }
+
+/* === Plan Switcher === */
+function _loadPlanSwitcher() {
+    api.get('/api/copilot/stats')
+        .then(function(data) {
+            var plans = data.active_plans || [];
+            var dd = document.getElementById('planSwitcherDD');
+            var html = '';
+            plans.forEach(function(p) {
+                var cls = p.id === PLAN_ID ? ' active' : '';
+                html += '<button class="copilot-plan-switch-item' + cls + '" onclick="switchPlan(' + p.id + ', \'' + _escapeJsString(p.title || ('Plan ' + p.id)) + '\')">'
+                    + escapeHtml(p.title || 'Plan #' + p.id)
+                    + '<small>' + escapeHtml(p.project_name || '') + ' &middot; ' + (p.status || '') + '</small>'
+                    + '</button>';
+            });
+            if (plans.length > 0) {
+                html += '<div class="copilot-plan-switch-divider"></div>';
+            }
+            html += '<button class="copilot-plan-switch-item" onclick="window.location.href=\'/plans\'">Show all plans &rarr;</button>';
+            dd.innerHTML = html;
+        })
+        .catch(function() {});
+}
+
+function togglePlanSwitcher() {
+    var dd = document.getElementById('planSwitcherDD');
+    dd.style.display = dd.style.display === 'none' ? 'block' : 'none';
+}
+
+function switchPlan(planId, planTitle) {
+    window.location.href = _buildCopilotUrl(planId, planTitle);
+}

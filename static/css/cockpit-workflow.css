@@ -1,0 +1,131 @@
+/* Cockpit Workflow Overview — kompakte Inline-Darstellung */
+
+.cockpit-wf-overview {
+    margin-bottom: 12px;
+    padding: 10px 16px;
+}
+
+.cockpit-wf-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.cockpit-wf-toggle-btn {
+    font-size: 13px;
+    font-weight: 600;
+    gap: 6px;
+    padding: 4px 8px;
+}
+
+.cockpit-wf-chevron {
+    transition: transform 0.2s ease;
+}
+
+.cockpit-wf-overview.is-collapsed .cockpit-wf-chevron {
+    transform: rotate(-90deg);
+}
+
+.cockpit-wf-overview.is-collapsed .cockpit-wf-body {
+    display: none;
+}
+
+.cockpit-wf-signals {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.cockpit-wf-signal-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+    flex-shrink: 0;
+}
+
+.cockpit-wf-signal-dot[title] {
+    cursor: help;
+}
+
+.cockpit-wf-body {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.cockpit-wf-ring {
+    flex-shrink: 0;
+    width: 240px;
+    height: 240px;
+}
+
+.cockpit-wf-ring .workflow-loop-svg {
+    width: 100%;
+    height: auto;
+}
+
+.cockpit-wf-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.cockpit-wf-step-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: rgba(125, 211, 252, 0.9);
+    margin-bottom: 8px;
+}
+
+.cockpit-wf-markers {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.cockpit-wf-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s ease;
+    max-width: 280px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cockpit-wf-pill:hover {
+    filter: brightness(1.2);
+}
+
+.cockpit-wf-pill--current {
+    background: rgba(56, 189, 248, 0.15);
+    color: #7dd3fc;
+    border: 1px solid rgba(56, 189, 248, 0.25);
+}
+
+.cockpit-wf-pill--next {
+    background: rgba(148, 163, 184, 0.1);
+    color: #94a3b8;
+    border: 1px solid rgba(148, 163, 184, 0.15);
+}
+
+.cockpit-wf-pill-label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    opacity: 0.7;
+    flex-shrink: 0;
+}
