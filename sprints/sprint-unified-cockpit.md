@@ -1,7 +1,7 @@
 # Sprint: Unified Cockpit — Konsolidierung der operativen Oberflaeche
 
 Stand: 2026-04-14
-Status: **IN PROGRESS** (Phase 1-3 fertig, Phase 4-7 offen)
+Status: **IN PROGRESS** (Phase 1-5 fertig, Phase 6-7 offen)
 Grundlage: ADR-002 Stufe 2a (Dispatch), Unified-Cockpit-Plan (`~/.claude/plans/soft-discovering-horizon.md`)
 
 ## Ziel
@@ -244,4 +244,20 @@ hinzugefuegt und bestehende Features konsolidiert.
 - Plan-Switcher nach `copilot-board-shared.js` extrahiert (copilot_board.js: 495→477 Zeilen)
 - `workflow-loop-summary.css` im Cockpit geladen (SVG-Farben fehlten initial)
 - Git-Commit: `3e6b696`
+- Alle 5 Akzeptanzkriterien verifiziert im Browser
+
+### Session 2026-04-14 (Commit 5)
+
+- Commit 5 (Board-Umstellung): Alle 15 Projekt-Marker auf dem Board im Projekt-Modus
+- Cockpit-API um `assignments` erweitert (`_get_active_assignments` in `cockpit_routes.py`)
+- `_loadSections` speichert `_workflowStates`, `_activeAssignments`, `_cockpitPlans`
+- Workflow-Badges: 11 von 15 Cards (planned wird ausgeblendet), 5 Tone-Varianten
+- Plan-Herkunft-Labels: lila Badges, nur im Projekt-Modus sichtbar
+- Assignment-Badges: bereit, aktuell keine aktiven Assignments im System
+- Panel-Header: Workflow-Status als Badge in der Meta-Zeile
+- Refactoring: `_buildCard` + Drag&Drop nach `copilot-board-cards.js` (226 Z.)
+- Refactoring: `_formatTokenCount`/`_formatUsd` nach `copilot-board-shared.js`
+- copilot_board.js: 478→339 Zeilen, copilot-board-panel.js: 495→490 Zeilen
+- Abwaertskompatibilitaet: `?plan_id=N` funktioniert unveraendert (0 Fehler)
+- Git-Commit: `d9993d3`
 - Alle 5 Akzeptanzkriterien verifiziert im Browser
