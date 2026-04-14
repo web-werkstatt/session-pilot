@@ -1,8 +1,8 @@
 # Projekt-Dashboard - Naechste Session
 
-> **Letzte Aktualisierung:** 2026-04-13 (Session 10: Dispatch-Backend)
-> **Status:** Sprint ADR-002 Stufe 2a Commits 1-5 (Backend) fertig, UI-Commits 6-8 offen.
-> **Naechste Aufgabe:** Sprint 2a Commit 6 — Dispatch-UI im Cockpit-Tab (Marker → Tool → Ergebnis)
+> **Letzte Aktualisierung:** 2026-04-14 (Session 11: Dispatch-UI + Unified Cockpit Phase 1-3)
+> **Status:** Dispatch-UI fertig (Commit 6). Neuer Sprint "Unified Cockpit" gestartet (Phase 1-3 done).
+> **Naechste Aufgabe:** Unified Cockpit Phase 4 — Workflow-Uebersicht im Cockpit
 
 ---
 
@@ -57,7 +57,10 @@ CLAUDE.md/AGENTS.md/GEMINI.md. Perplexity-Copilot wird Read-Only-Validierungssch
 - [x] **LLM Commands UX:** Command-Cards mit Icons, Purpose-Block, bessere Run-Tabelle
 - [x] **CSS-Block-Fix:** policies.html extra_css → head_extra (CSS wurde nicht geladen)
 - [ ] Dead Code V2: Ungenutzte Funktionen/Klassen mit Flask-Decorator-Erkennung
-- [ ] **ADR-002 Stufe 2a: Dispatch A+B** — Commits 1-5 (Backend) fertig, Commits 6-9 (UI+Integration+Doku) offen
+- [x] **ADR-002 Stufe 2a Commit 6:** Dispatch-UI in Projekt-Detail + Cockpit-Panel
+- [ ] **ADR-002 Stufe 2a Commits 7-9:** Pull-Adapter, Integration, Doku (offen)
+- [x] **Unified Cockpit Phase 1-3:** Backend-API, JS-Parametrisierung, Route (project= Param)
+- [ ] **Unified Cockpit Phase 4-7:** Workflow-Uebersicht, Board-Umstellung, Section-Demotion, Cleanup
 
 ### GUI/UX (Codex)
 
@@ -141,18 +144,52 @@ Dashboard laeuft als systemd-Service auf Port 5055, Backup taeglich 12:30.
 
 ## Naechste Session
 
-### Primaer: Sprint 2a Commits 6-9 (UI + Integration)
-1. Sprint-Plan lesen: `sprints/sprint-adr002-stufe2a-dispatch.md`
-2. **Commit 6:** Dispatch-UI im Cockpit-Tab — Marker-Cards mit "Assign"-Button, Perplexity-Review inline, Approve/Reject direkt an Cards
-3. **Commit 7:** Pull-Adapter Scripts + Perplexity-Gate bei Pull
-4. **Commit 8:** Integration workflow_core + Marker-Binding + Settings-Toggles
-5. **Commit 9:** Doku + Push
+### Primaer: Unified Cockpit Phase 4-6
+1. Sprint-Plan lesen: `sprints/sprint-unified-cockpit.md`
+2. **Commit 4:** Workflow-Uebersicht im Cockpit (kompakter SVG-Ring + Summary-Zeile)
+3. **Commit 5:** Board auf Projekt-Datenquelle umstellen (alle Marker, Workflow-Badges)
+4. **Commit 6:** Sprint-Sections demoten + Plan-Filter-Dropdown
 
-### UI-Design-Entscheidung (Commit 6)
-- Dispatch-Aktionen im bestehenden Cockpit-Tab, KEIN eigener Tab
-- Workflow: Marker ansehen → Perplexity Suggest → Approve/Reject → Ergebnis sehen
-- Perplexity liefert Empfehlung (Tool, Scope, Risiko), Joseph akzeptiert
+### Sekundaer: Dispatch Sprint 2a Commits 7-9
+- **Commit 7:** Pull-Adapter Scripts + Perplexity-Gate bei Pull
+- **Commit 8:** Integration workflow_core + Marker-Binding + Settings-Toggles
+- **Commit 9:** Doku + Push
 
-### Sekundaer (wenn Zeit)
+### Tertiaer (wenn Zeit)
 - [ ] Policy-Suggestions bewerten: 4 pending unter /policies
 - [ ] Optional: Dead Code V2, Trend-Chart, Adaptive Kalibrierung
+
+## Session 2026-04-14 (Session 11) — Dispatch-UI + Unified Cockpit Infrastruktur
+
+### Was wurde erledigt
+
+**Dispatch-UI (ADR-002 Stufe 2a Commit 6):**
+- Dispatch-Tab in Projekt-Detail-Seite: Marker-Liste, Assign-Formular (Tool/Role/Risk/Scope), Perplexity-Review-Button, Approve/Reject/Claim/Complete Lifecycle
+- Dispatch-Tab im Cockpit-Panel: Kompaktes Assign-Formular, Assignment-Anzeige pro Marker
+- Neue Endpoints: `GET /api/dispatch/markers`, `POST .../claim` (Manual)
+- Quality-Tab aus project-detail.js extrahiert (Dateigroessen-Limit)
+- Kompletter Lifecycle im Browser getestet: proposed → approved → claimed → completed
+
+**Unified Cockpit Phase 1-3 (neuer Sprint):**
+- **Phase 1:** `routes/cockpit_routes.py` — aggregierter Endpoint `GET /api/cockpit/project/<name>` (Markers + Workflow + Plans)
+- **Phase 2:** Workflow-Loop JS parametrisiert — `WL.projectName` + `WL.getProjectName()` mit `PROJECT_NAME`-Fallback, `WL.onPlanningClick` Callback
+- **Phase 3:** Cockpit-Route akzeptiert `?project=<name>` — Projekt-Modus (neu) + Plan-Modus (abwaertskompatibel)
+
+**Architekturentscheidung:** Cockpit wird zum einzigen operativen Arbeitsplatz, Projekt-zentriert statt Plan-zentriert. Bestehendes Design bleibt.
+
+### Git Commits
+```
+00be649 Feature: ADR-002 Stufe 2a Commit 6 — Dispatch-UI im Cockpit
+ec4e138 Feature: Dispatch-Tab im Cockpit-Panel integriert
+a514bcb Feature: Unified Cockpit Phase 1-3 — Backend + JS-Parametrisierung + Route
+113ffdf Docs: Sprint-Plan Unified Cockpit (Phase 1-3 done, 4-7 offen)
+```
+
+### Neue Dateien
+| Datei | Zeilen | Zweck |
+|-------|--------|-------|
+| `static/css/dispatch.css` | ~387 | Dispatch-Panel Styles (Dark-Theme) |
+| `static/js/dispatch.js` | ~500 | Dispatch Frontend (Projekt-Detail + Cockpit-Panel) |
+| `static/js/project-quality.js` | ~128 | Quality-Tab (extrahiert) |
+| `routes/cockpit_routes.py` | ~73 | Aggregierter Cockpit-Projekt-API |
+| `sprints/sprint-unified-cockpit.md` | ~237 | Sprint-Plan Unified Cockpit |
