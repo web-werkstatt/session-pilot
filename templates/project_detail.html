@@ -27,6 +27,7 @@
 <link rel="stylesheet" href="/static/css/workflow-loop-cards.css">
 <link rel="stylesheet" href="/static/css/workflow-loop-forms.css">
 <link rel="stylesheet" href="/static/css/workflow-loop-summary.css">
+<link rel="stylesheet" href="/static/css/dispatch.css">
 {% endblock %}
 
 {% block content %}
@@ -63,6 +64,10 @@
         </button>
         <button class="project-secondary-link" type="button" onclick="switchProjectTabByName('governance')">
             <i data-lucide="shield" class="icon icon-xs"></i> Governance
+        </button>
+        <button class="project-secondary-link" type="button" onclick="switchProjectTabByName('dispatch')">
+            <i data-lucide="send" class="icon icon-xs"></i> Dispatch
+            <span class="tab-count" id="dispatchCount"></span>
         </button>
         <button class="project-secondary-link" type="button" onclick="switchProjectTabByName('heatmap')">
             <i data-lucide="flame" class="icon icon-xs"></i> AI Heatmap
@@ -117,6 +122,13 @@
         <div class="project-tab-content" id="ptab_heatmap">
             <div id="heatmapBody">
                 <div class="loading"><div class="spinner"></div> Loading file heatmap...</div>
+            </div>
+        </div>
+
+        <!-- Tab: Dispatch -->
+        <div class="project-tab-content" id="ptab_dispatch">
+            <div id="dispatchBody">
+                <div class="loading"><div class="spinner"></div> Loading dispatch data...</div>
             </div>
         </div>
 
@@ -247,6 +259,8 @@
 <script src="/static/js/context-window-optimizer.js"></script>
 <script src="/static/js/context-window-optimizer-review.js"></script>
 <script src="/static/js/tool-profile-adapter.js"></script>
+<script src="/static/js/dispatch.js"></script>
+<script src="/static/js/project-quality.js"></script>
 <script src="/static/js/project-detail.js"></script>
 <script src="/static/js/dashboard-modals.js"></script>
 

@@ -1,0 +1,387 @@
+/* Dispatch Panel — ADR-002 Stufe 2a Commit 6 */
+
+/* ── Layout ── */
+.dispatch-panel {
+    display: grid;
+    gap: 24px;
+}
+
+.dispatch-section-title {
+    margin: 0 0 12px;
+    font-size: 15px;
+    font-weight: 600;
+    color: #f8fafc;
+}
+
+.dispatch-section-subtitle {
+    margin: 0 0 16px;
+    font-size: 12px;
+    color: rgba(148, 163, 184, 0.7);
+}
+
+/* ── Marker-Liste (kompakt) ── */
+.dispatch-marker-list {
+    display: grid;
+    gap: 8px;
+}
+
+.dispatch-marker-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: 1px solid rgba(148, 163, 184, 0.12);
+    background: rgba(2, 6, 23, 0.5);
+}
+
+.dispatch-marker-row:hover {
+    border-color: rgba(148, 163, 184, 0.22);
+}
+
+.dispatch-marker-id {
+    font-family: monospace;
+    font-size: 11px;
+    color: rgba(56, 189, 248, 0.8);
+    min-width: 60px;
+}
+
+.dispatch-marker-title {
+    flex: 1;
+    font-size: 13px;
+    color: rgba(226, 232, 240, 0.9);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.dispatch-marker-status {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+}
+
+.dispatch-marker-status--todo { background: rgba(148, 163, 184, 0.15); color: #94a3b8; }
+.dispatch-marker-status--in_progress { background: rgba(56, 189, 248, 0.15); color: #38bdf8; }
+.dispatch-marker-status--blocked { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+.dispatch-marker-status--done { background: rgba(34, 197, 94, 0.15); color: #22c55e; }
+
+.dispatch-marker-assign-btn {
+    padding: 4px 12px;
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    border-radius: 6px;
+    background: rgba(56, 189, 248, 0.08);
+    color: #38bdf8;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s, border-color 0.15s;
+}
+
+.dispatch-marker-assign-btn:hover {
+    background: rgba(56, 189, 248, 0.18);
+    border-color: rgba(56, 189, 248, 0.5);
+}
+
+.dispatch-marker-assigned {
+    font-size: 11px;
+    color: rgba(34, 197, 94, 0.8);
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+/* ── Assignment-Formular ── */
+.dispatch-form-overlay {
+    display: none;
+    margin-top: 12px;
+    padding: 20px;
+    border-radius: 10px;
+    border: 1px solid rgba(56, 189, 248, 0.2);
+    background: rgba(15, 23, 42, 0.92);
+}
+
+.dispatch-form-overlay.active {
+    display: block;
+}
+
+.dispatch-form-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.dispatch-form-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #38bdf8;
+}
+
+.dispatch-form-close {
+    background: none;
+    border: none;
+    color: rgba(148, 163, 184, 0.6);
+    font-size: 20px;
+    cursor: pointer;
+    padding: 0 4px;
+    line-height: 1;
+}
+
+.dispatch-form-close:hover {
+    color: #f8fafc;
+}
+
+.dispatch-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.dispatch-form-grid--full {
+    grid-column: 1 / -1;
+}
+
+.dispatch-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.dispatch-form-group label {
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(148, 163, 184, 0.7);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.dispatch-form-group select,
+.dispatch-form-group input,
+.dispatch-form-group textarea {
+    padding: 8px 10px;
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    border-radius: 6px;
+    background: rgba(2, 6, 23, 0.6);
+    color: #e2e8f0;
+    font-size: 13px;
+    font-family: inherit;
+}
+
+.dispatch-form-group select:focus,
+.dispatch-form-group input:focus,
+.dispatch-form-group textarea:focus {
+    outline: none;
+    border-color: rgba(56, 189, 248, 0.4);
+}
+
+.dispatch-form-group textarea {
+    resize: vertical;
+    min-height: 60px;
+}
+
+.dispatch-form-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 16px;
+    justify-content: flex-end;
+}
+
+/* ── Buttons ── */
+.dispatch-btn {
+    padding: 6px 16px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: background 0.15s, border-color 0.15s;
+}
+
+.dispatch-btn--primary {
+    background: rgba(56, 189, 248, 0.15);
+    border-color: rgba(56, 189, 248, 0.3);
+    color: #38bdf8;
+}
+
+.dispatch-btn--primary:hover {
+    background: rgba(56, 189, 248, 0.25);
+}
+
+.dispatch-btn--approve {
+    background: rgba(34, 197, 94, 0.12);
+    border-color: rgba(34, 197, 94, 0.3);
+    color: #22c55e;
+}
+
+.dispatch-btn--approve:hover {
+    background: rgba(34, 197, 94, 0.22);
+}
+
+.dispatch-btn--reject {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: rgba(239, 68, 68, 0.25);
+    color: #ef4444;
+}
+
+.dispatch-btn--reject:hover {
+    background: rgba(239, 68, 68, 0.2);
+}
+
+.dispatch-btn--ghost {
+    background: transparent;
+    color: rgba(148, 163, 184, 0.7);
+}
+
+.dispatch-btn--ghost:hover {
+    color: #e2e8f0;
+    background: rgba(148, 163, 184, 0.08);
+}
+
+.dispatch-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+/* ── Assignment-Cards ── */
+.dispatch-assignment-list {
+    display: grid;
+    gap: 10px;
+}
+
+.dispatch-assignment-card {
+    padding: 14px 16px;
+    border-radius: 8px;
+    border: 1px solid rgba(148, 163, 184, 0.12);
+    background: rgba(2, 6, 23, 0.5);
+}
+
+.dispatch-assignment-top {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+}
+
+.dispatch-assignment-id {
+    font-family: monospace;
+    font-size: 11px;
+    color: rgba(148, 163, 184, 0.5);
+}
+
+.dispatch-assignment-tool {
+    font-size: 12px;
+    font-weight: 600;
+    color: rgba(226, 232, 240, 0.9);
+}
+
+.dispatch-assignment-marker {
+    font-family: monospace;
+    font-size: 11px;
+    color: rgba(56, 189, 248, 0.6);
+}
+
+/* ── Status + Risk Badges ── */
+.dispatch-state,
+.dispatch-risk {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+}
+.dispatch-state--proposed { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
+.dispatch-state--approved { background: rgba(34, 197, 94, 0.15); color: #22c55e; }
+.dispatch-state--claimed { background: rgba(56, 189, 248, 0.15); color: #38bdf8; }
+.dispatch-state--completed { background: rgba(34, 197, 94, 0.2); color: #4ade80; }
+.dispatch-state--failed { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+.dispatch-state--rejected { background: rgba(239, 68, 68, 0.12); color: #f87171; }
+.dispatch-state--revoked { background: rgba(148, 163, 184, 0.12); color: #94a3b8; }
+.dispatch-state--expired { background: rgba(148, 163, 184, 0.1); color: #64748b; }
+.dispatch-risk--low { background: rgba(34, 197, 94, 0.12); color: #22c55e; }
+.dispatch-risk--medium { background: rgba(245, 158, 11, 0.12); color: #f59e0b; }
+.dispatch-risk--high { background: rgba(239, 68, 68, 0.12); color: #ef4444; }
+
+/* ── Perplexity Review ── */
+.dispatch-review-box {
+    margin-top: 10px;
+    padding: 12px 14px;
+    border-radius: 8px;
+    border: 1px solid rgba(168, 85, 247, 0.2);
+    background: rgba(168, 85, 247, 0.05);
+}
+
+.dispatch-review-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    color: rgba(168, 85, 247, 0.9);
+}
+
+.dispatch-review-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: rgba(226, 232, 240, 0.8);
+    margin-bottom: 4px;
+}
+
+.dispatch-review-label {
+    color: rgba(148, 163, 184, 0.6);
+    min-width: 90px;
+}
+
+.dispatch-review-recommendation { font-weight: 600; }
+.dispatch-review-recommendation--approve { color: #22c55e; }
+.dispatch-review-recommendation--reject { color: #ef4444; }
+.dispatch-review-recommendation--modify { color: #f59e0b; }
+
+/* ── Assignment Detail ── */
+.dispatch-assignment-body {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(148, 163, 184, 0.08);
+}
+
+.dispatch-assignment-meta {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    font-size: 12px;
+    color: rgba(148, 163, 184, 0.6);
+    margin-bottom: 8px;
+}
+
+.dispatch-assignment-actions {
+    display: flex;
+    gap: 6px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+}
+
+/* ── Empty + Loading ── */
+.dispatch-empty { text-align: center; padding: 32px 16px; color: rgba(148, 163, 184, 0.5); font-size: 13px; }
+.dispatch-loading { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 24px; color: rgba(148, 163, 184, 0.5); font-size: 13px; }
+
+/* ── Responsive ── */
+@media (max-width: 640px) {
+    .dispatch-form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .dispatch-marker-row {
+        flex-wrap: wrap;
+    }
+
+    .dispatch-marker-title {
+        min-width: 100%;
+        order: 3;
+    }
+}

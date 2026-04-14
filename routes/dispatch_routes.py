@@ -175,8 +175,6 @@ def pull_next():
     Query-Param: tool=<tool_id>
     Response: Assignment-Daten oder 204 No Content.
     """
-    from services.dispatch_service import list_assignments
-
     tool_id = request.args.get("tool")
     if not tool_id:
         return jsonify({"error": "Query-Param 'tool' fehlt"}), 400
@@ -319,3 +317,52 @@ def update_settings_api():
 
     row = update_settings(scope, scope_ref, **kwargs)
     return jsonify(row)
+
+
+# ---------------------------------------------------------------------------
+# Marker-Liste fuer Dispatch-UI (Commit 6)
+# ---------------------------------------------------------------------------
+
+@dispatch_bp.route("/api/dispatch/markers", methods=["GET"])
+@api_route
+def list_markers_for_dispatch():
+    """Marker eines Projekts fuer die Dispatch-UI.
+
+    Liefert alle Marker (als Dicts) aus workflow_core_service.
+    """
+    from dataclasses import asdict
+
+    from services.workflow_core_service import get_markers
+
+    project = request.args.get("project")
+    if not project:
+        return jsonify({"error": "Query-Param 'project' fehlt"}), 400
+
+    markers = get_markers(project)
+    result = [asdict(m) for m in markers if m]
+    return jsonify({
+        "markers": result,
+        "count": len(result),
+    })
+
+
+# ---------------------------------------------------------------------------
+# Manual Claim (Commit 6 — kein Bearer-Auth, interne UI)
+# ---------------------------------------------------------------------------
+
+@dispatch_bp.route("/api/dispatch/assignments/<int:aid>/claim", methods=["POST"])
+@api_route
+def manual_claim_api(aid):
+    """Manuelles Claim eines Assignments aus der UI (Variante A)."""
+    from services.dispatch_service import claim_assignment
+
+    body = request.get_json(silent=True) or {}
+    claimed_by = body.get("claimed_by", "joseph")
+
+    try:
+        row = claim_assignment(aid, claimed_by=claimed_by)
+        return jsonify(row)
+    except RuntimeError as e:
+        return jsonify({"error": str(e)}), 409
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
