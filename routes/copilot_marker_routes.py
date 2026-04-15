@@ -250,7 +250,7 @@ def api_sprint_to_markers(plan_id):
     if not handoff_path:
         return jsonify({"ok": False, "error": "project_id ist erforderlich"}), 400
     try:
-        markers = sprinttomarkers(sprint_path, plan_id, handoff_path)
+        markers = sprinttomarkers(sprint_path, plan_id, handoff_path, db_plan_id=db_plan_id)
     except FileNotFoundError:
         if not db_plan_id:
             return jsonify({"ok": False, "error": "sprint_missing"}), 404
@@ -258,7 +258,7 @@ def api_sprint_to_markers(plan_id):
         if not row or not row.get("content"):
             return jsonify({"ok": False, "error": "sprint_missing"}), 404
         try:
-            markers = sprinttomarkers_from_content(row.get("content"), plan_id, handoff_path, source_label=row.get("filename") or row.get("title") or f"plan:{db_plan_id}")
+            markers = sprinttomarkers_from_content(row.get("content"), plan_id, handoff_path, source_label=row.get("filename") or row.get("title") or f"plan:{db_plan_id}", db_plan_id=db_plan_id)
         except ValueError as e:
             if str(e) not in ("plan_id_not_found", "tasks_not_found"):
                 return jsonify({"ok": False, "error": str(e)}), 400

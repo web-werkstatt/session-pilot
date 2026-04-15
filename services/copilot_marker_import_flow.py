@@ -182,6 +182,39 @@ def _resolve_marker_refs(handoff_path, plan_id, task_item):
         return None, None
 
 
+def _backfill_task_ids(handoff_path, db_plan_id, plan_id, written_markers):
+    """Setzt markers.task_id fuer frisch importierte Marker via parse_key-Match.
+
+    `db_plan_id` ist project_plans.id (nullable). `plan_id` ist der Sprint-/Section-
+    Tag (Section-Key in plan_tasks). Ohne db_plan_id wird nichts gemacht.
+    Fehler werden geloggt, aber nicht durchgereicht (nicht-kritischer Mehrwert).
+    """
+    if not db_plan_id or not written_markers:
+        return
+    try:
+        from services.db_service import execute
+        from services.plan_task_service import find_task_by_parse_key
+        project_name = os.path.basename(os.path.dirname(handoff_path)) or ""
+        if not project_name:
+            return
+        section_key = str(plan_id or "").strip().lstrip("#")
+        for marker in written_markers:
+            spec_key = str(getattr(marker, "spec_tag", "") or "").strip().lstrip("#")
+            task_id = find_task_by_parse_key(db_plan_id, section_key, spec_key, marker.titel)
+            if task_id is None and spec_key:
+                # Fallback: Task moeglicherweise direkt unter Section ohne Spec-Key persistiert
+                task_id = find_task_by_parse_key(db_plan_id, section_key, "", marker.titel)
+            if task_id is None:
+                continue
+            execute(
+                "UPDATE markers SET task_id = %s WHERE project_name = %s AND marker_id = %s",
+                (task_id, project_name, marker.marker_id),
+            )
+    except Exception as exc:
+        import logging
+        logging.getLogger(__name__).warning("backfill task_id failed for plan %s: %s", db_plan_id, exc)
+
+
 def _upsert_task_markers(sprint_context, plan_id, handoff_path):
     existing_markers = parse_markers(handoff_path)
     existing_by_id = {marker.marker_id: marker for marker in existing_markers}
@@ -232,21 +265,23 @@ def _upsert_task_markers(sprint_context, plan_id, handoff_path):
     return written
 
 
-def sprinttomarkers(sprint_path, plan_id, handoff_path):
+def sprinttomarkers(sprint_path, plan_id, handoff_path, db_plan_id=None):
     plan_id = str(plan_id).strip()
     if not plan_id:
         raise ValueError("plan_id ist erforderlich")
     result = _upsert_task_markers(_extract_tasks_from_sprint(sprint_path, plan_id), plan_id, handoff_path)
     _sync_to_db(handoff_path)
+    _backfill_task_ids(handoff_path, db_plan_id, plan_id, result)
     return result
 
 
-def sprinttomarkers_from_content(content, plan_id, handoff_path, source_label="db_plan"):
+def sprinttomarkers_from_content(content, plan_id, handoff_path, source_label="db_plan", db_plan_id=None):
     plan_id = str(plan_id).strip()
     if not plan_id:
         raise ValueError("plan_id ist erforderlich")
     result = _upsert_task_markers(_extract_tasks_from_content(str(content or ""), plan_id, source_label), plan_id, handoff_path)
     _sync_to_db(handoff_path)
+    _backfill_task_ids(handoff_path, db_plan_id, plan_id, result)
     return result
 
 
