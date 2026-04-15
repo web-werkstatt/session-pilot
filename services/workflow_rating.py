@@ -24,12 +24,17 @@ def parse_iso_ts(value):
         return None
 
 
-def is_rating_pending(marker):
-    """True nur wenn Marker done, kein Score, Session existiert UND < 48h alt.
+def is_rating_pending(marker, done_since=None):
+    """True nur wenn Marker done, kein Score, Session existiert UND < 48h
+    seit Done-Transition.
+
+    done_since: Timestamp der letzten done-Transition (str ISO oder datetime).
+    Vorzugsweise aus marker_workflow_states.completed_at. Fallback auf
+    marker.updated_at, aber dieser kippt bei jeder Feldaenderung — daher
+    unzuverlaessig und nur Notloesung.
 
     Zusaetzliche Bedingung last_session: ohne aktive Session gibt es keine
-    Ausfuehrung zu bewerten — dann waere "Bewertung nachholen" sinnlos
-    (z.B. Marker manuell auf done gesetzt ohne Claude-Code-Lauf).
+    Ausfuehrung zu bewerten (z.B. Marker manuell auf done gesetzt ohne Lauf).
     """
     if getattr(marker, "status", None) != "done":
         return False
@@ -37,7 +42,18 @@ def is_rating_pending(marker):
         return False
     if not str(getattr(marker, "last_session", "") or "").strip():
         return False
-    updated = parse_iso_ts(getattr(marker, "updated_at", None))
-    if not updated:
+    ref = done_since if done_since is not None else getattr(marker, "updated_at", None)
+    ref_dt = parse_iso_ts(ref) if not hasattr(ref, "tzinfo") else ref
+    if not ref_dt:
         return False
-    return datetime.now(timezone.utc) - updated <= RATING_PENDING_WINDOW
+    return datetime.now(timezone.utc) - ref_dt <= RATING_PENDING_WINDOW
+
+
+def get_done_since(workflow_state):
+    """Liest completed_at aus einem Workflow-State-Dict (marker_workflow_states)."""
+    if not workflow_state:
+        return None
+    val = workflow_state.get("completed_at") if isinstance(workflow_state, dict) else None
+    if val is None:
+        return None
+    return val if hasattr(val, "tzinfo") else parse_iso_ts(val)

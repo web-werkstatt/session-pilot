@@ -3,9 +3,8 @@ Aggregiert den Workflow-Loop fuer die Projekt-Control-Plane.
 """
 from datetime import datetime, timezone
 
-from services.workflow_rating import is_rating_pending as _is_rating_pending
+from services.workflow_rating import is_rating_pending as _is_rating_pending, get_done_since
 
-from services.governance_service import get_governance_gate
 from services.path_resolver import resolve_project_path
 from services.db_service import execute
 from services.workflow_core_service import get_markers as core_get_markers
@@ -14,6 +13,7 @@ from services.workflow_state_service import (
     get_workflow_states_for_project,
     sync_marker_to_workflow,
 )
+from services.workflow_loop_signals import build_signals as _build_signals
 
 
 STEP_DEFINITIONS = [
@@ -43,9 +43,9 @@ def build_workflow_loop_data(project_name):
     _sync_markers_to_workflow(project_name, markers)
     workflow_states = _load_workflow_states_map(project_name)
 
-    current_marker = _build_current_marker(markers, plan_titles)
+    current_marker = _build_current_marker(markers, plan_titles, workflow_states)
     next_marker = _build_next_marker(markers, plan_titles, current_marker)
-    pending_ratings = _build_pending_ratings(markers)
+    pending_ratings = _build_pending_ratings(markers, workflow_states)
     signals = _build_signals(project_name, markers, next_marker)
     current_step = _derive_current_step(markers, current_marker, next_marker, pending_ratings)
     steps = _build_steps(current_step, current_marker, next_marker)
@@ -76,14 +76,18 @@ def _load_plan_titles(project_name):
     return {str(row.get("id")): row.get("title") or f"Plan {row.get('id')}" for row in rows}
 
 
-def _build_current_marker(markers, plan_titles):
+def _build_current_marker(markers, plan_titles, workflow_states=None):
     active = next((marker for marker in markers if marker.status == "in_progress"), None)
     if active:
-        return _serialize_marker_focus(active, plan_titles)
+        return _serialize_marker_focus(active, plan_titles, workflow_states)
 
-    pending = _latest_marker([marker for marker in markers if _is_rating_pending(marker)])
+    ws = workflow_states or {}
+    pending = _latest_marker([
+        marker for marker in markers
+        if _is_rating_pending(marker, get_done_since(ws.get(marker.marker_id)))
+    ])
     if pending:
-        return _serialize_marker_focus(pending, plan_titles)
+        return _serialize_marker_focus(pending, plan_titles, workflow_states)
 
     return {}
 
@@ -120,8 +124,12 @@ def _build_next_marker(markers, plan_titles, current_marker):
     return {}
 
 
-def _build_pending_ratings(markers):
-    pending = [marker for marker in markers if _is_rating_pending(marker)]
+def _build_pending_ratings(markers, workflow_states=None):
+    ws = workflow_states or {}
+    pending = [
+        marker for marker in markers
+        if _is_rating_pending(marker, get_done_since(ws.get(marker.marker_id)))
+    ]
     pending.sort(key=_marker_sort_key, reverse=True)
     result = []
     for marker in pending[:5]:
@@ -133,92 +141,6 @@ def _build_pending_ratings(markers):
             "plan_id": str(marker.plan_id or ""),
         })
     return result
-
-
-def _build_signals(project_name, markers, next_marker):
-    gate = get_governance_gate(project_name) or {}
-    quality_summary = gate.get("quality_summary") or {}
-    audit_summary = gate.get("audit_summary") or {}
-    next_marker_id = str((next_marker or {}).get("marker_id") or "")
-
-    hints = []
-    seen = set()
-
-    for marker in markers:
-        _append_marker_hints(hints, seen, marker)
-
-    if next_marker_id and gate.get("status") in ("yellow", "red"):
-        _append_hint(hints, seen, {
-            "marker_id": next_marker_id,
-            "label": "Governance-Risiko",
-            "level": "high" if gate.get("status") == "red" else "medium",
-            "hint": "bevorzugt bearbeiten",
-        })
-
-    quality_score = quality_summary.get("score_numeric")
-    if next_marker_id and quality_score is not None and int(quality_score) < 60:
-        _append_hint(hints, seen, {
-            "marker_id": next_marker_id,
-            "label": "Quality-Risiko",
-            "level": "high" if int(quality_score) < 40 else "medium",
-            "hint": "Quality-kritisch",
-        })
-
-    audit_status = str(audit_summary.get("overall_status") or "").strip()
-    if next_marker_id and audit_status and audit_status.upper() in ("FAIL", "PARTIAL", "UNSICHER"):
-        _append_hint(hints, seen, {
-            "marker_id": next_marker_id,
-            "label": "Audit-Risiko",
-            "level": "high" if audit_status.upper() == "FAIL" else "medium",
-            "hint": "bevorzugt bearbeiten",
-        })
-
-    # Dead-Code-Signal aus Quality-Report
-    dead_code = quality_summary.get("dead_code_summary") or {}
-    dead_total = dead_code.get("total", 0)
-    if next_marker_id and dead_total > 0:
-        parts = []
-        if dead_code.get("unused_imports"):
-            parts.append(f"{dead_code['unused_imports']} ungenutzte Imports")
-        if dead_code.get("orphaned_files"):
-            parts.append(f"{dead_code['orphaned_files']} verwaiste Dateien")
-        if dead_code.get("unused_deps"):
-            parts.append(f"{dead_code['unused_deps']} ungenutzte Dependencies")
-        if dead_code.get("orphaned_assets"):
-            parts.append(f"{dead_code['orphaned_assets']} verwaiste Assets")
-        _append_hint(hints, seen, {
-            "marker_id": next_marker_id,
-            "label": "Dead Code",
-            "level": "high" if dead_total > 20 else "medium",
-            "hint": ", ".join(parts[:3]) if parts else f"{dead_total} Findings",
-        })
-
-    # Dispatch-Status pro Marker + Hints fuer unzugewiesene Marker
-    try:
-        from services.dispatch_service import get_dispatch_status_map
-        dispatch_status = get_dispatch_status_map(project_name)
-    except Exception:
-        dispatch_status = {}
-    for marker in markers:
-        mid = marker.marker_id
-        if marker.status in ("in_progress", "todo"):
-            ds = dispatch_status.get(mid)
-            if not ds:
-                _append_hint(hints, seen, {
-                    "marker_id": mid,
-                    "label": "Dispatch",
-                    "level": "low",
-                    "hint": "Kein Tool zugewiesen",
-                })
-
-    return {
-        "governance_status": gate.get("status") or "unknown",
-        "audit_status": (audit_status or "unknown").lower(),
-        "quality_score": quality_score if quality_score is not None else None,
-        "dead_code_summary": dead_code if dead_code else None,
-        "dispatch_status": dispatch_status,
-        "priority_hints": hints[:8],
-    }
 
 
 def _derive_current_step(markers, current_marker, next_marker, pending_ratings):
@@ -282,10 +204,12 @@ def _build_steps(current_step, current_marker, next_marker):
     return steps
 
 
-def _serialize_marker_focus(marker, plan_titles):
+def _serialize_marker_focus(marker, plan_titles, workflow_states=None):
     gate_status = "ready" if getattr(marker, "prompt", "").strip() and len(getattr(marker, "checks", []) or []) >= 1 else "blocked"
     gate_reason = "" if gate_status == "ready" else _derive_gate_reason(marker)
-    rating_pending = _is_rating_pending(marker)
+    ws = (workflow_states or {}).get(marker.marker_id) if workflow_states else None
+    done_since = get_done_since(ws)
+    rating_pending = _is_rating_pending(marker, done_since)
     return {
         "marker_id": marker.marker_id,
         "title": marker.titel,
@@ -298,6 +222,7 @@ def _serialize_marker_focus(marker, plan_titles):
         "last_session": marker.last_session or "",
         "execution_score": marker.execution_score,
         "rating_pending": rating_pending,
+        "done_since": done_since.isoformat() if done_since else None,
     }
 
 
@@ -350,7 +275,8 @@ def _serialize_marker_card(project_name, marker, plan_titles, workflow_states, c
         "last_session": state.get("last_session") or marker.last_session or "",
         "execution_score": marker.execution_score,
         "execution_comment": marker.execution_comment or "",
-        "rating_pending": _is_rating_pending(marker),
+        "rating_pending": _is_rating_pending(marker, get_done_since(state)),
+        "done_since": (get_done_since(state).isoformat() if get_done_since(state) else None),
         "gate_status": gate_status,
         "gate_reason": gate_reason,
         "checks_count": len(getattr(marker, "checks", []) or []),
@@ -399,39 +325,6 @@ _WORKFLOW_LABELS = {
 
 def _workflow_status_label(workflow_status):
     return _WORKFLOW_LABELS.get(str(workflow_status or "").strip(), workflow_status or "Unbekannt")
-
-
-def _append_marker_hints(hints, seen, marker):
-    risk_text = str(getattr(marker, "risiko", "") or "").lower()
-    if "governance" in risk_text:
-        _append_hint(hints, seen, {
-            "marker_id": marker.marker_id,
-            "label": "Governance-Risiko",
-            "level": "high" if "red" in risk_text else "medium",
-            "hint": "bevorzugt bearbeiten",
-        })
-    if "audit" in risk_text:
-        _append_hint(hints, seen, {
-            "marker_id": marker.marker_id,
-            "label": "Audit-Risiko",
-            "level": "high" if "fail" in risk_text else "medium",
-            "hint": "bevorzugt bearbeiten",
-        })
-    if "quality" in risk_text:
-        _append_hint(hints, seen, {
-            "marker_id": marker.marker_id,
-            "label": "Quality-Risiko",
-            "level": "high" if "krit" in risk_text or "red" in risk_text else "medium",
-            "hint": "Quality-kritisch",
-        })
-
-
-def _append_hint(hints, seen, item):
-    key = (item["marker_id"], item["label"], item["hint"])
-    if key in seen:
-        return
-    seen.add(key)
-    hints.append(item)
 
 
 def _marker_has_signal(marker, signal_name):

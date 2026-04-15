@@ -75,10 +75,14 @@
         //    - < 48h auf done (sonst Erinnerung weg)
         //    - last_session vorhanden (sonst gab es nichts zu bewerten)
         if (status === 'done' && ratingMissing) {
-            var updated = marker.updated_at ? new Date(marker.updated_at) : null;
-            var ageHours = updated ? (Date.now() - updated.getTime()) / 3600000 : 0;
+            // An den Done-Zeitpunkt koppeln (done_since aus
+            // marker_workflow_states.completed_at), nicht an updated_at —
+            // sonst verlaengert jede Feldaenderung das 48h-Fenster.
+            var doneRef = marker.done_since || marker.updated_at;
+            var doneAt = doneRef ? new Date(doneRef) : null;
+            var ageHours = doneAt ? (Date.now() - doneAt.getTime()) / 3600000 : 0;
             var hasSession = !!(marker.last_session && String(marker.last_session).trim());
-            if (ageHours > 48 || !hasSession) {
+            if (!doneAt || ageHours > 48 || !hasSession) {
                 return null;
             }
             return {
