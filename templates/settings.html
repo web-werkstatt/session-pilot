@@ -44,6 +44,23 @@
                         <span class="s-toggle-slider"></span>
                     </label>
                 </div>
+
+                <div class="s-setting-row">
+                    <div>
+                        <div class="s-setting-title">Implementierungs-Check: Commit-Match-Modus</div>
+                        <div class="s-setting-help">
+                            Wie wird das Commit-Signal pro Marker gematcht?
+                            <strong>marker_id</strong> ist streng (Commit-Message muss die Marker-ID nennen),
+                            <strong>plan_id</strong> grosszuegiger (Plan-ID reicht),
+                            <strong>both</strong> findet beides.
+                        </div>
+                    </div>
+                    <select id="implCommitMatchMode" class="ui-input" style="width:160px">
+                        <option value="marker_id">marker_id</option>
+                        <option value="plan_id">plan_id</option>
+                        <option value="both">both</option>
+                    </select>
+                </div>
             </div>
 
             <div class="s-panel" style="margin-top:20px;max-width:980px">

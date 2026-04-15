@@ -7,8 +7,17 @@ import os
 from config import INCLUDE_SELF_PROJECT, SETTINGS_FILE
 
 
+IMPLEMENTATION_CHECK_MODES = ("marker_id", "plan_id", "both")
+
 DEFAULT_SETTINGS = {
     "include_self_project": INCLUDE_SELF_PROJECT,
+    "implementation_check": {
+        # Wie wird das Commit-Signal im Implementierungs-Check gematcht?
+        # marker_id: strenger (Commit muss Marker-ID enthalten)
+        # plan_id:   grosszuegiger (Commit referenziert nur den Plan)
+        # both:      Treffer wenn eine der beiden IDs in der Commit-Message steht
+        "commit_match_mode": "both",
+    },
     "account_badge_styles": {
         "claude": {"background": "rgba(79,195,247,0.12)", "text": "#4fc3f7", "border": "rgba(79,195,247,0.28)"},
         "account1": {"background": "rgba(79,195,247,0.12)", "text": "#4fc3f7", "border": "rgba(79,195,247,0.28)"},
@@ -50,6 +59,10 @@ def load_dashboard_settings():
         stored.get("include_self_project"),
         DEFAULT_SETTINGS["include_self_project"],
     )
+    settings["implementation_check"] = _normalize_implementation_check(
+        stored.get("implementation_check"),
+        DEFAULT_SETTINGS["implementation_check"],
+    )
     settings["account_badge_styles"] = _normalize_badge_styles(
         stored.get("account_badge_styles"),
         DEFAULT_SETTINGS["account_badge_styles"],
@@ -62,6 +75,10 @@ def save_dashboard_settings(data):
     settings["include_self_project"] = _normalize_bool(
         data.get("include_self_project"),
         settings["include_self_project"],
+    )
+    settings["implementation_check"] = _normalize_implementation_check(
+        data.get("implementation_check"),
+        settings.get("implementation_check") or DEFAULT_SETTINGS["implementation_check"],
     )
     settings["account_badge_styles"] = _normalize_badge_styles(
         data.get("account_badge_styles"),
@@ -109,3 +126,16 @@ def _normalize_badge_styles(value, defaults):
 def _normalize_badge_key(value):
     text = str(value or "").strip().lower()
     return "".join(ch for ch in text if ch.isalnum())
+
+
+def _normalize_implementation_check(value, defaults):
+    out = dict(defaults or {})
+    if isinstance(value, dict):
+        mode = str(value.get("commit_match_mode") or "").strip().lower()
+        if mode in IMPLEMENTATION_CHECK_MODES:
+            out["commit_match_mode"] = mode
+    return out
+
+
+def get_commit_match_mode():
+    return load_dashboard_settings().get("implementation_check", {}).get("commit_match_mode", "both")

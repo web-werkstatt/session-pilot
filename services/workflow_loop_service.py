@@ -4,6 +4,8 @@ Aggregiert den Workflow-Loop fuer die Projekt-Control-Plane.
 from datetime import datetime, timezone
 
 from services.workflow_rating import is_rating_pending as _is_rating_pending, get_done_since
+from services.marker_implementation import calculate_progress as _calculate_progress
+from services.dashboard_settings_service import get_commit_match_mode
 
 from services.path_resolver import resolve_project_path
 from services.db_service import execute
@@ -80,13 +82,14 @@ def build_workflow_loop_data(project_name):
     _sync_markers_to_workflow(project_name, markers)
     workflow_states = _load_workflow_states_map(project_name)
 
-    current_marker = _build_current_marker(markers, plan_titles, workflow_states)
+    commit_mode = get_commit_match_mode()
+    current_marker = _build_current_marker(markers, plan_titles, workflow_states, project_path, commit_mode)
     next_marker = _build_next_marker(markers, plan_titles, current_marker)
     pending_ratings = _build_pending_ratings(markers, workflow_states)
     signals = _build_signals(project_name, markers, next_marker)
     current_step = _derive_current_step(markers, current_marker, next_marker, pending_ratings)
     steps = _build_steps(current_step, current_marker, next_marker)
-    marker_groups = _build_marker_groups(project_name, markers, plan_titles, workflow_states, current_marker, next_marker)
+    marker_groups = _build_marker_groups(project_name, markers, plan_titles, workflow_states, current_marker, next_marker, project_path, commit_mode)
 
     return {
         "project_id": project_name,
@@ -113,10 +116,10 @@ def _load_plan_titles(project_name):
     return {str(row.get("id")): row.get("title") or f"Plan {row.get('id')}" for row in rows}
 
 
-def _build_current_marker(markers, plan_titles, workflow_states=None):
+def _build_current_marker(markers, plan_titles, workflow_states=None, project_path=None, commit_mode="both"):
     active = next((marker for marker in markers if marker.status == "in_progress"), None)
     if active:
-        return _serialize_marker_focus(active, plan_titles, workflow_states)
+        return _serialize_marker_focus(active, plan_titles, workflow_states, project_path, commit_mode)
 
     ws = workflow_states or {}
     pending = _latest_marker([
@@ -124,7 +127,7 @@ def _build_current_marker(markers, plan_titles, workflow_states=None):
         if _is_rating_pending(marker, get_done_since(ws.get(marker.marker_id)))
     ])
     if pending:
-        return _serialize_marker_focus(pending, plan_titles, workflow_states)
+        return _serialize_marker_focus(pending, plan_titles, workflow_states, project_path, commit_mode)
 
     return {}
 
@@ -242,12 +245,13 @@ def _build_steps(current_step, current_marker, next_marker):
     return steps
 
 
-def _serialize_marker_focus(marker, plan_titles, workflow_states=None):
+def _serialize_marker_focus(marker, plan_titles, workflow_states=None, project_path=None, commit_mode="both"):
     gate_status = "ready" if getattr(marker, "prompt", "").strip() and len(getattr(marker, "checks", []) or []) >= 1 else "blocked"
     gate_reason = "" if gate_status == "ready" else _derive_gate_reason(marker)
     ws = (workflow_states or {}).get(marker.marker_id) if workflow_states else None
     done_since = get_done_since(ws)
     rating_pending = _is_rating_pending(marker, done_since)
+    impl = _calculate_progress(marker, ws, project_path, commit_mode)
     return {
         "marker_id": marker.marker_id,
         "title": marker.titel,
@@ -261,10 +265,12 @@ def _serialize_marker_focus(marker, plan_titles, workflow_states=None):
         "execution_score": marker.execution_score,
         "rating_pending": rating_pending,
         "done_since": done_since.isoformat() if done_since else None,
+        "implementation_percent": impl["percent"],
+        "implementation_signals": impl["signals"],
     }
 
 
-def _build_marker_groups(project_name, markers, plan_titles, workflow_states, current_marker, next_marker):
+def _build_marker_groups(project_name, markers, plan_titles, workflow_states, current_marker, next_marker, project_path=None, commit_mode="both"):
     groups = {
         "active": {"id": "active", "label": "Aktiv", "tone": "green", "cards": []},
         "waiting": {"id": "waiting", "label": "Wartet", "tone": "amber", "cards": []},
@@ -274,13 +280,13 @@ def _build_marker_groups(project_name, markers, plan_titles, workflow_states, cu
     next_marker_id = str((next_marker or {}).get("marker_id") or "")
 
     for marker in sorted(list(markers or []), key=_marker_sort_key, reverse=True):
-        card = _serialize_marker_card(project_name, marker, plan_titles, workflow_states, current_marker_id, next_marker_id)
+        card = _serialize_marker_card(project_name, marker, plan_titles, workflow_states, current_marker_id, next_marker_id, project_path, commit_mode)
         groups[card["group"]]["cards"].append(card)
 
     return [groups["active"], groups["waiting"], groups["blocked"]]
 
 
-def _serialize_marker_card(project_name, marker, plan_titles, workflow_states, current_marker_id, next_marker_id):
+def _serialize_marker_card(project_name, marker, plan_titles, workflow_states, current_marker_id, next_marker_id, project_path=None, commit_mode="both"):
     plan_id = str(marker.plan_id or "")
     gate_ready = bool(getattr(marker, "prompt", "").strip() and len(getattr(marker, "checks", []) or []) >= 1)
     gate_status = "ready" if gate_ready else "blocked"
@@ -297,6 +303,7 @@ def _serialize_marker_card(project_name, marker, plan_titles, workflow_states, c
             "blocked_reason": state.get("blocked_reason"),
         }
 
+    impl = _calculate_progress(marker, state, project_path, commit_mode)
     return {
         "marker_id": marker.marker_id,
         "title": marker.titel,
@@ -322,6 +329,8 @@ def _serialize_marker_card(project_name, marker, plan_titles, workflow_states, c
         "is_current": marker.marker_id == current_marker_id,
         "is_next": marker.marker_id == next_marker_id,
         "updated_at": getattr(marker, "updated_at", "") or "",
+        "implementation_percent": impl["percent"],
+        "implementation_signals": impl["signals"],
     }
 
 

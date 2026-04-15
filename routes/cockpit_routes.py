@@ -25,14 +25,29 @@ def get_cockpit_project_data(name):
     """
     from services.workflow_core_service import get_markers
     from services.workflow_loop_service import build_workflow_loop_data
+    from services.workflow_state_service import get_workflow_states_for_project
+    from services.marker_implementation import calculate_progress
+    from services.dashboard_settings_service import get_commit_match_mode
+    from services.path_resolver import resolve_project_path
 
     name = str(name or "").strip()
     if not name:
         return jsonify({"error": "Projektname fehlt"}), 400
 
-    # Marker als Dicts
+    # Marker als Dicts + Implementierungs-Fortschritt
     raw_markers = get_markers(name)
-    markers = [asdict(m) for m in raw_markers if m]
+    ws_map = {s["marker_id"]: s for s in (get_workflow_states_for_project(name) or [])}
+    project_path = resolve_project_path(name) or ""
+    commit_mode = get_commit_match_mode()
+    markers = []
+    for m in raw_markers:
+        if not m:
+            continue
+        d = asdict(m)
+        impl = calculate_progress(m, ws_map.get(m.marker_id), project_path, commit_mode)
+        d["implementation_percent"] = impl["percent"]
+        d["implementation_signals"] = impl["signals"]
+        markers.append(d)
 
     # Workflow-Loop-Daten (Steps, Groups, Signals)
     try:

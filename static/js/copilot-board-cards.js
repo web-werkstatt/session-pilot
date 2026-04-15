@@ -74,6 +74,17 @@ function _buildCard(sec) {
     // Badges: Workflow-Status, Plan-Herkunft, Assignment
     var badgesHtml = _buildCardBadges(sec);
 
+    // Implementierungs-Fortschritt (Phase 8, 2026-04-15)
+    var implHtml = '';
+    if (typeof sec.implementation_percent === 'number') {
+        var pct = Math.max(0, Math.min(100, sec.implementation_percent));
+        var tone = pct >= 80 ? 'impl-high' : (pct >= 40 ? 'impl-mid' : 'impl-low');
+        implHtml = '<div class="card-impl ' + tone + '" title="Implementierungs-Fortschritt: ' + pct + '% (siehe Panel fuer Details)">'
+            + '<div class="card-impl-bar"><div class="card-impl-fill" style="width:' + pct + '%"></div></div>'
+            + '<span class="card-impl-pct">' + pct + '%</span>'
+            + '</div>';
+    }
+
     return '<div class="plan-card ui-card board-task-card sec-status-' + st + (locked ? ' is-locked' : '') + selected + '" draggable="true" '
         + 'data-marker-id="' + escapeHtml(sec.marker_id) + '" data-status="' + st + '" '
         + 'onclick="openSectionPanel(\'' + _escapeJsString(sec.marker_id) + '\')">'
@@ -83,6 +94,7 @@ function _buildCard(sec) {
         + badgesHtml
         + '</div>'
         + '<div class="card-title">' + escapeHtml(sec.titel) + '</div>'
+        + implHtml
         + previewHtml
         + executionHtml
         + genHtml

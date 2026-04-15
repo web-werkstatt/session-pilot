@@ -1,0 +1,88 @@
+/* Implementierungs-Fortschritt — Card + Panel-Detail (Phase 8, 2026-04-15) */
+
+/* Card-Variante: kompakter Balken + Prozent */
+.card-impl {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 6px 12px 4px;
+    font-size: 10px;
+    color: var(--cn-text-muted, #a1a1aa);
+}
+.card-impl-bar {
+    flex: 1;
+    height: 4px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 2px;
+    overflow: hidden;
+}
+.card-impl-fill {
+    height: 100%;
+    transition: width 0.3s ease;
+    border-radius: 2px;
+}
+.card-impl.impl-low .card-impl-fill  { background: linear-gradient(90deg, #f87171, #fb923c); }
+.card-impl.impl-mid .card-impl-fill  { background: linear-gradient(90deg, #fb923c, #facc15); }
+.card-impl.impl-high .card-impl-fill { background: linear-gradient(90deg, #4ade80, #22c55e); }
+.card-impl-pct {
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    min-width: 32px;
+    text-align: right;
+}
+
+/* Panel-Detail-Box: volle Signal-Liste */
+.impl-check-box {
+    margin-top: 8px;
+    padding: 12px 14px;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid var(--cn-border, #3f3f46);
+}
+.impl-check-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+.impl-check-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--cn-text, #e4e4e7);
+}
+.impl-check-percent {
+    font-size: 20px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: #60a5fa;
+}
+.impl-check-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.impl-check-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    padding: 4px 0;
+    color: var(--cn-text-sec, #a1a1aa);
+}
+.impl-check-item.is-done { color: var(--cn-text, #e4e4e7); }
+.impl-check-icon {
+    width: 16px;
+    height: 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+.impl-check-icon.done  { color: #4ade80; }
+.impl-check-icon.todo  { color: #71717a; }
+.impl-check-weight {
+    margin-left: auto;
+    font-size: 10px;
+    color: var(--cn-text-muted, #71717a);
+    font-variant-numeric: tabular-nums;
+}

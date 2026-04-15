@@ -24,6 +24,9 @@ async function loadGeneralSettings() {
     try {
         const data = await api.get('/api/settings/general');
         document.getElementById('includeSelfProjectToggle').checked = !!data.include_self_project;
+        var implMode = (data.implementation_check && data.implementation_check.commit_match_mode) || 'both';
+        var implSel = document.getElementById('implCommitMatchMode');
+        if (implSel) implSel.value = implMode;
         badgeStylesData = Object.assign({}, data.account_badge_styles || {});
         renderBadgeStyles();
         document.getElementById('generalSettingsStatus').textContent = '';
@@ -35,8 +38,12 @@ async function loadGeneralSettings() {
 
 async function saveGeneralSettings() {
     const status = document.getElementById('generalSettingsStatus');
+    var implSel = document.getElementById('implCommitMatchMode');
     const data = {
         include_self_project: document.getElementById('includeSelfProjectToggle').checked,
+        implementation_check: {
+            commit_match_mode: implSel ? implSel.value : 'both'
+        },
         account_badge_styles: collectBadgeStyles()
     };
 

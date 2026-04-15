@@ -190,6 +190,34 @@ function _renderPanelMarkerDetails(marker) {
             ? _cockpitWorkflowData.workflow : null;
         renderCockpitNextAction(marker, wf);
     }
+    _renderImplementationCheck(marker);
+}
+
+function _renderImplementationCheck(marker) {
+    var box = document.getElementById('panelImplCheck');
+    if (!box) return;
+    var pct = (typeof marker.implementation_percent === 'number') ? marker.implementation_percent : null;
+    var signals = Array.isArray(marker.implementation_signals) ? marker.implementation_signals : [];
+    if (pct === null || !signals.length) {
+        box.innerHTML = '<div style="font-size:12px;color:var(--cn-text-muted)">Keine Signale verfuegbar.</div>';
+        return;
+    }
+    var items = signals.map(function (s) {
+        var done = !!s.done;
+        var icon = done ? 'check-circle-2' : 'circle';
+        var cls = 'impl-check-icon ' + (done ? 'done' : 'todo');
+        return '<div class="impl-check-item' + (done ? ' is-done' : '') + '">'
+            + '<span class="' + cls + '"><i data-lucide="' + icon + '" class="icon icon-xs"></i></span>'
+            + '<span>' + escapeHtml(s.label || s.key) + '</span>'
+            + '<span class="impl-check-weight">' + (s.weight || 0) + '%</span>'
+            + '</div>';
+    }).join('');
+    box.innerHTML = '<div class="impl-check-head">'
+        + '<span class="impl-check-title">Automatische Kontrolle</span>'
+        + '<span class="impl-check-percent">' + pct + '%</span>'
+        + '</div>'
+        + '<div class="impl-check-list">' + items + '</div>';
+    if (typeof lucide !== 'undefined') lucide.createIcons();
 }
 
 function _renderPlanSectionDetails(section) {
