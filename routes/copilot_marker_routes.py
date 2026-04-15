@@ -221,6 +221,25 @@ def api_marker_rating_skip(marker_id):
     return jsonify({"ok": True, "marker_id": marker_id, "rating_skipped": True})
 
 
+@copilot_marker_bp.route("/api/marker/<marker_id>/rating-unskip", methods=["POST"])
+def api_marker_rating_unskip(marker_id):
+    """Rating-Skip zuruecknehmen — Marker wird wieder regulaer bewertet.
+
+    Gegenstueck zu /rating-skip: reaktiviert das "Bewertung nachholen"-Signal,
+    falls ein Marker versehentlich als "ignoriert" markiert wurde.
+    """
+    from services.workflow_core_service import update_marker_field as core_update_marker_field
+    data = request.get_json(silent=True) or {}
+    project_id = _resolve_project_id(data.get("project_id"), data.get("plan_id"))
+    if not project_id:
+        return jsonify({"error": "project_id ist erforderlich"}), 400
+    try:
+        core_update_marker_field(project_id, marker_id, rating_skipped=False)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    return jsonify({"ok": True, "marker_id": marker_id, "rating_skipped": False})
+
+
 @copilot_marker_bp.route("/api/sprint/<plan_id>/to-markers", methods=["POST"])
 def api_sprint_to_markers(plan_id):
     data = request.get_json(silent=True) or {}
