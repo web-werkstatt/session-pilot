@@ -251,6 +251,14 @@ def ensure_marker_schema():
     ensure_marker_schema_impl(execute)
 
 
+def ensure_plan_task_schema():
+    """Sprint Task-Entity: plan_tasks + markers.task_id (FK)."""
+    # markers muss existieren bevor task_id FK angelegt wird
+    ensure_marker_schema()
+    from services.db_plan_task_schema import ensure_plan_task_schema_impl
+    ensure_plan_task_schema_impl(execute)
+
+
 def ensure_cwo_schema():
     """CWO Sprint: Context Window Optimizer Tabellen."""
     from services.db_cwo_schema import ensure_cwo_schema_impl
