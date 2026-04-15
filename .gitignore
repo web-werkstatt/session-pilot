@@ -32,8 +32,9 @@ Thumbs.db
 # Local config
 *.local
 
-# Playwright screenshots
+# Playwright screenshots / dev screenshots (root-level)
 .playwright-mcp/
+/*.png
 dashboard-full.png
 plans-*.png
 scheduled-tasks-*.png
