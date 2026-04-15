@@ -83,4 +83,28 @@ def ensure_marker_schema_impl(execute):
             END $$
         """)
 
+        # Implementation-Check Persisting (Sprint sprint-impl-check-persisting, 2026-04-15):
+        # Cache fuer Prozent + Signale + Timestamp. NULL = nicht berechnet / invalidiert.
+        execute("""
+            DO $$ BEGIN
+                ALTER TABLE markers
+                    ADD COLUMN implementation_percent SMALLINT;
+            EXCEPTION WHEN duplicate_column THEN NULL;
+            END $$
+        """)
+        execute("""
+            DO $$ BEGIN
+                ALTER TABLE markers
+                    ADD COLUMN implementation_signals JSONB;
+            EXCEPTION WHEN duplicate_column THEN NULL;
+            END $$
+        """)
+        execute("""
+            DO $$ BEGIN
+                ALTER TABLE markers
+                    ADD COLUMN implementation_checked_at TIMESTAMPTZ;
+            EXCEPTION WHEN duplicate_column THEN NULL;
+            END $$
+        """)
+
         _marker_schema_ready = True
