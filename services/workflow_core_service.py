@@ -122,7 +122,8 @@ def update_marker_field(project_name, marker_id, **fields):
     allowed = {
         "titel", "ziel", "naechster_schritt", "prompt", "prompt_suggestion",
         "risiko", "checks", "status", "execution_score", "execution_comment",
-        "last_session", "sprint_tag", "spec_tag", "sprint_plan_id", "spec_id",
+        "last_execution_at", "last_session", "sprint_tag", "spec_tag",
+        "sprint_plan_id", "spec_id", "rating_skipped",
     }
     update_parts = []
     params = []
@@ -453,4 +454,5 @@ def _row_to_marker(row):
         sprint_plan_id=row.get("sprint_plan_id"),
         spec_id=row.get("spec_id"),
         source_line=row.get("source_line"),
+        rating_skipped=bool(row.get("rating_skipped")),
     )

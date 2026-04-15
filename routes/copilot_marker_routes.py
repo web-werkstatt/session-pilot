@@ -201,6 +201,26 @@ def api_marker_execution_rating_post(marker_id):
     return jsonify(rating)
 
 
+@copilot_marker_bp.route("/api/marker/<marker_id>/rating-skip", methods=["POST"])
+def api_marker_rating_skip(marker_id):
+    """Rating explizit als nicht-anwendbar markieren.
+
+    Unterdrueckt das "Bewertung nachholen"-Signal fuer Marker, bei denen
+    eine Bewertung keinen Sinn ergibt (fehlende Erinnerung, manueller
+    done-Status, kein tatsaechlicher Claude-Code-Lauf).
+    """
+    from services.workflow_core_service import update_marker_field as core_update_marker_field
+    data = request.get_json(silent=True) or {}
+    project_id = _resolve_project_id(data.get("project_id"), data.get("plan_id"))
+    if not project_id:
+        return jsonify({"error": "project_id ist erforderlich"}), 400
+    try:
+        core_update_marker_field(project_id, marker_id, rating_skipped=True)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    return jsonify({"ok": True, "marker_id": marker_id, "rating_skipped": True})
+
+
 @copilot_marker_bp.route("/api/sprint/<plan_id>/to-markers", methods=["POST"])
 def api_sprint_to_markers(plan_id):
     data = request.get_json(silent=True) or {}

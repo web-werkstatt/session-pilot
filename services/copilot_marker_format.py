@@ -45,6 +45,9 @@ class Marker:
     # Zeilennummer in der handoff.md (Phase 7, 2026-04-14):
     # Nur fuer Sortierung genutzt; compare=False um Equality-Tests nicht zu brechen.
     source_line: int | None = field(default=None, compare=False, repr=False)
+    # Rating explizit verworfen (2026-04-15): User hat "Ignorieren" gedrueckt.
+    # Unterdrueckt das "Bewertung nachholen"-Signal ohne execution_score zu setzen.
+    rating_skipped: bool = field(default=False, compare=False, repr=False)
 
     def __post_init__(self):
         self.marker_id = str(self.marker_id).strip()

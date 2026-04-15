@@ -90,7 +90,11 @@
                 title: 'Bewertung nachholen',
                 description: 'Der Marker ist abgeschlossen, aber noch nicht bewertet. Bewertung jetzt, solange die Erinnerung frisch ist.',
                 ctaLabel: 'Jetzt bewerten',
-                action: 'close_with_rating'
+                action: 'close_with_rating',
+                secondary: {
+                    label: 'Ignorieren',
+                    action: 'skip_rating'
+                }
             };
         }
 
@@ -116,6 +120,9 @@
             }
             if (act.action === 'close_with_rating') {
                 return 'data-action="close_with_rating" data-marker-id="' + markerIdAttr + '"';
+            }
+            if (act.action === 'skip_rating') {
+                return 'data-action="skip_rating" data-marker-id="' + markerIdAttr + '"';
             }
             if (act.tab) {
                 return 'data-tab="' + act.tab + '"'
@@ -159,6 +166,10 @@
             openCockpitCloseModal(markerId);
             return;
         }
+        if (actionName === 'skip_rating' && markerId) {
+            _skipRating(markerId);
+            return;
+        }
         if (tab && typeof switchPanelTab === 'function') {
             switchPanelTab(tab);
             if (focus) {
@@ -166,6 +177,27 @@
                 setTimeout(function () { _focusField(tab, focus); }, 50);
             }
         }
+    }
+
+    function _skipRating(markerId) {
+        var payload = {};
+        if (typeof _currentProjectId !== 'undefined' && _currentProjectId) payload.project_id = _currentProjectId;
+        if (typeof PLAN_ID !== 'undefined' && PLAN_ID) payload.plan_id = PLAN_ID;
+        api.post('/api/marker/' + encodeURIComponent(markerId) + '/rating-skip', payload)
+            .then(function () {
+                if (typeof _showToast === 'function') _showToast('Rating fuer diesen Marker ignoriert');
+                var box = document.getElementById('cockpitNextAction');
+                if (box) { box.style.display = 'none'; box.innerHTML = ''; }
+                if (typeof _loadMarkerContext === 'function' && typeof _currentSection !== 'undefined'
+                    && _currentSection && _currentSection.marker_id === markerId) {
+                    _loadMarkerContext(markerId);
+                }
+                if (typeof loadCockpitWorkflow === 'function') loadCockpitWorkflow();
+            })
+            .catch(function (err) {
+                var msg = (err && err.message) ? err.message : 'Fehler beim Ignorieren';
+                if (typeof _showToast === 'function') _showToast(msg, true);
+            });
     }
 
     function _focusField(tab, focus) {

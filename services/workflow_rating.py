@@ -40,6 +40,8 @@ def is_rating_pending(marker, done_since=None):
         return False
     if getattr(marker, "execution_score", None) is not None:
         return False
+    if getattr(marker, "rating_skipped", False):
+        return False
     if not str(getattr(marker, "last_session", "") or "").strip():
         return False
     ref = done_since if done_since is not None else getattr(marker, "updated_at", None)

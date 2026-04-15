@@ -63,6 +63,17 @@ def ensure_marker_schema_impl(execute):
             END $$
         """)
 
+        # rating_skipped (2026-04-15): User kann Rating explizit verwerfen
+        # (z.B. Marker ohne relevante Ausfuehrung, Ratlosigkeit). Setzt das
+        # "Bewertung nachholen"-Signal stumm, ohne execution_score zu setzen.
+        execute("""
+            DO $$ BEGIN
+                ALTER TABLE markers
+                    ADD COLUMN rating_skipped BOOLEAN NOT NULL DEFAULT FALSE;
+            EXCEPTION WHEN duplicate_column THEN NULL;
+            END $$
+        """)
+
         # executor_tool in marker_workflow_states (Sprint ADR-001 Erweiterung)
         execute("""
             DO $$ BEGIN
