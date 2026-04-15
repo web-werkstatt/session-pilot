@@ -1,0 +1,54 @@
+{# Erklaer-Modal fuer den Workflow-Ring (Phase 7, 2026-04-14) #}
+<div class="modal-overlay" id="workflowHelpModal">
+    <div class="modal-content" style="max-width:720px">
+        <div class="modal-header">
+            <h2>Workflow-Ring — wie ist das gemeint?</h2>
+            <button class="modal-close" onclick="closeModal('workflowHelpModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p><strong>Der Ring zeigt den Lebenszyklus einer Arbeits-Aufgabe (Marker) in 5 Phasen.</strong> Er leuchtet immer an der Phase, die <em>als naechstes</em> Aufmerksamkeit braucht.</p>
+
+            <h3 style="margin-top:18px">Begriffe</h3>
+            <ul>
+                <li><strong>Projekt</strong> — ein Verzeichnis unter <code>/mnt/projects/</code></li>
+                <li><strong>Sprint-Plan</strong> — ein groesseres Vorhaben (z.B. "Dispatch Sprint 2a"); lebt in <code>project_plans</code> + <code>sprints/*.md</code></li>
+                <li><strong>Marker</strong> — eine konkrete, abgrenzbare Aufgabe innerhalb eines Plans. <em>Eine Card = ein Marker.</em> Liegt in <code>handoff.md</code> + DB-Tabelle <code>markers</code></li>
+                <li><strong>Session</strong> — eine Claude-Code-Session, die an einem Marker gearbeitet hat</li>
+            </ul>
+
+            <h3 style="margin-top:18px">Die 5 Phasen</h3>
+            <ol>
+                <li><strong>Gate Ready</strong> — Prompt &amp; Checks liegen vor, Marker kann gestartet werden. <em>(rot wenn Prompt oder Checks fehlen)</em></li>
+                <li><strong>Aktiv</strong> — Marker ist auf <code>in_progress</code>, aber noch keine Session dran. <em>Naechster Schritt: Session starten.</em></li>
+                <li><strong>Execution</strong> — Tool/Agent arbeitet gerade (<code>last_session</code> gesetzt). <em>Warten/beobachten.</em></li>
+                <li><strong>Write Back</strong> — Marker ist <code>done</code> oder <code>blocked</code>, Session-Ergebnis muss in die .md. <em>Handoff oeffnen.</em></li>
+                <li><strong>Rating</strong> — done-Marker hat noch keinen <code>execution_score</code>. <em>Score (0-5) + Kommentar vergeben.</em></li>
+            </ol>
+
+            <h3 style="margin-top:18px">Welcher Knoten leuchtet?</h3>
+            <p>Priorisiert — der erste Treffer gewinnt:</p>
+            <ol>
+                <li>Gibt es irgendeinen done-Marker ohne Rating? → <strong>Rating</strong></li>
+                <li>Aktueller Marker ist in_progress und hat Session-Referenz? → <strong>Execution</strong></li>
+                <li>Aktueller Marker ist in_progress (noch keine Session)? → <strong>Aktiv</strong></li>
+                <li>Sonst: done/blocked-Marker vorhanden? → <strong>Write Back</strong></li>
+                <li>Sonst: naechster offener Marker? → <strong>Gate Ready</strong></li>
+            </ol>
+
+            <h3 style="margin-top:18px">Farben</h3>
+            <ul>
+                <li><strong>Haken</strong> — Phase fuer aktuellen Fokus erledigt</li>
+                <li><strong>Blau</strong> — aktuelle Phase</li>
+                <li><strong>Gelb/Orange</strong> — Handlungsbedarf (Write-Back, Rating)</li>
+                <li><strong>Rot</strong> — Gate blockiert (Prompt/Checks fehlen)</li>
+                <li><strong>Grau</strong> — noch nicht dran</li>
+            </ul>
+
+            <h3 style="margin-top:18px">Was in der Mitte steht</h3>
+            <p>Der <strong>Notice-Block</strong> rechts vom Ring zeigt den Titel und Plan des aktuell fokussierten Markers. <em>CURRENT</em> = der Marker auf den sich der Ring-Status bezieht, <em>NEXT</em> = der naechste vorgesehene Marker.</p>
+
+            <h3 style="margin-top:18px">Kurz</h3>
+            <p>Das Bild ist eine <strong>Ampel fuer den aktuellen Marker-Fokus</strong> — keine Board-Uebersicht. Es sagt dir welche <em>naechste Aktion</em> fuer den im Fokus stehenden Marker ansteht.</p>
+        </div>
+    </div>
+</div>

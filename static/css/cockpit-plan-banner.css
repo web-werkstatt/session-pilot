@@ -1,0 +1,67 @@
+/* Phase 7 (2026-04-14): Plan-Context-Banner — zeigt Herkunft aus Planning. */
+.plan-context-banner {
+    margin-bottom: 12px;
+    padding: 14px 18px;
+    border-left: 3px solid rgba(79,195,247,0.6);
+    background: linear-gradient(135deg, rgba(79,195,247,0.07), rgba(79,195,247,0.02));
+}
+.plan-context-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 6px;
+}
+.plan-context-kicker {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(125,211,252,0.9);
+}
+.plan-context-back {
+    font-size: 11px;
+    color: var(--cn-text-muted);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+.plan-context-back:hover { color: var(--cn-text); }
+.plan-context-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--cn-text);
+    margin-bottom: 4px;
+}
+.plan-context-summary {
+    font-size: 13px;
+    color: var(--cn-text-sec);
+    line-height: 1.5;
+    margin-bottom: 10px;
+}
+.plan-context-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+}
+.plan-context-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 2px 8px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--cn-text-muted);
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 999px;
+}
+.plan-context-date {
+    font-size: 11px;
+    color: var(--cn-text-muted);
+    font-variant-numeric: tabular-nums;
+}

@@ -42,8 +42,11 @@
 .card-head {
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
     gap: 6px;
     margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--cn-border);
 }
 
 /* shadcn Badge */
@@ -82,6 +85,18 @@
     -webkit-line-clamp: 4;
     -webkit-box-orient: vertical;
     overflow: hidden;
+}
+
+/* Phase 7 (2026-04-14): plans.css setzt .card-title auf nowrap+ellipsis,
+   was im Cockpit Titel einzeilig mit "..." abschneidet. Override: in Cockpit-
+   Columns wrapt der Titel ueber bis zu 3 Zeilen. */
+.board-split-view .card-title {
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .card-gate {

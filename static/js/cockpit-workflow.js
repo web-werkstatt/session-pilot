@@ -25,9 +25,10 @@ function loadCockpitWorkflow() {
 
             overview.style.display = 'block';
             _renderCockpitWfRing(workflow);
-            _renderCockpitWfStepLabel(workflow);
+            _renderCockpitWfStepPill(workflow);
             _renderCockpitWfMarkers(workflow);
             _renderCockpitWfSignals(workflow);
+            _renderCockpitWfHint(workflow);
             if (typeof lucide !== 'undefined') lucide.createIcons();
         })
         .catch(function() {});
@@ -56,37 +57,96 @@ function _renderCockpitWfStepLabel(workflow) {
     el.textContent = label;
 }
 
+var COCKPIT_WF_STEP_ICON = {
+    gate_ready: 'key',
+    active: 'play',
+    execution: 'activity',
+    write_back: 'file-text',
+    rating: 'star'
+};
+
+function _cockpitWfActiveStep(workflow) {
+    var steps = (workflow && workflow.steps) || [];
+    var currentId = workflow && workflow.current_step;
+    for (var i = 0; i < steps.length; i++) {
+        if (steps[i].id === currentId) return steps[i];
+    }
+    return null;
+}
+
 function _renderCockpitWfMarkers(workflow) {
     var container = document.getElementById('cockpitWfMarkers');
     if (!container) return;
 
     var current = workflow.current_marker || {};
     var next = workflow.next_marker || {};
+    var activeStep = _cockpitWfActiveStep(workflow);
+    var cta = activeStep && activeStep.cta_label ? activeStep.cta_label : '';
+
+    function _card(role, marker, roleLabel, extraClass, withCta) {
+        var iconName = role === 'current' ? 'target' : 'arrow-right-circle';
+        var planLine = marker.plan_id
+            ? '<div class="cockpit-wf-card-plan">Plan ' + escapeHtml(String(marker.plan_id))
+                + (marker.plan_title ? ': ' + escapeHtml(marker.plan_title) : '')
+                + '</div>'
+            : '';
+        var ctaBtn = withCta && cta
+            ? '<span class="cockpit-wf-card-cta"><i data-lucide="chevron-right" class="icon icon-xs"></i>' + escapeHtml(cta) + '</span>'
+            : '';
+        return '<button class="cockpit-wf-card ' + extraClass + '" type="button"'
+            + ' onclick="openSectionPanel(\'' + _escapeJsString(marker.marker_id) + '\')"'
+            + ' title="' + escapeHtml(roleLabel) + '">'
+            + '<span class="cockpit-wf-card-head">'
+            +   '<i data-lucide="' + iconName + '" class="icon icon-sm cockpit-wf-card-icon"></i>'
+            +   '<span class="cockpit-wf-card-role">' + escapeHtml(roleLabel) + '</span>'
+            + '</span>'
+            + '<span class="cockpit-wf-card-title">' + escapeHtml(marker.title || marker.marker_id) + '</span>'
+            + planLine
+            + ctaBtn
+            + '</button>';
+    }
+
     var html = '';
-
     if (current.marker_id) {
-        html += '<span class="cockpit-wf-pill cockpit-wf-pill--current" '
-            + 'onclick="openSectionPanel(\'' + _escapeJsString(current.marker_id) + '\')" '
-            + 'title="Aktueller Marker">'
-            + '<span class="cockpit-wf-pill-label">Current</span> '
-            + escapeHtml(current.title || current.marker_id)
-            + '</span>';
+        html += _card('current', current, 'Current · aktueller Fokus', 'cockpit-wf-card--current', true);
     }
-
     if (next.marker_id) {
-        html += '<span class="cockpit-wf-pill cockpit-wf-pill--next" '
-            + 'onclick="openSectionPanel(\'' + _escapeJsString(next.marker_id) + '\')" '
-            + 'title="Naechster Marker">'
-            + '<span class="cockpit-wf-pill-label">Next</span> '
-            + escapeHtml(next.title || next.marker_id)
-            + '</span>';
+        html += _card('next', next, 'Next · naechster Marker', 'cockpit-wf-card--next', !current.marker_id);
     }
-
     if (!html) {
-        html = '<span class="cockpit-wf-pill cockpit-wf-pill--next">Keine aktiven Marker</span>';
+        html = '<div class="cockpit-wf-card cockpit-wf-card--empty"><span class="cockpit-wf-card-role">Keine aktiven Marker</span></div>';
     }
 
     container.innerHTML = html;
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+function _renderCockpitWfHint(workflow) {
+    var el = document.getElementById('cockpitWfHint');
+    if (!el) return;
+    var step = _cockpitWfActiveStep(workflow);
+    var hints = {
+        gate_ready: 'Marker bereit — Prompt und Checks pruefen, dann starten.',
+        active: 'Marker ist auf in_progress — Session starten, Thread beginnen.',
+        execution: 'Eine Session arbeitet gerade dran — Thread oeffnen oder warten.',
+        write_back: 'Marker abgeschlossen — Session-Ergebnis in die handoff.md uebertragen.',
+        rating: 'Marker ist done, Bewertung fehlt — Score (0-5) und Kommentar vergeben.'
+    };
+    var msg = step && hints[step.id] ? hints[step.id] : '';
+    el.textContent = msg;
+    el.style.display = msg ? '' : 'none';
+}
+
+function _renderCockpitWfStepPill(workflow) {
+    var el = document.getElementById('cockpitWfStepLabel');
+    if (!el) return;
+    var label = typeof workflowLoopCurrentStepLabel === 'function'
+        ? workflowLoopCurrentStepLabel(workflow)
+        : (workflow.current_step || 'Workflow');
+    var iconName = COCKPIT_WF_STEP_ICON[workflow.current_step] || 'activity';
+    el.innerHTML = '<i data-lucide="' + iconName + '" class="icon icon-xs"></i>'
+        + '<span>' + escapeHtml(label) + '</span>';
+    if (typeof lucide !== 'undefined') lucide.createIcons();
 }
 
 function _renderCockpitWfSignals(workflow) {

@@ -45,13 +45,40 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 /* === Plan Info === */
+function _renderPlanContextBanner(plan) {
+    var banner = document.getElementById('planContextBanner');
+    if (!banner || !plan) return;
+    var title = plan.title || ('Plan #' + PLAN_ID);
+    var summary = plan.context_summary || plan.description || '';
+    document.getElementById('planContextTitle').textContent = title;
+    var summaryEl = document.getElementById('planContextSummary');
+    summaryEl.textContent = summary;
+    summaryEl.style.display = summary ? '' : 'none';
+
+    var metaParts = [];
+    if (plan.category) metaParts.push('<span class="plan-context-chip">' + escapeHtml(plan.category) + '</span>');
+    if (plan.status) metaParts.push('<span class="plan-context-chip">' + escapeHtml(plan.status) + '</span>');
+    if (plan.project_name) metaParts.push('<span class="plan-context-chip"><i data-lucide="folder" class="icon icon-xs"></i> ' + escapeHtml(plan.project_name) + '</span>');
+    var dateStr = plan.updated_at || plan.created_at || '';
+    if (dateStr && typeof formatDate === 'function') metaParts.push('<span class="plan-context-date">' + formatDate(dateStr) + '</span>');
+    document.getElementById('planContextMeta').innerHTML = metaParts.join('');
+
+    banner.style.display = '';
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
 function _loadPlanInfo() {
     // Projekt-Modus: kein Plan geladen, Projekt aus COCKPIT_PROJECT
     if (!PLAN_ID && COCKPIT_PROJECT) {
         _currentProjectId = COCKPIT_PROJECT;
         _planSections = [];
         document.getElementById('planSwitcherLabel').textContent = 'Plan switch';
-        document.getElementById('currentPlanTitle').textContent = COCKPIT_PROJECT;
+        // Phase 7: currentPlanTitle entfernt — defensiv pruefen, falls Element fehlt.
+        var _cptEl1 = document.getElementById('currentPlanTitle');
+        if (_cptEl1) _cptEl1.textContent = COCKPIT_PROJECT;
+        // Sprint-Import-Button im Projektmodus verbergen (kein einzelner Plan-Kontext).
+        var _spBtn1 = document.getElementById('importSprintMarkersBtn');
+        if (_spBtn1) _spBtn1.style.display = 'none';
         return Promise.resolve();
     }
     return api.get('/api/plans/' + PLAN_ID)
@@ -62,7 +89,13 @@ function _loadPlanInfo() {
             _planSections = _derivePlanSections(plan);
             var label = plan.title || 'Plan #' + PLAN_ID;
             document.getElementById('planSwitcherLabel').textContent = 'Plan switch';
-            document.getElementById('currentPlanTitle').textContent = label;
+            var _cptEl2 = document.getElementById('currentPlanTitle');
+            if (_cptEl2) _cptEl2.textContent = label;
+            // Phase 7: Sprint-Import-Button nur im Plan-Modus sichtbar
+            var _spBtn2 = document.getElementById('importSprintMarkersBtn');
+            if (_spBtn2) _spBtn2.style.display = '';
+            // Phase 7 (2026-04-14): Plan-Context-Banner mit Plan-Daten befuellen
+            _renderPlanContextBanner(plan);
             if (window.history && window.history.replaceState) {
                 window.history.replaceState(null, '', _buildCopilotUrl(PLAN_ID, label));
             }
@@ -71,7 +104,8 @@ function _loadPlanInfo() {
             _currentMarkerPlanId = String(PLAN_ID);
             _planSections = [];
             document.getElementById('planSwitcherLabel').textContent = 'Plan switch';
-            document.getElementById('currentPlanTitle').textContent = 'Plan #' + PLAN_ID;
+            var _cptEl3 = document.getElementById('currentPlanTitle');
+            if (_cptEl3) _cptEl3.textContent = 'Plan #' + PLAN_ID;
         });
 }
 

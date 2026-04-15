@@ -107,11 +107,9 @@ function _buildCardBadges(sec) {
         parts.push('<span class="card-badge card-badge--wf card-badge--' + tone + '">' + escapeHtml(label) + '</span>');
     }
 
-    // 2) Plan-Herkunft (nur im Projekt-Modus mit mehreren Plaenen)
-    if (COCKPIT_PROJECT && !PLAN_ID && sec.plan_id) {
-        var planLabel = sec.plan_title || ('Plan ' + sec.plan_id);
-        parts.push('<span class="card-badge card-badge--plan">' + escapeHtml(planLabel) + '</span>');
-    }
+    // 2) Plan-Herkunft: NICHT mehr auf der Card (Platz fuer Title/Status).
+    // Phase 7 (2026-04-14): Plan-Info wird nur noch im rechten Panel angezeigt
+    // (openSectionPanel -> panelSectionMeta mit aufgeloestem Plan-Titel).
 
     // 3) Assignment Badge
     var assignment = _activeAssignments[sec.marker_id];

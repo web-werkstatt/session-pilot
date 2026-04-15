@@ -157,14 +157,15 @@ function _buildCardHtml(plan, draggable) {
     const projectBadge = plan.project_name
         ? `<span class="card-project"><i data-lucide="folder" class="icon icon-xs"></i> ${escapeHtml(plan.project_name)}</span>`
         : '';
+    // Phase 7 (2026-04-14): absolutes Datum auf der Card (updated_at bevorzugt, sonst created_at).
+    const planDate = plan.updated_at || plan.created_at || '';
+    const dateBadge = planDate
+        ? `<span class="card-date" title="Zuletzt aktualisiert">${formatDate(planDate)}</span>`
+        : '';
     const cockpitUrl = buildCopilotUrl(plan.id, plan.title, plan.project_name || filters.project || '');
     const detailUrl = buildPlanDetailUrl(plan);
-    const projectWorkspaceUrl = plan.project_name
-        ? `/project/${encodeURIComponent(plan.project_name)}`
-        : '';
-    const projectWorkspaceAction = projectWorkspaceUrl
-        ? `<a href="${projectWorkspaceUrl}" class="card-inline-btn" onclick="event.stopPropagation()"><i data-lucide="folder-open" class="icon icon-xs"></i> Project</a>`
-        : '';
+    // Phase 7 (2026-04-14): Project-Button entfernt — Card-Klick fuehrt zum Plan-Detail,
+    // Projekt-Badge im Footer bleibt. Project-Workspace erreichbar ueber Breadcrumb oder Sidebar.
 
     return `
     <div class="plan-card status-${statusClass}" ${dragAttr} onclick="location.href='${detailUrl}'">
@@ -177,9 +178,8 @@ function _buildCardHtml(plan, draggable) {
             ${summary ? `<p class="card-summary">${escapeHtml(summary)}</p>` : ''}
         </div>
         <div class="card-foot">
-            <div class="card-foot-meta">${projectBadge}</div>
+            <div class="card-foot-meta">${projectBadge}${dateBadge}</div>
             <div class="card-foot-actions">
-                ${projectWorkspaceAction}
                 <a href="${cockpitUrl}" class="card-inline-btn" onclick="event.stopPropagation()"><i data-lucide="message-square" class="icon icon-xs"></i> Cockpit</a>
             </div>
         </div>
@@ -256,110 +256,7 @@ function setView(view) {
 }
 
 // === Drag & Drop ===
-let _dragPlanId = null;
-let _dragSourceStage = null;
-
-function _initBoardDragDrop() {
-    // Drag-Start auf Cards
-    document.querySelectorAll('.plans-board .plan-card[draggable]').forEach(card => {
-        card.addEventListener('dragstart', function(e) {
-            _dragPlanId = parseInt(this.dataset.planId);
-            _dragSourceStage = this.dataset.stage;
-            this.classList.add('dragging');
-            e.dataTransfer.effectAllowed = 'move';
-            e.dataTransfer.setData('text/plain', _dragPlanId);
-        });
-        card.addEventListener('dragend', function() {
-            this.classList.remove('dragging');
-            document.querySelectorAll('.board-column-body.drag-over').forEach(el => el.classList.remove('drag-over'));
-            _dragPlanId = null;
-            _dragSourceStage = null;
-        });
-    });
-
-    // Drop-Zonen auf Column-Bodies
-    document.querySelectorAll('.board-column-body').forEach(colBody => {
-        colBody.addEventListener('dragover', function(e) {
-            e.preventDefault();
-            e.dataTransfer.dropEffect = 'move';
-            this.classList.add('drag-over');
-        });
-        colBody.addEventListener('dragleave', function(e) {
-            // Nur entfernen wenn wirklich verlassen (nicht bei Kind-Elementen)
-            if (!this.contains(e.relatedTarget)) {
-                this.classList.remove('drag-over');
-            }
-        });
-        colBody.addEventListener('drop', function(e) {
-            e.preventDefault();
-            this.classList.remove('drag-over');
-            const targetStage = this.dataset.stage;
-            const planId = parseInt(e.dataTransfer.getData('text/plain'));
-            if (!planId || targetStage === _dragSourceStage) return;
-            _moveCardToStage(planId, _dragSourceStage, targetStage);
-        });
-    });
-}
-
-function _moveCardToStage(planId, oldStage, newStage) {
-    // Optimistisch: Card sofort verschieben
-    const card = document.querySelector(`.plan-card[data-plan-id="${planId}"]`);
-    const targetCol = document.querySelector(`.board-column-body[data-stage="${newStage}"]`);
-    if (card && targetCol) {
-        targetCol.appendChild(card);
-        card.dataset.stage = newStage;
-        // Badge auf Card aktualisieren
-        const wfBadge = card.querySelector('.badge-wf');
-        if (wfBadge) {
-            wfBadge.className = `badge badge-wf badge-wf-${newStage}`;
-            wfBadge.textContent = newStage.replace('_', ' ');
-        }
-        // Column-Counts aktualisieren
-        _updateColumnCounts();
-    }
-
-    // API-Call
-    api.put(`/api/plans/${planId}/workflow`, { workflow_stage: newStage })
-        .then(function(result) {
-            // Lokale Daten aktualisieren
-            const plan = allPlans.find(p => p.id === planId);
-            if (plan) {
-                plan.workflow_stage = newStage;
-                if (result.current_state !== undefined) plan.current_state = result.current_state;
-                if (result.target_state !== undefined) plan.target_state = result.target_state;
-                if (result.next_action !== undefined) plan.next_action = result.next_action;
-            }
-            showToast(`Plan in "${_stageLabel(newStage)}" verschoben`);
-        })
-        .catch(function(err) {
-            // Rollback: Card zurueck in alte Spalte
-            const sourceCol = document.querySelector(`.board-column-body[data-stage="${oldStage}"]`);
-            if (card && sourceCol) {
-                sourceCol.appendChild(card);
-                card.dataset.stage = oldStage;
-                const wfBadge = card.querySelector('.badge-wf');
-                if (wfBadge) {
-                    wfBadge.className = `badge badge-wf badge-wf-${oldStage}`;
-                    wfBadge.textContent = oldStage.replace('_', ' ');
-                }
-                _updateColumnCounts();
-            }
-            showToast('Fehler: ' + (err.message || 'Workflow-Update fehlgeschlagen'), true);
-        });
-}
-
-function _stageLabel(stage) {
-    const col = BOARD_COLUMNS.find(c => c.stage === stage);
-    return col ? col.label : stage;
-}
-
-function _updateColumnCounts() {
-    document.querySelectorAll('.board-column').forEach(col => {
-        const count = col.querySelectorAll('.plan-card').length;
-        const countEl = col.querySelector('.board-count');
-        if (countEl) countEl.textContent = count;
-    });
-}
+// Drag & Drop Logik ausgelagert in plans-board.js (Phase 7, 2026-04-14).
 
 function getCategoryIcon(cat) {
     const icons = {
@@ -396,8 +293,43 @@ function setFilter(key, value) {
         });
     }
 
+    // Phase 7 (2026-04-14): Project-Filter aktualisiert URL + Breadcrumb.
+    if (key === 'project' && window.history && window.history.replaceState) {
+        const url = new URL(window.location.href);
+        if (value) url.searchParams.set('project', value);
+        else url.searchParams.delete('project');
+        window.history.replaceState(null, '', url.toString());
+        _updateBreadcrumbProject(value);
+    }
+
     loadPlans();
     loadStats();
+}
+
+function _updateBreadcrumbProject(project) {
+    const bc = document.querySelector('.breadcrumb');
+    if (!bc) return;
+    // Bestehenden Projekt-Link entfernen (plus Separator davor/dahinter).
+    const existing = bc.querySelector('.bc-project-injected');
+    if (existing) {
+        const sep = existing.nextSibling;
+        if (sep && sep.classList && sep.classList.contains('bc-sep')) sep.remove();
+        existing.remove();
+    }
+    if (!project) return;
+    const bcActive = bc.querySelector('.bc-active');
+    if (!bcActive) return;
+    const link = document.createElement('a');
+    link.href = '/project/' + encodeURIComponent(project);
+    link.textContent = project;
+    link.className = 'bc-link bc-project-injected';
+    const sep = document.createElement('span');
+    sep.className = 'bc-sep';
+    sep.textContent = '/';
+    bc.insertBefore(link, bcActive);
+    bc.insertBefore(document.createTextNode(' '), bcActive);
+    bc.insertBefore(sep, bcActive);
+    bc.insertBefore(document.createTextNode(' '), bcActive);
 }
 
 // === Detail ===

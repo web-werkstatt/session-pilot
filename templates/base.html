@@ -46,23 +46,25 @@
                 <div class="nav-section-body">
                     <div class="nav-subsection">
                         <div class="nav-subsection-head">
-                            <a href="/?tab=projects" data-default-href="/?tab=projects" data-project-nav="projects" class="nav-item nav-item--primary nav-subsection-link {% if active_page in ['dashboard', 'scaffold'] %}active{% endif %}" onclick="if(window.location.pathname==='/' && typeof showTab==='function'){event.preventDefault();showTab('projects', this);}">
+                            <a href="/?tab=projects" data-default-href="/?tab=projects" data-project-nav="projects" class="nav-item nav-item--primary nav-subsection-link {% if active_page in ['dashboard', 'scaffold', 'projects'] %}active{% endif %}" onclick="if(window.location.pathname==='/' && typeof showTab==='function'){event.preventDefault();showTab('projects', this);}">
                                 <span class="nav-icon"><i data-lucide="folder-open" class="icon"></i></span><span class="nav-text">Projects</span>
                             </a>
-                            <button class="nav-subsection-toggle-btn" type="button" onclick="toggleSidebarSubmenu('projectsSubmenu')" aria-expanded="{% if active_page in ['dashboard', 'scaffold'] %}true{% else %}false{% endif %}" aria-label="Toggle Projects submenu">
+                            <button class="nav-subsection-toggle-btn" type="button" onclick="toggleSidebarSubmenu('projectsSubmenu')" aria-expanded="{% if active_page in ['dashboard', 'scaffold', 'projects'] %}true{% else %}false{% endif %}" aria-label="Toggle Projects submenu">
                                 <span class="nav-subsection-chevron"><i data-lucide="chevron-down" class="icon icon-xs"></i></span>
                             </button>
                         </div>
-                        <div class="nav-submenu {% if active_page in ['dashboard', 'scaffold'] %}is-open{% endif %}" id="projectsSubmenu">
+                        {# Phase 7 (2026-04-14): Submenu bleibt offen auf /project/<name> (active_page='projects'). #}
+                        <div class="nav-submenu {% if active_page in ['dashboard', 'scaffold', 'projects'] %}is-open{% endif %}" id="projectsSubmenu">
+                            <a href="/project/project_dashboard" class="nav-item nav-item--sub {% if active_page == 'projects' and project_name == 'project_dashboard' %}active{% endif %}">
+                                <span class="nav-icon"><i data-lucide="folder-cog" class="icon"></i></span><span class="nav-text">Project Dashboard</span>
+                            </a>
                             <a href="/scaffold" class="nav-item nav-item--sub {% if active_page == 'scaffold' %}active{% endif %}">
                                 <span class="nav-icon"><i data-lucide="plus-circle" class="icon"></i></span><span class="nav-text">New Project</span>
                             </a>
                             <a href="/?tab=widgets" class="nav-item nav-item--sub {% if active_page == 'dashboard' and dashboard_tab == 'widgets' %}active{% endif %}" onclick="if(window.location.pathname==='/' && typeof showTab==='function'){event.preventDefault();showTab('widgets', this);}">
                                 <span class="nav-icon"><i data-lucide="layout-grid" class="icon"></i></span><span class="nav-text">Overview</span>
                             </a>
-                            <a href="/?tab=gitea" class="nav-item nav-item--sub {% if active_page == 'dashboard' and dashboard_tab == 'gitea' %}active{% endif %}" onclick="if(window.location.pathname==='/' && typeof showTab==='function'){event.preventDefault();showTab('gitea', this);}">
-                                <span class="nav-icon"><i data-lucide="git-branch" class="icon"></i></span><span class="nav-text">Repository Sources</span>
-                            </a>
+                            {# Phase 7 (2026-04-14): Repository Sources verschoben nach Integrationen-Sektion (projekt-uebergreifend, nicht projekt-spezifisch). #}
                         </div>
                     </div>
                     <a href="/plans" class="nav-item {% if active_page == 'plans' %}active{% endif %}">
@@ -156,9 +158,33 @@
                     </a>
                 </div>
             </div>
+            {# Phase 7 (2026-04-14): Integrationen-Sektion nur rendern, wenn mindestens eine Integration konfiguriert ist. #}
+            {% if gitea_url or portainer_url %}
+            <div class="nav-section nav-section--collapsible is-collapsed" data-section-key="integrations-static">
+                <button class="nav-section-toggle" type="button" onclick="toggleSidebarSection('integrations-static')" aria-expanded="false">
+                    <span class="nav-label">Integrationen</span>
+                    <span class="nav-section-chevron"><i data-lucide="chevron-down" class="icon icon-xs"></i></span>
+                </button>
+                <div class="nav-section-body" data-section-body="integrations-static">
+                    {% if gitea_url %}
+                    <a href="/?tab=gitea" class="nav-item {% if active_page == 'dashboard' and dashboard_tab == 'gitea' %}active{% endif %}" onclick="if(window.location.pathname==='/' && typeof showTab==='function'){event.preventDefault();showTab('gitea', this);}" title="Repository-Liste im Dashboard">
+                        <span class="nav-icon"><i data-lucide="git-branch" class="icon"></i></span><span class="nav-text">Gitea Repositories</span>
+                    </a>
+                    <a href="{{ gitea_url }}" class="nav-item" target="_blank" rel="noopener" title="Gitea-Instanz oeffnen (extern)">
+                        <span class="nav-icon"><i data-lucide="external-link" class="icon"></i></span><span class="nav-text">Gitea oeffnen</span>
+                    </a>
+                    {% endif %}
+                    {% if portainer_url %}
+                    <a href="{{ portainer_url }}" class="nav-item" target="_blank" rel="noopener" title="Portainer (Docker Management UI) oeffnen">
+                        <span class="nav-icon"><i data-lucide="box" class="icon"></i></span><span class="nav-text">Portainer</span>
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
             <div class="nav-section nav-section--collapsible is-collapsed" id="externalLinksSection" data-section-key="integrations" style="display:none">
                 <button class="nav-section-toggle" type="button" onclick="toggleSidebarSection('integrations')" aria-expanded="false">
-                    <span class="nav-label">Integrationen</span>
+                    <span class="nav-label">Externe Links</span>
                     <span class="nav-section-chevron"><i data-lucide="chevron-down" class="icon icon-xs"></i></span>
                 </button>
                 <div class="nav-section-body" id="externalLinksNav" data-section-body="integrations"></div>
@@ -182,7 +208,7 @@
         <header class="topbar">
             <button class="sidebar-toggle" onclick="toggleSidebar()" title="Toggle Sidebar"><i data-lucide="menu" class="icon"></i></button>
             <div class="breadcrumb">
-                <span>Workspace</span>
+                <a href="/" class="bc-link">Workspace</a>
                 <span class="bc-sep">/</span>
                 <span class="bc-active">{% block breadcrumb %}Dashboard{% endblock %}</span>
             </div>
@@ -245,6 +271,8 @@
     <script>window.DASHBOARD_SETTINGS = {{ dashboard_settings|tojson }};</script>
     <script src="/static/js/project-context.js"></script>
     <script src="/static/js/base.js"></script>
+    <script src="/static/js/lightbox.js"></script>
+    <script src="/static/js/breadcrumb-project.js"></script>
     <script src="/static/js/notifications.js"></script>
     <script>if (typeof lucide !== 'undefined') lucide.createIcons();</script>
     {% block scripts %}{% endblock %}

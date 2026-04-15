@@ -110,6 +110,7 @@ def _upsert_marker(project_name, marker):
                 spec_tag = %s,
                 sprint_plan_id = %s,
                 spec_id = %s,
+                source_line = %s,
                 updated_at = NOW()
             WHERE project_name = %s AND marker_id = %s""",
             (
@@ -130,6 +131,7 @@ def _upsert_marker(project_name, marker):
                 marker.spec_tag or "",
                 marker.sprint_plan_id,
                 marker.spec_id,
+                marker.source_line,
                 project_name,
                 marker.marker_id,
             ),
@@ -143,13 +145,13 @@ def _upsert_marker(project_name, marker):
             naechster_schritt, prompt, prompt_suggestion, risiko, checks,
             last_session, execution_score, execution_comment,
             last_execution_at, sprint_tag, spec_tag,
-            sprint_plan_id, spec_id, imported_from
+            sprint_plan_id, spec_id, source_line, imported_from
         ) VALUES (
             %s, %s, %s, %s, %s, %s,
             %s, %s, %s, %s, %s::jsonb,
             %s, %s, %s,
             %s, %s, %s,
-            %s, %s, 'handoff'
+            %s, %s, %s, 'handoff'
         )""",
         (
             project_name,
@@ -171,6 +173,7 @@ def _upsert_marker(project_name, marker):
             marker.spec_tag or "",
             marker.sprint_plan_id,
             marker.spec_id,
+            marker.source_line,
         ),
     )
     return "created"

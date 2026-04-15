@@ -194,6 +194,9 @@
 .breadcrumb { font-size: var(--text-base); color: var(--text-ghost); }
 .breadcrumb .bc-sep { margin: 0 6px; }
 .breadcrumb .bc-active { color: var(--text-secondary); font-weight: 500; }
+/* Phase 7 (2026-04-14): konsistenter Style fuer klickbare Breadcrumb-Segmente. */
+.breadcrumb .bc-link { color: #4fc3f7; text-decoration: none; }
+.breadcrumb .bc-link:hover { text-decoration: underline; }
 .topbar-search {
     display: flex;
     align-items: center;

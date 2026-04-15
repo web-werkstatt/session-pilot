@@ -35,6 +35,25 @@
     display: flex;
     align-items: center;
     gap: 8px;
+    margin-left: auto;
+}
+
+/* Phase 7 (2026-04-14): Hilfe-Button neben dem Toggle oeffnet Erklaer-Modal. */
+.cockpit-wf-help-btn {
+    background: transparent;
+    border: none;
+    color: var(--cn-text-muted);
+    cursor: pointer;
+    padding: 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--cn-radius-sm);
+    transition: color 0.15s, background 0.15s;
+}
+.cockpit-wf-help-btn:hover {
+    color: var(--cn-text);
+    background: rgba(255,255,255,0.05);
 }
 
 .cockpit-wf-signal-dot {
@@ -49,19 +68,147 @@
     cursor: help;
 }
 
-.cockpit-wf-body {
+/* Phase 7 (2026-04-14): Ring LINKS, Current/Next-Cards in derselben Zeile rechts. */
+
+.cockpit-wf-step-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px 4px 8px;
+    align-self: flex-start;
+    background: linear-gradient(135deg, rgba(56,189,248,0.18), rgba(56,189,248,0.08));
+    color: #7dd3fc;
+    border: 1px solid rgba(56, 189, 248, 0.35);
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.cockpit-wf-focus-grid {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    min-width: 0;
+}
+
+@media (max-width: 900px) {
+    .cockpit-wf-focus-grid { grid-template-columns: 1fr; }
+}
+
+.cockpit-wf-card {
+    text-align: left;
+    background: var(--cn-bg-card);
+    border: 1px solid var(--cn-border);
+    border-radius: var(--cn-radius);
+    padding: 12px 14px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    transition: border-color 0.15s, transform 0.15s, background 0.15s;
+    font: inherit;
+    color: inherit;
+}
+.cockpit-wf-card:hover {
+    border-color: var(--cn-border-hover, rgba(148,163,184,0.35));
+    transform: translateY(-1px);
+}
+.cockpit-wf-card--current {
+    background: linear-gradient(135deg, rgba(56,189,248,0.10), rgba(56,189,248,0.03));
+    border-color: rgba(56, 189, 248, 0.35);
+}
+.cockpit-wf-card--next {
+    border-style: dashed;
+}
+.cockpit-wf-card--empty {
+    cursor: default;
+    opacity: 0.6;
+}
+.cockpit-wf-card-head {
     display: flex;
     align-items: center;
-    gap: 20px;
-    margin-top: 10px;
-    padding-top: 10px;
+    gap: 6px;
+}
+.cockpit-wf-card-icon {
+    color: #7dd3fc;
+}
+.cockpit-wf-card--next .cockpit-wf-card-icon {
+    color: var(--cn-text-muted);
+}
+.cockpit-wf-card-role {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--cn-text-muted);
+}
+.cockpit-wf-card--current .cockpit-wf-card-role {
+    color: #7dd3fc;
+}
+.cockpit-wf-card-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--cn-text);
+    line-height: 1.35;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.cockpit-wf-card-plan {
+    font-size: 11px;
+    color: var(--cn-text-muted);
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.cockpit-wf-card-cta {
+    margin-top: 4px;
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 3px 8px;
+    border-radius: var(--cn-radius-sm);
+    background: rgba(56,189,248,0.12);
+    color: #7dd3fc;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.cockpit-wf-body {
+    display: flex;
+    align-items: stretch;
+    gap: 16px;
+    margin-top: 14px;
+    padding-top: 14px;
     border-top: 1px solid rgba(148, 163, 184, 0.1);
 }
 
 .cockpit-wf-ring {
     flex-shrink: 0;
-    width: 240px;
-    height: 240px;
+    width: 220px;
+    height: 220px;
+}
+
+.cockpit-wf-below {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+}
+
+.cockpit-wf-hint {
+    font-size: 13px;
+    color: var(--cn-text-muted);
+    line-height: 1.5;
+    flex: 1;
+    min-width: 200px;
 }
 
 .cockpit-wf-ring .workflow-loop-svg {

@@ -6,6 +6,7 @@
 }
 
 /* Left Nav */
+/* Phase 7 (2026-04-14): Sticky — Nav bleibt beim Scrollen des Content-Bereichs sichtbar. */
 .settings-nav {
     width: 200px;
     min-width: 200px;
@@ -15,6 +16,11 @@
     display: flex;
     flex-direction: column;
     gap: 2px;
+    position: sticky;
+    top: 0;
+    align-self: flex-start;
+    max-height: 100vh;
+    overflow-y: auto;
 }
 .settings-tab {
     background: none;
@@ -175,6 +181,8 @@
     border-radius: var(--radius-lg);
     overflow: hidden;
 }
+/* Phase 7 (2026-04-14): table.css setzt global th sticky — in Settings nicht sinnvoll.
+   Hier explizit zuruecksetzen, Panels sind kurz und die linke Nav ist schon sticky. */
 .s-table th {
     background: var(--bg-surface);
     color: var(--text-muted);
@@ -186,6 +194,10 @@
     font-weight: 600;
     border-bottom: 1px solid var(--border-subtle);
     white-space: nowrap;
+    position: static;
+    top: auto;
+    z-index: auto;
+    box-shadow: none;
 }
 .s-table td {
     padding: 8px 8px;
@@ -209,8 +221,9 @@
     box-sizing: border-box;
 }
 .s-table input:focus { border-color: var(--accent); outline: none; }
-.s-table input.input-sm { max-width: 90px; }
-.s-table input.input-xs { max-width: 60px; text-align: right; }
+.s-table input.input-sm { max-width: 120px; }
+/* Phase 7 (2026-04-14): breitere Price-Felder + zentrierte Zahlen. */
+.s-table input.input-xs { max-width: 100px; text-align: center; }
 
 /* Scrollable table wrapper */
 .s-table-wrap { overflow-x: auto; }

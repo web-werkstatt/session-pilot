@@ -21,7 +21,8 @@
         </a>
     </div>
     <div class="kpi-wrapper">
-    <div class="kpi-grid">
+    {# Phase 7 (2026-04-14): Nur die KPI-Karten (Completion, Pipeline, Activity, Coverage) ausgeblendet. Beschreibung + Filter bleiben sichtbar. #}
+    <div class="kpi-grid" style="display:none">
         <div class="kpi-card kpi-progress">
             <div class="kpi-header">
                 <i data-lucide="target" class="icon"></i>
@@ -192,4 +193,5 @@
 
 {% block scripts %}
 <script src="/static/js/plans.js"></script>
+<script src="/static/js/plans-board.js"></script>
 {% endblock %}

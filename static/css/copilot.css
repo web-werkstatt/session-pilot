@@ -1,7 +1,9 @@
 /* Copilot Workspace — shadcn/ui Design System (Zinc Dark) */
 /* Aufgeteilt 2026-04-07 (Issue #19): Header/Cards/Panel/Chat/Marker-Errors in eigene Dateien.
    Diese Datei enthaelt nur noch: Tokens, Progress, Split View, Board Columns,
-   Drag&Drop, Toast, Attachments und Responsive. */
+   Drag&Drop, Toast, Attachments und Responsive.
+   Phase 7 (2026-04-14): Plan-Context-Banner → cockpit-plan-banner.css */
+@import url("cockpit-plan-banner.css");
 
 /* === Design Tokens (shadcn zinc) === */
 :root {
@@ -89,23 +91,37 @@
 }
 
 /* === SPLIT VIEW === */
+/* Phase 7 (2026-04-14): Seiten-Scroll statt Column-Scroll.
+   Fixe Viewport-Hoehe entfernt, Board waechst natuerlich mit den Cards.
+   Vorher: jede Column scrollt einzeln (verdeckt Cards unter dem Fold).
+   Jetzt: Columns zeigen alle Cards, nur die Seite scrollt bei Bedarf. */
 .board-split-view {
     display: grid;
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     gap: 0;
-    height: calc(100vh - 190px);
     min-height: 400px;
     transition: grid-template-columns 0.25s ease;
 }
 
 .board-split-view.panel-open {
-    grid-template-columns: 1fr 400px;
+    grid-template-columns: minmax(0, 1fr) 400px;
 }
 
 .board-main {
-    overflow: hidden;
     display: flex;
     flex-direction: column;
+    min-width: 0;
+}
+
+/* Phase 7 (2026-04-14): Panel bleibt im Viewport, scrollt bei Bedarf intern.
+   Vorher: Panel stretcht mit Board (1963px) + ragt horizontal ueber den Rand. */
+.board-split-view .board-panel {
+    position: sticky;
+    top: 0;
+    align-self: start;
+    max-height: 100vh;
+    height: auto;
+    overflow-y: auto;
 }
 
 /* === 3. BOARD COLUMNS === */
@@ -117,8 +133,13 @@
     max-width: 340px;
     display: flex;
     flex-direction: column;
-    max-height: 100%;
 }
+
+/* Phase 7 (2026-04-14): Overrides fuer plans.css im Cockpit-Kontext.
+   plans.css setzt max-height/overflow auf Column + Column-Body (Planning-Page
+   braucht das), im Cockpit soll stattdessen die Seite scrollen. */
+.board-split-view .board-column { max-height: none; }
+.board-split-view .board-column-body { overflow-y: visible; }
 
 .board-column-header {
     padding: 12px 12px 8px;
@@ -160,12 +181,16 @@
 
 .board-column-body {
     flex: 1;
-    overflow-y: auto;
     padding: 6px;
     display: flex;
     flex-direction: column;
     gap: 6px;
+    /* overflow-y entfernt (Phase 7): kein Column-Scroll, Seite scrollt */
 }
+
+/* Phase 7 (2026-04-14): flex-shrink:0 verhindert, dass Cards durch
+   Flex-Layout gestaucht werden. Cards behalten natuerliche Hoehe. */
+.board-column-body > .plan-card { flex-shrink: 0; }
 
 .column-empty {
     font-size: 12px;

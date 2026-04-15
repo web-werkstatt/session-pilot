@@ -2,7 +2,7 @@
 
 {% block title %}{{ project_name }} - Dashboard{% endblock %}
 
-{% block breadcrumb %}<a href="/" style="color:#4fc3f7;text-decoration:none">Projects</a> <span class="bc-sep">/</span> {{ project_name }}{% endblock %}
+{% block breadcrumb %}<a href="/" class="bc-link">Projects</a> <span class="bc-sep">/</span> {{ project_name }}{% endblock %}
 
 {% block topbar_actions %}
 <button class="topbar-btn" type="button" onclick="projectDetailGoBack()" title="Go Back">← Back</button>
@@ -45,13 +45,30 @@
         <button class="project-tab active" onclick="switchProjectTab('overview', this)">
             <i data-lucide="layout-dashboard" class="icon icon-sm"></i> Details
         </button>
-        <button class="project-tab" onclick="switchProjectTab('plans', this)">
+        {# Phase 7 (2026-04-14): Planning-Tab ausgeblendet.
+           Planning wird auf der dedizierten Seite /plans?project=... mit vollem
+           Funktionsumfang bedient (KPIs, Board/List, Filter). Ausblenden statt
+           Entfernen, um bei Bedarf schnell zurueckzuschalten. Wenn nach
+           ~3 Wochen nicht vermisst: Tab-Button + ptab_plans-Block + plans-Loader
+           in project-detail.js entfernen. #}
+        {# <button class="project-tab" onclick="switchProjectTab('plans', this)">
             <i data-lucide="clipboard-list" class="icon icon-sm"></i> Planning
             <span class="tab-count" id="plansCount"></span>
-        </button>
-        <button class="project-tab" onclick="switchProjectTab('workflow', this)">
+        </button> #}
+        <a class="project-tab" href="/plans?project={{ project_name | urlencode }}" title="Planning im globalen Tool oeffnen">
+            <i data-lucide="clipboard-list" class="icon icon-sm"></i> Planning
+        </a>
+        {# Unified Cockpit Phase 7 (2026-04-14): Workflow-Tab ausgeblendet.
+           Workflow wird zentral im Cockpit bedient (/copilot?project=...).
+           Ausblenden statt Entfernen, um bei Bedarf schnell zurueckzuschalten.
+           Wenn nach ~3 Wochen nicht vermisst: Tab-Button + ptab_workflow-Block
+           + workflowLoaded-Logik in project-detail.js entfernen. #}
+        {# <button class="project-tab" onclick="switchProjectTab('workflow', this)">
             <i data-lucide="orbit" class="icon icon-sm"></i> Workflow
-        </button>
+        </button> #}
+        <a class="project-tab" href="/copilot?project={{ project_name | urlencode }}" title="Workflow im Unified Cockpit oeffnen">
+            <i data-lucide="orbit" class="icon icon-sm"></i> Workflow (Cockpit)
+        </a>
     </div>
 
     <div class="project-secondary-links">
@@ -66,10 +83,14 @@
         <button class="project-secondary-link" type="button" onclick="switchProjectTabByName('governance')">
             <i data-lucide="shield" class="icon icon-xs"></i> Governance
         </button>
-        <button class="project-secondary-link" type="button" onclick="switchProjectTabByName('dispatch')">
+        {# Unified Cockpit Phase 7 (2026-04-14): Dispatch-Link ausgeblendet.
+           Dispatch wird im Cockpit-Panel bedient. Bei Bedarf zurueckschalten.
+           Sauberes Entfernen (ptab_dispatch-Block + dispatchLoaded-Logik) wenn
+           nach ~3 Wochen nicht vermisst. #}
+        {# <button class="project-secondary-link" type="button" onclick="switchProjectTabByName('dispatch')">
             <i data-lucide="send" class="icon icon-xs"></i> Dispatch
             <span class="tab-count" id="dispatchCount"></span>
-        </button>
+        </button> #}
         <button class="project-secondary-link" type="button" onclick="switchProjectTabByName('heatmap')">
             <i data-lucide="flame" class="icon icon-xs"></i> AI Heatmap
         </button>

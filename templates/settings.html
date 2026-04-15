@@ -30,7 +30,8 @@
                 </div>
             </div>
 
-            <div class="s-panel">
+            {# Phase 7 (2026-04-14): beide Panels auf gleiche Breite. #}
+            <div class="s-panel" style="max-width:980px">
                 <div class="s-setting-row">
                     <div>
                         <div class="s-setting-title">Show this dashboard as a project</div>
@@ -42,11 +43,6 @@
                         <input type="checkbox" id="includeSelfProjectToggle">
                         <span class="s-toggle-slider"></span>
                     </label>
-                </div>
-
-                <div class="s-setting-actions">
-                    <button class="s-btn s-btn-primary" onclick="saveGeneralSettings()">Save settings</button>
-                    <span class="s-setting-status" id="generalSettingsStatus"></span>
                 </div>
             </div>
 
@@ -73,6 +69,13 @@
                         <tbody id="badgeStylesBody"></tbody>
                     </table>
                 </div>
+            </div>
+
+            {# Phase 7 (2026-04-14): globale Save/Cancel fuer gesamte General-Sektion (Toggle + Badge Styles). #}
+            <div class="s-setting-actions">
+                <button class="s-btn s-btn-primary" onclick="saveGeneralSettings()">Speichern</button>
+                <button class="s-btn" onclick="cancelGeneralSettings()">Abbrechen</button>
+                <span class="s-setting-status" id="generalSettingsStatus"></span>
             </div>
         </section>
 
@@ -111,6 +114,13 @@
                     <tr><td colspan="8" class="loading"><div class="spinner"></div>Loading...</td></tr>
                 </tbody>
             </table></div>
+
+            {# Phase 7 (2026-04-14): globale Save/Cancel statt Per-Row. #}
+            <div class="s-setting-actions">
+                <button class="s-btn s-btn-primary" onclick="saveAllPricing()">Speichern</button>
+                <button class="s-btn" onclick="cancelPricing()">Abbrechen</button>
+                <span class="s-setting-status" id="pricingStatus"></span>
+            </div>
         </section>
 
         <!-- Accounts Section -->
@@ -154,6 +164,13 @@
                 Icons: any <a href="https://lucide.dev/icons/" target="_blank" style="color:#5b9bd5">Lucide icon name</a>
                 (e.g. <code>settings</code>, <code>git-fork</code>, <code>globe</code>, <code>external-link</code>)
             </p>
+
+            {# Phase 7 (2026-04-14): globale Save/Cancel statt Per-Row. #}
+            <div class="s-setting-actions">
+                <button class="s-btn s-btn-primary" onclick="saveAllLinks()">Speichern</button>
+                <button class="s-btn" onclick="cancelLinks()">Abbrechen</button>
+                <span class="s-setting-status" id="linksStatus"></span>
+            </div>
         </section>
 
         <!-- System Section -->

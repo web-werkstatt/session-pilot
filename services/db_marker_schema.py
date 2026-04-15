@@ -45,12 +45,23 @@ def ensure_marker_schema_impl(execute):
                 spec_id INTEGER,
                 imported_from VARCHAR(20) DEFAULT 'handoff',
                 created_at TIMESTAMPTZ DEFAULT NOW(),
+                source_line INTEGER,
                 UNIQUE(project_name, marker_id)
             )
         """)
         execute("CREATE INDEX IF NOT EXISTS idx_markers_project ON markers(project_name)")
         execute("CREATE INDEX IF NOT EXISTS idx_markers_status ON markers(status)")
         execute("CREATE INDEX IF NOT EXISTS idx_markers_plan ON markers(plan_id)")
+
+        # source_line fuer bestehende Installationen nachziehen (Phase 7, 2026-04-14):
+        # Reihenfolge der Marker entspricht der Position in der handoff.md.
+        execute("""
+            DO $$ BEGIN
+                ALTER TABLE markers
+                    ADD COLUMN source_line INTEGER;
+            EXCEPTION WHEN duplicate_column THEN NULL;
+            END $$
+        """)
 
         # executor_tool in marker_workflow_states (Sprint ADR-001 Erweiterung)
         execute("""

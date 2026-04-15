@@ -6,13 +6,18 @@
             <span>Workflow</span>
             <i data-lucide="chevron-down" class="icon icon-xs cockpit-wf-chevron" id="cockpitWfChevron"></i>
         </button>
+        <button class="cockpit-wf-help-btn" type="button" onclick="openModal('workflowHelpModal')" title="Was ist der Workflow-Ring?" aria-label="Workflow-Ring erklaeren">
+            <i data-lucide="help-circle" class="icon icon-xs"></i>
+        </button>
         <div class="cockpit-wf-signals" id="cockpitWfSignals"></div>
     </div>
+    {# Phase 7 (2026-04-14): Ring LINKS, Current und Next-Card rechts daneben in einer Zeile. #}
     <div class="cockpit-wf-body" id="cockpitWfBody">
         <div class="cockpit-wf-ring" id="cockpitWfRing"></div>
-        <div class="cockpit-wf-info">
-            <div class="cockpit-wf-step-label" id="cockpitWfStepLabel"></div>
-            <div class="cockpit-wf-markers" id="cockpitWfMarkers"></div>
-        </div>
+        <div class="cockpit-wf-focus-grid" id="cockpitWfMarkers"></div>
+    </div>
+    <div class="cockpit-wf-below">
+        <div class="cockpit-wf-step-pill" id="cockpitWfStepLabel"></div>
+        <div class="cockpit-wf-hint" id="cockpitWfHint"></div>
     </div>
 </div>

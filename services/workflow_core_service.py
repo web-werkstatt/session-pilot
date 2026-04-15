@@ -52,6 +52,16 @@ def get_markers(project_name, plan_id=None):
                      result["created"], project_name)
             markers = _fetch_markers_from_db(project_name, plan_id=plan_id)
 
+    # Phase 7 (2026-04-14): One-shot-Migration fuer source_line.
+    # Wenn keine Marker source_line haben, einmal Re-Import triggern um die
+    # Reihenfolge aus der handoff.md nachzuziehen. Idempotent nach Abschluss.
+    elif markers and all(getattr(m, "source_line", None) is None for m in markers):
+        result = import_markers_from_handoff(project_name)
+        if result["updated"] > 0:
+            log.info("source_line-Migration: %d Marker aktualisiert fuer %s",
+                     result["updated"], project_name)
+            markers = _fetch_markers_from_db(project_name, plan_id=plan_id)
+
     return markers
 
 
@@ -375,12 +385,16 @@ def _trigger_mirror_write(project_name):
 
 
 def _fetch_markers_from_db(project_name, plan_id=None):
-    """Liest Marker aus der DB und konvertiert zu Marker-Dataclass-Instanzen."""
+    """Liest Marker aus der DB und konvertiert zu Marker-Dataclass-Instanzen.
+
+    Sortierung: source_line (Reihenfolge in der handoff.md), marker_id als Tiebreaker.
+    NULL-Werte (Marker die vor Phase 7 importiert wurden) kommen ans Ende.
+    """
     if plan_id:
         rows = execute(
             """SELECT * FROM markers
                WHERE project_name = %s AND plan_id = %s
-               ORDER BY marker_id""",
+               ORDER BY source_line NULLS LAST, marker_id""",
             (project_name, str(plan_id)),
             fetch=True,
         ) or []
@@ -388,7 +402,7 @@ def _fetch_markers_from_db(project_name, plan_id=None):
         rows = execute(
             """SELECT * FROM markers
                WHERE project_name = %s
-               ORDER BY marker_id""",
+               ORDER BY source_line NULLS LAST, marker_id""",
             (project_name,),
             fetch=True,
         ) or []
@@ -438,4 +452,5 @@ def _row_to_marker(row):
         spec_tag=row.get("spec_tag") or "",
         sprint_plan_id=row.get("sprint_plan_id"),
         spec_id=row.get("spec_id"),
+        source_line=row.get("source_line"),
     )

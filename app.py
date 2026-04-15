@@ -31,7 +31,15 @@ app.jinja_env.globals['cache_bust'] = int(time.time())
 
 @app.context_processor
 def inject_dashboard_settings():
-    return {"dashboard_settings": load_dashboard_settings()}
+    # Phase 7 (2026-04-14): optionale Integrations-URLs fuer konditionelle Nav-Anzeige
+    from config import GITEA_URL, PORTAINER_URL
+    gitea_url = str(GITEA_URL or "").strip()
+    portainer_url = str(PORTAINER_URL or "").strip()
+    return {
+        "dashboard_settings": load_dashboard_settings(),
+        "gitea_url": gitea_url if gitea_url else None,
+        "portainer_url": portainer_url if portainer_url else None,
+    }
 
 # Alle Blueprints registrieren
 from routes import register_blueprints

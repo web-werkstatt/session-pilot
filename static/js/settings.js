@@ -40,17 +40,25 @@ async function saveGeneralSettings() {
         account_badge_styles: collectBadgeStyles()
     };
 
+    status.textContent = 'Speichert...';
     try {
         const response = await api.post('/api/settings/general', data);
         window.DASHBOARD_SETTINGS = response.settings || window.DASHBOARD_SETTINGS;
         badgeStylesData = Object.assign({}, (response.settings || {}).account_badge_styles || {});
         renderBadgeStyles();
-        status.textContent = 'Saved';
+        status.textContent = 'Gespeichert';
         setTimeout(() => { status.textContent = ''; }, 1500);
     } catch (e) {
         console.error(e);
-        status.textContent = 'Save failed';
+        status.textContent = 'Fehler beim Speichern';
     }
+}
+
+function cancelGeneralSettings() {
+    generalSettingsLoaded = false;
+    loadGeneralSettings();
+    const status = document.getElementById('generalSettingsStatus');
+    if (status) { status.textContent = 'Abgebrochen'; setTimeout(() => { status.textContent = ''; }, 1200); }
 }
 
 function renderBadgeStyles() {
@@ -171,7 +179,7 @@ function renderPricing() {
         return;
     }
 
-    tbody.innerHTML = filtered.map(p => `<tr data-id="${p.id}">
+    tbody.innerHTML = filtered.map(p => `<tr data-id="${p.id}" oninput="markRowDirty(this)">
         <td><input type="text" value="${esc(p.model_pattern)}" data-field="model_pattern"></td>
         <td><input type="text" value="${esc(p.display_name || '')}" data-field="display_name"></td>
         <td><input type="text" value="${esc(p.provider || '')}" data-field="provider" class="input-sm"></td>
@@ -180,18 +188,47 @@ function renderPricing() {
         <td><input type="number" step="0.01" value="${p.cache_read_factor}" data-field="cache_read_factor" class="input-xs"></td>
         <td><input type="number" step="0.01" value="${p.cache_create_factor}" data-field="cache_create_factor" class="input-xs"></td>
         <td class="s-btn-group">
-            <button class="s-btn s-btn-sm s-btn-save" onclick="savePricing(this)">&#10003;</button>
-            <button class="s-btn s-btn-sm s-btn-del" onclick="deletePricing(${p.id})">&#10005;</button>
+            <button class="s-btn s-btn-sm s-btn-del" onclick="markRowForDelete(this)" title="Zum Loeschen markieren">&#10005;</button>
         </td>
     </tr>`).join('');
+}
+
+/* Phase 7 (2026-04-14): Dirty-Tracking + Batch-Save/Cancel (fuer Pricing und Links). */
+function markRowDirty(tr) {
+    if (!tr.dataset.deleted) tr.dataset.dirty = '1';
+}
+
+function markRowForDelete(btn) {
+    const tr = btn.closest('tr');
+    if (!tr) return;
+    if (tr.dataset.deleted === '1') {
+        // Ruecknahme: Markierung entfernen
+        delete tr.dataset.deleted;
+        tr.style.opacity = '';
+        tr.style.textDecoration = '';
+        btn.innerHTML = '&#10005;';
+        btn.title = 'Zum Loeschen markieren';
+    } else if (!tr.dataset.id) {
+        // Ungespeicherte Zeile direkt entfernen
+        tr.remove();
+    } else {
+        tr.dataset.deleted = '1';
+        tr.style.opacity = '0.45';
+        tr.style.textDecoration = 'line-through';
+        btn.innerHTML = '&#8634;'; // Undo-Zeichen
+        btn.title = 'Loeschen zuruecknehmen';
+    }
 }
 
 function esc(s) { return (s || '').replace(/"/g, '&quot;').replace(/</g, '&lt;'); }
 
 function addPricingRow() {
     const tbody = document.getElementById('pricingBody');
+    if (tbody.querySelector('td[colspan]')) tbody.innerHTML = '';
     const tr = document.createElement('tr');
     tr.dataset.id = '';
+    tr.dataset.dirty = '1';
+    tr.setAttribute('oninput', 'markRowDirty(this)');
     tr.innerHTML = `
         <td><input type="text" data-field="model_pattern" placeholder="e.g. gpt-6"></td>
         <td><input type="text" data-field="display_name" placeholder="GPT-6"></td>
@@ -201,35 +238,49 @@ function addPricingRow() {
         <td><input type="number" step="0.01" value="0.10" data-field="cache_read_factor" class="input-xs"></td>
         <td><input type="number" step="0.01" value="1.25" data-field="cache_create_factor" class="input-xs"></td>
         <td class="s-btn-group">
-            <button class="s-btn s-btn-sm s-btn-save" onclick="savePricing(this)">&#10003;</button>
-            <button class="s-btn s-btn-sm s-btn-del" onclick="this.closest('tr').remove()">&#10005;</button>
+            <button class="s-btn s-btn-sm s-btn-del" onclick="markRowForDelete(this)">&#10005;</button>
         </td>`;
     tbody.prepend(tr);
     tr.querySelector('input').focus();
 }
 
-async function savePricing(btn) {
-    const tr = btn.closest('tr');
-    const data = {id: tr.dataset.id ? parseInt(tr.dataset.id) : null};
-    tr.querySelectorAll('input').forEach(inp => {
-        data[inp.dataset.field] = inp.type === 'number' ? parseFloat(inp.value) : inp.value;
-    });
-    if (!data.model_pattern) return;
+async function saveAllPricing() {
+    const status = document.getElementById('pricingStatus');
+    const rows = [...document.querySelectorAll('#pricingBody tr')].filter(tr => !tr.querySelector('td[colspan]'));
+    const saves = [];
+    const deletes = [];
 
+    rows.forEach(tr => {
+        if (tr.dataset.deleted === '1' && tr.dataset.id) {
+            deletes.push(parseInt(tr.dataset.id));
+            return;
+        }
+        if (!tr.dataset.dirty && tr.dataset.id) return; // unveraendert
+        const data = {id: tr.dataset.id ? parseInt(tr.dataset.id) : null};
+        tr.querySelectorAll('input').forEach(inp => {
+            data[inp.dataset.field] = inp.type === 'number' ? parseFloat(inp.value) : inp.value;
+        });
+        if (!data.model_pattern) return;
+        saves.push(data);
+    });
+
+    status.textContent = 'Speichert...';
     try {
-        await api.post('/api/settings/pricing', data);
-        btn.textContent = '\u2713';
-        btn.style.background = '#4caf50';
-        setTimeout(() => { btn.style.background = ''; loadPricing(); }, 600);
-    } catch(e) { console.error(e); }
+        for (const id of deletes) await api.del('/api/settings/pricing/' + id);
+        for (const data of saves) await api.post('/api/settings/pricing', data);
+        status.textContent = 'Gespeichert (' + saves.length + ' geaendert, ' + deletes.length + ' geloescht)';
+        setTimeout(() => { status.textContent = ''; }, 2000);
+        loadPricing();
+    } catch (e) {
+        console.error(e);
+        status.textContent = 'Fehler beim Speichern';
+    }
 }
 
-async function deletePricing(id) {
-    if (!confirm('Delete model price?')) return;
-    try {
-        await api.del('/api/settings/pricing/' + id);
-        loadPricing();
-    } catch(e) { console.error(e); }
+function cancelPricing() {
+    loadPricing();
+    const status = document.getElementById('pricingStatus');
+    if (status) { status.textContent = 'Abgebrochen'; setTimeout(() => { status.textContent = ''; }, 1200); }
 }
 
 // === Accounts ===
@@ -311,13 +362,12 @@ function renderLinks() {
         tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#666;padding:20px">No external links configured. The sidebar section will be hidden.</td></tr>';
         return;
     }
-    tbody.innerHTML = linksData.map(l => `<tr data-id="${l.id}">
+    tbody.innerHTML = linksData.map(l => `<tr data-id="${l.id}" oninput="markRowDirty(this)">
         <td><input type="text" value="${esc(l.name)}" data-field="name"></td>
         <td><input type="text" value="${esc(l.url)}" data-field="url"></td>
         <td><input type="text" value="${esc(l.icon || 'external-link')}" data-field="icon" class="input-sm"></td>
         <td class="s-btn-group">
-            <button class="s-btn s-btn-sm s-btn-save" onclick="saveLink(this)">&#10003;</button>
-            <button class="s-btn s-btn-sm s-btn-del" onclick="deleteLink(${l.id})">&#10005;</button>
+            <button class="s-btn s-btn-sm s-btn-del" onclick="markRowForDelete(this)" title="Zum Loeschen markieren">&#10005;</button>
         </td>
     </tr>`).join('');
 }
@@ -327,38 +377,54 @@ function addLinkRow() {
     if (tbody.querySelector('td[colspan]')) tbody.innerHTML = '';
     const tr = document.createElement('tr');
     tr.dataset.id = '';
+    tr.dataset.dirty = '1';
+    tr.setAttribute('oninput', 'markRowDirty(this)');
     tr.innerHTML = `
         <td><input type="text" data-field="name" placeholder="e.g. Portainer"></td>
         <td><input type="text" data-field="url" placeholder="https://..."></td>
         <td><input type="text" data-field="icon" placeholder="external-link" class="input-sm"></td>
         <td class="s-btn-group">
-            <button class="s-btn s-btn-sm s-btn-save" onclick="saveLink(this)">&#10003;</button>
-            <button class="s-btn s-btn-sm s-btn-del" onclick="this.closest('tr').remove()">&#10005;</button>
+            <button class="s-btn s-btn-sm s-btn-del" onclick="markRowForDelete(this)">&#10005;</button>
         </td>`;
     tbody.prepend(tr);
     tr.querySelector('input').focus();
 }
 
-async function saveLink(btn) {
-    const tr = btn.closest('tr');
-    const data = {id: tr.dataset.id ? parseInt(tr.dataset.id) : null};
-    tr.querySelectorAll('input').forEach(inp => { data[inp.dataset.field] = inp.value; });
-    if (!data.name || !data.url) return;
+async function saveAllLinks() {
+    const status = document.getElementById('linksStatus');
+    const rows = [...document.querySelectorAll('#linksBody tr')].filter(tr => !tr.querySelector('td[colspan]'));
+    const saves = [];
+    const deletes = [];
 
+    rows.forEach(tr => {
+        if (tr.dataset.deleted === '1' && tr.dataset.id) {
+            deletes.push(parseInt(tr.dataset.id));
+            return;
+        }
+        if (!tr.dataset.dirty && tr.dataset.id) return;
+        const data = {id: tr.dataset.id ? parseInt(tr.dataset.id) : null};
+        tr.querySelectorAll('input').forEach(inp => { data[inp.dataset.field] = inp.value; });
+        if (!data.name || !data.url) return;
+        saves.push(data);
+    });
+
+    status.textContent = 'Speichert...';
     try {
-        await api.post('/api/settings/external-links', data);
-        btn.textContent = '\u2713';
-        btn.style.background = '#4caf50';
-        setTimeout(() => { btn.style.background = ''; loadLinks(); }, 600);
-    } catch(e) { console.error(e); }
+        for (const id of deletes) await api.del('/api/settings/external-links/' + id);
+        for (const data of saves) await api.post('/api/settings/external-links', data);
+        status.textContent = 'Gespeichert (' + saves.length + ' geaendert, ' + deletes.length + ' geloescht)';
+        setTimeout(() => { status.textContent = ''; }, 2000);
+        loadLinks();
+    } catch (e) {
+        console.error(e);
+        status.textContent = 'Fehler beim Speichern';
+    }
 }
 
-async function deleteLink(id) {
-    if (!confirm('Delete this link?')) return;
-    try {
-        await api.del('/api/settings/external-links/' + id);
-        loadLinks();
-    } catch(e) { console.error(e); }
+function cancelLinks() {
+    loadLinks();
+    const status = document.getElementById('linksStatus');
+    if (status) { status.textContent = 'Abgebrochen'; setTimeout(() => { status.textContent = ''; }, 1200); }
 }
 
 // Init

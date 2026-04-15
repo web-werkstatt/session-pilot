@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block title %}Cockpit{% endblock %}
-{% block breadcrumb %}Cockpit{% endblock %}
+{% block breadcrumb %}Cockpit{% if project_name %} <span class="bc-sep">/</span> {{ project_name }}{% endif %}{% endblock %}
 {% block topbar_actions %}{% endblock %}
 {% block head_extra %}
 <link rel="stylesheet" href="/static/css/design-tokens.css?v={{ cache_bust }}">
@@ -22,8 +22,7 @@
     <div class="copilot-ws-header ui-panel">
         <div class="copilot-ws-header-main">
             <div class="copilot-ws-nav">
-                <span class="copilot-ws-brand"><i data-lucide="bot" class="icon icon-sm"></i> Copilot</span>
-                <span class="copilot-ws-dot" aria-hidden="true"></span>
+                {# Phase 7 (2026-04-14): Copilot-Brand entfernt — Projektname steht jetzt im Breadcrumb (Workspace / Cockpit / <project>). #}
                 <div class="copilot-plan-switch" id="planSwitcher">
                     <button class="copilot-plan-switch-btn ui-button ui-button--ghost" id="planSwitcherBtn" onclick="togglePlanSwitcher()">
                         <span class="copilot-plan-switch-label" id="planSwitcherLabel">Plan wechseln</span>
@@ -31,13 +30,13 @@
                     </button>
                     <div class="copilot-plan-switch-dd" id="planSwitcherDD" style="display:none;"></div>
                 </div>
-                <span class="copilot-ws-dot" aria-hidden="true"></span>
-                <span class="copilot-current-plan-title" id="currentPlanTitle">Plan laden...</span>
+                {# Phase 7 (2026-04-14): currentPlanTitle entfernt — Projektname steht im Breadcrumb, Plantitel im Panel. #}
                 <span class="copilot-ws-dot" aria-hidden="true" id="planFilterDot" style="display:none;"></span>
                 <select class="copilot-plan-filter-select" id="planFilterSelect" style="display:none;" onchange="setPlanFilter(this.value)"><option value="">Alle Pl&auml;ne</option></select>
             </div>
             <div class="copilot-ws-actions">
-                <button class="ui-button ui-button--ghost" onclick="importSprintMarkers()">
+                {# Phase 7 (2026-04-14): nur im Plan-Modus sinnvoll, im Cockpit-Projektmodus gibt es keinen eindeutigen Sprint. #}
+                <button class="ui-button ui-button--ghost" onclick="importSprintMarkers()" id="importSprintMarkersBtn" style="display:none;">
                     <i data-lucide="list-plus" class="icon icon-sm"></i> Sprint &rarr; Marker
                 </button>
                 <button class="ui-button ui-button--primary" onclick="openAddSectionModal()">
@@ -67,6 +66,19 @@
             <span class="copilot-progress-dot" aria-hidden="true"></span>
             <span id="progressReview">0 Review</span>
         </div>
+    </div>
+
+    {# Phase 7 (2026-04-14): Plan-Context-Banner — zeigt Herkunft aus Planning. #}
+    <div class="plan-context-banner ui-panel" id="planContextBanner" style="display:none">
+        <div class="plan-context-head">
+            <span class="plan-context-kicker">Plan aus Planning</span>
+            <a class="plan-context-back" href="/plans" title="Zur Planning-Uebersicht">
+                <i data-lucide="arrow-left" class="icon icon-xs"></i> Zurueck zu Planning
+            </a>
+        </div>
+        <div class="plan-context-title" id="planContextTitle"></div>
+        <div class="plan-context-summary" id="planContextSummary"></div>
+        <div class="plan-context-meta" id="planContextMeta"></div>
     </div>
 
     {% include "_cockpit_workflow_overview.html" %}
@@ -124,153 +136,7 @@
                     </button>
                 </div>
 
-                <div class="panel-tab-body active" id="tabChat">
-                    <div class="panel-chat">
-                        <div class="panel-thread-mode" id="panelThreadMode" style="display:none;"></div>
-                        <div class="panel-chat-messages" id="panelChatMessages">
-                            <div class="panel-chat-empty">
-                                <div class="panel-chat-empty-icon">💬</div>
-                                Noch keine Nachrichten.<br>Stelle eine Frage!
-                            </div>
-                        </div>
-                        <div class="panel-chat-input">
-                            <div class="panel-chat-input-row">
-                                <button class="btn btn-sm btn-secondary" onclick="document.getElementById('panelFileInput').click()" title="Bild anhaengen">
-                                    <i data-lucide="paperclip" class="icon icon-xs"></i>
-                                </button>
-                                <textarea id="panelChatInput" class="ui-input" rows="1" placeholder="Nachricht an Copilot..."
-                                    onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendPanelMessage()}"></textarea>
-                                <button class="btn btn-sm btn-primary" id="btnPanelSend" onclick="sendPanelMessage()">
-                                    <i data-lucide="send" class="icon icon-xs"></i>
-                                </button>
-                            </div>
-                            <input type="file" id="panelFileInput" accept="image/png,image/jpeg,image/gif,image/webp" multiple style="display:none;" onchange="handlePanelImageSelect(this)">
-                        </div>
-                    </div>
-                </div>
-
-                <div class="panel-tab-body" id="tabOutput">
-                    <div class="panel-output" id="panelOutput">
-                        <div class="panel-output-empty" id="panelOutputEmpty">
-                            <i data-lucide="file-text" style="width:28px;height:28px;opacity:0.25"></i>
-                            <div>Kein Marker geladen</div>
-                        </div>
-                        <div class="panel-output-fields" id="panelOutputFields" style="display:none;">
-                            <div class="panel-field">
-                                <div class="panel-field-label">Ziel</div>
-                                <div class="panel-field-value" id="panelMarkerGoal"></div>
-                            </div>
-                            <div class="panel-field">
-                                <div class="panel-field-label">Naechster Schritt</div>
-                                <div class="panel-field-value" id="panelMarkerNextStep"></div>
-                            </div>
-                            <div class="panel-field">
-                                <div class="panel-field-row">
-                                    <div class="panel-field-label">Prompt</div>
-                                    <button class="ui-button ui-button--ghost panel-suggestion-btn" id="panelAdoptSuggestionBtn" style="display:none;" onclick="adoptPromptSuggestion()">
-                                        Vorschlag uebernehmen
-                                    </button>
-                                </div>
-                                <textarea class="ui-input panel-prompt-input" id="panelMarkerPrompt" rows="6" readonly></textarea>
-                            </div>
-                            <div class="panel-field">
-                                <div class="panel-field-label">Checks</div>
-                                <div class="panel-checks" id="panelMarkerChecks"></div>
-                            </div>
-                            <div class="panel-field">
-                                <div class="panel-field-label">Risiko</div>
-                                <div class="panel-field-value" id="panelMarkerRisk"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="panel-tab-body" id="tabHistory">
-                    <div class="panel-history" id="panelHistory">
-                        <div class="panel-history-empty" id="panelHistoryEmpty">
-                            <i data-lucide="clock" style="width:28px;height:28px;opacity:0.25"></i>
-                            <div>Keine Historie</div>
-                        </div>
-                        <div class="panel-history-fields" id="panelHistoryFields" style="display:none;">
-                            <div class="panel-field">
-                                <div class="panel-field-label">Last Session</div>
-                                <div class="panel-field-value" id="panelMarkerLastSession"></div>
-                            </div>
-                            <div class="panel-field">
-                                <div class="panel-field-label">Updated</div>
-                                <div class="panel-field-value" id="panelMarkerUpdatedAt"></div>
-                            </div>
-                            <div class="panel-field">
-                                <div class="panel-field-label">Gate</div>
-                                <div class="panel-field-value" id="panelMarkerGate"></div>
-                            </div>
-                            <div class="panel-field">
-                                <div class="panel-field-label">Execution Rating</div>
-                                <div class="panel-field-value" id="panelMarkerExecutionSummary"></div>
-                            </div>
-                            <div class="panel-field">
-                                <div class="panel-field-label">Kommentar</div>
-                                <div class="panel-field-value" id="panelMarkerExecutionComment"></div>
-                            </div>
-                            <div class="panel-field">
-                                <div class="panel-field-label">Bewertung aendern</div>
-                                <div class="panel-rating-editor">
-                                    <select class="ui-input panel-rating-select" id="panelExecutionScore">
-                                        <option value="">Score</option>
-                                        <option value="0">0</option>
-                                        <option value="1">1</option>
-                                        <option value="2">2</option>
-                                        <option value="3">3</option>
-                                        <option value="4">4</option>
-                                        <option value="5">5</option>
-                                    </select>
-                                    <input class="ui-input panel-rating-input" id="panelExecutionCommentInput" type="text" placeholder="Kurzer Kommentar">
-                                    <button class="ui-button ui-button--primary" type="button" onclick="saveMarkerExecutionRating()">Speichern</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="panel-tab-body" id="tabDispatch">
-                    <div class="panel-dispatch" id="panelDispatch">
-                        <div class="dispatch-loading" id="panelDispatchLoading" style="display:none">
-                            <div class="spinner" style="width:16px;height:16px"></div> Loading...
-                        </div>
-                        <div id="panelDispatchContent"></div>
-                    </div>
-                </div>
-
-                <div class="panel-tab-body" id="tabSource">
-                    <div class="panel-source" id="panelSource">
-                        <div class="panel-source-empty" id="panelSourceEmpty">
-                            <i data-lucide="scroll-text" style="width:28px;height:28px;opacity:0.25"></i>
-                            <div>Kein Sprint-Abschnitt ausgewaehlt</div>
-                        </div>
-                        <div class="panel-source-fields" id="panelSourceFields" style="display:none;">
-                            <div class="panel-field">
-                                <div class="panel-field-label">Abschnitt</div>
-                                <div class="panel-field-value" id="panelSourceSectionTitle"></div>
-                            </div>
-                            <div class="panel-field">
-                                <div class="panel-field-label">Summary</div>
-                                <div class="panel-field-value" id="panelSourceSectionSummary"></div>
-                            </div>
-                            <div class="panel-field">
-                                <div class="panel-field-label">Tasks</div>
-                                <div class="panel-checks" id="panelSourceTasks"></div>
-                            </div>
-                            <div class="panel-field">
-                                <div class="panel-field-label">Zugeordnete Marker</div>
-                                <div class="panel-checks" id="panelSourceMarkers"></div>
-                            </div>
-                            <div class="panel-field">
-                                <div class="panel-field-label">Rohinhalt</div>
-                                <div class="panel-source-body" id="panelSourceBody"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                {% include "_cockpit_panel_tabs.html" %}
             </div>
         </div>
     </div>
@@ -278,6 +144,7 @@
     <div class="toast" id="syncToast"></div>
 
     {% include "_copilot_add_section_modal.html" %}
+    {% include "_workflow_help_modal.html" %}
 {% endblock %}
 {% block scripts %}
 <script src="/static/js/marked.min.js"></script>
@@ -290,6 +157,7 @@
 <script src="/static/js/copilot_board.js?v={{ cache_bust }}"></script>
 <script src="/static/js/copilot-section-modal.js?v={{ cache_bust }}"></script>
 <script src="/static/js/copilot-board-panel.js?v={{ cache_bust }}"></script>
+<script src="/static/js/copilot-board-chat.js?v={{ cache_bust }}"></script>
 <script src="/static/js/dispatch-render.js?v={{ cache_bust }}"></script>
 <script src="/static/js/dispatch.js?v={{ cache_bust }}"></script>
 <script src="/static/js/dispatch-settings.js?v={{ cache_bust }}"></script>

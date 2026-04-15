@@ -42,6 +42,9 @@ class Marker:
     spec_tag: str = ""
     sprint_plan_id: int | None = None
     spec_id: int | None = None
+    # Zeilennummer in der handoff.md (Phase 7, 2026-04-14):
+    # Nur fuer Sortierung genutzt; compare=False um Equality-Tests nicht zu brechen.
+    source_line: int | None = field(default=None, compare=False, repr=False)
 
     def __post_init__(self):
         self.marker_id = str(self.marker_id).strip()
@@ -154,6 +157,8 @@ def parse_markers_with_errors(handoff_path):
     errors = []
     for match in _MARKER_BLOCK_RE.finditer(content):
         marker_id_hint = (match.group("marker_id") or "").strip() or "<unknown>"
+        # Phase 7: Zeilennummer fuer Sortierung im Board mitnehmen
+        source_line = content.count("\n", 0, match.start()) + 1
         try:
             payload = json.loads(match.group("json"))
         except json.JSONDecodeError as exc:
@@ -166,7 +171,9 @@ def parse_markers_with_errors(handoff_path):
             continue
         try:
             payload["marker_id"] = str(payload.get("marker_id") or marker_id_hint).strip()
-            markers.append(Marker(**payload))
+            marker = Marker(**payload)
+            marker.source_line = source_line
+            markers.append(marker)
         except (ValueError, TypeError) as exc:
             errors.append({
                 "marker_id": str(payload.get("marker_id") or marker_id_hint),

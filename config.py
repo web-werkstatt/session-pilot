@@ -30,6 +30,9 @@ GITEA_URL = os.environ.get("GITEA_URL", "https://git.webideas24.com")
 GITEA_TOKEN = os.environ.get("GITEA_TOKEN", "")
 GITEA_USER = os.environ.get("GITEA_USER", "webideas24")
 
+# Portainer Konfiguration (Phase 7, 2026-04-14): optional, leer bedeutet "nicht anzeigen"
+PORTAINER_URL = os.environ.get("PORTAINER_URL", "")
+
 # PostgreSQL
 DB_CONFIG = {
     "host": os.environ.get("DB_HOST", "localhost"),
