@@ -198,3 +198,69 @@
     background: rgba(255,255,255,0.03);
     border: 1px solid rgba(255,255,255,0.05);
 }
+
+/* Drill-Down Section -> Task -> Marker (Sprint Task-Entity) */
+.panel-task-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    text-align: left;
+    padding: 8px 10px;
+    margin-bottom: 6px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: var(--cn-radius-sm);
+    color: var(--cn-text);
+    cursor: pointer;
+    font-size: 12px;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.panel-task-item:hover {
+    background: rgba(255,255,255,0.06);
+    border-color: rgba(96,165,250,0.4);
+}
+
+.panel-task-item.is-selected {
+    background: rgba(96,165,250,0.12);
+    border-color: rgba(96,165,250,0.6);
+}
+
+.panel-task-status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #64748b;
+    flex-shrink: 0;
+}
+
+.panel-task-item.task-status-in_progress .panel-task-status-dot { background: #3b82f6; }
+.panel-task-item.task-status-done .panel-task-status-dot { background: #22c55e; }
+.panel-task-item.task-status-open .panel-task-status-dot { background: #64748b; }
+
+.panel-task-title {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.panel-task-meta {
+    font-size: 11px;
+    color: var(--cn-text-muted);
+    flex-shrink: 0;
+}
+
+.panel-marker-status {
+    display: inline-block;
+    margin-left: 6px;
+    padding: 1px 6px;
+    border-radius: 999px;
+    font-size: 10px;
+    background: rgba(255,255,255,0.08);
+    color: var(--cn-text-sec);
+}
+.panel-marker-status-done { background: rgba(34,197,94,0.18); color: #4ade80; }
+.panel-marker-status-in_progress { background: rgba(59,130,246,0.18); color: #60a5fa; }
+.panel-marker-status-blocked { background: rgba(239,68,68,0.18); color: #f87171; }

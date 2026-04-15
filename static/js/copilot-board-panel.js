@@ -61,6 +61,26 @@ function openSectionPanel(sectionId, tab) {
     _renderPanelMarkerDetails(sec);
     _loadMarkerContext(sectionId);
     _loadPanelChat(sectionId);
+
+    // Modus-Vereinheitlichung: im Projekt-Modus (?project=&marker_id=) den
+    // Plan-Header analog zum Plan-Modus rendern, sobald der Marker einen
+    // sprint_plan_id hat. So ist der Plan-Kontext bei jedem Deep-Link gleich.
+    if (!PLAN_ID && sec.sprint_plan_id && (!_planInfo || _planInfo.id !== sec.sprint_plan_id)) {
+        api.get('/api/plans/' + encodeURIComponent(sec.sprint_plan_id))
+            .then(function(plan) {
+                _planInfo = plan;
+                if (typeof _renderPlanContextBanner === 'function') {
+                    _renderPlanContextBanner(plan);
+                }
+                _planSections = (typeof _derivePlanSections === 'function')
+                    ? _derivePlanSections(plan)
+                    : [];
+                _sprintSectionsCollapsed = false;
+                if (typeof _renderSprintSections === 'function') _renderSprintSections();
+            })
+            .catch(function() { /* still no plan-context — UI faellt zurueck */ });
+    }
+
     if (typeof lucide !== 'undefined') lucide.createIcons();
 }
 
@@ -236,22 +256,113 @@ function _renderPlanSectionDetails(section) {
     fields.style.display = 'flex';
     document.getElementById('panelSourceSectionTitle').textContent = section.title;
     document.getElementById('panelSourceSectionSummary').textContent = section.summary || section.sprint_tag || '-';
-    var allTasks = [].concat(section.tasks || []);
-    (section.specs || []).forEach(function(spec) {
-        (spec.tasks || []).forEach(function(task) {
-            allTasks.push((spec.title ? (spec.title + ': ') : '') + task);
+
+    // Drill-Down: Tasks aus DB (per section_key gefiltert) statt rohem Markdown.
+    // Fallback auf section.tasks (Strings) wenn kein Plan-Kontext oder DB-Tasks
+    // noch nicht persistiert sind (Lazy-Parse erfolgt im /api/plans/<id>-Read).
+    var sectionKey = (section.sprint_tag || '').replace(/^#/, '') || (section.id || '').replace(/^sprint:/, '');
+    var planIdForTasks = (_planInfo && _planInfo.id) || (PLAN_ID || section.plan_id);
+    if (planIdForTasks && sectionKey) {
+        api.get('/api/plans/' + encodeURIComponent(planIdForTasks) + '/sections/' + encodeURIComponent(sectionKey) + '/tasks')
+            .then(function(data) {
+                _renderSectionTasks(section, markers, data && data.tasks ? data.tasks : []);
+            })
+            .catch(function() {
+                _renderSectionTasks(section, markers, []);
+            });
+    } else {
+        _renderSectionTasks(section, markers, []);
+    }
+
+    document.getElementById('panelSourceBody').textContent = section.body || '-';
+}
+
+/* Drill-Down Section -> Task -> Marker.
+ * Rendert Task-Liste mit abgeleitetem Status + Marker-Count, gruppiert
+ * zusaetzlich Marker dieser Section nach task_id (Orphan-Bucket "Ohne Task"). */
+function _renderSectionTasks(section, sectionMarkers, dbTasks) {
+    var tasksHost = document.getElementById('panelSourceTasks');
+    var markersHost = document.getElementById('panelSourceMarkers');
+    if (!tasksHost || !markersHost) return;
+
+    if (dbTasks && dbTasks.length) {
+        tasksHost.innerHTML = dbTasks.map(function(task) {
+            var statusCls = 'task-status-' + (task.status || 'open');
+            var statusLabel = task.status === 'done' ? 'Done'
+                : task.status === 'in_progress' ? 'Active'
+                : 'Open';
+            var markerInfo = task.marker_count > 0
+                ? (task.marker_count + ' Marker')
+                : 'Kein Marker';
+            return '<button type="button" class="panel-task-item ' + statusCls
+                + '" onclick="loadTaskMarkers(' + Number(task.id) + ', this)">'
+                + '<span class="panel-task-status-dot"></span>'
+                + '<span class="panel-task-title">' + escapeHtml(task.title || '') + '</span>'
+                + '<span class="panel-task-meta">' + escapeHtml(statusLabel) + ' · ' + escapeHtml(markerInfo) + '</span>'
+                + '</button>';
+        }).join('');
+    } else {
+        // Fallback: Strings aus tagged_sections (vor Lazy-Parse oder ohne Plan-Kontext)
+        var allStrings = [].concat(section.tasks || []);
+        (section.specs || []).forEach(function(spec) {
+            (spec.tasks || []).forEach(function(task) {
+                allStrings.push((spec.title ? (spec.title + ': ') : '') + task);
+            });
         });
+        tasksHost.innerHTML = allStrings.length
+            ? allStrings.map(function(t) {
+                return '<div class="panel-check-item"><i data-lucide="list-todo" class="icon icon-xs"></i>'
+                    + escapeHtml(t) + '</div>';
+            }).join('')
+            : '<div class="panel-check-empty">Keine Tasks erkannt</div>';
+    }
+
+    // Marker-Bucket "Ohne Task" — Section-Marker mit task_id=null bzw. nicht zugeordnet.
+    var orphanMarkers = (sectionMarkers || []).filter(function(m) {
+        return !m.task_id;
     });
-    document.getElementById('panelSourceTasks').innerHTML = allTasks.length ? allTasks.map(function(task) {
-        return '<div class="panel-check-item"><i data-lucide="list-todo" class="icon icon-xs"></i>' + escapeHtml(task) + '</div>';
-    }).join('') : '<div class="panel-check-empty">Keine Tasks erkannt</div>';
-    document.getElementById('panelSourceMarkers').innerHTML = markers.length ? markers.map(function(marker) {
+    markersHost.innerHTML = _renderMarkerList(orphanMarkers, 'Ohne Task: keine offenen Marker');
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+function _renderMarkerList(markers, emptyText) {
+    if (!markers || !markers.length) {
+        return '<div class="panel-check-empty">' + escapeHtml(emptyText || 'Keine Marker') + '</div>';
+    }
+    return markers.map(function(marker) {
         var hierarchy = [];
         if (marker.sprint_tag) hierarchy.push(marker.sprint_tag);
         if (marker.spec_tag) hierarchy.push(marker.spec_tag);
-        return '<div class="panel-check-item"><i data-lucide="flag" class="icon icon-xs"></i>' + escapeHtml(marker.titel + (hierarchy.length ? ' · ' + hierarchy.join(' / ') : '')) + '</div>';
-    }).join('') : '<div class="panel-check-empty">Noch keine zugeordneten Marker</div>';
-    document.getElementById('panelSourceBody').textContent = section.body || '-';
+        var label = (marker.titel || marker.title || '')
+            + (hierarchy.length ? ' · ' + hierarchy.join(' / ') : '');
+        var statusBadge = marker.status
+            ? ' <span class="panel-marker-status panel-marker-status-' + escapeHtml(marker.status) + '">' + escapeHtml(marker.status) + '</span>'
+            : '';
+        return '<div class="panel-check-item">'
+            + '<i data-lucide="flag" class="icon icon-xs"></i>'
+            + escapeHtml(label) + statusBadge
+            + '</div>';
+    }).join('');
+}
+
+/* Klick auf einen Task: laedt zugeordnete Marker und ersetzt den
+ * "Zugeordnete Marker"-Bucket mit task-spezifischer Liste. */
+function loadTaskMarkers(taskId, btnEl) {
+    if (!taskId) return;
+    document.querySelectorAll('.panel-task-item').forEach(function(el) {
+        el.classList.remove('is-selected');
+    });
+    if (btnEl) btnEl.classList.add('is-selected');
+    var host = document.getElementById('panelSourceMarkers');
+    if (host) host.innerHTML = '<div class="panel-check-empty">Lade Marker...</div>';
+    api.get('/api/tasks/' + encodeURIComponent(taskId) + '/markers')
+        .then(function(data) {
+            if (host) host.innerHTML = _renderMarkerList(data && data.markers ? data.markers : [], 'Noch keine Marker fuer diesen Task');
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        })
+        .catch(function() {
+            if (host) host.innerHTML = '<div class="panel-check-empty">Fehler beim Laden</div>';
+        });
 }
 
 function activateMarker(markerId) {
