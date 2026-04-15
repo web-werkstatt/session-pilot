@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block title %}Cockpit{% endblock %}
-{% block breadcrumb %}Cockpit{% if project_name %} <span class="bc-sep">/</span> {{ project_name }}{% endif %}{% endblock %}
+{% block breadcrumb %}{% if project_name %}<a href="/project/{{ project_name }}" class="bc-link">{{ project_name }}</a> <span class="bc-sep">/</span> <a href="/copilot?project={{ project_name }}" class="bc-link">Cockpit</a>{% else %}<a href="/copilot" class="bc-link">Cockpit</a>{% endif %}{% endblock %}
 {% block topbar_actions %}{% endblock %}
 {% block head_extra %}
 <link rel="stylesheet" href="/static/css/design-tokens.css?v={{ cache_bust }}">
