@@ -120,3 +120,66 @@ a86b02a Schema: markers.implementation_percent|_signals|_checked_at
 - **Marker-Bulk-Import:** `POST /api/sprint/<plan_id>/to-markers` in `routes/copilot_marker_routes.py:243` — erzeugt deterministische `marker_id = slug(plan_id) + '-' + slug(title)`, schreibt in handoff.md und synct zur DB.
 - **Tasks aktuell nur Text-Strings:** `services/plan_structure_helpers.py:build_task_items()` liefert `{title, sessions[], marker_id, status}` via Titel-Match (fragil). Ziel: stabile FK.
 - **ADR-001-Regel weiterhin gueltig:** DB ist kanonische Quelle, handoff.md ist Mirror.
+
+---
+
+## Session 2026-04-15 (Session 19) — Sprint Task-Entity + Drill-Down umgesetzt
+
+### Was wurde erledigt
+
+**Sprint `sprint-task-entity-und-drilldown.md` — alle 6 Commits + Bugfix:**
+
+- **Commit 1 (Schema):** `services/db_plan_task_schema.py` — Tabelle `plan_tasks` (SERIAL id, plan_id, section_key, spec_key, title, normalized_title, parse_key UNIQUE, order_index, body, last_parsed_at). `markers.task_id INTEGER REFERENCES plan_tasks(id) ON DELETE SET NULL` + Index. Idempotent via duplicate_column-Pattern. Lazy-Init via `db_service.ensure_plan_task_schema()`.
+- **Commit 2 (Service):** `services/plan_task_service.py` (291 Z.) — `upsert_tasks_for_plan` (UPSERT via parse_key ON CONFLICT), `list_tasks_for_plan|section`, `get_task`, `get_markers_for_task`, `rename_task` (laesst parse_key stabil), `find_task_by_parse_key`, `derive_task_status` (open|in_progress|done). Verwaiste Tasks bleiben erhalten.
+- **Commit 3 (Parser-Integration):** `routes/plans_routes.py` — `GET /api/plans/<id>` triggert nach `get_tagged_plan_structure` einen `upsert_tasks_for_plan(plan_id, tagged_sections)`-Call. Fehler werden geloggt, Plan-Detail funktioniert auch ohne Task-Persisting.
+- **Commit 4 (API):** `routes/plan_task_routes.py` (neu) — `GET /api/plans/<id>/tasks`, `GET /api/plans/<id>/sections/<key>/tasks`, `GET /api/tasks/<id>`, `GET /api/tasks/<id>/markers`, `PATCH /api/tasks/<id>` (Inline-Rename), `POST /api/tasks/<id>/to-marker` (erzeugt Marker via `_write_marker`/`_sync_to_db` + setzt `markers.task_id`-Backlink). Alle mit `@api_route` (ausser to-marker).
+- **Commit 5 (UI):** `static/js/copilot-board-panel.js` (+109 Z.) + `static/css/copilot-board.css` (+76 Z.) — Drill-Down im Source-Tab: `_renderSectionTasks` rendert DB-Tasks als klickbare Cards mit Status-Dot + Marker-Count. Klick laedt `/api/tasks/<id>/markers` in den "Zugeordnete Marker"-Bucket. Section-Marker mit `task_id=NULL` landen im Orphan-Bucket "Ohne Task". Fallback auf rohe Markdown-Strings, wenn DB noch leer. **Modus-Vereinheitlichung:** Bei `?project=&marker_id=` wird der Plan-Header analog zum Plan-Modus geladen, sobald der Marker `sprint_plan_id` traegt.
+- **Commit 6 (Marker-Import-Backlink):** `services/copilot_marker_import_flow.py` — `sprinttomarkers*` nehmen optionalen `db_plan_id` (project_plans.id). Neue Helper-Funktion `_backfill_task_ids` setzt `markers.task_id` via `find_task_by_parse_key(plan_id, section_key, spec_key, titel)` mit Fallback auf spec_key="". `routes/copilot_marker_routes.py` reicht db_plan_id aus dem Body weiter.
+
+**Bugfix + Cleanup (Commit 7):**
+- `derive_tagged_plan_sections` liefert Tasks via `build_task_items` als dict ({title, sessions, marker_id, status}), nicht als Strings. `upsert_tasks_for_plan` stringifizierte das fehlerhaft (`"{'title': '...'}"` wurde als title gespeichert). `_task_title()`-Helper extrahiert den title-Key korrekt.
+- `scripts/cleanup_dirty_plan_tasks.py` raeumt einmalig 50 kaputte plan_tasks-Zeilen auf (Filter `title LIKE "%'title':%"`). Idempotent.
+
+### Verifikation
+
+- `POST /api/plans/1853` -> 50 saubere Tasks in DB, parse_key korrekt
+- `GET /api/tasks/65` -> dict mit body, normalized_title, parse_key, status='open'
+- `GET /api/plans/1853/sections/sprint-workflow-actions/tasks` -> 9 Tasks
+- Service `project-dashboard` aktiv, Schema idempotent
+
+### Git Commits (7) — alle auf Gitea (origin), GitHub unangetastet
+```
+313f1b6 Fix: dict-Items aus build_task_items als String behandeln (+ Cleanup)
+26aee19 Marker-Import: backfill markers.task_id via parse_key-Match
+b099bf9 UI: Drill-Down Section -> Task -> Marker + Modus-Vereinheitlichung
+82a254c API: plan_task_routes mit Tasks-CRUD und to-marker
+ec95855 Parser-Integration: GET /api/plans/<id> triggert upsert_tasks_for_plan
+70d48a4 Service: plan_task_service mit upsert/rename/derive_status
+1e93f1d Schema: plan_tasks + markers.task_id (FK ON DELETE SET NULL)
+```
+
+### Erweiterte/neue Dateien
+| Datei | Aenderung |
+|-------|-----------|
+| `services/db_plan_task_schema.py` | NEU — plan_tasks-Schema + markers.task_id |
+| `services/plan_task_service.py` | NEU — Service-Schicht (291 Z.) |
+| `services/db_service.py` | `ensure_plan_task_schema()` registriert |
+| `services/copilot_marker_import_flow.py` | `_backfill_task_ids` + db_plan_id-Param |
+| `routes/plan_task_routes.py` | NEU — 6 API-Endpunkte |
+| `routes/plans_routes.py` | upsert_tasks_for_plan-Trigger im GET |
+| `routes/copilot_marker_routes.py` | db_plan_id durchgereicht |
+| `routes/__init__.py` | plan_task_bp registriert |
+| `static/js/copilot-board-panel.js` | Drill-Down + Modus-Vereinheitlichung |
+| `static/css/copilot-board.css` | .panel-task-item + Marker-Status-Badges |
+| `scripts/cleanup_dirty_plan_tasks.py` | NEU — Einmal-Cleanup |
+
+### Gitea-Issue
+- **Issue #24** geschlossen: https://git.webideas24.com/webideas24/project_dashboard/issues/24
+
+### Naechste Session
+
+Folge-Sprint-Kandidaten (Reihenfolge nach Wert):
+
+1. **`sprints/sprint-task-backfill.md`** (zu erstellen) — Bestands-Marker `task_id=NULL` per Titel-Fuzzy-Match an Tasks zuordnen, mit Review-UI (Opt-In pro Marker). Aktuell sind alle Bestands-Marker im Orphan-Bucket sichtbar.
+2. **Commit 5 aus `sprint-impl-check-persisting.md`** (optional): UI-Timestamp „Zuletzt geprueft: vor X min" + manueller Recheck-Button.
+3. **Task-UX-Erweiterungen:** Inline-Rename via PATCH-Endpunkt im UI, Task-Status-Override (`blocked`, `wont_do`) via neue Spalte `manual_status_override`.
