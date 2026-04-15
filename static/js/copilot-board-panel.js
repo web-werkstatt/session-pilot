@@ -71,6 +71,9 @@ function closeSectionPanel() {
     document.getElementById('panelEmptyState').style.display = 'flex';
     document.querySelectorAll('#sectionsBoard .plan-card').forEach(function(c) { c.classList.remove('selected'); });
     _updateCockpitBreadcrumb(null);
+    if (typeof renderCockpitNextAction === 'function') {
+        renderCockpitNextAction(null, null);
+    }
 }
 
 function switchPanelTab(tab) {
@@ -181,6 +184,11 @@ function _renderPanelMarkerDetails(marker) {
     if (_currentPlanSectionId) {
         var section = _planSections.find(function(item) { return item.id === _currentPlanSectionId; });
         if (section) _renderPlanSectionDetails(section);
+    }
+    if (typeof renderCockpitNextAction === 'function') {
+        var wf = (typeof _cockpitWorkflowData !== 'undefined' && _cockpitWorkflowData)
+            ? _cockpitWorkflowData.workflow : null;
+        renderCockpitNextAction(marker, wf);
     }
 }
 
