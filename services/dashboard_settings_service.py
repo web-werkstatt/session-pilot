@@ -72,6 +72,7 @@ def load_dashboard_settings():
 
 def save_dashboard_settings(data):
     settings = load_dashboard_settings()
+    old_commit_mode = (settings.get("implementation_check") or {}).get("commit_match_mode")
     settings["include_self_project"] = _normalize_bool(
         data.get("include_self_project"),
         settings["include_self_project"],
@@ -87,6 +88,16 @@ def save_dashboard_settings(data):
 
     with open(SETTINGS_FILE, 'w', encoding='utf-8') as f:
         json.dump(settings, f, indent=2, ensure_ascii=False)
+
+    # Commit-Match-Mode wirkt auf das commit_found-Signal im Implementation-Check.
+    # Bei Aenderung mussen alle gecachten Fortschritts-Werte neu gerechnet werden.
+    new_commit_mode = (settings.get("implementation_check") or {}).get("commit_match_mode")
+    if new_commit_mode != old_commit_mode:
+        try:
+            from services.marker_implementation import invalidate_implementation_progress
+            invalidate_implementation_progress(project_name=None, marker_id=None)
+        except Exception:
+            pass
 
     return settings
 

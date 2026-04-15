@@ -111,12 +111,21 @@ def get_marker_detail(project_name, marker_id):
     return data
 
 
+SIGNAL_RELEVANT_FIELDS = frozenset({
+    "prompt", "checks", "status", "execution_score", "last_session",
+    "rating_skipped",
+})
+
+
 def update_marker_field(project_name, marker_id, **fields):
     """Aktualisiert einzelne Felder eines Markers in der DB.
 
     Erlaubte Felder: titel, ziel, naechster_schritt, prompt, prompt_suggestion,
     risiko, checks, status, execution_score, execution_comment, last_session,
     sprint_tag, spec_tag.
+
+    Invalidiert den Implementation-Progress-Cache (implementation_checked_at=NULL)
+    wenn ein signal-relevantes Feld geaendert wird.
     """
     ensure_marker_schema()
     allowed = {
@@ -127,9 +136,12 @@ def update_marker_field(project_name, marker_id, **fields):
     }
     update_parts = []
     params = []
+    touched_signal = False
     for key, value in fields.items():
         if key not in allowed:
             continue
+        if key in SIGNAL_RELEVANT_FIELDS:
+            touched_signal = True
         if key == "checks":
             update_parts.append("checks = %s::jsonb")
             params.append(json.dumps(value or [], ensure_ascii=True))
@@ -141,6 +153,8 @@ def update_marker_field(project_name, marker_id, **fields):
         return None
 
     update_parts.append("updated_at = NOW()")
+    if touched_signal:
+        update_parts.append("implementation_checked_at = NULL")
     params.extend([project_name, marker_id])
 
     execute(
