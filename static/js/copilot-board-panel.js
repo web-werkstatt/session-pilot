@@ -70,6 +70,7 @@ function closeSectionPanel() {
     document.getElementById('panelContent').style.display = 'none';
     document.getElementById('panelEmptyState').style.display = 'flex';
     document.querySelectorAll('#sectionsBoard .plan-card').forEach(function(c) { c.classList.remove('selected'); });
+    _updateCockpitBreadcrumb(null);
 }
 
 function switchPanelTab(tab) {
@@ -88,6 +89,36 @@ function switchPanelTab(tab) {
             if (dc) dc.innerHTML = '<div class="dispatch-empty">Waehle einen AI Task (Marker) um Dispatch zu nutzen.</div>';
         }
     }
+    _updateCockpitBreadcrumb(tab);
+}
+
+/* Breadcrumb-Ergaenzung: bei geoeffnetem Panel Tab-Name anhaengen
+   (Workspace / Cockpit / <projekt> / <Tab-Label>). */
+var _COCKPIT_TAB_LABELS = {
+    chat: 'Chat',
+    output: 'Output',
+    history: 'Verlauf',
+    source: 'Quelle',
+    dispatch: 'Dispatch'
+};
+
+function _updateCockpitBreadcrumb(tab) {
+    var bc = document.querySelector('.breadcrumb');
+    if (!bc) return;
+    // Vorheriges dynamisches Segment entfernen.
+    bc.querySelectorAll('.bc-tab-injected').forEach(function(el) { el.remove(); });
+    var label = tab && _COCKPIT_TAB_LABELS[tab];
+    if (!label) return;
+    var sep = document.createElement('span');
+    sep.className = 'bc-sep bc-tab-injected';
+    sep.textContent = '/';
+    var span = document.createElement('span');
+    span.className = 'bc-tab-injected';
+    span.textContent = label;
+    bc.appendChild(document.createTextNode(' '));
+    bc.appendChild(sep);
+    bc.appendChild(document.createTextNode(' '));
+    bc.appendChild(span);
 }
 
 function askCopilot() {
