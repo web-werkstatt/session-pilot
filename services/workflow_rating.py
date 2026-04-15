@@ -25,10 +25,17 @@ def parse_iso_ts(value):
 
 
 def is_rating_pending(marker):
-    """True nur wenn Marker auf done, kein Score UND innerhalb RATING_PENDING_WINDOW."""
+    """True nur wenn Marker done, kein Score, Session existiert UND < 48h alt.
+
+    Zusaetzliche Bedingung last_session: ohne aktive Session gibt es keine
+    Ausfuehrung zu bewerten — dann waere "Bewertung nachholen" sinnlos
+    (z.B. Marker manuell auf done gesetzt ohne Claude-Code-Lauf).
+    """
     if getattr(marker, "status", None) != "done":
         return False
     if getattr(marker, "execution_score", None) is not None:
+        return False
+    if not str(getattr(marker, "last_session", "") or "").strip():
         return False
     updated = parse_iso_ts(getattr(marker, "updated_at", None))
     if not updated:

@@ -71,12 +71,15 @@
         // 5. Abschluss + Bewertung in einem Schritt
         //    (alter Schritt 6 "Bewertung nachholen" entfaellt — retrospektives
         //    Rating ist wertlos, siehe RATING_PENDING_WINDOW.)
+        //    Nur triggern wenn:
+        //    - < 48h auf done (sonst Erinnerung weg)
+        //    - last_session vorhanden (sonst gab es nichts zu bewerten)
         if (status === 'done' && ratingMissing) {
-            // Altlast-Hinweis: > 48h ohne Rating = Erinnerung weg
             var updated = marker.updated_at ? new Date(marker.updated_at) : null;
             var ageHours = updated ? (Date.now() - updated.getTime()) / 3600000 : 0;
-            if (ageHours > 48) {
-                return null;  // kein sinnvolles Rating mehr moeglich
+            var hasSession = !!(marker.last_session && String(marker.last_session).trim());
+            if (ageHours > 48 || !hasSession) {
+                return null;
             }
             return {
                 step: 5,
