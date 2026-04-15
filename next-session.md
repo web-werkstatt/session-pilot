@@ -183,3 +183,69 @@ Folge-Sprint-Kandidaten (Reihenfolge nach Wert):
 1. **`sprints/sprint-task-backfill.md`** (zu erstellen) — Bestands-Marker `task_id=NULL` per Titel-Fuzzy-Match an Tasks zuordnen, mit Review-UI (Opt-In pro Marker). Aktuell sind alle Bestands-Marker im Orphan-Bucket sichtbar.
 2. **Commit 5 aus `sprint-impl-check-persisting.md`** (optional): UI-Timestamp „Zuletzt geprueft: vor X min" + manueller Recheck-Button.
 3. **Task-UX-Erweiterungen:** Inline-Rename via PATCH-Endpunkt im UI, Task-Status-Override (`blocked`, `wont_do`) via neue Spalte `manual_status_override`.
+
+---
+
+## Session 2026-04-15 (Session 20) — Sprint Task-Backfill umgesetzt
+
+### Was wurde erledigt
+
+**Sprint `sprint-task-backfill.md` — Commits 1-4 DONE, Commit 5 via Sprint-Nachtrag:**
+
+- **Commit 1 (Schema):** `services/db_plan_task_match_schema.py` — Tabelle `plan_task_match_suggestions` (SERIAL id, marker_id + task_id FK ON DELETE CASCADE, score NUMERIC(4,3), method VARCHAR(30), status VARCHAR(20) 'pending', decided_at/by, UNIQUE(marker_id, task_id)). 3 Indizes (marker, task, status). Idempotent via `ensure_plan_task_match_schema()`.
+- **Commit 2 (Service):** `services/plan_task_match_service.py` (295 Z.) — Mehrstufiger Match: `normalized_exact` (1.0), `jaccard_tokens` (Set-Intersection mit Stopword-Filter), `seq_ratio` (difflib-Fallback). Konstanten `PERSIST_MIN_SCORE=0.5`, `AUTO_APPLY_MIN_SCORE=0.9`. Scope: `markers.sprint_plan_id = plan_id AND task_id IS NULL`. Best-per-Marker-Filter gegen Review-Noise.
+- **Commit 3 (API):** `routes/plan_task_match_routes.py` — 5 Endpunkte, alle mit `@api_route`:
+  - `POST /api/plans/<id>/task-matches/recompute`
+  - `GET  /api/plans/<id>/task-matches?status=pending|approved|rejected`
+  - `POST /api/task-matches/<id>/approve` (setzt `markers.task_id`, auto-rejected andere pending desselben Markers)
+  - `POST /api/task-matches/<id>/reject`
+  - `POST /api/plans/<id>/task-matches/auto-apply` (Body: `min_score`, Default 0.9)
+- **Commit 4 (UI):** Cockpit-Toolbar-Button "Backfill" (nur im Plan-Modus sichtbar, analog `importSprintMarkersBtn`) oeffnet Modal. Modal zeigt Suggestions sortiert nach Score:
+  - Marker-Titel -> Task-Titel (plus section/spec-Kontext)
+  - Score-Value + Farbverlauf-Bar (orange -> gruen) + Method-Label
+  - Approve/Reject pro Item, "Alle >= 0.9 anwenden" global
+  - Eigene Dateien (`task-backfill-panel.js`, `task-backfill.css`, `_task_backfill_modal.html`) — `copilot-board-panel.js` ist bei 500 Z.-Limit.
+
+### Abweichungen vom Plan
+
+- **Match-Methode erweitert:** Plan nannte nur `normalized_jaccard`. Implementierung nutzt zusaetzlich `seq_ratio` als Fallback fuer sehr kurze Titel, wo Jaccard-Tokens zu schwach sind.
+- **Best-per-Marker statt alle Paare:** Nur der beste Task-Kandidat pro Orphan-Marker wird persistiert. Haelt die Review-Liste fokussiert.
+- **approve() auto-rejected Konkurrenten:** Bei mehreren pending Suggestions pro Marker wird nach Approve der Rest verworfen — Ein Marker = ein Task.
+
+### Git Commits (4) — alle auf Gitea, GitHub unangetastet
+
+```
+0bc111e UI: Task-Backfill-Modal im Cockpit mit Approve/Reject/Auto-Apply
+4d18b32 API: plan_task_match_routes (recompute/list/approve/reject/auto-apply)
+9d6da5a Service: plan_task_match_service mit compute/approve/reject/auto_apply
+2d30fae Schema: plan_task_match_suggestions (Fuzzy-Match Backfill)
+```
+
+### Neue/erweiterte Dateien
+| Datei | Aenderung |
+|-------|-----------|
+| `services/db_plan_task_match_schema.py` | NEU — Schema + 3 Indizes |
+| `services/db_service.py` | `ensure_plan_task_match_schema()` registriert |
+| `services/plan_task_match_service.py` | NEU — Match-Algorithmus, CRUD, auto_apply |
+| `routes/plan_task_match_routes.py` | NEU — 5 API-Endpunkte |
+| `routes/__init__.py` | plan_task_match_bp registriert |
+| `templates/copilot_board.html` | Button + Modal-Include + JS/CSS-Link |
+| `templates/_task_backfill_modal.html` | NEU — Modal-Partial |
+| `static/js/task-backfill-panel.js` | NEU — Modul mit openModal/api.js |
+| `static/js/copilot_board.js` | taskBackfillBtn-Sichtbarkeit an Plan-Modus gekoppelt |
+| `static/css/task-backfill.css` | NEU — 161 Z. Styles |
+
+### Verifikation
+
+- Service aktiv, Schema idempotent — kein Fehler beim Restart
+- `POST /api/plans/1853/task-matches/recompute` -> `{"created":0, "orphans":0, "tasks":50}`. Plan 1853 hat nach Sprint-19-Backfill keine Orphans mehr — erwartetes Verhalten.
+- UI-Modal oeffnet korrekt, Empty-State bei leerer Pending-Liste.
+
+### Gitea-Issue
+- **Issue #25:** https://git.webideas24.com/webideas24/project_dashboard/issues/25 (offen, soll mit Commit-Batch geschlossen werden)
+
+### Offen / Naechste Schritte
+
+- **Live-Test mit echten Orphans:** Aktuell 0 Orphans in allen Plaenen (`markers.sprint_plan_id IS NOT NULL AND task_id IS NULL`). Algorithmus noch nicht unter Realbedingungen geprueft — erst wenn neue Marker importiert werden oder alte Marker ohne task_id auftauchen, greift der Backfill.
+- **Commit 5 aus `sprint-impl-check-persisting.md`** (optional): UI-Timestamp „Zuletzt geprueft: vor X min" + manueller Recheck-Button.
+- **Task-UX-Erweiterungen:** Inline-Rename, manual_status_override, Task-spezifische Close-Rule-Overrides.
