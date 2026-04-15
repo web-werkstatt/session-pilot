@@ -74,6 +74,16 @@ function _cockpitWfActiveStep(workflow) {
     return null;
 }
 
+/* Mapping: Workflow-Step-ID → Panel-Tab fuer CTA-Klick.
+   Aktueller Step entscheidet, welcher Tab im Section-Panel oeffnet. */
+var COCKPIT_WF_STEP_TAB = {
+    gate_ready: 'output',
+    active: 'chat',
+    execution: 'chat',
+    write_back: 'output',
+    rating: 'history'
+};
+
 function _renderCockpitWfMarkers(workflow) {
     var container = document.getElementById('cockpitWfMarkers');
     if (!container) return;
@@ -82,6 +92,7 @@ function _renderCockpitWfMarkers(workflow) {
     var next = workflow.next_marker || {};
     var activeStep = _cockpitWfActiveStep(workflow);
     var cta = activeStep && activeStep.cta_label ? activeStep.cta_label : '';
+    var stepTab = activeStep && COCKPIT_WF_STEP_TAB[activeStep.id] ? COCKPIT_WF_STEP_TAB[activeStep.id] : 'chat';
 
     function _card(role, marker, roleLabel, extraClass, withCta) {
         var iconName = role === 'current' ? 'target' : 'arrow-right-circle';
@@ -94,7 +105,7 @@ function _renderCockpitWfMarkers(workflow) {
             ? '<span class="cockpit-wf-card-cta"><i data-lucide="chevron-right" class="icon icon-xs"></i>' + escapeHtml(cta) + '</span>'
             : '';
         return '<button class="cockpit-wf-card ' + extraClass + '" type="button"'
-            + ' onclick="openSectionPanel(\'' + _escapeJsString(marker.marker_id) + '\')"'
+            + ' onclick="openSectionPanel(\'' + _escapeJsString(marker.marker_id) + '\', \'' + _escapeJsString(stepTab) + '\')"'
             + ' title="' + escapeHtml(roleLabel) + '">'
             + '<span class="cockpit-wf-card-head">'
             +   '<i data-lucide="' + iconName + '" class="icon icon-sm cockpit-wf-card-icon"></i>'

@@ -1,7 +1,23 @@
 /* === Panel === */
 function openSectionPanel(sectionId, tab) {
     var sec = allSections.find(function(s) { return s.marker_id === sectionId; });
-    if (!sec) return;
+    if (!sec) {
+        // Marker liegt ausserhalb des aktuellen Board-Filters (z.B. anderer Plan).
+        // Fallback: zum Projekt-Cockpit wechseln, Deep-Link via Query-Params
+        // (wird von copilot_board.js:_openInitialMarkerContext ausgewertet).
+        var projectName = (typeof COCKPIT_PROJECT !== 'undefined' && COCKPIT_PROJECT) ? COCKPIT_PROJECT : '';
+        if (projectName) {
+            var url = '/copilot?project=' + encodeURIComponent(projectName)
+                + '&marker_id=' + encodeURIComponent(sectionId);
+            if (tab) url += '&tab=' + encodeURIComponent(tab);
+            window.location.href = url;
+            return;
+        }
+        if (typeof _showToast === 'function') {
+            _showToast('Marker liegt ausserhalb des aktuellen Plan-Filters', true);
+        }
+        return;
+    }
 
     _currentSection = sec;
     _currentThreadId = _markerThreadId(sec.marker_id);
