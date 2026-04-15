@@ -146,11 +146,23 @@ def api_copilot_marker_close(marker_id):
     if context_path is None and project_id:
         context_path = "marker-context.md"
     try:
-        marker = close_marker(handoff_path, marker_id, project_id=project_id, status=data.get("status"), naechster_schritt=data.get("naechster_schritt"), last_session=data.get("last_session"), context_path=context_path)
+        marker = close_marker(handoff_path, marker_id, project_id=project_id,
+                              status=data.get("status"),
+                              naechster_schritt=data.get("naechster_schritt"),
+                              last_session=data.get("last_session"),
+                              context_path=context_path,
+                              execution_score=data.get("execution_score"),
+                              execution_comment=data.get("execution_comment"))
     except FileNotFoundError:
         return jsonify({"ok": False, "error": "handoff_missing"}), 404
     except MarkerCloseError as e:
-        return jsonify({"ok": False, "error": str(e)}), 404 if str(e) == "marker_not_found" else 400
+        err = str(e)
+        if err == "marker_not_found":
+            return jsonify({"ok": False, "error": err}), 404
+        if err == "rating_required":
+            return jsonify({"ok": False, "error": err,
+                            "message": "execution_score (0-5) ist Pflicht beim Abschluss"}), 400
+        return jsonify({"ok": False, "error": err}), 400
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)}), 500
     return jsonify({"ok": True, "marker_id": marker.marker_id, "status": marker.status, "updated_at": marker.updated_at})

@@ -289,7 +289,7 @@ def update_marker_fields(project_id, marker_id, fields):
     return _marker_to_dict(marker, include_gate=True)
 
 
-def close_marker(handoff_path, marker_id, *, project_id=None, status=None, naechster_schritt=None, last_session=None, updated_at=None, context_path=None):
+def close_marker(handoff_path, marker_id, *, project_id=None, status=None, naechster_schritt=None, last_session=None, updated_at=None, context_path=None, execution_score=None, execution_comment=None):
     if not os.path.exists(handoff_path):
         raise FileNotFoundError("handoff_missing")
     marker_id = str(marker_id).strip()
@@ -304,6 +304,11 @@ def close_marker(handoff_path, marker_id, *, project_id=None, status=None, naech
                 break
     if not marker:
         raise MarkerCloseError("marker_not_found")
+    # Rating-Pflicht beim Abschluss: wer einen Marker auf done setzt, muss
+    # frisch bewerten (Score 0-5). Retrospektives Rating ist wertlos, weil
+    # die Erinnerung weg ist — siehe RATING_PENDING_WINDOW in workflow_loop_service.
+    if status is not None and str(status).strip() == "done" and execution_score is None:
+        raise MarkerCloseError("rating_required")
     if status is not None:
         next_status = str(status).strip()
         if next_status not in VALID_STATUSES:
@@ -313,6 +318,11 @@ def close_marker(handoff_path, marker_id, *, project_id=None, status=None, naech
         marker.naechster_schritt = str(naechster_schritt).strip()
     if last_session is not None:
         marker.last_session = str(last_session).strip()
+    if execution_score is not None:
+        score = _validate_execution_score(execution_score)
+        marker.execution_score = score
+        marker.execution_comment = str(execution_comment).strip() if execution_comment else ""
+        marker.last_execution_at = datetime.now(timezone.utc).isoformat()
     effective_updated_at = updated_at or datetime.now(timezone.utc)
     marker.updated_at = effective_updated_at.astimezone(timezone.utc).isoformat() if isinstance(effective_updated_at, datetime) else str(effective_updated_at).strip()
     marker = Marker(**asdict(marker))
@@ -326,6 +336,10 @@ def close_marker(handoff_path, marker_id, *, project_id=None, status=None, naech
             db_fields["naechster_schritt"] = marker.naechster_schritt
         if last_session is not None:
             db_fields["last_session"] = marker.last_session
+        if execution_score is not None:
+            db_fields["execution_score"] = marker.execution_score
+            db_fields["execution_comment"] = marker.execution_comment
+            db_fields["last_execution_at"] = marker.last_execution_at
         if db_fields:
             try:
                 core_update_marker_field(pid, marker_id, **db_fields)

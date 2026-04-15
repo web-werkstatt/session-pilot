@@ -16,6 +16,7 @@
 <link rel="stylesheet" href="/static/css/workflow-loop-summary.css?v={{ cache_bust }}">
 <link rel="stylesheet" href="/static/css/cockpit-workflow.css?v={{ cache_bust }}">
 <link rel="stylesheet" href="/static/css/cockpit-next-action.css?v={{ cache_bust }}">
+<link rel="stylesheet" href="/static/css/cockpit-close-modal.css?v={{ cache_bust }}">
 <link rel="stylesheet" href="/static/css/dispatch.css?v={{ cache_bust }}">
 <link rel="stylesheet" href="/static/css/dispatch-settings.css?v={{ cache_bust }}">
 {% endblock %}
@@ -148,6 +149,7 @@
 
     {% include "_copilot_add_section_modal.html" %}
     {% include "_workflow_help_modal.html" %}
+    {% include "_cockpit_close_modal.html" %}
 {% endblock %}
 {% block scripts %}
 <script src="/static/js/marked.min.js"></script>
@@ -162,6 +164,7 @@
 <script src="/static/js/copilot-board-panel.js?v={{ cache_bust }}"></script>
 <script src="/static/js/copilot-board-chat.js?v={{ cache_bust }}"></script>
 <script src="/static/js/cockpit-next-action.js?v={{ cache_bust }}"></script>
+<script src="/static/js/cockpit-close-modal.js?v={{ cache_bust }}"></script>
 <script src="/static/js/dispatch-render.js?v={{ cache_bust }}"></script>
 <script src="/static/js/dispatch.js?v={{ cache_bust }}"></script>
 <script src="/static/js/dispatch-settings.js?v={{ cache_bust }}"></script>

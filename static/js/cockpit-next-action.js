@@ -6,7 +6,7 @@
  * workflow.current_step genau einen Schritt ab und rendert einen Primary-CTA.
  */
 (function () {
-    var TOTAL_STEPS = 7;
+    var TOTAL_STEPS = 5;
 
     function _deriveNextAction(marker, workflow) {
         if (!marker || !marker.marker_id) return null;
@@ -53,42 +53,41 @@
             };
         }
 
-        // 4. Aktive Session
-        if (status === 'in_progress') {
+        // 4. Aktive Session — CTA: abschliessen mit Rating (kombiniert)
+        if (status === 'in_progress' || step === 'write_back') {
             return {
                 step: 4,
                 title: 'Session laeuft',
-                description: 'Thread im Chat fortsetzen oder auf Ergebnis warten.',
+                description: 'Thread fortsetzen oder wenn Arbeit fertig: Marker abschliessen und bewerten.',
                 ctaLabel: 'Thread oeffnen',
-                tab: 'chat'
+                tab: 'chat',
+                secondary: {
+                    label: 'Abschliessen + bewerten',
+                    action: 'close_with_rating'
+                }
             };
         }
 
-        // 5. Write-back — Code fertig, Marker noch nicht auf done
-        if (step === 'write_back' && status !== 'done') {
+        // 5. Abschluss + Bewertung in einem Schritt
+        //    (alter Schritt 6 "Bewertung nachholen" entfaellt — retrospektives
+        //    Rating ist wertlos, siehe RATING_PENDING_WINDOW.)
+        if (status === 'done' && ratingMissing) {
+            // Altlast-Hinweis: > 48h ohne Rating = Erinnerung weg
+            var updated = marker.updated_at ? new Date(marker.updated_at) : null;
+            var ageHours = updated ? (Date.now() - updated.getTime()) / 3600000 : 0;
+            if (ageHours > 48) {
+                return null;  // kein sinnvolles Rating mehr moeglich
+            }
             return {
                 step: 5,
-                title: 'Ergebnis festschreiben',
-                description: 'Session abgeschlossen. Marker auf done setzen und Commit vorbereiten.',
-                ctaLabel: 'Abschluss vorbereiten',
-                tab: 'output',
-                focus: 'prompt'
-            };
-        }
-
-        // 6. Rating fehlt nach done
-        if (status === 'done' && ratingMissing) {
-            return {
-                step: 6,
                 title: 'Bewertung nachholen',
-                description: 'Score (0-5) und kurzen Kommentar zur Ausfuehrungsqualitaet hinterlassen.',
-                ctaLabel: 'Bewerten',
-                tab: 'history',
-                focus: 'rating'
+                description: 'Der Marker ist abgeschlossen, aber noch nicht bewertet. Bewertung jetzt, solange die Erinnerung frisch ist.',
+                ctaLabel: 'Jetzt bewerten',
+                action: 'close_with_rating'
             };
         }
 
-        // 7. Fertig
+        // Fertig
         return null;
     }
 
@@ -103,22 +102,38 @@
             return;
         }
 
-        var ctaAttrs = '';
-        if (action.action === 'activate') {
-            ctaAttrs = 'data-action="activate" data-marker-id="' + String(marker.marker_id).replace(/"/g, '&quot;') + '"';
-        } else if (action.tab) {
-            ctaAttrs = 'data-tab="' + action.tab + '"'
-                + (action.focus ? ' data-focus="' + action.focus + '"' : '');
+        function _ctaAttrs(act) {
+            var markerIdAttr = String(marker.marker_id).replace(/"/g, '&quot;');
+            if (act.action === 'activate') {
+                return 'data-action="activate" data-marker-id="' + markerIdAttr + '"';
+            }
+            if (act.action === 'close_with_rating') {
+                return 'data-action="close_with_rating" data-marker-id="' + markerIdAttr + '"';
+            }
+            if (act.tab) {
+                return 'data-tab="' + act.tab + '"'
+                    + (act.focus ? ' data-focus="' + act.focus + '"' : '');
+            }
+            return '';
+        }
+
+        var primaryHtml = '<button type="button" class="ui-button ui-button--primary cna-cta" ' + _ctaAttrs(action) + '>'
+            + '<i data-lucide="arrow-right" class="icon icon-xs"></i> '
+            + escapeHtml(action.ctaLabel)
+            + '</button>';
+        var secondaryHtml = '';
+        if (action.secondary) {
+            secondaryHtml = '<button type="button" class="ui-button ui-button--ghost cna-cta cna-cta--secondary" '
+                + _ctaAttrs(action.secondary) + '>'
+                + escapeHtml(action.secondary.label)
+                + '</button>';
         }
 
         box.innerHTML = ''
             + '<div class="cna-step">Schritt ' + action.step + ' von ' + TOTAL_STEPS + '</div>'
             + '<div class="cna-title">' + escapeHtml(action.title) + '</div>'
             + '<div class="cna-desc">' + escapeHtml(action.description) + '</div>'
-            + '<button type="button" class="ui-button ui-button--primary cna-cta" ' + ctaAttrs + '>'
-            +   '<i data-lucide="arrow-right" class="icon icon-xs"></i> '
-            +   escapeHtml(action.ctaLabel)
-            + '</button>';
+            + '<div class="cna-actions">' + primaryHtml + secondaryHtml + '</div>';
         box.style.display = '';
         if (typeof lucide !== 'undefined') lucide.createIcons();
     }
@@ -131,6 +146,10 @@
 
         if (actionName === 'activate' && markerId && typeof activateMarker === 'function') {
             activateMarker(markerId);
+            return;
+        }
+        if (actionName === 'close_with_rating' && markerId && typeof openCockpitCloseModal === 'function') {
+            openCockpitCloseModal(markerId);
             return;
         }
         if (tab && typeof switchPanelTab === 'function') {

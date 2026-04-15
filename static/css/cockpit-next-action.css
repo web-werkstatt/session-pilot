@@ -33,7 +33,17 @@
     line-height: 1.5;
 }
 
+.cockpit-next-action .cna-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 4px;
+}
+
 .cockpit-next-action .cna-cta {
     align-self: flex-start;
-    margin-top: 4px;
+}
+
+.cockpit-next-action .cna-cta--secondary {
+    font-weight: 500;
 }

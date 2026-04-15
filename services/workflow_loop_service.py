@@ -3,6 +3,8 @@ Aggregiert den Workflow-Loop fuer die Projekt-Control-Plane.
 """
 from datetime import datetime, timezone
 
+from services.workflow_rating import is_rating_pending as _is_rating_pending
+
 from services.governance_service import get_governance_gate
 from services.path_resolver import resolve_project_path
 from services.db_service import execute
@@ -79,7 +81,7 @@ def _build_current_marker(markers, plan_titles):
     if active:
         return _serialize_marker_focus(active, plan_titles)
 
-    pending = _latest_marker([marker for marker in markers if marker.status == "done" and marker.execution_score is None])
+    pending = _latest_marker([marker for marker in markers if _is_rating_pending(marker)])
     if pending:
         return _serialize_marker_focus(pending, plan_titles)
 
@@ -119,7 +121,7 @@ def _build_next_marker(markers, plan_titles, current_marker):
 
 
 def _build_pending_ratings(markers):
-    pending = [marker for marker in markers if marker.status == "done" and marker.execution_score is None]
+    pending = [marker for marker in markers if _is_rating_pending(marker)]
     pending.sort(key=_marker_sort_key, reverse=True)
     result = []
     for marker in pending[:5]:
@@ -283,7 +285,7 @@ def _build_steps(current_step, current_marker, next_marker):
 def _serialize_marker_focus(marker, plan_titles):
     gate_status = "ready" if getattr(marker, "prompt", "").strip() and len(getattr(marker, "checks", []) or []) >= 1 else "blocked"
     gate_reason = "" if gate_status == "ready" else _derive_gate_reason(marker)
-    rating_pending = marker.status == "done" and marker.execution_score is None
+    rating_pending = _is_rating_pending(marker)
     return {
         "marker_id": marker.marker_id,
         "title": marker.titel,
@@ -348,7 +350,7 @@ def _serialize_marker_card(project_name, marker, plan_titles, workflow_states, c
         "last_session": state.get("last_session") or marker.last_session or "",
         "execution_score": marker.execution_score,
         "execution_comment": marker.execution_comment or "",
-        "rating_pending": marker.status == "done" and marker.execution_score is None,
+        "rating_pending": _is_rating_pending(marker),
         "gate_status": gate_status,
         "gate_reason": gate_reason,
         "checks_count": len(getattr(marker, "checks", []) or []),

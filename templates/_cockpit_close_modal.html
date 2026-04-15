@@ -1,0 +1,45 @@
+{# Close-Modal mit Pflicht-Rating beim Marker-Abschluss.
+   Ausgelagert 2026-04-15: Bewertung passiert direkt beim Close,
+   retrospektives Rating wird nicht mehr angefordert. #}
+
+<div class="modal-overlay" id="cockpitCloseModal">
+    <div class="modal ui-panel cockpit-close-modal">
+        <div class="modal-header">
+            <h3>Marker abschliessen</h3>
+            <button class="modal-close" type="button" onclick="closeModal('cockpitCloseModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p class="cockpit-close-intro">
+                Wie gut hat Claude Code den Marker umgesetzt? Bewertung passiert
+                jetzt — spaeter waere die Erinnerung weg.
+            </p>
+
+            <div class="cockpit-close-field">
+                <label for="cockpitCloseScore">Score <span class="required">*</span></label>
+                <select id="cockpitCloseScore" class="ui-input">
+                    <option value="">-- Score waehlen --</option>
+                    <option value="5">5 — perfekt, keine Nacharbeit</option>
+                    <option value="4">4 — gut, kleinere Korrekturen</option>
+                    <option value="3">3 — brauchbar, teilweise nachgebessert</option>
+                    <option value="2">2 — schwach, erhebliche Nacharbeit</option>
+                    <option value="1">1 — kaputt, kompletter Rewrite</option>
+                    <option value="0">0 — nicht verwendbar, Ansatz verworfen</option>
+                </select>
+            </div>
+
+            <div class="cockpit-close-field">
+                <label for="cockpitCloseComment">Kommentar <span class="optional">(optional)</span></label>
+                <textarea id="cockpitCloseComment" class="ui-input" rows="3"
+                    placeholder="z.B. Tests fehlten, Prompt war unscharf, Follow-Up noetig"></textarea>
+            </div>
+
+            <div class="cockpit-close-error" id="cockpitCloseError" style="display:none"></div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="ui-button ui-button--ghost" onclick="closeModal('cockpitCloseModal')">Abbrechen</button>
+            <button type="button" class="ui-button ui-button--primary" id="cockpitCloseSubmit" onclick="submitCockpitClose()">
+                <i data-lucide="check-circle" class="icon icon-xs"></i> Abschliessen
+            </button>
+        </div>
+    </div>
+</div>

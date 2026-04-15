@@ -1,0 +1,45 @@
+/* Cockpit Close-Modal Styles */
+
+.cockpit-close-modal {
+    width: min(520px, 92vw);
+}
+
+.cockpit-close-intro {
+    font-size: 13px;
+    color: var(--cn-text-sec, #a1a1aa);
+    margin: 0 0 14px;
+    line-height: 1.5;
+}
+
+.cockpit-close-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 14px;
+}
+
+.cockpit-close-field label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--cn-text, #e4e4e7);
+}
+
+.cockpit-close-field .required {
+    color: #f87171;
+    margin-left: 2px;
+}
+
+.cockpit-close-field .optional {
+    font-weight: 400;
+    color: var(--cn-text-muted, #71717a);
+}
+
+.cockpit-close-error {
+    padding: 8px 12px;
+    border-radius: 6px;
+    background: rgba(239, 68, 68, 0.1);
+    border-left: 3px solid rgba(239, 68, 68, 0.6);
+    color: #fca5a5;
+    font-size: 12px;
+    margin-top: 4px;
+}
