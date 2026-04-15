@@ -259,6 +259,13 @@ def ensure_plan_task_schema():
     ensure_plan_task_schema_impl(execute)
 
 
+def ensure_plan_task_match_schema():
+    """Sprint Task-Backfill: Fuzzy-Match-Suggestions fuer Bestands-Marker."""
+    ensure_plan_task_schema()
+    from services.db_plan_task_match_schema import ensure_plan_task_match_schema_impl
+    ensure_plan_task_match_schema_impl(execute)
+
+
 def ensure_cwo_schema():
     """CWO Sprint: Context Window Optimizer Tabellen."""
     from services.db_cwo_schema import ensure_cwo_schema_impl
