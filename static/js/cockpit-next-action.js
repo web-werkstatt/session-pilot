@@ -6,100 +6,42 @@
  * workflow.current_step genau einen Schritt ab und rendert einen Primary-CTA.
  */
 (function () {
-    var TOTAL_STEPS = 5;
+    /* Single Source of Truth fuers Step-Modell: Backend liefert
+       workflow.steps[] mit id, number, title, description, cta_label,
+       optional tab/focus/action/secondary. Das Banner rendert den Step,
+       der workflow.current_step entspricht — keine eigene Ableitung mehr. */
 
     function _deriveNextAction(marker, workflow) {
-        if (!marker || !marker.marker_id) return null;
-
-        var gateReason = String(marker.gate_reason || '').toLowerCase();
-        var status = String(marker.status || 'todo').toLowerCase();
-        var ratingMissing = marker.execution_score === null
-            || marker.execution_score === undefined
-            || marker.execution_score === '';
-        var step = workflow && workflow.current_step;
-
-        // 1. Prompt leer — Gate blockiert
-        if (gateReason.indexOf('prompt') !== -1) {
-            return {
-                step: 1,
-                title: 'Prompt formulieren',
-                description: 'Der Marker braucht eine klare Anweisung fuer Claude Code, bevor er aktiviert werden kann.',
-                ctaLabel: 'Prompt bearbeiten',
-                tab: 'output',
-                focus: 'prompt'
-            };
+        if (!marker || !marker.marker_id || !workflow) return null;
+        var steps = workflow.steps || [];
+        var currentId = workflow.current_step;
+        var currentStep = null;
+        for (var i = 0; i < steps.length; i++) {
+            if (steps[i].id === currentId) { currentStep = steps[i]; break; }
         }
+        if (!currentStep) return null;
 
-        // 2. Keine Checks — Gate blockiert
-        if (gateReason.indexOf('check') !== -1) {
-            return {
-                step: 2,
-                title: 'Abnahme-Checks definieren',
-                description: 'Mindestens ein Check (Definition of Done) fehlt. Checks im Prompt-Abschnitt ergaenzen.',
-                ctaLabel: 'Prompt bearbeiten',
-                tab: 'output',
-                focus: 'prompt'
-            };
-        }
-
-        // 3. Aktivierbar, aber noch nicht gestartet
-        if (marker.is_activatable && status === 'todo') {
-            return {
-                step: 3,
-                title: 'Marker aktivieren',
-                description: 'Prompt und Checks sind bereit. Kontext fuer Claude Code schreiben und Session starten.',
-                ctaLabel: 'Aktivieren',
-                action: 'activate'
-            };
-        }
-
-        // 4. Aktive Session — CTA: abschliessen mit Rating (kombiniert)
-        if (status === 'in_progress' || step === 'write_back') {
-            return {
-                step: 4,
-                title: 'Session laeuft',
-                description: 'Thread fortsetzen oder wenn Arbeit fertig: Marker abschliessen und bewerten.',
-                ctaLabel: 'Thread oeffnen',
-                tab: 'chat',
-                secondary: {
-                    label: 'Abschliessen + bewerten',
-                    action: 'close_with_rating'
-                }
-            };
-        }
-
-        // 5. Abschluss + Bewertung in einem Schritt
-        //    (alter Schritt 6 "Bewertung nachholen" entfaellt — retrospektives
-        //    Rating ist wertlos, siehe RATING_PENDING_WINDOW.)
-        //    Nur triggern wenn:
-        //    - < 48h auf done (sonst Erinnerung weg)
-        //    - last_session vorhanden (sonst gab es nichts zu bewerten)
-        if (status === 'done' && ratingMissing) {
-            // An den Done-Zeitpunkt koppeln (done_since aus
-            // marker_workflow_states.completed_at), nicht an updated_at —
-            // sonst verlaengert jede Feldaenderung das 48h-Fenster.
+        // "close"-Step unterdruecken, wenn Rating nicht sinnvoll:
+        // keine Session ODER done_since > 48h (Fenster weg) ODER skipped.
+        if (currentStep.id === 'close') {
+            var hasSession = !!(marker.last_session && String(marker.last_session).trim());
             var doneRef = marker.done_since || marker.updated_at;
             var doneAt = doneRef ? new Date(doneRef) : null;
             var ageHours = doneAt ? (Date.now() - doneAt.getTime()) / 3600000 : 0;
-            var hasSession = !!(marker.last_session && String(marker.last_session).trim());
-            if (!doneAt || ageHours > 48 || !hasSession) {
-                return null;
-            }
-            return {
-                step: 5,
-                title: 'Bewertung nachholen',
-                description: 'Der Marker ist abgeschlossen, aber noch nicht bewertet. Bewertung jetzt, solange die Erinnerung frisch ist.',
-                ctaLabel: 'Jetzt bewerten',
-                action: 'close_with_rating',
-                secondary: {
-                    label: 'Ignorieren',
-                    action: 'skip_rating'
-                }
-            };
+            if (!hasSession || !doneAt || ageHours > 48 || marker.rating_skipped) return null;
         }
 
-        // Fertig
-        return null;
+        return {
+            step: currentStep.number,
+            total: steps.length,
+            title: currentStep.title,
+            description: currentStep.description,
+            ctaLabel: currentStep.cta_label,
+            tab: currentStep.tab,
+            focus: currentStep.focus,
+            action: currentStep.action,
+            secondary: currentStep.secondary || null
+        };
     }
 
     function renderCockpitNextAction(marker, workflow) {
@@ -144,7 +86,7 @@
         }
 
         box.innerHTML = ''
-            + '<div class="cna-step">Schritt ' + action.step + ' von ' + TOTAL_STEPS + '</div>'
+            + '<div class="cna-step">Schritt ' + action.step + ' von ' + (action.total || 5) + '</div>'
             + '<div class="cna-title">' + escapeHtml(action.title) + '</div>'
             + '<div class="cna-desc">' + escapeHtml(action.description) + '</div>'
             + '<div class="cna-actions">' + primaryHtml + secondaryHtml + '</div>';

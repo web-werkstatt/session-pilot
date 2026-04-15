@@ -124,14 +124,20 @@ function renderWorkflowLoopSvg(container, data, onStepClick) {
 
 function workflowLoopCurrentStepLabel(data) {
     var current = String((data && data.current_step) || '');
-    var map = {
-        gate_ready: 'Gate Ready',
-        active: 'Aktiv',
-        execution: 'Execution',
-        write_back: 'Write Back',
-        rating: 'Rating'
+    // Bevorzugt das Label direkt aus workflow.steps (Single Source of Truth),
+    // sonst Fallback-Map fuer Legacy-Aufrufer.
+    var steps = (data && data.steps) || [];
+    for (var i = 0; i < steps.length; i++) {
+        if (steps[i].id === current) return steps[i].label || 'Workflow';
+    }
+    var fallback = {
+        gate_prompt: 'Prompt',
+        gate_checks: 'Checks',
+        ready: 'Bereit',
+        running: 'Session',
+        close: 'Abschluss'
     };
-    return map[current] || 'Workflow';
+    return fallback[current] || 'Workflow';
 }
 
 function workflowLoopNodeDescription(step) {

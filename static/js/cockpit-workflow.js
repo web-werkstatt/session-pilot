@@ -58,11 +58,11 @@ function _renderCockpitWfStepLabel(workflow) {
 }
 
 var COCKPIT_WF_STEP_ICON = {
-    gate_ready: 'key',
-    active: 'play',
-    execution: 'activity',
-    write_back: 'file-text',
-    rating: 'star'
+    gate_prompt: 'edit-3',
+    gate_checks: 'check-square',
+    ready: 'key',
+    running: 'play',
+    close: 'star'
 };
 
 function _cockpitWfActiveStep(workflow) {
@@ -77,11 +77,11 @@ function _cockpitWfActiveStep(workflow) {
 /* Mapping: Workflow-Step-ID → Panel-Tab fuer CTA-Klick.
    Aktueller Step entscheidet, welcher Tab im Section-Panel oeffnet. */
 var COCKPIT_WF_STEP_TAB = {
-    gate_ready: 'output',
-    active: 'chat',
-    execution: 'chat',
-    write_back: 'output',
-    rating: 'history'
+    gate_prompt: 'output',
+    gate_checks: 'output',
+    ready: 'output',
+    running: 'chat',
+    close: 'history'
 };
 
 function _renderCockpitWfMarkers(workflow) {
@@ -137,11 +137,11 @@ function _renderCockpitWfHint(workflow) {
     if (!el) return;
     var step = _cockpitWfActiveStep(workflow);
     var hints = {
-        gate_ready: 'Marker bereit — Prompt und Checks pruefen, dann starten.',
-        active: 'Marker ist auf in_progress — Session starten, Thread beginnen.',
-        execution: 'Eine Session arbeitet gerade dran — Thread oeffnen oder warten.',
-        write_back: 'Marker abgeschlossen — Session-Ergebnis in die handoff.md uebertragen.',
-        rating: 'Marker ist done, Bewertung fehlt — Score (0-5) und Kommentar vergeben.'
+        gate_prompt: 'Prompt fehlt — Anweisung fuer Claude Code formulieren.',
+        gate_checks: 'Checks fehlen — mindestens einen Abnahme-Check definieren.',
+        ready: 'Marker bereit — aktivieren und Session starten.',
+        running: 'Session laeuft — Thread fortsetzen oder abschliessen.',
+        close: 'Abschluss + Bewertung — jetzt, solange die Erinnerung frisch ist.'
     };
     var msg = step && hints[step.id] ? hints[step.id] : '';
     el.textContent = msg;

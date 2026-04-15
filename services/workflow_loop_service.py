@@ -17,11 +17,48 @@ from services.workflow_loop_signals import build_signals as _build_signals
 
 
 STEP_DEFINITIONS = [
-    {"id": "gate_ready", "label": "Gate Ready", "number": 1},
-    {"id": "active", "label": "Aktiv", "number": 2},
-    {"id": "execution", "label": "Execution", "number": 3},
-    {"id": "write_back", "label": "Write Back", "number": 4},
-    {"id": "rating", "label": "Rating", "number": 5},
+    {
+        "id": "gate_prompt", "number": 1,
+        "label": "Prompt",
+        "title": "Prompt formulieren",
+        "description": "Der Marker braucht eine klare Anweisung fuer Claude Code, bevor er aktiviert werden kann.",
+        "cta_label": "Prompt bearbeiten",
+        "tab": "output", "focus": "prompt",
+    },
+    {
+        "id": "gate_checks", "number": 2,
+        "label": "Checks",
+        "title": "Checks definieren",
+        "description": "Mindestens ein Abnahme-Check (Definition of Done) fehlt. Im Prompt-Abschnitt ergaenzen.",
+        "cta_label": "Checks ergaenzen",
+        "tab": "output", "focus": "prompt",
+    },
+    {
+        "id": "ready", "number": 3,
+        "label": "Bereit",
+        "title": "Marker aktivieren",
+        "description": "Prompt und Checks sind bereit. Kontext fuer Claude Code schreiben und Session starten.",
+        "cta_label": "Aktivieren",
+        "action": "activate",
+    },
+    {
+        "id": "running", "number": 4,
+        "label": "Session",
+        "title": "Session laeuft",
+        "description": "Thread fortsetzen oder bei Fertigstellung abschliessen und bewerten.",
+        "cta_label": "Thread oeffnen",
+        "tab": "chat",
+        "secondary": {"label": "Abschliessen + bewerten", "action": "close_with_rating"},
+    },
+    {
+        "id": "close", "number": 5,
+        "label": "Abschluss",
+        "title": "Abschliessen + bewerten",
+        "description": "Marker ist fertig, Bewertung steht noch aus. Jetzt bewerten, solange die Erinnerung frisch ist.",
+        "cta_label": "Jetzt bewerten",
+        "action": "close_with_rating",
+        "secondary": {"label": "Ignorieren", "action": "skip_rating"},
+    },
 ]
 
 STEP_INDEX = {step["id"]: index for index, step in enumerate(STEP_DEFINITIONS)}
@@ -144,62 +181,63 @@ def _build_pending_ratings(markers, workflow_states=None):
 
 
 def _derive_current_step(markers, current_marker, next_marker, pending_ratings):
+    # Abschluss + Bewertung offen -> Step 5
     if pending_ratings:
-        return "rating"
+        return "close"
+    # Aktive Session -> Step 4
     if current_marker and current_marker.get("status") == "in_progress":
-        if current_marker.get("last_session"):
-            return "execution"
-        return "active"
-    if _latest_marker([marker for marker in markers if marker.status in ("done", "blocked")]):
-        return "write_back"
+        return "running"
+    # Naechster Marker vorhanden: Gate pruefen
     if next_marker:
-        return "gate_ready"
-    return "gate_ready"
+        gr = str(next_marker.get("gate_reason", "") or "").lower()
+        if "prompt" in gr:
+            return "gate_prompt"
+        if "check" in gr:
+            return "gate_checks"
+        return "ready"
+    # Current ohne Session, aber todo/in_progress -> "ready" als Default
+    return "ready"
 
 
 def _build_steps(current_step, current_marker, next_marker):
     current_index = STEP_INDEX.get(current_step, 0)
     current_marker_id = str((current_marker or {}).get("marker_id") or "")
     next_marker_id = str((next_marker or {}).get("marker_id") or "")
-    next_blocked = bool(next_marker and next_marker.get("gate_status") == "blocked")
     steps = []
 
     for step in STEP_DEFINITIONS:
         step_id = step["id"]
-        status = "pending"
-        attention_level = "none"
+        idx = STEP_INDEX[step_id]
         marker_ref = current_marker_id or next_marker_id or ""
-        cta_label = _step_cta_label(step_id, current_marker, next_marker)
 
-        if marker_ref:
-            if STEP_INDEX[step_id] < current_index:
-                status = "done"
-            elif STEP_INDEX[step_id] == current_index:
-                if step_id == "rating":
-                    status = "attention"
-                    attention_level = "high"
-                elif step_id == "gate_ready" and next_blocked:
-                    status = "blocked"
-                    attention_level = "high"
-                elif step_id == "write_back":
-                    status = "attention"
-                    attention_level = "medium"
-                else:
-                    status = "active"
-                    attention_level = "medium" if step_id == "execution" else "low"
-            elif step_id == "gate_ready" and next_blocked:
-                status = "blocked"
-                attention_level = "high"
+        if idx < current_index:
+            status, attention_level = "done", "none"
+        elif idx == current_index:
+            if step_id in ("gate_prompt", "gate_checks"):
+                status, attention_level = "blocked", "high"
+            elif step_id == "close":
+                status, attention_level = "attention", "high"
+            else:
+                status, attention_level = "active", "medium"
+        else:
+            status, attention_level = "pending", "none"
 
-        steps.append({
+        entry = {
             "id": step_id,
             "label": step["label"],
             "number": step["number"],
+            "title": step["title"],
+            "description": step["description"],
             "status": status,
             "attention_level": attention_level,
-            "cta_label": cta_label,
+            "cta_label": step["cta_label"],
             "marker_ref": marker_ref,
-        })
+        }
+        if "tab" in step: entry["tab"] = step["tab"]
+        if "focus" in step: entry["focus"] = step["focus"]
+        if "action" in step: entry["action"] = step["action"]
+        if "secondary" in step: entry["secondary"] = step["secondary"]
+        steps.append(entry)
 
     return steps
 
@@ -338,15 +376,6 @@ def _derive_gate_reason(marker):
     if len(getattr(marker, "checks", []) or []) < 1:
         return "keine checks definiert"
     return ""
-
-
-def _step_cta_label(step_id, current_marker, next_marker):
-    if step_id == "rating":
-        return "Rating nachholen" if current_marker and current_marker.get("rating_pending") else "Verlauf ansehen"
-    if step_id == "write_back": return "Abschluss vorbereiten"
-    if step_id == "execution": return "Thread fortsetzen" if current_marker else "Execution oeffnen"
-    if step_id == "active": return "Execution oeffnen"
-    return "Marker pruefen"
 
 
 def _latest_marker(markers):
