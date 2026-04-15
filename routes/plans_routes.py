@@ -127,6 +127,22 @@ def get_plan_detail(plan_id):
             extensions=['fenced_code', 'tables', 'nl2br']
         )
 
+        tagged_sections = get_tagged_plan_structure(
+            content_md,
+            _get_handoff_path(row['project_name']) if row.get('project_name') else None,
+            source_path=row['filename'] or row['title'] or f"plan:{row['id']}",
+        )
+
+        # Sprint Task-Entity: Tasks persistieren beim Plan-Read (Lazy-Parse).
+        # Fehler nur loggen, nicht durchreichen — Plan-Detail muss auch ohne
+        # Task-Persisting funktionieren (Graceful-Degradation).
+        try:
+            from services.plan_task_service import upsert_tasks_for_plan
+            upsert_tasks_for_plan(row['id'], tagged_sections)
+        except Exception as exc:
+            import logging
+            logging.getLogger(__name__).warning("upsert_tasks_for_plan failed for plan %s: %s", row['id'], exc)
+
         return jsonify({
             'id': row['id'],
             'filename': row['filename'],
@@ -143,11 +159,7 @@ def get_plan_detail(plan_id):
             'session_slug': row['session_slug'],
             'session_started': row['session_started'].isoformat() if row['session_started'] else None,
             'sprint_plans': get_plan_structure(row['project_name'], _get_handoff_path(row['project_name'])) if row.get('project_name') else [],
-            'tagged_sections': get_tagged_plan_structure(
-                content_md,
-                _get_handoff_path(row['project_name']) if row.get('project_name') else None,
-                source_path=row['filename'] or row['title'] or f"plan:{row['id']}",
-            ),
+            'tagged_sections': tagged_sections,
         })
     except Exception:
         return jsonify({'error': 'Plan not found'}), 404
