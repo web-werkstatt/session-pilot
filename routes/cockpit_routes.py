@@ -26,7 +26,10 @@ def get_cockpit_project_data(name):
     from services.workflow_core_service import get_markers
     from services.workflow_loop_service import build_workflow_loop_data
     from services.workflow_state_service import get_workflow_states_for_project
-    from services.marker_implementation import calculate_progress
+    from services.marker_implementation import (
+        get_or_calculate_progress,
+        load_cached_progress_map,
+    )
     from services.dashboard_settings_service import get_commit_match_mode
     from services.path_resolver import resolve_project_path
 
@@ -34,17 +37,21 @@ def get_cockpit_project_data(name):
     if not name:
         return jsonify({"error": "Projektname fehlt"}), 400
 
-    # Marker als Dicts + Implementierungs-Fortschritt
+    # Marker als Dicts + Implementierungs-Fortschritt (Bulk-Load vermeidet N+1)
     raw_markers = get_markers(name)
     ws_map = {s["marker_id"]: s for s in (get_workflow_states_for_project(name) or [])}
     project_path = resolve_project_path(name) or ""
     commit_mode = get_commit_match_mode()
+    progress_cache = load_cached_progress_map(name)
     markers = []
     for m in raw_markers:
         if not m:
             continue
         d = asdict(m)
-        impl = calculate_progress(m, ws_map.get(m.marker_id), project_path, commit_mode)
+        impl = get_or_calculate_progress(
+            m, ws_map.get(m.marker_id), project_path, commit_mode,
+            project_name=name, cached=progress_cache.get(m.marker_id),
+        )
         d["implementation_percent"] = impl["percent"]
         d["implementation_signals"] = impl["signals"]
         markers.append(d)
