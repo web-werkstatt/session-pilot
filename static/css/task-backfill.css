@@ -1,0 +1,169 @@
+/* Sprint sprint-task-backfill (2026-04-15):
+ * UI fuer Fuzzy-Match-Backfill bestehender Marker an plan_tasks.
+ */
+
+.task-backfill-body {
+    padding: 16px 24px 24px;
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+.task-backfill-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+}
+
+.task-backfill-stats {
+    display: flex;
+    gap: 12px;
+}
+
+.task-backfill-stat {
+    font-size: 13px;
+    color: var(--text-muted, #6b7280);
+    padding: 4px 10px;
+    background: var(--surface-2, rgba(0, 0, 0, 0.04));
+    border-radius: 6px;
+}
+
+.task-backfill-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.task-backfill-hint {
+    font-size: 12px;
+    color: var(--text-muted, #6b7280);
+    margin-bottom: 12px;
+    line-height: 1.5;
+    padding: 10px 12px;
+    background: var(--surface-2, rgba(0, 0, 0, 0.03));
+    border-radius: 6px;
+    border-left: 3px solid var(--accent, #3b82f6);
+}
+
+.task-backfill-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.task-backfill-empty {
+    padding: 24px;
+    text-align: center;
+    color: var(--text-muted, #6b7280);
+    font-size: 13px;
+}
+
+.task-backfill-item {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: 12px;
+    align-items: center;
+    padding: 12px;
+    background: var(--surface-1, #fff);
+    border: 1px solid var(--border, #e5e7eb);
+    border-radius: 8px;
+    transition: border-color 120ms ease, background 120ms ease;
+}
+
+.task-backfill-item:hover {
+    border-color: var(--accent, #3b82f6);
+}
+
+.task-backfill-item.is-auto {
+    border-left: 3px solid var(--success, #10b981);
+}
+
+.task-backfill-item-info {
+    min-width: 0;
+}
+
+.task-backfill-marker-title {
+    font-weight: 600;
+    font-size: 13px;
+    margin-bottom: 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.task-backfill-arrow {
+    color: var(--text-muted, #6b7280);
+    font-size: 11px;
+    margin: 2px 0;
+}
+
+.task-backfill-task-title {
+    font-size: 12px;
+    color: var(--text-muted, #6b7280);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.task-backfill-task-context {
+    font-size: 11px;
+    color: var(--text-muted, #9ca3af);
+    margin-top: 2px;
+}
+
+.task-backfill-score {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    min-width: 80px;
+}
+
+.task-backfill-score-value {
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--text, #111827);
+}
+
+.task-backfill-score-bar {
+    width: 80px;
+    height: 6px;
+    background: var(--surface-2, rgba(0, 0, 0, 0.08));
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.task-backfill-score-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #f59e0b 0%, #10b981 100%);
+    transition: width 200ms ease;
+}
+
+.task-backfill-score-method {
+    font-size: 10px;
+    color: var(--text-muted, #9ca3af);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.task-backfill-controls {
+    display: flex;
+    gap: 4px;
+}
+
+.task-backfill-controls .ui-button {
+    padding: 6px 10px;
+    font-size: 12px;
+}
+
+.task-backfill-status-msg {
+    font-size: 12px;
+    color: var(--success, #10b981);
+    padding: 12px;
+    text-align: center;
+}
+
+.task-backfill-status-msg.is-error {
+    color: var(--danger, #ef4444);
+}

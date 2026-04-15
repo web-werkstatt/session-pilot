@@ -1,0 +1,31 @@
+<div class="modal-overlay" id="taskBackfillModal">
+    <div class="modal-content" style="max-width:900px;">
+        <div class="modal-header">
+            <h2>Bestands-Marker zuordnen</h2>
+            <button class="modal-close" onclick="closeModal('taskBackfillModal')">&times;</button>
+        </div>
+        <div class="modal-body task-backfill-body">
+            <div class="task-backfill-toolbar">
+                <div class="task-backfill-stats" id="taskBackfillStats">
+                    <span class="task-backfill-stat" id="tbfOrphansStat">&mdash; offen</span>
+                    <span class="task-backfill-stat" id="tbfPendingStat">&mdash; Vorschl&auml;ge</span>
+                </div>
+                <div class="task-backfill-actions">
+                    <button class="ui-button ui-button--ghost" onclick="taskBackfillRecompute()">
+                        <i data-lucide="refresh-cw" class="icon icon-xs"></i> Neu berechnen
+                    </button>
+                    <button class="ui-button ui-button--primary" id="tbfAutoApplyBtn" onclick="taskBackfillAutoApply()">
+                        <i data-lucide="zap" class="icon icon-xs"></i> Alle &ge; 0.9 anwenden
+                    </button>
+                </div>
+            </div>
+            <div class="task-backfill-hint">
+                Fuzzy-Match zwischen Bestands-Markern (ohne Task-Zuordnung) und den Tasks dieses Plans.
+                Score 1.0 = exakter Titel, 0.9+ = sehr sicher (Auto-Apply moeglich), 0.5-0.9 = Review erforderlich.
+            </div>
+            <div class="task-backfill-list" id="taskBackfillList">
+                <div class="task-backfill-empty">Klicke <strong>Neu berechnen</strong>, um Vorschl&auml;ge zu laden.</div>
+            </div>
+        </div>
+    </div>
+</div>

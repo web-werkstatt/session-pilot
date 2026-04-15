@@ -79,6 +79,8 @@ function _loadPlanInfo() {
         // Sprint-Import-Button im Projektmodus verbergen (kein einzelner Plan-Kontext).
         var _spBtn1 = document.getElementById('importSprintMarkersBtn');
         if (_spBtn1) _spBtn1.style.display = 'none';
+        var _bfBtn1 = document.getElementById('taskBackfillBtn');
+        if (_bfBtn1) _bfBtn1.style.display = 'none';
         return Promise.resolve();
     }
     return api.get('/api/plans/' + PLAN_ID)
@@ -94,6 +96,8 @@ function _loadPlanInfo() {
             // Phase 7: Sprint-Import-Button nur im Plan-Modus sichtbar
             var _spBtn2 = document.getElementById('importSprintMarkersBtn');
             if (_spBtn2) _spBtn2.style.display = '';
+            var _bfBtn2 = document.getElementById('taskBackfillBtn');
+            if (_bfBtn2) _bfBtn2.style.display = '';
             // Phase 7 (2026-04-14): Plan-Context-Banner mit Plan-Daten befuellen
             _renderPlanContextBanner(plan);
             if (window.history && window.history.replaceState) {

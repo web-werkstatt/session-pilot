@@ -20,6 +20,7 @@
 <link rel="stylesheet" href="/static/css/cockpit-close-modal.css?v={{ cache_bust }}">
 <link rel="stylesheet" href="/static/css/dispatch.css?v={{ cache_bust }}">
 <link rel="stylesheet" href="/static/css/dispatch-settings.css?v={{ cache_bust }}">
+<link rel="stylesheet" href="/static/css/task-backfill.css?v={{ cache_bust }}">
 {% endblock %}
 {% block content %}
     <div class="copilot-ws-header ui-panel">
@@ -47,6 +48,9 @@
                 </button>
                 <button class="ui-button" onclick="askCopilot()">
                     <i data-lucide="sparkles" class="icon icon-sm"></i> Ask Copilot
+                </button>
+                <button class="ui-button ui-button--ghost" onclick="openTaskBackfillModal()" id="taskBackfillBtn" style="display:none;" title="Bestands-Marker an Tasks zuordnen">
+                    <i data-lucide="link" class="icon icon-sm"></i> Backfill
                 </button>
             </div>
         </div>
@@ -151,6 +155,7 @@
     {% include "_copilot_add_section_modal.html" %}
     {% include "_workflow_help_modal.html" %}
     {% include "_cockpit_close_modal.html" %}
+    {% include "_task_backfill_modal.html" %}
 {% endblock %}
 {% block scripts %}
 <script src="/static/js/marked.min.js"></script>
@@ -169,4 +174,5 @@
 <script src="/static/js/dispatch-render.js?v={{ cache_bust }}"></script>
 <script src="/static/js/dispatch.js?v={{ cache_bust }}"></script>
 <script src="/static/js/dispatch-settings.js?v={{ cache_bust }}"></script>
+<script src="/static/js/task-backfill-panel.js?v={{ cache_bust }}"></script>
 {% endblock %}
