@@ -22,6 +22,14 @@ def _normalize_title(title):
     return re.sub(r"\s+", " ", lowered)
 
 
+def _task_title(task):
+    """Akzeptiert sowohl Strings (rohes Markdown) als auch dicts
+    (build_task_items-Output {title, sessions, marker_id, status})."""
+    if isinstance(task, dict):
+        return str(task.get("title") or "").strip()
+    return str(task or "").strip()
+
+
 def _build_parse_key(section_key, spec_key, normalized_title):
     return f"{section_key or ''}:{spec_key or ''}:{normalized_title or ''}"
 
@@ -67,8 +75,8 @@ def upsert_tasks_for_plan(plan_id, sections):
         if not section_key:
             continue
 
-        for task_title in section.get("tasks") or []:
-            title = str(task_title or "").strip()
+        for task_entry in section.get("tasks") or []:
+            title = _task_title(task_entry)
             if not title:
                 continue
             normalized = _normalize_title(title)
@@ -89,8 +97,8 @@ def upsert_tasks_for_plan(plan_id, sections):
 
         for spec in section.get("specs") or []:
             spec_key = str(spec.get("spec_tag") or spec.get("id") or "").strip().lstrip("#")
-            for task_title in spec.get("tasks") or []:
-                title = str(task_title or "").strip()
+            for task_entry in spec.get("tasks") or []:
+                title = _task_title(task_entry)
                 if not title:
                     continue
                 normalized = _normalize_title(title)
