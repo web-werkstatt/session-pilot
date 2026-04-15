@@ -26,7 +26,7 @@ handoff:
     "Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen"
   ],
   "last_session": "d1de6645-7b0d-44e7-a872-3d671ab5412d",
-  "updated_at": "2026-04-15T08:48:27.976015+00:00",
+  "updated_at": "2026-04-15T09:33:47.396127+00:00",
   "execution_score": null,
   "execution_comment": "",
   "last_execution_at": "",
@@ -73,7 +73,7 @@ _(noch nicht gesetzt)_
     "Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen"
   ],
   "last_session": "b93370a6-b1b6-4c4b-b3fd-37d4720e7f2f",
-  "updated_at": "2026-04-15T08:48:27.982016+00:00",
+  "updated_at": "2026-04-15T09:33:47.423183+00:00",
   "execution_score": null,
   "execution_comment": "",
   "last_execution_at": "",
@@ -82,7 +82,7 @@ _(noch nicht gesetzt)_
   "sprint_plan_id": null,
   "spec_id": null,
   "source_line": 61,
-  "rating_skipped": true
+  "rating_skipped": false
 }
 -->
 
@@ -120,7 +120,7 @@ _(noch nicht gesetzt)_
     "Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen"
   ],
   "last_session": "7921fa7a-eba6-438f-8d57-6d74146dd409",
-  "updated_at": "2026-04-15T08:48:27.990399+00:00",
+  "updated_at": "2026-04-15T09:33:47.452207+00:00",
   "execution_score": null,
   "execution_comment": "",
   "last_execution_at": "",
@@ -167,7 +167,7 @@ _(noch nicht gesetzt)_
     "Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen"
   ],
   "last_session": "",
-  "updated_at": "2026-04-15T08:48:27.998953+00:00",
+  "updated_at": "2026-04-15T09:33:47.479071+00:00",
   "execution_score": null,
   "execution_comment": "",
   "last_execution_at": "",
@@ -214,7 +214,7 @@ _(noch nicht gesetzt)_
     "Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen"
   ],
   "last_session": "032e4f9f-7ff4-4980-94cc-10a8e13b04c4",
-  "updated_at": "2026-04-15T08:48:28.007136+00:00",
+  "updated_at": "2026-04-15T09:33:47.509869+00:00",
   "execution_score": null,
   "execution_comment": "",
   "last_execution_at": "",
@@ -261,7 +261,7 @@ _(noch nicht gesetzt)_
     "Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen"
   ],
   "last_session": "12816c3e-ddd3-4910-b5fe-79d53b2e0b68",
-  "updated_at": "2026-04-15T08:48:28.015525+00:00",
+  "updated_at": "2026-04-15T09:33:47.532724+00:00",
   "execution_score": null,
   "execution_comment": "",
   "last_execution_at": "",
@@ -308,7 +308,7 @@ _(noch nicht gesetzt)_
     "Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen"
   ],
   "last_session": "e91095ab-2cce-4d7d-85e4-ab3a1200d7c1",
-  "updated_at": "2026-04-15T08:48:28.032153+00:00",
+  "updated_at": "2026-04-15T09:33:47.568704+00:00",
   "execution_score": null,
   "execution_comment": "",
   "last_execution_at": "",
@@ -356,7 +356,7 @@ _(noch nicht gesetzt)_
     "Naechster Schritt ist konkret benannt"
   ],
   "last_session": "b6dd45cd-96fb-4ca0-a019-3326f86baa03",
-  "updated_at": "2026-04-15T08:48:28.040608+00:00",
+  "updated_at": "2026-04-15T09:33:47.596210+00:00",
   "execution_score": null,
   "execution_comment": "",
   "last_execution_at": "",
@@ -404,7 +404,7 @@ _(noch nicht gesetzt)_
     "Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen"
   ],
   "last_session": "",
-  "updated_at": "2026-04-15T08:48:28.048773+00:00",
+  "updated_at": "2026-04-15T09:33:47.608551+00:00",
   "execution_score": null,
   "execution_comment": "",
   "last_execution_at": "",
@@ -451,7 +451,7 @@ _(noch nicht gesetzt)_
     "Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen"
   ],
   "last_session": "",
-  "updated_at": "2026-04-15T08:48:28.057100+00:00",
+  "updated_at": "2026-04-15T09:33:47.631871+00:00",
   "execution_score": null,
   "execution_comment": "",
   "last_execution_at": "",
@@ -498,7 +498,7 @@ Arbeite an: Dead-Code-Findings in den Workflow einspeisen.
     "Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen"
   ],
   "last_session": "",
-  "updated_at": "2026-04-15T08:48:28.065551+00:00",
+  "updated_at": "2026-04-15T09:33:47.687774+00:00",
   "execution_score": null,
   "execution_comment": "",
   "last_execution_at": "",
@@ -545,7 +545,7 @@ _(noch nicht gesetzt)_
     "Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen"
   ],
   "last_session": "",
-  "updated_at": "2026-04-15T08:48:28.073977+00:00",
+  "updated_at": "2026-04-15T09:33:47.709120+00:00",
   "execution_score": null,
   "execution_comment": "",
   "last_execution_at": "",
@@ -592,7 +592,7 @@ _(noch nicht gesetzt)_
     "Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen"
   ],
   "last_session": "",
-  "updated_at": "2026-04-15T08:48:28.082285+00:00",
+  "updated_at": "2026-04-15T09:33:47.759762+00:00",
   "execution_score": null,
   "execution_comment": "",
   "last_execution_at": "",
@@ -639,7 +639,7 @@ _(noch nicht gesetzt)_
     "Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen"
   ],
   "last_session": "",
-  "updated_at": "2026-04-15T08:48:28.090516+00:00",
+  "updated_at": "2026-04-15T09:33:47.786614+00:00",
   "execution_score": null,
   "execution_comment": "",
   "last_execution_at": "",
@@ -686,7 +686,7 @@ _(noch nicht gesetzt)_
     "Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen"
   ],
   "last_session": "",
-  "updated_at": "2026-04-15T08:48:28.098805+00:00",
+  "updated_at": "2026-04-15T09:33:47.803884+00:00",
   "execution_score": null,
   "execution_comment": "",
   "last_execution_at": "",
@@ -733,7 +733,7 @@ _(noch nicht gesetzt)_
     "Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen"
   ],
   "last_session": "",
-  "updated_at": "2026-04-15T08:48:28.107211+00:00",
+  "updated_at": "2026-04-15T09:33:47.819804+00:00",
   "execution_score": null,
   "execution_comment": "",
   "last_execution_at": "",

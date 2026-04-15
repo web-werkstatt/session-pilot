@@ -4,6 +4,70 @@
 
 ---
 
+## Session 2026-04-15 (Session 17) — Phase 7 + Guided Flow + Implementierungs-Check
+
+### Was wurde erledigt
+
+**Phase 7 UI-Konsolidierung:**
+- Workflow-Tab + Dispatch-Tab + Planning-Tab im Projekt-Detail ausgeblendet, Links ins Cockpit/Planning
+- Cockpit-Board-UI: flex-wrap, flex-shrink:0, Seiten-Scroll statt Column-Scroll, Panel sticky
+- Workflow-Ring: Hilfe-Modal, Focus-Row, kontextabhaengige Hints
+- Marker-Reihenfolge per `source_line`, Breadcrumb-System, Settings Save/Cancel-Pattern
+- **Aufteilung:** `plans.css` (799→3 Dateien), `base.js` (→lightbox.js), `plans.js` (→plans-board.js), `copilot-board-panel.js` (→copilot-board-chat.js), `copilot_board.html` (→_cockpit_panel_tabs.html)
+
+**Breadcrumb-Fixes:**
+- Reihenfolge: `Workspace / <projekt> / Cockpit / <Tab>` (vorher verdreht)
+- Tab-Segment dynamisch (Chat/Output/Verlauf/Quelle/Dispatch) beim Panel-Oeffnen
+
+**Guided Flow (Next-Action-Banner):**
+- Kontextabhaengiges Banner oberhalb der Panel-Tabs mit genau einem Schritt + Primary-CTA
+- Step-Modell vereinheitlicht: `gate_prompt → gate_checks → ready → running → close` (Ring + Banner Single Source)
+- CTA-Klick oeffnet semantisch passenden Tab mit Fokus (Prompt-Textarea, Rating-Editor)
+- Fallback-Navigation bei Cross-Plan-Markern statt silent return
+
+**Rating-v2:**
+- Close-Modal erzwingt `execution_score` beim `status=done` (HTTP 400 `rating_required` sonst)
+- Klartext-Labels: 5 perfekt ... 0 nicht verwendbar
+- 48h-Fenster: `RATING_PENDING_WINDOW` in `workflow_rating.py`, an `completed_at` aus `marker_workflow_states` gekoppelt (nicht `updated_at`)
+- Zusaetzliche Bedingungen: `last_session` vorhanden, nicht `rating_skipped`
+- Neue Spalte `markers.rating_skipped` + `POST /api/marker/<id>/rating-skip` + "Ignorieren"-Button
+
+**Automatischer Implementierungs-Check:**
+- `services/marker_implementation.py`: 7 Signale gewichtet zu 100 % (Prompt, Checks, Aktiviert, Session, Commit, Done, Rating)
+- Commit-Match-Modus einstellbar (marker_id | plan_id | both) in Settings → General
+- Card: Fortschrittsbalken + Prozent, farbkodiert rot/orange/gruen
+- Panel-History-Tab: Box "Implementierungs-Check" mit Prozent + Checkliste aller 7 Signale
+- Live-Berechnung bei jedem Request (DB-Persisting folgt in naechster Session)
+
+### Git Commits (12)
+```
+91959d1 Feature: Automatischer Implementierungs-Check pro Marker (0-100%)
+00b5c9b Refactor: Step-Modell vereinheitlichen — Backend als Single Source of Truth
+801dcf0 Feature: "Ignorieren"-Button fuer Rating — Marker explizit ueberspringen
+48d3c56 Fix: Rating-Pending-Fenster an Done-Zeitpunkt koppeln
+0314fc2 Fix: Rating-Pending unterdruecken wenn keine Session vorhanden
+9379096 Feature: Rating beim Close erzwingen + 48h-Fenster fuer Pending-Signale
+4d0de4e Feature: Cockpit Next-Action-Banner — kontextabhaengige Fuehrung
+75ced9e Fix: Cockpit-Breadcrumb-Reihenfolge Workspace / <projekt> / Cockpit
+889adc2 Fix: Breadcrumb ergaenzt Tab-Namen wenn Cockpit-Panel offen
+bbb9d8f Fix: Cockpit-Workflow-CTA oeffnet semantisch passenden Panel-Tab
+d99664a Chore: Dev-Screenshots auf Root-Level per .gitignore ausschliessen
+0ea3816 Feature: Unified Cockpit Phase 7 — UI-Konsolidierung + Projekt-Detail bereinigen
+```
+
+### Neue Dateien (ausgewaehlt)
+| Datei | Zweck |
+|-------|-------|
+| `services/workflow_rating.py` | 48h-Fenster-Logik, is_rating_pending, get_done_since |
+| `services/workflow_loop_signals.py` | Signal-Aggregation (ausgelagert wegen Limit) |
+| `services/marker_implementation.py` | 7-Signal-Check mit git-log-grep |
+| `static/js/cockpit-next-action.js` | Next-Action-Banner |
+| `static/js/cockpit-close-modal.js` | Close-Modal mit Rating-Pflicht |
+| `static/css/cockpit-implementation.css` | Card-Balken + Panel-Box |
+| `sprints/sprint-impl-check-persisting.md` | Plan fuer naechste Session (Option 2) |
+
+---
+
 ## Session 2026-04-14 (Session 16) — Dispatch Commit 9 + GitHub-Mirror + Container-CI
 
 ### Was wurde erledigt
