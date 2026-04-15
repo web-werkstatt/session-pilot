@@ -4,6 +4,67 @@
 
 ---
 
+## Session 2026-04-14 (Session 16) — Dispatch Commit 9 + GitHub-Mirror + Container-CI
+
+### Was wurde erledigt
+- **Commit 9 Dispatch Sprint 2a (DONE):**
+  - `services/CLAUDE.md` erweitert: Dispatch-Schicht (db_dispatch_schema, dispatch_service, dispatch_review_service)
+  - `sprints/master-plan-summary.md` Nachtrag: Stufe 2a → DONE (lokal, gitignored)
+  - `DISPATCH_PULL_API_KEY` generiert + in `.env`, Service neugestartet
+  - Live-Test: CRUD 200 (12 Assignments), Pull-API Auth + Tool-Profile-Gate verifiziert
+  - Gitea-Push: `9542252`
+- **GitHub-Mirror-Panne + Recovery:**
+  - Force-push hat versehentlich den Mirror-Cleanup-Commit `2dc5d43` ueberschrieben (25 Dateien inkl. tests/, session-notes wieder oeffentlich) — kein Secret-Leak (`.env` gitignored)
+  - Neuer Cleanup-Commit `0badb71` auf `github/main`: tests/, sprints/, CLAUDE.md/AGENTS.md, handoff.md, next-session.md entfernt, `prompts/` + `pyrightconfig.json` behalten
+  - Clone + Import-Smoke-Test erfolgreich — Self-Install lauffaehig
+- **Container-CI:**
+  - Manueller Push: `ghcr.io/.../session-pilot:0badb71,2026.04.14,latest` (495 MB, aus Cleanup-SHA)
+  - `.github/workflows/publish-container.yml` angelegt: Multi-Tag-Build bei push/main + v*.*.* (Tags: `latest`, `YYYY.MM.DD`, `sha-<short>`, semver)
+  - Cherry-Pick auf `github/main`: `c40a78c`
+  - UI-Fix "Manage Actions access" → Repo `session-pilot` = Write → Workflow laeuft autonom
+  - Aktuelles `latest` = `sha-c40a78c` (Workflow-gebaut)
+
+### Git Commits
+```
+9542252 Docs: ADR-002 Stufe 2a Commit 9 — Dispatch-Schicht in services/CLAUDE.md
+1811c9b CI: GitHub Actions Workflow fuer Container-Publish nach ghcr.io
+c40a78c (github/main only) = 1811c9b cherry-picked auf 0badb71
+```
+
+### Neue Dateien
+| Datei | Zweck |
+|-------|-------|
+| `.github/workflows/publish-container.yml` | Auto-Build + Push nach ghcr.io bei push/main + v-Tag |
+
+### Offen / Hinweise
+- Dependabot: 9 Vulnerabilities (3 high, 5 moderate, 1 low) auf GitHub-Mirror — separate Aufgabe
+- Node.js 20 deprecation warning in Workflow (unkritisch bis Sep 2026, Actions v4/v5/v6 upgraden wenn verfuegbar)
+- Kuenftige GitHub-Pushes brauchen weiterhin Temp-Branch + Cherry-Pick (Cleanup-Commit lebt nur auf GitHub)
+
+---
+
+## Session 2026-04-14 (Session 15) — Dispatch Sprint 2a Commits 7-8
+
+### Was wurde erledigt
+- **Commit 7 — Pull-Adapter + Perplexity-Gate:**
+  - Pull-API Perplexity-Gate gehaertet: automatischer Review-Trigger bei fehlender Review
+  - `scripts/dispatch_pull_adapter.py` (364 Z.) — Referenz-Implementierung mit One-Shot/Daemon
+  - `scripts/dispatch_pull_adapter_claude.sh` (106 Z.) — Claude-Code Shell-Wrapper
+- **Commit 8 — Integration + Settings-Toggles:**
+  - `get_handoff_view()` liefert `active_assignments` Map pro Marker
+  - Neues Signal `dispatch_status` + Hint-Typ `dispatch` im Workflow-Loop
+  - Settings-Section im Dispatch-Panel (Perplexity-Modus, Tool-Toggles, Suggest-Button)
+  - Badge-Counter fuer aktive Assignments im Cockpit-Tab
+  - JS aufgeteilt: `dispatch-render.js`, `dispatch-settings.js` (Dateigroessen-Limit)
+
+### Git Commits
+```
+3d88d24 Feature: ADR-002 Stufe 2a Commit 7 — Pull-Adapter + Perplexity-Gate
+3d03c32 Feature: ADR-002 Stufe 2a Commit 8 — Integration workflow_core + Settings-Toggles
+```
+
+---
+
 ## Session 2026-04-14 (Session 14) — Unified Cockpit Phase 6
 
 ### Was wurde erledigt
