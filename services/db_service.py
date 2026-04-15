@@ -228,6 +228,18 @@ def ensure_plan_workflow_schema():
     ensure_plan_workflow_schema_impl(execute, ensure_plans_schema)
 
 
+def ensure_plan_source_schema():
+    """Sprint Plan-Discovery: source_path, source_kind, content_hash auf project_plans."""
+    from services.db_plan_source_schema import ensure_plan_source_schema_impl
+    ensure_plan_source_schema_impl(execute, ensure_plans_schema)
+
+
+def ensure_plan_scan_exclusions_schema():
+    """Sprint Plan-Discovery: plan_scan_exclusions (GUI-Exclusion-Patterns)."""
+    from services.db_plan_scan_exclusions_schema import ensure_plan_scan_exclusions_schema_impl
+    ensure_plan_scan_exclusions_schema_impl(execute)
+
+
 def ensure_plan_structure_schema():
     from services.db_plan_structure_schema import ensure_plan_structure_schema_impl
     ensure_plan_structure_schema_impl(execute, ensure_plan_workflow_schema)
