@@ -308,3 +308,172 @@ Kern-Design:
 - **Rollback-SQL-Form:** `UPDATE project_plans SET source_path = NULL, source_kind = NULL WHERE source_kind != 'claude_plans'` via `db_service.execute()` (siehe Nachtrag 5, Klarstellung 2)
 - **Sprint-Datei ist append-only** — keine Korrekturen im bestehenden Text, nur weitere Nachtraege
 - **Issue-Referenzierung:** `refs #26` in Commits 1-4, `closes #26` in Commit 5
+
+---
+
+## Session 2026-04-16 (Session 22) — Task-Rückbau + Auto-Tagging + Recovery + UI-Fixes
+
+### Ausgangslage
+
+Session startete mit 15 unstaged modifizierten Dateien im Workingtree (Arbeit des
+Vormittags mit Codex zum Sprint `sprint-plan-discovery-followup.md` — Commits 1-4
++ GUI-Zusatz, alles nur im Workingtree, nie committet).
+
+### Was erledigt wurde
+
+**Teil 1 — Rückbau `markdown_routine_service.py` (refs #27):**
+- Task-Logik aus `TAG_RE`, `suggest_tag_from_title`, `build_tag_update_plan` entfernt
+  (Entscheidung: Tasks sind Downstream-Marker, kein Heading-Level im Quell-Markdown)
+- `_is_spec_container_title` + `SPEC_CONTAINER_RE` + `NUMBERED_CONTAINER_RE` entfernt
+- Dead-Code `in_commits_container` raus
+- `SPRINT_TITLE_RE` liberalisiert (`\b` + `.search()`)
+- `_unique_tag()` gegen Tag-Kollisionen
+- Pyright-Fix in `scan_markdown_structure` (None-Guard für `current_sprint`)
+- Byte-Integritäts-Check an 5 Sprint-Plänen verifiziert
+
+**Teil 2 — Auto-Tagging `plans_sync_service._auto_tag_plan_file` (fixes #28):**
+- `#sprint-*`/`#spec-*`-Tags werden beim `sync_all_plans()` automatisch in
+  Heading-Zeilen geschrieben, atomic write, Backup unter
+  `backups/plan-auto-tagging/<ts>/`
+- Schutzliste (CLAUDE.md, AGENTS.md, …) + `claude_plans`-Blacklist
+- mtime-Drift-Check, Opt-Out via `DASHBOARD_PLAN_AUTO_TAG=0`
+- 7 neue Tests in `tests/test_plan_auto_tagging.py`
+
+**Teil 3 — KRITISCH: Datenverlust durch Mirror-Cleanup:**
+- `git checkout -f main` (Schritt 6 aus Memory `feedback_github_mirror_cleanup.md`)
+  hat die 15 unstaged Dateien im Workingtree verworfen
+- Betroffen: `routes/plans_routes.py`, `services/plan_structure_service.py`,
+  `services/notification_service.py`, `services/plans_sync_service.py`,
+  `services/db_service.py`, `services/db_plan_source_schema.py`,
+  `services/plans_import.py`, `static/js/copilot-board-panel.js`,
+  `static/js/plans.js`, `static/css/plans.css`, `static/css/plans-board.css`,
+  `static/css/copilot-board.css`, `templates/_cockpit_panel_tabs.html`,
+  `templates/plans.html`, `sprints/master-plan-2026-04-01.md`
+- Weder Gitea noch GitHub noch Backup enthielten die Änderungen
+- **Memory-File erweitert:** Schritt 0 `git stash push -u` und Schritt 7
+  `git stash pop` als Pflicht. Datenverlust dieser Art nicht mehr möglich
+
+**Teil 4 — Recovery aus `sprint-plan-discovery-followup.md`:**
+
+- **Block D** (`c2d8f32`): Copilot-Source-Board rendert Specs als eigene Karten
+  unterhalb Sprint-Sections (`copilot_board.js`, `copilot-board.css`)
+- **Block B** (`c9de4ca`): `/api/plans` liefert `source_kind`/`source_path`/`plan_type`,
+  Plan-Cards zeigen Source-Badges, Empty-State-Text auf Multi-Source
+- **Block A** (`f1e289d`): `sync_all_plans(force=True)` respektiert Circuit-Breaker,
+  `_CIRCUIT_UNTIL` getrennt, Rückgabe `skipped_reason=circuit`
+- **Block C** (`f1e289d`): `add_notification()` prüft zentral
+  `plans_sync_service.is_scanning()`, INFO-Log bei Suppression
+- **Commit 4** (`fcfca66`): `UNIQUE(filename)` → `UNIQUE(filename, project_name)`,
+  Cross-Project-Importe funktionieren
+
+**Teil 5 — UI-Fixes nach User-Review:**
+- **IDEA-Badge raus** (`fbad6d1`): Default-Workflow-Stage `idea` wird nicht mehr
+  gerendert (unspezifisch)
+- **Sprintplan-Label** (`fbad6d1`): `_buildPlanCategoryLabel` mapped
+  `plan_type=sprint` auf „Sprintplan" statt `detect_category()`-Wert
+- **Source-Badge entkoppelt** (`0bcd2b5`): `sprint`/`plan` werden nicht mehr als
+  Badge gerendert (doppelte Info zur Category)
+- **Einheitliche Sprintplan-Optik** (`c33f13b`): `_buildPlanCategoryMeta()`
+  liefert `{label, cssKey, icon}` konsistent, `.cat-sprint` CSS-Klasse
+  (Blau-Ton + Rocket-Icon) — vorher drei verschiedene Badge-Farben für Sprints
+- **Zweiter Category-Badge** (`8e25411`): `_buildPlanContentCategoryBadge` rendert
+  rechts neben Sprintplan die inhaltliche Category (feature/bugfix/refactor/infra/plan)
+- **Filter auf lokale Pläne** (`607b2df`): `/plans` zeigt nur `project_sprints` +
+  `project_plans`, Claude-Plans/Docs/Root ausgeblendet
+
+**Teil 6 — Status + Datum korrekt aus Markdown/mtime:**
+- `detect_plan_status()` in `plans_import.py` — erkennt
+  `**Status:** DONE|Active|Draft|Archived` (DE+EN) aus Markdown-Header
+- `_legacy_session_fields()` liefert für `project_sprints`/`project_plans`
+  den abgeleiteten Status (statt pauschal `unknown`)
+- `_upsert_step1` re-evaluiert Status bei default-Wert ohne `updated_at`-Bump
+- `_auto_tag_plan_file` bewahrt `os.utime()`-mtime + setzt
+  `plan["_auto_tag_applied"]=True`
+- `_upsert_step1` respektiert Auto-Tag-Flag (kein `updated_at=NOW()`)
+- **Card-Date auf `file_mtime_iso`** (`c8374d4`) — API liefert POSIX→UTC-ISO,
+  `plans.js` zeigt echte Datei-Änderungszeit statt System-gebumpter `updated_at`
+- `scripts/restore_auto_tag_mtimes.py` (einmalig) rollt Datei-mtime + DB-
+  `file_mtime`/`updated_at` aus Backups zurück
+
+### Git-Commits (14) — alle auf Gitea + GitHub-Mirror
+
+```
+c8374d4 Plans: Status aus Markdown-Header + Card-Date aus file_mtime (refs #28)
+607b2df UI: /plans filtert auf lokale Plaene/Sprintplaene (sonst nichts)
+8e25411 UI: Zweiter Category-Badge (inhaltlich) neben Sprintplan
+c33f13b UI: Einheitliche Sprintplan-Optik statt 3 verschiedener Badge-Farben
+0bcd2b5 UI: Source-Badge nicht mehr bei sprint/plan rendern (Doppel-Info raus)
+fbad6d1 UI: IDEA-Badge ausblenden + 'Sprintplan'-Label fuer Sprint-Plaene
+fcfca66 Recovery Commit 4: UNIQUE(filename) zu UNIQUE(filename, project_name)
+f1e289d Recovery Block A+C: Circuit-Guard + Notification-Suppression
+c9de4ca Recovery Block B: Source-Metadaten + Badges auf /plans
+c2d8f32 Recovery Block D: Specs als Karten unterhalb Sprint-Sections
+803c2d9 Auto-Tagging: #sprint-/#spec-Tags bei sync_all_plans (fixes #28)
+f1626b9 README: Multi-Source Plan Discovery + Sprint/Spec Auto-Tagging dokumentiert
+4476791 Rueckbau + Cleanup: markdown_routine_service auf Sprint+Spec fokussiert
+```
+
+### Gitea-Issues
+
+- **Issue #28** angelegt + durch `803c2d9 fixes #28` automatisch geschlossen
+  (Plan-Auto-Tagging). Nachfolgende Recovery-Commits referenzieren `refs #28`
+  weiter (Rekonstruktions-Audit-Trail)
+- **Issue #26** bleibt offen bis alle Followup-Punkte live validiert sind
+- **Issue #27** (markdown_routine_service-Rückbau) indirekt durch `4476791` abgehakt
+
+### Bekannte offene Punkte / Einschränkungen
+
+- **Codex-Vormittagsarbeit nicht rekonstruiert:** Arbeit die NICHT im
+  `sprint-plan-discovery-followup.md` stand (z.B. Workflow-Stage-Ableitung
+  aus `status`+`source_kind`, komplexere Category-Mapping) bleibt verloren
+  und muss vom User mit Codex neu gemacht werden, falls gewünscht.
+- **Hash-Drift DB vs File:** Beim Sync nach Auto-Tag berechnet Discovery
+  einen anderen `content_hash` als die DB speichert (trotz identischer
+  Vorschau). Symptom ist mit `file_mtime_iso`-Umstellung auf der UI nicht
+  mehr sichtbar, Root-Cause nicht ermittelt. Ticketbar.
+- **Zweiter Scanner (Full-Project-Recursive-Walk):** User erwähnte einen
+  Sprint-Plan für einen zweiten Scanner der das gesamte Projekt scannt
+  (nicht nur `sprints/`/`plans/`/`docs/`). Kein solcher Sprint-Plan in
+  `sprints/` gefunden. Status: unklar, Sprint ggf. in anderem Ordner oder
+  nur mündlich.
+
+### Für die nächste Session
+
+**Primäre Entscheidungspunkte:**
+
+1. **Codex-Fortsetzung:** Workflow-Stage-Ableitung / erweiterte Category-Mapping
+   aus Vormittag neu implementieren — falls noch gewünscht.
+2. **Zweiter Scanner:** Klärung, ob es einen Sprint-Plan für den
+   Full-Project-Recursive-Scanner gibt oder dieser neu geschrieben werden soll.
+3. **Hash-Drift-Root-Cause:** Debug, warum `compute_content_hash` für
+   identische Content-Previews unterschiedliche Werte liefert.
+
+**Laufende Infrastruktur:**
+
+- Auto-Tagging läuft automatisch beim `sync_all_plans()`. Bei neuen
+  Sprint-Dateien werden Tags geschrieben, `updated_at` wird nicht gebumpt,
+  Backup landet unter `backups/plan-auto-tagging/<ts>/`.
+- Status-Erkennung aus Markdown-Header ist live, Filter greift.
+- Card-Date zeigt echte Datei-mtime, nicht DB-updated_at.
+
+### Wichtige Memory-Updates
+
+- `feedback_github_mirror_cleanup.md`: Pflicht-`git stash push -u` in Schritt 0,
+  `git stash pop` in Schritt 7. Datenverlust durch `checkout -f` ist nicht mehr
+  unbemerkt möglich.
+- `feedback_markdown_tag_scope.md`: Neu — Markdown-Tags nur `sprint`+`spec`,
+  keine `task`-Tags (Tasks sind Downstream-Marker).
+
+### Eigene Fehler in dieser Session — transparent dokumentiert
+
+- **Datenverlust durch unvorsichtigen `checkout -f`**: 2-3 h Codex-Arbeit
+  durch meine Mirror-Cleanup-Prozedur verloren. Memory-Update fixt das
+  Wiederholungsrisiko, aber die verlorene Arbeit selbst musste teils
+  rekonstruiert werden (aus Sprint-Plan), teils bleibt sie weg.
+- **Auto-Tagging-Nebeneffekt „alle Dateien heute":** 50 Sprint-Dateien
+  hatten fälschlich `updated_at=heute`. Vier Reparatur-Schichten später:
+  mtime-bewahrendes Auto-Tag + Auto-Tag-Flag + Restore-Skript +
+  `file_mtime_iso` auf der UI.
+- **Initial zu weit gegriffen beim Mirror-Cleanup:** Prozedur aus Memory
+  ohne vorheriges Stash blind angewendet. Nicht wieder.
+
