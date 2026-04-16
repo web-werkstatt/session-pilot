@@ -153,6 +153,9 @@ function _buildCardHtml(plan, draggable) {
     // Kategorie liefert Label + Klasse + Icon konsistent — Sprint-Plaene sehen
     // unabhaengig von detect_category() als "Sprintplan" aus.
     const catMeta = _buildPlanCategoryMeta(plan);
+    // Zweiter (inhaltlicher) Category-Badge — nur bei Sprint-Plaenen, damit die
+    // detect_category()-Info (feature/bugfix/refactor/infra/plan) nicht verloren geht.
+    const contentCatBadge = _buildPlanContentCategoryBadge(plan);
     // Default-Workflow-Stage 'idea' wird nicht als Badge gerendert (zu unspezifisch).
     const wfBadge = wfStage && wfStage !== 'idea'
         ? `<span class="card-wf-badge wf-${wfStage}">${wfStage.replace(/_/g, ' ')}</span>`
@@ -178,6 +181,7 @@ function _buildCardHtml(plan, draggable) {
     <div class="plan-card status-${statusClass}" ${dragAttr} onclick="location.href='${detailUrl}'">
         <div class="card-head">
             <span class="card-cat-badge cat-${catMeta.cssKey}"><i data-lucide="${catMeta.icon}" class="icon icon-xs"></i> ${escapeHtml(catMeta.label)}</span>
+            ${contentCatBadge}
             ${wfBadge}
             ${sourceBadge}
         </div>
@@ -208,6 +212,23 @@ function _buildPlanCategoryMeta(plan) {
     }
     var cat = plan.category || 'plan';
     return { label: cat, cssKey: cat, icon: getCategoryIcon(cat) };
+}
+
+/**
+ * Zweiter Category-Badge fuer Sprint-Plaene — zeigt die inhaltliche
+ * Kategorie aus detect_category() (feature/bugfix/refactor/infra/plan)
+ * rechts neben dem "Sprintplan"-Badge. Bei Nicht-Sprint-Plaenen leer.
+ */
+function _buildPlanContentCategoryBadge(plan) {
+    var type = plan.plan_type || '';
+    var kind = plan.source_kind || '';
+    var isSprint = (type === 'sprint' || kind === 'project_sprints');
+    if (!isSprint) return '';
+    var cat = plan.category || 'plan';
+    var icon = getCategoryIcon(cat);
+    return '<span class="card-cat-badge cat-' + escapeHtml(cat) + '">'
+        + '<i data-lucide="' + escapeHtml(icon) + '" class="icon icon-xs"></i> '
+        + escapeHtml(cat) + '</span>';
 }
 
 /**
