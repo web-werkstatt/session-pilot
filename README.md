@@ -88,10 +88,13 @@ No API keys needed. No cloud service. Just point it at `~/.claude/` and go.
 
 ### Plans Management
 - **Plan Import** — Automatically imports Claude Code plans from `~/.claude/plans/` into PostgreSQL
+- **Multi-Source Discovery** — Scans `~/.claude/plans/` plus each project's `sprints/`, `plans/`, `docs/{plans,sprints}/` for Markdown plans. Discovery and per-folder exclusions configurable through the Plans Board
 - **Project Matching** — Detects which project a plan belongs to by scanning for `/mnt/projects/` paths in plan content
 - **Session Linking** — Correlates plans with sessions via timestamp matching
 - **Auto-Status** — Determines plan status (completed, in-progress, stale) based on file age and session activity
 - **Category Detection** — Identifies plan categories: feature, bugfix, refactor, setup, etc.
+- **Sprint/Spec Auto-Tagging** — CLI tool (`scripts/plan_tag_migrator.py`) appends `#sprint-*` / `#spec-*` tags to heading lines of existing plan files with backup and idempotent re-runs. Byte-integrity verified — only heading lines touched, never content lines
+- **Plans Scan UI** — `/plans/scan` shows a tree preview with per-folder checkboxes before sync, so you see exactly which files would be imported
 - **Filterable Overview** — Browse all plans with filters for project, status, and category
 
 ### Scheduled Tasks
@@ -361,6 +364,8 @@ SessionPilot is actively developed. Here's what's coming next:
 | **Planned** | **Prompt Library** | Extract and rate reusable initial prompts per task type. Build a personal prompt playbook from real session data. |
 | **Done** | ~~**Live Usage Monitor**~~ | Real-time token tracking with P90 limits, burn rates, predictions, and OpenTelemetry support. |
 | **Done** | ~~**Multi-LLM Support**~~ | Codex CLI and Gemini CLI sessions are now supported alongside Claude Code. |
+| **Done** | ~~**Multi-Source Plan Discovery**~~ | Scans `~/.claude/plans/`, project `sprints/`, `plans/`, and `docs/{plans,sprints}/` with configurable per-folder exclusions. |
+| **Done** | ~~**Sprint/Spec Auto-Tagging**~~ | CLI tool to append `#sprint-*` / `#spec-*` tags to existing plan files, idempotent, byte-integrity verified. |
 | **Planned** | **Quality CI Integration** | Run `auto_coder diff` in CI pipelines, block PRs on regressions. |
 | **Future** | **Team Mode** | Shared dashboard for small teams with role-based views. |
 
@@ -417,9 +422,12 @@ Aber das ist nicht alles — es ueberwacht auch Docker-Container, scannt Projekt
 
 **Plans-Verwaltung**
 - Import von Claude Code Plans aus `~/.claude/plans/` in PostgreSQL
+- Multi-Source-Discovery: scannt zusaetzlich `sprints/`, `plans/`, `docs/{plans,sprints}/` jedes Projekts. Discovery und Ordner-Exclusions per Plans-Board konfigurierbar
 - Automatische Projekt-Zuordnung anhand von Pfaden im Plan-Inhalt
 - Session-Verknuepfung via Zeitstempel-Korrelation
 - Auto-Status (fertig, in Arbeit, veraltet), Kategorie-Erkennung
+- Sprint/Spec-Auto-Tagging: CLI-Tool (`scripts/plan_tag_migrator.py`) haengt `#sprint-*` / `#spec-*` Tags an Heading-Zeilen bestehender Plan-Dateien an, mit Backup und idempotentem Re-Run. Byte-Integritaet verifiziert — nur Heading-Zeilen werden beruehrt, Content bleibt unveraendert
+- Plans-Scan-UI unter `/plans/scan` mit Baum-Preview und Checkbox-Exclusions vor dem Sync
 - Filterbare Uebersicht nach Projekt, Status und Kategorie
 
 **Scheduled Tasks**
