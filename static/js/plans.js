@@ -157,6 +157,7 @@ function _buildCardHtml(plan, draggable) {
     const projectBadge = plan.project_name
         ? `<span class="card-project"><i data-lucide="folder" class="icon icon-xs"></i> ${escapeHtml(plan.project_name)}</span>`
         : '';
+    const sourceBadge = _buildPlanSourceBadge(plan);
     // Phase 7 (2026-04-14): absolutes Datum auf der Card (updated_at bevorzugt, sonst created_at).
     const planDate = plan.updated_at || plan.created_at || '';
     const dateBadge = planDate
@@ -172,6 +173,7 @@ function _buildCardHtml(plan, draggable) {
         <div class="card-head">
             <span class="card-cat-badge cat-${plan.category || 'plan'}"><i data-lucide="${catIcon}" class="icon icon-xs"></i> ${plan.category || 'plan'}</span>
             <span class="card-wf-badge wf-${wfStage}">${wfStage.replace(/_/g, ' ')}</span>
+            ${sourceBadge}
         </div>
         <div class="card-body">
             <p class="card-title">${escapeHtml(plan.title)}</p>
@@ -184,6 +186,25 @@ function _buildCardHtml(plan, draggable) {
             </div>
         </div>
     </div>`;
+}
+
+/**
+ * Source-Badge fuer Plan-Cards (rekonstruiert aus sprint-plan-discovery-followup.md).
+ * plan_type wird vom API-Endpoint /api/plans geliefert (claude/sprint/plan/docs/root).
+ */
+function _buildPlanSourceBadge(plan) {
+    var type = plan.plan_type || '';
+    if (!type) return '';
+    var label;
+    switch (type) {
+        case 'claude': label = 'Claude Plan'; break;
+        case 'sprint': label = 'Sprint'; break;
+        case 'docs':   label = 'Docs'; break;
+        case 'root':   label = 'Projekt-Root'; break;
+        default:       label = 'Plan';
+    }
+    var tip = plan.source_path ? ' title="' + escapeHtml(plan.source_path) + '"' : '';
+    return '<span class="card-source-badge src-' + escapeHtml(type) + '"' + tip + '>' + escapeHtml(label) + '</span>';
 }
 
 function buildPlanDetailUrl(plan) {

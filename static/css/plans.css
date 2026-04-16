@@ -221,6 +221,54 @@
     color: var(--error);
 }
 
+/* Source-Badge auf Plan-Cards (rekonstruiert aus sprint-plan-discovery-followup) */
+.card-source-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    background: rgba(148,163,184,0.16);
+    color: #cbd5e1;
+    border: 1px solid rgba(148,163,184,0.25);
+    white-space: nowrap;
+}
+
+.card-source-badge.src-claude {
+    background: rgba(251,146,60,0.15);
+    color: #fdba74;
+    border-color: rgba(251,146,60,0.35);
+}
+
+.card-source-badge.src-sprint {
+    background: rgba(59,130,246,0.16);
+    color: #93c5fd;
+    border-color: rgba(59,130,246,0.35);
+}
+
+.card-source-badge.src-plan {
+    background: rgba(148,163,184,0.14);
+    color: #cbd5e1;
+    border-color: rgba(148,163,184,0.3);
+}
+
+.card-source-badge.src-docs {
+    background: rgba(100,116,139,0.12);
+    color: #94a3b8;
+    border-color: rgba(100,116,139,0.25);
+}
+
+.card-source-badge.src-root {
+    background: rgba(71,85,105,0.14);
+    color: #94a3b8;
+    border-color: rgba(71,85,105,0.3);
+    font-style: italic;
+}
+
 /* Spin Animation */
 .spin {
     animation: spin 1s linear infinite;

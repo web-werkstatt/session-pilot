@@ -3,7 +3,7 @@ Plans Routes - Uebersicht und Verwaltung von Claude Code Plans
 """
 import markdown
 from flask import Blueprint, Response, jsonify, request, render_template, redirect, url_for
-from services.db_service import execute, ensure_plans_schema, ensure_plan_workflow_schema, ensure_plan_structure_schema
+from services.db_service import execute, ensure_plans_schema, ensure_plan_workflow_schema, ensure_plan_structure_schema, ensure_plan_source_schema
 from services.plans_import import sync_plans
 from services.plan_workflow_service import (
     get_plan_workflow,
@@ -25,6 +25,21 @@ from services.copilot_marker_service import _get_handoff_path
 plans_bp = Blueprint('plans', __name__)
 
 
+_SOURCE_KIND_TO_PLAN_TYPE = {
+    'claude_plans': 'claude',
+    'project_sprints': 'sprint',
+    'project_plans': 'plan',
+    'project_docs_plans': 'docs',
+    'project_docs_sprints': 'docs',
+    'project_root': 'root',
+}
+
+
+def _plan_type_from_source_kind(source_kind):
+    """Liefert ein kompaktes Label fuer die UI (claude/sprint/plan/docs/root)."""
+    return _SOURCE_KIND_TO_PLAN_TYPE.get(str(source_kind or ''), 'plan')
+
+
 @plans_bp.route('/plans')
 def plans_page():
     plan_id = request.args.get('plan', type=int)
@@ -43,6 +58,7 @@ def get_plans():
     """Alle Plans aus der DB laden."""
     try:
         ensure_plan_workflow_schema()
+        ensure_plan_source_schema()
         project = request.args.get('project')
         status = request.args.get('status')
         category = request.args.get('category')
@@ -52,6 +68,7 @@ def get_plans():
                    p.category, p.status, p.session_uuid, p.created_at, p.updated_at,
                    p.workflow_stage, p.current_state, p.target_state, p.next_action,
                    p.latest_executor_status, p.latest_review_status, p.open_items_count,
+                   p.source_kind, p.source_path,
                    s.slug as session_slug
             FROM project_plans p
             LEFT JOIN sessions s ON s.session_uuid = p.session_uuid
@@ -76,6 +93,7 @@ def get_plans():
         rows = execute(query, params if params else None, fetch=True)
         plans = []
         for row in (rows or []):
+            source_kind = row.get('source_kind') or ''
             plans.append({
                 'id': row['id'],
                 'filename': row['filename'],
@@ -95,6 +113,9 @@ def get_plans():
                 'latest_executor_status': row.get('latest_executor_status'),
                 'latest_review_status': row.get('latest_review_status'),
                 'open_items_count': row.get('open_items_count') or 0,
+                'source_kind': source_kind,
+                'source_path': row.get('source_path') or '',
+                'plan_type': _plan_type_from_source_kind(source_kind),
             })
 
         return jsonify({'plans': plans})
