@@ -249,3 +249,62 @@ Folge-Sprint-Kandidaten (Reihenfolge nach Wert):
 - **Live-Test mit echten Orphans:** Aktuell 0 Orphans in allen Plaenen (`markers.sprint_plan_id IS NOT NULL AND task_id IS NULL`). Algorithmus noch nicht unter Realbedingungen geprueft — erst wenn neue Marker importiert werden oder alte Marker ohne task_id auftauchen, greift der Backfill.
 - **Commit 5 aus `sprint-impl-check-persisting.md`** (optional): UI-Timestamp „Zuletzt geprueft: vor X min" + manueller Recheck-Button.
 - **Task-UX-Erweiterungen:** Inline-Rename, manual_status_override, Task-spezifische Close-Rule-Overrides.
+
+---
+
+## Session 2026-04-15 (Session 21 — Planning Only) — Sprint Plan-Discovery vorbereitet
+
+### Ausgangspunkt
+
+Beim Live-Test-Versuch des Task-Backfills (Sprint 20) entdeckt: Plan-Scanner liest nur `~/.claude/plans/`. Eigene Sprint-/Spec-/ADR-Dateien unter `/mnt/projects/project_dashboard/sprints/` sind fuer das Dashboard unsichtbar. Damit fehlt die Basis fuer realistische Orphan-Tests — Scanner-Luecke blockiert alle nachgelagerten Sprints.
+
+### Was entstanden ist
+
+**Sprint-Plan `sprints/sprint-plan-discovery.md`** (gitignored, lokal) — Basis + 5 Nachtraege, append-only.
+
+Kern-Design:
+- **Scan-Quellen (fest):** `~/.claude/plans/`, `<project>/sprints/`, `<project>/plans/`, `<project>/docs/{plans,sprints}/`, Projekt-Root-Roadmaps
+- **Heuristik:** Filename-Regex + Plan-Tag + `## `-Headline; Negativ-Liste (`-retro`, `CHANGELOG` etc.)
+- **Schema-Delta:** `source_path`, `source_kind`, `content_hash` + Tabelle `plan_scan_exclusions`
+- **Duplikat-Erkennung:** 6 Quellen adressiert (source_path-UNIQUE, Symlinks via realpath, Scan-seen-Set, Content-Hash-Migration, Modul-Lock, Quarantaene `source_kind='unclassified'`)
+- **Preview-UI:** Route `/plans/scan` mit Baum-Ansicht + Checkbox-Exclusions + Badge-System
+- **Observability:** Strukturiertes Metrik-Log (`plan_scan metrics ...`), Circuit-Breaker (`plan_scan_circuit_open`), Lock-Log (`plan_scan_lock_skipped`)
+- **Test-Strategie:** Option A verbindlich — nur Stubs in `tests/test_plan_discovery.py`, voller pytest-Setup in Folge-Sprint `sprint-test-infrastructure.md`
+
+**5 Commits geplant (5.5-6.5 h, 2 Sessions):**
+1. Schema: Spalten + Tabelle + Indizes
+2. Scanner: `plan_discovery_service.py` (~200 Z., realpath, seen-Set, MD5, Heuristik, Exclusion-Filter)
+3. Import: `plans_import.py` erweitert (4-stufige Upsert-Reihenfolge, Cooldown, Bulk-Tx, Notification-Suppression)
+4. API: `plan_scan_routes.py` (scan-preview, sync-now, scan-exclusions CRUD)
+5. UI: `/plans/scan` (Baum, Badges, Exclusion-Tab)
+
+### Gitea-Issue
+
+- **Issue #26** angelegt: https://git.webideas24.com/webideas24/project_dashboard/issues/26
+- Referenz in jedem der 5 Commits (`refs #26`), Schluss mit Commit 5 (`closes #26`)
+
+### Code-Status
+
+**Keine Implementierung.** Nur Planungs-Session. Keine Commits auf Gitea/GitHub. `sprints/sprint-plan-discovery.md` ist gitignored (nicht in Repo).
+
+### Naechste Session — Start-Reihenfolge
+
+1. `next-session.md` lesen (diese Datei)
+2. `sprints/sprint-plan-discovery.md` vollstaendig lesen — Basis + 5 Nachtraege, Reihenfolge:
+   - Basis → Nachtrag (5) Navigation → Nachtraege (1-4) in Reihenfolge
+3. Commit 1 (Schema) starten:
+   - Datei `services/db_plan_schema.py` neu anlegen ODER Erweiterung in `services/plans_import.py:ensure_plans_schema`
+   - Spalten: `source_path TEXT`, `source_kind VARCHAR(32)`, `content_hash VARCHAR(32)`
+   - Tabelle: `plan_scan_exclusions` (siehe Nachtrag 3)
+   - Indizes: `UNIQUE(source_path) WHERE NOT NULL`, `ix_project_plans_content_hash`, `ix_plan_scan_exclusions_project`
+   - `db_service.ensure_plan_source_schema()` + `ensure_plan_scan_exclusions_schema()` registrieren
+   - Akzeptanz: Service-Neustart ohne Fehler
+4. Commit-Message: `Schema: source_path, source_kind, content_hash + plan_scan_exclusions (refs #26)`
+
+### Verbindliche Festlegungen aus Planung
+
+- **Test-Strategie:** Option A (Stubs only)
+- **UI-Kopplung:** Preview + Exclusions BLEIBEN im selben Sprint (Nachtrag 3 + Nachtrag 5)
+- **Rollback-SQL-Form:** `UPDATE project_plans SET source_path = NULL, source_kind = NULL WHERE source_kind != 'claude_plans'` via `db_service.execute()` (siehe Nachtrag 5, Klarstellung 2)
+- **Sprint-Datei ist append-only** — keine Korrekturen im bestehenden Text, nur weitere Nachtraege
+- **Issue-Referenzierung:** `refs #26` in Commits 1-4, `closes #26` in Commit 5
