@@ -139,6 +139,7 @@
 .card-cat-badge.cat-bugfix   { background: rgba(239,68,68,0.15);  color: #f87171; }
 .card-cat-badge.cat-refactor { background: rgba(234,179,8,0.15);  color: #facc15; }
 .card-cat-badge.cat-infra    { background: rgba(20,184,166,0.15); color: #2dd4bf; }
+.card-cat-badge.cat-sprint   { background: rgba(59,130,246,0.18); color: #93c5fd; }
 
 /* Workflow stage badge */
 .card-wf-badge {

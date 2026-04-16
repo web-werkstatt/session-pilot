@@ -149,9 +149,10 @@ function renderPlans() {
 function _buildCardHtml(plan, draggable) {
     const statusClass = plan.status || 'draft';
     const wfStage = plan.workflow_stage || 'idea';
-    const catIcon = getCategoryIcon(plan.category);
     const dragAttr = draggable ? `draggable="true" data-plan-id="${plan.id}" data-stage="${wfStage}"` : '';
-    const catLabel = _buildPlanCategoryLabel(plan);
+    // Kategorie liefert Label + Klasse + Icon konsistent — Sprint-Plaene sehen
+    // unabhaengig von detect_category() als "Sprintplan" aus.
+    const catMeta = _buildPlanCategoryMeta(plan);
     // Default-Workflow-Stage 'idea' wird nicht als Badge gerendert (zu unspezifisch).
     const wfBadge = wfStage && wfStage !== 'idea'
         ? `<span class="card-wf-badge wf-${wfStage}">${wfStage.replace(/_/g, ' ')}</span>`
@@ -176,7 +177,7 @@ function _buildCardHtml(plan, draggable) {
     return `
     <div class="plan-card status-${statusClass}" ${dragAttr} onclick="location.href='${detailUrl}'">
         <div class="card-head">
-            <span class="card-cat-badge cat-${plan.category || 'plan'}"><i data-lucide="${catIcon}" class="icon icon-xs"></i> ${escapeHtml(catLabel)}</span>
+            <span class="card-cat-badge cat-${catMeta.cssKey}"><i data-lucide="${catMeta.icon}" class="icon icon-xs"></i> ${escapeHtml(catMeta.label)}</span>
             ${wfBadge}
             ${sourceBadge}
         </div>
@@ -194,17 +195,19 @@ function _buildCardHtml(plan, draggable) {
 }
 
 /**
- * Category-Label fuer Plan-Cards.
+ * Category-Meta (Label + CSS-Klasse + Icon) fuer Plan-Cards.
  * Sprint-Plaene (plan_type === 'sprint' ODER source_kind === 'project_sprints')
- * zeigen "Sprintplan" statt der generischen category aus detect_category().
+ * bekommen eine einheitliche Optik (cssKey=sprint, icon=rocket, label=Sprintplan).
+ * Sonstige Plaene behalten detect_category()-Wert als Label, Klasse, Icon.
  */
-function _buildPlanCategoryLabel(plan) {
+function _buildPlanCategoryMeta(plan) {
     var type = plan.plan_type || '';
     var kind = plan.source_kind || '';
     if (type === 'sprint' || kind === 'project_sprints') {
-        return 'Sprintplan';
+        return { label: 'Sprintplan', cssKey: 'sprint', icon: 'rocket' };
     }
-    return plan.category || 'plan';
+    var cat = plan.category || 'plan';
+    return { label: cat, cssKey: cat, icon: getCategoryIcon(cat) };
 }
 
 /**
