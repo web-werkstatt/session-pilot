@@ -2,11 +2,14 @@
 Notification Store - JSON-basierte Benachrichtigungsverwaltung
 Thread-safe via Lock fuer gleichzeitigen Zugriff (Checker-Thread + Flask-Requests)
 """
+import logging
 import os
 import json
 import uuid
 import threading
 from datetime import datetime, timedelta
+
+_log = logging.getLogger(__name__)
 
 _BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 NOTIFICATIONS_FILE = os.path.join(_BASE_DIR, 'notifications.json')
@@ -53,6 +56,19 @@ def add_notification(ntype, severity, title, message, project=None, container=No
         project: Projektname (optional)
         container: Containername (optional)
     """
+    # Waehrend eines laufenden Plan-Scans keine neuen Notifications schreiben.
+    # Verhindert Flut bei Bulk-Imports / Multi-Source-Discovery.
+    try:
+        from services.plans_sync_service import is_scanning
+        if is_scanning():
+            _log.info(
+                "notification_suppressed_during_plan_scan type=%s project=%s",
+                ntype, project,
+            )
+            return None
+    except ImportError:
+        pass  # plans_sync_service noch nicht geladen (Startup/Tests)
+
     notifications = load_notifications()
 
     # Deduplizierung: gleicher type+project+container innerhalb DEDUP_WINDOW

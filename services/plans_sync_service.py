@@ -56,6 +56,7 @@ logger = logging.getLogger(__name__)
 
 _SYNC_LOCK = threading.Lock()
 _NEXT_ALLOWED_AT = 0.0
+_CIRCUIT_UNTIL = 0.0  # Circuit-Breaker getrennt vom Cooldown: `force=True` umgeht den Cooldown, aber NICHT den Circuit.
 _COOLDOWN_SEC = 60.0
 _CIRCUIT_COOLDOWN_SEC = 900.0
 _CIRCUIT_THRESHOLD_MS = 5000
@@ -486,7 +487,7 @@ def sync_all_plans(force: bool = False) -> dict:
     """
     from psycopg2 import extras as _extras
 
-    global _NEXT_ALLOWED_AT
+    global _NEXT_ALLOWED_AT, _CIRCUIT_UNTIL
 
     if not _SYNC_LOCK.acquire(blocking=False):
         logger.warning("plan_scan_lock_skipped")
@@ -494,6 +495,16 @@ def sync_all_plans(force: bool = False) -> dict:
 
     try:
         now = time.monotonic()
+        # Circuit-Breaker hat Vorrang: auch force=True darf einen offenen
+        # 15-Min-Circuit nicht umgehen (sonst ist der Schutz gegen
+        # langsame/blockierende Scans wertlos).
+        if now < _CIRCUIT_UNTIL:
+            remaining = _CIRCUIT_UNTIL - now
+            logger.warning(
+                "plan_scan_circuit_skipped remaining_sec=%.1f force=%s",
+                remaining, force,
+            )
+            return {"skipped_reason": "circuit", "remaining_sec": remaining}
         if not force and now < _NEXT_ALLOWED_AT:
             remaining = _NEXT_ALLOWED_AT - now
             logger.info(
@@ -555,7 +566,8 @@ def sync_all_plans(force: bool = False) -> dict:
         stats["duration_ms"] = duration_ms
 
         if duration_ms > _CIRCUIT_THRESHOLD_MS:
-            _NEXT_ALLOWED_AT = time.monotonic() + _CIRCUIT_COOLDOWN_SEC
+            _CIRCUIT_UNTIL = time.monotonic() + _CIRCUIT_COOLDOWN_SEC
+            _NEXT_ALLOWED_AT = _CIRCUIT_UNTIL
             logger.warning(
                 "plan_scan_circuit_open duration_ms=%d cooldown_sec=%d",
                 duration_ms, int(_CIRCUIT_COOLDOWN_SEC),
