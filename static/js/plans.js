@@ -151,6 +151,11 @@ function _buildCardHtml(plan, draggable) {
     const wfStage = plan.workflow_stage || 'idea';
     const catIcon = getCategoryIcon(plan.category);
     const dragAttr = draggable ? `draggable="true" data-plan-id="${plan.id}" data-stage="${wfStage}"` : '';
+    const catLabel = _buildPlanCategoryLabel(plan);
+    // Default-Workflow-Stage 'idea' wird nicht als Badge gerendert (zu unspezifisch).
+    const wfBadge = wfStage && wfStage !== 'idea'
+        ? `<span class="card-wf-badge wf-${wfStage}">${wfStage.replace(/_/g, ' ')}</span>`
+        : '';
 
     const summary = plan.context_summary || plan.description || '';
 
@@ -171,8 +176,8 @@ function _buildCardHtml(plan, draggable) {
     return `
     <div class="plan-card status-${statusClass}" ${dragAttr} onclick="location.href='${detailUrl}'">
         <div class="card-head">
-            <span class="card-cat-badge cat-${plan.category || 'plan'}"><i data-lucide="${catIcon}" class="icon icon-xs"></i> ${plan.category || 'plan'}</span>
-            <span class="card-wf-badge wf-${wfStage}">${wfStage.replace(/_/g, ' ')}</span>
+            <span class="card-cat-badge cat-${plan.category || 'plan'}"><i data-lucide="${catIcon}" class="icon icon-xs"></i> ${escapeHtml(catLabel)}</span>
+            ${wfBadge}
             ${sourceBadge}
         </div>
         <div class="card-body">
@@ -186,6 +191,20 @@ function _buildCardHtml(plan, draggable) {
             </div>
         </div>
     </div>`;
+}
+
+/**
+ * Category-Label fuer Plan-Cards.
+ * Sprint-Plaene (plan_type === 'sprint' ODER source_kind === 'project_sprints')
+ * zeigen "Sprintplan" statt der generischen category aus detect_category().
+ */
+function _buildPlanCategoryLabel(plan) {
+    var type = plan.plan_type || '';
+    var kind = plan.source_kind || '';
+    if (type === 'sprint' || kind === 'project_sprints') {
+        return 'Sprintplan';
+    }
+    return plan.category || 'plan';
 }
 
 /**
