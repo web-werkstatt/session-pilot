@@ -79,6 +79,91 @@ DEFAULT_PATTERN_CONFIG = {
 
 TAG_RE = re.compile(r"(?P<tag>#(?:sprint|spec)-[a-z0-9][a-z0-9-]*)\b", re.IGNORECASE)
 HEADING_RE = re.compile(r"^(?P<level>#{1,6})\s+(?P<title>.+?)\s*$")
+CODE_FENCE_RE = re.compile(r"^(?:```|~~~)")
+
+
+def _code_block_line_set(lines):
+    """Gibt Menge der Zeilen-Indizes zurueck, die innerhalb eines Code-Fences
+    (```lang oder ~~~) liegen. Wird benutzt, um `#`-Zeilen in Code-Bloecken
+    nicht als Markdown-Headings fehlzuinterpretieren."""
+    in_code_block = False
+    blocked = set()
+    for idx, raw_line in enumerate(lines):
+        stripped = raw_line.strip()
+        if CODE_FENCE_RE.match(stripped):
+            blocked.add(idx)  # Fence-Zeile selbst auch ignorieren
+            in_code_block = not in_code_block
+            continue
+        if in_code_block:
+            blocked.add(idx)
+    return blocked
+SPRINT_TITLE_RE = re.compile(
+    r"^(?:master\s+)?"
+    r"(?:sprint(?:-plan)?|plan(?:verzeichnis)?|adr(?:[-\s]*\d+)?|spec(?:[-\s]*\w+)?|roadmap)"
+    r"\b",
+    re.IGNORECASE,
+)
+EMOJI_PREFIX_RE = re.compile(
+    r"^[\U0001F300-\U0001FAFF\U00002600-\U000027BF\s\*_]+",
+)
+
+
+def _normalize_title_for_match(title):
+    """Strippt fuehrende Emojis, Bullets und Whitespace, damit
+    `🚀 Sprint-Plan: FastAPI` und `**Sprint 1:**` beide matchen."""
+    return EMOJI_PREFIX_RE.sub("", str(title or "").strip()).strip()
+
+
+def _is_sprint_title(title):
+    """Matcht `Sprint`, `Sprint:`, `Sprint 1:`, `Sprint — X`, `Sprint - X`,
+    `Sprint-Plan: X`, `Plan: X`, auch mit fuehrenden Emojis oder Bold-Markern.
+    Benutzt word boundary, damit `Sprintboard`/`Planner` nicht matcht."""
+    return bool(SPRINT_TITLE_RE.match(_normalize_title_for_match(title)))
+
+
+SPEC_CONTAINER_RE = re.compile(
+    r"^("
+    # Sprint-Container (Hausform A + B)
+    r"commits|aufgaben|arbeitspakete|tasks|was\s+gebaut\s+wird|"
+    r"module|komponenten|deliverables|technik|technical|implementation|"
+    # Phase-Container (`Phase 1:`, `Phase 2:`)
+    r"phase\s*\d+|"
+    # Design-/Konzept-Container
+    r"ziel(?:bild)?|l(?:o|ö)sungen|architektur|informationsarchitektur|"
+    r"darstellungslogik|copilot\s+markers|"
+    # Status-/Historie-Container (Master-Plan-Stil)
+    r"done\b|open\s+blocks|completed\s+sprints|hotfixes?|bereits\s+erledigt|"
+    # Weitere Struktur-Container (sprint-17, sprint-px, best-practices)
+    r"umsetzungsphasen|migrationsstrategie|risiken|mapping|"
+    r"tag[-_\s]*schema|anti[-_\s]*patterns?|"
+    # ADR-Container
+    r"entscheidung(?:en)?|decision(?:s)?|"
+    # Spec-Standalone-Container
+    r"check-module|anforderungen|requirements|"
+    # Plan-Directory-Container
+    r"aktive\s+sprint[-\s]*plaene|aktive\s+architektur[-\s]*entscheidungen|"
+    r"andere\s+projekte|"
+    # Roadmap-Container
+    r"overall\s+goals|immediate|ongoing|upcoming|stretch|goals"
+    r")\b",
+    re.IGNORECASE,
+)
+
+# Nummerierte H2 wie `## 1. Projektstruktur`, `## 2. Module`, `## 6.1 PDF Templates`
+# sind implizite Spec-Container in vielen Projekt-Sprints.
+NUMBERED_CONTAINER_RE = re.compile(r"^\d+(?:\.\d+)*\.?\s+\S")
+
+
+def _is_spec_container_title(title):
+    """Matcht H2-Container, deren H3-Kinder als Specs getaggt werden.
+    Deckt Sprint-Form A/B, ADR, Standalone-Spec, Plan-Directory, Roadmap
+    und nummerierte H2 (`## 2. Module`) ab. Alle anderen H2 gelten als
+    Meta-Sektionen (Ziel, Akzeptanz, Risiken, Kontext etc.).
+    Fuehrende Emojis werden gestrippt."""
+    normalized = _normalize_title_for_match(title)
+    if SPEC_CONTAINER_RE.match(normalized):
+        return True
+    return bool(NUMBERED_CONTAINER_RE.match(normalized))
 TASK_BULLET_RE = re.compile(r"^\s*[-*]\s+(?:\[[ xX]\]\s+)?(?P<task>.+?)\s*$")
 PLAN_ID_META_RE = re.compile(
     r"^(?:\*\*)?\s*plan-id\s*:?\s*(?:\*\*)?\s*(?P<plan_id>[a-z0-9_.-]+)\s*$",
@@ -265,8 +350,11 @@ def classify_markdown_content(path, content, config=None):
 def extract_markdown_tags(content):
     """Extrahiert Sprint-/Spec-Tags nur aus Heading- oder direkter Meta-Zeile."""
     lines = str(content or "").splitlines()
+    code_lines = _code_block_line_set(lines)
     tags = []
     for idx, line in enumerate(lines):
+        if idx in code_lines:
+            continue
         heading = HEADING_RE.match(line.strip())
         if not heading:
             continue
@@ -320,15 +408,17 @@ def detect_semantic_split_points(content, config=None):
 def scan_markdown_structure(content, source_path="", config=None):
     """Extrahiert Sprint-/Spec-Struktur aus Markdown."""
     lines = str(content or "").splitlines()
+    code_lines = _code_block_line_set(lines)
     classification = classify_markdown_content(source_path, content, config=config)
     tags = extract_markdown_tags(content)
     sections = []
     current_sprint = None
     current_spec = None
+    in_commits_container = False  # aktiv zwischen H2 `## Commits` und naechstem H2
 
     for idx, raw_line in enumerate(lines):
         line = raw_line.strip()
-        heading = HEADING_RE.match(line)
+        heading = None if idx in code_lines else HEADING_RE.match(line)
         if not heading:
             if current_spec is not None:
                 current_spec["lines"].append(raw_line)
@@ -352,8 +442,14 @@ def scan_markdown_structure(content, source_path="", config=None):
         title = _strip_tags(raw_title)
         plan_id = _extract_plan_id_from_meta(meta)
 
-        if sprint_tag or title.lower().startswith("sprint "):
-            if current_spec is not None:
+        # Sprint-Heading: Nur als neuer Sprint akzeptieren, wenn Level <= current
+        # (sonst ist es eine Referenz innerhalb eines offenen Sprints,
+        # z.B. `### ADR-002 Stufe 1` unter `## Relation zu bestehenden Plaenen`).
+        is_sprint_level = (sprint_tag or _is_sprint_title(title)) and (
+            current_sprint is None or level <= current_sprint["level"]
+        )
+        if is_sprint_level:
+            if current_spec is not None and current_sprint is not None:
                 current_sprint["specs"].append(_finalize_section(current_spec))
                 current_spec = None
             if current_sprint is not None:
@@ -371,9 +467,28 @@ def scan_markdown_structure(content, source_path="", config=None):
                 "tasks": [],
                 "specs": [],
             }
+            in_commits_container = False
             continue
 
-        if current_sprint is not None and level > current_sprint["level"]:
+        # Commits-Container-Tracking fuer Hausform A (H1-Sprint)
+        if current_sprint is not None and current_sprint["level"] == 1 and level == 2:
+            in_commits_container = _is_spec_container_title(title)
+            if current_spec is not None:
+                current_sprint["specs"].append(_finalize_section(current_spec))
+                current_spec = None
+            continue
+
+        # Spec-Detektion:
+        # - Hausform A: nur H3 in offenem Commits-Container
+        # - Hausform klassisch: H3 unter H2-Sprint (Level+1)
+        is_spec_level = False
+        if current_sprint is not None:
+            if current_sprint["level"] == 1:
+                is_spec_level = in_commits_container and level == 3
+            else:
+                is_spec_level = level == current_sprint["level"] + 1
+
+        if is_spec_level:
             if current_spec is not None:
                 current_sprint["specs"].append(_finalize_section(current_spec))
             current_spec = {
@@ -414,10 +529,14 @@ def suggest_tag_from_title(title, prefix):
 def build_tag_update_plan(content):
     """Ermittelt fehlende Sprint-/Spec-Tags und liefert einen Update-Plan."""
     lines = str(content or "").splitlines()
+    code_lines = _code_block_line_set(lines)
     updates = []
     current_sprint_level = None
+    in_commits_container = False
 
     for idx, raw_line in enumerate(lines):
+        if idx in code_lines:
+            continue
         stripped = raw_line.strip()
         heading = HEADING_RE.match(stripped)
         if not heading:
@@ -431,10 +550,15 @@ def build_tag_update_plan(content):
         all_tags = heading_tags + meta_tags
         has_sprint_tag = any(tag.startswith("#sprint-") for tag in all_tags)
         has_spec_tag = any(tag.startswith("#spec-") for tag in all_tags)
-        is_sprint_heading = title.lower().startswith("sprint ")
+        is_sprint_heading = _is_sprint_title(title)
 
-        if is_sprint_heading:
+        # Sprint-Heading nur akzeptieren, wenn Level <= current (sonst Referenz)
+        is_new_sprint = is_sprint_heading and (
+            current_sprint_level is None or level <= current_sprint_level
+        )
+        if is_new_sprint:
             current_sprint_level = level
+            in_commits_container = False
             if not has_sprint_tag:
                 updates.append({
                     "line_index": idx,
@@ -444,8 +568,24 @@ def build_tag_update_plan(content):
                     "tag": suggest_tag_from_title(title, "sprint"),
                 })
             continue
+        # is_sprint_heading True aber als Referenz: Fall-through zur Spec-Detection
 
-        if current_sprint_level is not None and level > current_sprint_level and not has_spec_tag:
+        if current_sprint_level is None:
+            continue
+
+        # Commits-Container-Tracking fuer Hausform A (H1-Sprint)
+        if current_sprint_level == 1 and level == 2:
+            in_commits_container = _is_spec_container_title(title)
+            continue
+
+        # Spec-Detektion
+        is_spec_level = False
+        if current_sprint_level == 1:
+            is_spec_level = in_commits_container and level == 3
+        else:
+            is_spec_level = level == current_sprint_level + 1
+
+        if is_spec_level and not has_spec_tag:
             updates.append({
                 "line_index": idx,
                 "line_number": idx + 1,
@@ -455,8 +595,9 @@ def build_tag_update_plan(content):
             })
             continue
 
-        if current_sprint_level is not None and level <= current_sprint_level:
+        if level <= current_sprint_level:
             current_sprint_level = None
+            in_commits_container = False
 
     return updates
 
