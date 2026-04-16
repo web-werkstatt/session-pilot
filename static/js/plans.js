@@ -210,17 +210,18 @@ function _buildPlanCategoryLabel(plan) {
 /**
  * Source-Badge fuer Plan-Cards (rekonstruiert aus sprint-plan-discovery-followup.md).
  * plan_type wird vom API-Endpoint /api/plans geliefert (claude/sprint/plan/docs/root).
+ * 'sprint' und 'plan' werden NICHT als Badge gerendert — diese Info liegt bereits
+ * im Category-Label ('Sprintplan' bzw. 'plan'), der Source-Badge waere redundant.
  */
 function _buildPlanSourceBadge(plan) {
     var type = plan.plan_type || '';
-    if (!type) return '';
+    if (!type || type === 'sprint' || type === 'plan') return '';
     var label;
     switch (type) {
         case 'claude': label = 'Claude Plan'; break;
-        case 'sprint': label = 'Sprint'; break;
         case 'docs':   label = 'Docs'; break;
         case 'root':   label = 'Projekt-Root'; break;
-        default:       label = 'Plan';
+        default:       return '';
     }
     var tip = plan.source_path ? ' title="' + escapeHtml(plan.source_path) + '"' : '';
     return '<span class="card-source-badge src-' + escapeHtml(type) + '"' + tip + '>' + escapeHtml(label) + '</span>';
