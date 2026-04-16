@@ -20,6 +20,11 @@ PROJECTS_DIR = os.environ.get("DASHBOARD_PROJECTS_DIR", "/mnt/projects")
 CACHE_FILE = os.path.join(PROJECTS_DIR, ".project_dashboard_cache.json")
 SETTINGS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dashboard_settings.json')
 INCLUDE_SELF_PROJECT = _env_flag("DASHBOARD_INCLUDE_SELF_PROJECT", True)
+PLAN_AUTO_TAG_ENABLED = _env_flag("DASHBOARD_PLAN_AUTO_TAG", True)
+PLAN_AUTO_TAG_BACKUP_DIR = os.environ.get(
+    "DASHBOARD_PLAN_AUTO_TAG_BACKUP_DIR",
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), "backups", "plan-auto-tagging"),
+)
 
 # Server
 HOST = os.environ.get("DASHBOARD_HOST", "0.0.0.0")

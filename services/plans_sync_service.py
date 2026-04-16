@@ -20,6 +20,9 @@ Schutz-Mechanismen:
 Details: sprints/sprint-plan-discovery.md (Basis + Nachtraege 1-4).
 """
 import logging
+import os
+import shutil
+import tempfile
 import threading
 import time
 from datetime import datetime, timezone
@@ -31,7 +34,23 @@ from services.db_service import (
     get_conn,
     put_conn,
 )
+from services.markdown_routine_service import (
+    apply_tag_update_plan,
+    build_tag_update_plan,
+    compute_content_hash,
+    read_markdown_with_fallback,
+)
 from services.plan_discovery_service import discover_plans
+
+_PROTECTED_BASENAMES = {
+    "handoff.md",
+    "next-session.md",
+    "next-session-archiv.md",
+    "CLAUDE.md",
+    "AGENTS.md",
+    "GEMINI.md",
+}
+_AUTO_TAG_SOURCE_BLACKLIST = {"claude_plans"}
 
 logger = logging.getLogger(__name__)
 
@@ -89,6 +108,138 @@ def scan_all_plans(exclusions=None):
             "created_at": datetime.fromtimestamp(rec["mtime"], tz=timezone.utc),
         })
     return enriched
+
+
+# ---------------------------------------------------------------------------
+# Auto-Tagging (Option A: Tag am Heading-Ende)
+# ---------------------------------------------------------------------------
+
+def _is_auto_tag_protected(plan) -> bool:
+    """True wenn Datei nicht angefasst werden darf (Schutzliste + Blacklist)."""
+    basename = os.path.basename(plan.get("source_path") or "")
+    if basename in _PROTECTED_BASENAMES:
+        return True
+    if plan.get("source_kind") in _AUTO_TAG_SOURCE_BLACKLIST:
+        return True
+    return False
+
+
+def _atomic_write(path: str, content: str, encoding: str) -> None:
+    """Schreibt Datei via temp + rename im gleichen Verzeichnis."""
+    directory = os.path.dirname(os.path.abspath(path)) or "."
+    fd, tmp_path = tempfile.mkstemp(dir=directory, prefix=".plan_auto_tag_", suffix=".tmp")
+    try:
+        with os.fdopen(fd, "w", encoding=encoding) as f:
+            f.write(content)
+        os.replace(tmp_path, path)
+    except Exception:
+        if os.path.exists(tmp_path):
+            os.unlink(tmp_path)
+        raise
+
+
+def _auto_tag_plan_file(plan, backup_dir: str):
+    """Taggt eine einzelne Plan-Datei in-place. Gibt Anzahl angewandter Updates
+    zurueck (0 = kein Write). Modifiziert `plan` in-place mit neuem Content/Hash/Mtime.
+
+    Schutz-Mechanismen:
+    - Schutzliste + source_kind-Blacklist
+    - Pre-Write mtime-Drift-Check (User koennte parallel editieren)
+    - Atomic temp+rename
+    - Backup-Copy vor Overwrite
+    - Exceptions werden vom Caller gefangen (kein Crash des Sync)
+    """
+    if _is_auto_tag_protected(plan):
+        return 0
+
+    source_path = plan.get("source_path")
+    if not source_path or not os.path.isfile(source_path):
+        return 0
+
+    # mtime-Drift-Check: wenn die Datei seit Discovery geaendert wurde, skip.
+    try:
+        live_mtime = os.path.getmtime(source_path)
+    except OSError:
+        return 0
+    disc_mtime = plan.get("mtime") or 0.0
+    if abs(live_mtime - disc_mtime) > 1.0:
+        logger.info(
+            "plan_auto_tag mtime_drift path=%s disc=%.1f live=%.1f skip",
+            source_path, disc_mtime, live_mtime,
+        )
+        return 0
+
+    loaded = read_markdown_with_fallback(source_path)
+    original = loaded["content"]
+    encoding = loaded["encoding"]
+
+    updates = build_tag_update_plan(original)
+    if not updates:
+        return 0
+
+    os.makedirs(backup_dir, exist_ok=True)
+    rel_safe = source_path.replace("/", "__").lstrip("_")
+    backup_target = os.path.join(backup_dir, rel_safe)
+    idx = 1
+    while os.path.exists(backup_target):
+        backup_target = os.path.join(backup_dir, f"{rel_safe}.{idx}")
+        idx += 1
+    shutil.copy2(source_path, backup_target)
+
+    new_content = apply_tag_update_plan(original, updates)
+    if new_content == original:
+        return 0
+
+    _atomic_write(source_path, new_content, encoding)
+    new_hash = compute_content_hash(new_content)
+    new_mtime = os.path.getmtime(source_path)
+
+    plan["content"] = new_content
+    plan["content_hash"] = new_hash
+    plan["mtime"] = new_mtime
+
+    logger.warning(
+        "plan_auto_tag applied=%d file=%s backup=%s",
+        len(updates), source_path, backup_target,
+    )
+    return len(updates)
+
+
+def _auto_tag_all_plans(plans) -> dict:
+    """Taggt alle nicht-geschuetzten Plan-Dateien vor dem DB-Upsert.
+
+    Opt-Out per config.PLAN_AUTO_TAG_ENABLED=False. Backup-Verzeichnis wird
+    lazy angelegt (nur wenn mindestens ein Write ansteht).
+    """
+    from config import PLAN_AUTO_TAG_BACKUP_DIR, PLAN_AUTO_TAG_ENABLED
+
+    metrics = {"scanned": len(plans), "tagged": 0, "skipped": 0, "tag_writes": 0}
+    if not PLAN_AUTO_TAG_ENABLED:
+        metrics["disabled"] = True
+        return metrics
+
+    timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    backup_dir = os.path.join(PLAN_AUTO_TAG_BACKUP_DIR, timestamp)
+
+    for plan in plans:
+        try:
+            written = _auto_tag_plan_file(plan, backup_dir)
+            if written:
+                metrics["tagged"] += 1
+                metrics["tag_writes"] += written
+        except Exception as exc:  # noqa: BLE001 — Auto-Tag-Fehler darf Sync nicht kippen
+            logger.warning(
+                "plan_auto_tag_error path=%s error=%s",
+                plan.get("source_path"), exc,
+            )
+            metrics["skipped"] += 1
+
+    logger.warning(
+        "plan_auto_tag metrics scanned=%d tagged=%d skipped=%d tag_writes=%d",
+        metrics["scanned"], metrics["tagged"],
+        metrics["skipped"], metrics["tag_writes"],
+    )
+    return metrics
 
 
 # ---------------------------------------------------------------------------
@@ -363,6 +514,13 @@ def sync_all_plans(force: bool = False) -> dict:
 
         plans = scan_all_plans()
         stats["total"] = len(plans)
+
+        # Auto-Tagging vor DB-Upsert: modifiziert Plan-Records in-place
+        # (content/content_hash/mtime werden ggf. neu gesetzt), sodass die
+        # anschliessende Upsert-Logik den getaggten Stand in die DB schreibt.
+        auto_tag_metrics = _auto_tag_all_plans(plans)
+        stats["auto_tagged"] = auto_tag_metrics.get("tagged", 0)
+        stats["auto_tag_writes"] = auto_tag_metrics.get("tag_writes", 0)
 
         conn = get_conn()
         try:
