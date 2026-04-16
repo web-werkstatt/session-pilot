@@ -98,8 +98,8 @@ def _code_block_line_set(lines):
             blocked.add(idx)
     return blocked
 SPRINT_TITLE_RE = re.compile(
-    r"^(?:master\s+)?"
-    r"(?:sprint(?:-plan)?|plan(?:verzeichnis)?|adr(?:[-\s]*\d+)?|spec(?:[-\s]*\w+)?|roadmap)"
+    r"\b"
+    r"(?:sprint(?:[-_\s]*plan)?|plan(?:verzeichnis)?|adr(?:[-\s]*\d+)?|spec(?:[-\s]*\w+)?|roadmap)"
     r"\b",
     re.IGNORECASE,
 )
@@ -115,55 +115,13 @@ def _normalize_title_for_match(title):
 
 
 def _is_sprint_title(title):
-    """Matcht `Sprint`, `Sprint:`, `Sprint 1:`, `Sprint — X`, `Sprint - X`,
-    `Sprint-Plan: X`, `Plan: X`, auch mit fuehrenden Emojis oder Bold-Markern.
-    Benutzt word boundary, damit `Sprintboard`/`Planner` nicht matcht."""
-    return bool(SPRINT_TITLE_RE.match(_normalize_title_for_match(title)))
+    """Matcht `Sprint`, `Sprint 1:`, `Master Sprint Plan`, `Prototypr.io Clone -
+    Sprint & Anforderungsplan`, `Plan: X`, `ADR-001`, `SPEC-XXX`, `Roadmap`.
+    Sucht Schluesselwoerter als eigenstaendige Woerter irgendwo im Titel
+    (nicht nur am Anfang). `Sprintboard`/`Planner` matchen nicht durch \\b."""
+    return bool(SPRINT_TITLE_RE.search(_normalize_title_for_match(title)))
 
 
-SPEC_CONTAINER_RE = re.compile(
-    r"^("
-    # Sprint-Container (Hausform A + B)
-    r"commits|aufgaben|arbeitspakete|tasks|was\s+gebaut\s+wird|"
-    r"module|komponenten|deliverables|technik|technical|implementation|"
-    # Phase-Container (`Phase 1:`, `Phase 2:`)
-    r"phase\s*\d+|"
-    # Design-/Konzept-Container
-    r"ziel(?:bild)?|l(?:o|ö)sungen|architektur|informationsarchitektur|"
-    r"darstellungslogik|copilot\s+markers|"
-    # Status-/Historie-Container (Master-Plan-Stil)
-    r"done\b|open\s+blocks|completed\s+sprints|hotfixes?|bereits\s+erledigt|"
-    # Weitere Struktur-Container (sprint-17, sprint-px, best-practices)
-    r"umsetzungsphasen|migrationsstrategie|risiken|mapping|"
-    r"tag[-_\s]*schema|anti[-_\s]*patterns?|"
-    # ADR-Container
-    r"entscheidung(?:en)?|decision(?:s)?|"
-    # Spec-Standalone-Container
-    r"check-module|anforderungen|requirements|"
-    # Plan-Directory-Container
-    r"aktive\s+sprint[-\s]*plaene|aktive\s+architektur[-\s]*entscheidungen|"
-    r"andere\s+projekte|"
-    # Roadmap-Container
-    r"overall\s+goals|immediate|ongoing|upcoming|stretch|goals"
-    r")\b",
-    re.IGNORECASE,
-)
-
-# Nummerierte H2 wie `## 1. Projektstruktur`, `## 2. Module`, `## 6.1 PDF Templates`
-# sind implizite Spec-Container in vielen Projekt-Sprints.
-NUMBERED_CONTAINER_RE = re.compile(r"^\d+(?:\.\d+)*\.?\s+\S")
-
-
-def _is_spec_container_title(title):
-    """Matcht H2-Container, deren H3-Kinder als Specs getaggt werden.
-    Deckt Sprint-Form A/B, ADR, Standalone-Spec, Plan-Directory, Roadmap
-    und nummerierte H2 (`## 2. Module`) ab. Alle anderen H2 gelten als
-    Meta-Sektionen (Ziel, Akzeptanz, Risiken, Kontext etc.).
-    Fuehrende Emojis werden gestrippt."""
-    normalized = _normalize_title_for_match(title)
-    if SPEC_CONTAINER_RE.match(normalized):
-        return True
-    return bool(NUMBERED_CONTAINER_RE.match(normalized))
 TASK_BULLET_RE = re.compile(r"^\s*[-*]\s+(?:\[[ xX]\]\s+)?(?P<task>.+?)\s*$")
 PLAN_ID_META_RE = re.compile(
     r"^(?:\*\*)?\s*plan-id\s*:?\s*(?:\*\*)?\s*(?P<plan_id>[a-z0-9_.-]+)\s*$",
@@ -414,7 +372,6 @@ def scan_markdown_structure(content, source_path="", config=None):
     sections = []
     current_sprint = None
     current_spec = None
-    in_commits_container = False  # aktiv zwischen H2 `## Commits` und naechstem H2
 
     for idx, raw_line in enumerate(lines):
         line = raw_line.strip()
@@ -467,26 +424,25 @@ def scan_markdown_structure(content, source_path="", config=None):
                 "tasks": [],
                 "specs": [],
             }
-            in_commits_container = False
             continue
 
-        # Commits-Container-Tracking fuer Hausform A (H1-Sprint)
+        # H2 unter H1-Sprint: Meta-Sections (Ziel, Risiken, etc.) oder Container.
+        # Offene Spec schliessen, damit H3 darunter neu als Spec starten.
         if current_sprint is not None and current_sprint["level"] == 1 and level == 2:
-            in_commits_container = _is_spec_container_title(title)
             if current_spec is not None:
                 current_sprint["specs"].append(_finalize_section(current_spec))
                 current_spec = None
             continue
 
         # Spec-Detektion:
-        # - Hausform A: nur H3 in offenem Commits-Container
-        # - Hausform klassisch: H3 unter H2-Sprint (Level+1)
-        is_spec_level = False
-        if current_sprint is not None:
-            if current_sprint["level"] == 1:
-                is_spec_level = in_commits_container and level == 3
-            else:
-                is_spec_level = level == current_sprint["level"] + 1
+        # - Hausform A (H1-Sprint): ALLE H3 sind Specs
+        # - Hausform klassisch (H2-Sprint): H3 direkt unter H2-Sprint sind Specs
+        if current_sprint is None:
+            continue
+        if current_sprint["level"] == 1:
+            is_spec_level = level == 3
+        else:
+            is_spec_level = level == current_sprint["level"] + 1
 
         if is_spec_level:
             if current_spec is not None:
@@ -532,7 +488,19 @@ def build_tag_update_plan(content):
     code_lines = _code_block_line_set(lines)
     updates = []
     current_sprint_level = None
-    in_commits_container = False
+    used_tags: set[str] = set()
+
+    def _unique_tag(base_tag: str) -> str:
+        """Sichert Eindeutigkeit, indem bei Kollision -2, -3 ... angehaengt wird."""
+        if base_tag not in used_tags:
+            used_tags.add(base_tag)
+            return base_tag
+        counter = 2
+        while f"{base_tag}-{counter}" in used_tags:
+            counter += 1
+        suffixed = f"{base_tag}-{counter}"
+        used_tags.add(suffixed)
+        return suffixed
 
     for idx, raw_line in enumerate(lines):
         if idx in code_lines:
@@ -550,6 +518,8 @@ def build_tag_update_plan(content):
         all_tags = heading_tags + meta_tags
         has_sprint_tag = any(tag.startswith("#sprint-") for tag in all_tags)
         has_spec_tag = any(tag.startswith("#spec-") for tag in all_tags)
+        # Autor-Prioritaet: bereits vorhandener sprint/spec-Tag wird respektiert.
+        has_any_tag = has_sprint_tag or has_spec_tag
         is_sprint_heading = _is_sprint_title(title)
 
         # Sprint-Heading nur akzeptieren, wenn Level <= current (sonst Referenz)
@@ -558,46 +528,48 @@ def build_tag_update_plan(content):
         )
         if is_new_sprint:
             current_sprint_level = level
-            in_commits_container = False
-            if not has_sprint_tag:
+            # Bereits vorhandene Tags registrieren, damit neue nicht kollidieren
+            for t in all_tags:
+                used_tags.add(t.lower())
+            if not has_any_tag:
                 updates.append({
                     "line_index": idx,
                     "line_number": idx + 1,
                     "kind": "sprint",
                     "title": title,
-                    "tag": suggest_tag_from_title(title, "sprint"),
+                    "tag": _unique_tag(suggest_tag_from_title(title, "sprint")),
                 })
             continue
-        # is_sprint_heading True aber als Referenz: Fall-through zur Spec-Detection
+        # is_sprint_heading True aber als Referenz: Fall-through zur Spec/Task-Detection
 
         if current_sprint_level is None:
             continue
 
-        # Commits-Container-Tracking fuer Hausform A (H1-Sprint)
-        if current_sprint_level == 1 and level == 2:
-            in_commits_container = _is_spec_container_title(title)
-            continue
-
-        # Spec-Detektion
-        is_spec_level = False
+        # Spec-Level analog scan_markdown_structure:
+        # - Hausform A (H1-Sprint): ALLE H3 sind Specs
+        # - sonst: Spec ist genau ein Level unter dem aktuellen Sprint.
+        # Tasks werden NICHT hier erzeugt — sie sind Downstream-Marker und
+        # werden ausserhalb dieses Services aus Sprint-/Spec-Struktur abgeleitet.
         if current_sprint_level == 1:
-            is_spec_level = in_commits_container and level == 3
+            is_spec_level = level == 3
         else:
             is_spec_level = level == current_sprint_level + 1
 
-        if is_spec_level and not has_spec_tag:
-            updates.append({
-                "line_index": idx,
-                "line_number": idx + 1,
-                "kind": "spec",
-                "title": title,
-                "tag": suggest_tag_from_title(title, "spec"),
-            })
+        if is_spec_level:
+            for t in all_tags:
+                used_tags.add(t.lower())
+            if not has_any_tag:
+                updates.append({
+                    "line_index": idx,
+                    "line_number": idx + 1,
+                    "kind": "spec",
+                    "title": title,
+                    "tag": _unique_tag(suggest_tag_from_title(title, "spec")),
+                })
             continue
 
         if level <= current_sprint_level:
             current_sprint_level = None
-            in_commits_container = False
 
     return updates
 
@@ -619,10 +591,8 @@ def apply_tag_update_plan(content, updates):
             continue
         if update["tag"] in raw_line:
             continue
-        prefix = heading.group("level")
-        title = heading.group("title").strip()
-        cleaned_title = _strip_tags(title)
-        lines[idx] = f"{prefix} {cleaned_title} {update['tag']}"
+        # Nur neuen Tag am Ende anhaengen, bestehende Tags bleiben erhalten.
+        lines[idx] = raw_line.rstrip() + " " + update["tag"]
 
     updated = "\n".join(lines)
     if str(content or "").endswith("\n"):
