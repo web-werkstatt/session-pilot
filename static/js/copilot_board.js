@@ -356,19 +356,38 @@ function _renderSprintSections() {
         var chips = markers.slice(0, 3).map(function(marker) {
             return '<span class="sprint-section-chip">' + escapeHtml(marker.titel) + '</span>';
         }).join('');
-        var specCount = (section.specs || []).length;
-        var totalTaskCount = section.tasks.length + (section.specs || []).reduce(function(sum, spec) {
+        var specs = section.specs || [];
+        var specCount = specs.length;
+        var totalTaskCount = section.tasks.length + specs.reduce(function(sum, spec) {
             return sum + ((spec.tasks || []).length || 0);
         }, 0);
         var tasksLabel = totalTaskCount ? (totalTaskCount + ' Tasks') : 'Keine Tasks erkannt';
         var markerLabel = markers.length ? (markers.length + ' Marker') : 'Noch kein Marker';
-        return '<button class="sprint-section-card state-' + state + selected + '" type="button" onclick="openPlanSection(\'' + _escapeJsString(section.id) + '\')">'
+        var sprintCard = '<button class="sprint-section-card state-' + state + selected + '" type="button" onclick="openPlanSection(\'' + _escapeJsString(section.id) + '\')">'
             + '<div class="sprint-section-top"><span class="sprint-section-state">' + escapeHtml(state === 'synced' ? 'Gemappt' : (state === 'partial' ? 'Teilweise' : 'Offen')) + '</span><span class="sprint-section-map">' + escapeHtml(markerLabel) + '</span></div>'
             + '<div class="sprint-section-name">' + escapeHtml(section.title) + '</div>'
             + '<div class="sprint-section-summary">' + escapeHtml(section.summary || 'Keine Kurzbeschreibung') + '</div>'
             + '<div class="sprint-section-foot"><span>' + escapeHtml(tasksLabel) + '</span><span>' + escapeHtml(specCount + ' Specs') + '</span></div>'
             + '<div class="sprint-section-chips">' + chips + '</div>'
             + '</button>';
+        var specCards = specs.length
+            ? '<div class="sprint-spec-list">' + specs.map(function(spec) {
+                var specTaskCount = (spec.tasks || []).length;
+                var specMarkerCount = (spec.markers || []).length;
+                var specMetaParts = [];
+                if (specTaskCount) specMetaParts.push(specTaskCount + ' Task' + (specTaskCount === 1 ? '' : 's'));
+                if (specMarkerCount) specMetaParts.push(specMarkerCount + ' Marker');
+                if (!specMetaParts.length) specMetaParts.push('noch offen');
+                var specMeta = specMetaParts.join(' · ');
+                var specTag = spec.spec_tag ? '<span class="sprint-spec-tag">' + escapeHtml(spec.spec_tag) + '</span>' : '';
+                return '<button class="sprint-spec-card" type="button" onclick="openPlanSection(\'' + _escapeJsString(section.id) + '\')">'
+                    + '<div class="sprint-spec-top"><span class="sprint-spec-name">' + escapeHtml(spec.title || '(Spec ohne Titel)') + '</span>' + specTag + '</div>'
+                    + (spec.summary ? '<div class="sprint-spec-summary">' + escapeHtml(spec.summary) + '</div>' : '')
+                    + '<div class="sprint-spec-meta">' + escapeHtml(specMeta) + '</div>'
+                    + '</button>';
+            }).join('') + '</div>'
+            : '';
+        return '<div class="sprint-section-group">' + sprintCard + specCards + '</div>';
     }).join('');
 }
 
