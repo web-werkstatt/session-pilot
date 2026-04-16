@@ -56,13 +56,23 @@ function loadPlans() {
 
     return api.get('/api/plans?' + params.toString())
         .then(data => {
-            allPlans = data.plans || [];
+            // Diese Seite zeigt ausschliesslich lokale Plaene:
+            //   - project_sprints  (<project>/sprints/)
+            //   - project_plans    (<project>/plans/)
+            // Claude-Plans, Docs-Plans und Projekt-Root bleiben ausgeblendet.
+            allPlans = (data.plans || []).filter(_isLocalPlanOrSprint);
             renderPlans();
         })
         .catch(err => {
             console.error('Error:', err);
             document.getElementById('loading').innerHTML = '<div class="error">Error loading</div>';
         });
+}
+
+var _PLANS_VISIBLE_SOURCE_KINDS = new Set(['project_sprints', 'project_plans']);
+
+function _isLocalPlanOrSprint(plan) {
+    return _PLANS_VISIBLE_SOURCE_KINDS.has(plan && plan.source_kind || '');
 }
 
 function loadStats() {
