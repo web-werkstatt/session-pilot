@@ -199,10 +199,14 @@ def ensure_plans_schema():
     with _plans_schema_lock:
         if _plans_schema_ready:
             return
+        # filename NICHT mehr global UNIQUE — Cross-Project-Importe duerfen
+        # identische Dateinamen fuehren (z.B. `sprint-1.md` in mehreren Projekten).
+        # Composite UNIQUE(filename, project_name) wird in
+        # ensure_plan_source_schema() nachgezogen (Followup 2026-04-16).
         execute("""
             CREATE TABLE IF NOT EXISTS project_plans (
                 id SERIAL PRIMARY KEY,
-                filename VARCHAR(255) UNIQUE NOT NULL,
+                filename VARCHAR(255) NOT NULL,
                 title VARCHAR(500),
                 project_name VARCHAR(255),
                 content TEXT,

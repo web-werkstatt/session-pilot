@@ -1,5 +1,5 @@
 """
-Sprint sprint-plan-discovery (2026-04-15):
+Sprint sprint-plan-discovery (2026-04-15) + Followup (2026-04-16):
 Schema-Delta fuer mehrquelligen Plan-Scanner.
 
 - project_plans.source_path TEXT          -> Kanonischer Dateipfad (realpath)
@@ -10,7 +10,13 @@ Indizes:
 - ux_project_plans_source_path  UNIQUE (partial, WHERE source_path IS NOT NULL)
 - ix_project_plans_content_hash nicht-eindeutig, fuer Content-Duplikat-Scans
 
-Idempotent: ADD COLUMN IF NOT EXISTS / CREATE INDEX IF NOT EXISTS.
+Constraint-Aufloesung (Followup-Sprint 2026-04-16):
+- Globaler UNIQUE(filename) wird durch UNIQUE(filename, project_name)
+  ersetzt — dadurch scheitern Cross-Project-Importe nicht mehr, wenn
+  mehrere Projekte identische Dateinamen wie `sprint-1.md` fuehren.
+
+Idempotent: ADD COLUMN IF NOT EXISTS / CREATE INDEX IF NOT EXISTS +
+kontrolliertes DROP CONSTRAINT mit Existenz-Check.
 """
 import threading
 
@@ -19,7 +25,8 @@ _plan_source_schema_lock = threading.Lock()
 
 
 def ensure_plan_source_schema_impl(execute, ensure_plans_schema):
-    """Erweitert project_plans um source_path, source_kind, content_hash + Indizes."""
+    """Erweitert project_plans um source_path, source_kind, content_hash + Indizes
+    und bricht den globalen UNIQUE(filename)-Constraint auf (Followup 2026-04-16)."""
     global _plan_source_schema_ready
     if _plan_source_schema_ready:
         return
@@ -42,5 +49,28 @@ def ensure_plan_source_schema_impl(execute, ensure_plans_schema):
             CREATE INDEX IF NOT EXISTS ix_project_plans_content_hash
             ON project_plans(content_hash)
         """)
+
+        # Globaler UNIQUE(filename) -> UNIQUE(filename, project_name).
+        # Cross-Project-Importe duerfen nicht mehr an globalem filename-Konflikt scheitern.
+        # Umsetzung in PostgreSQL-kompatibler idempotenter Form.
+        rows = execute("""
+            SELECT conname
+            FROM pg_constraint
+            WHERE conrelid = 'project_plans'::regclass AND contype = 'u'
+        """, fetch=True) or []
+        existing_uniques = {row['conname'] for row in rows}
+
+        # Standard-Name von CREATE TABLE: project_plans_filename_key
+        if 'project_plans_filename_key' in existing_uniques:
+            execute("ALTER TABLE project_plans DROP CONSTRAINT project_plans_filename_key")
+
+        if 'project_plans_filename_project_key' not in existing_uniques:
+            # Composite-UNIQUE mit NULL-vertraeglichkeit: NULL-project wird mehrfach erlaubt
+            # (was fuer Legacy-claude_plans ohne project_name gewollt ist).
+            execute("""
+                ALTER TABLE project_plans
+                ADD CONSTRAINT project_plans_filename_project_key
+                UNIQUE (filename, project_name)
+            """)
 
         _plan_source_schema_ready = True
