@@ -1,0 +1,297 @@
+/* Plan-Scan Preview + Exclusions (Sprint sprint-plan-discovery, Commit 5) */
+
+.plan-scan-intro {
+    margin: 0 0 18px;
+    padding: 18px 20px;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: linear-gradient(135deg, rgba(0,120,212,0.12), rgba(79,195,247,0.05));
+}
+.plan-scan-intro-kicker {
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+}
+.plan-scan-intro-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+}
+.plan-scan-intro-desc {
+    max-width: 900px;
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--text-secondary);
+}
+
+.plan-scan-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+}
+.plan-scan-tabs { display: flex; gap: 4px; }
+.plan-scan-tab {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    padding: 6px 14px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    display: inline-flex;
+    gap: 8px;
+    align-items: center;
+}
+.plan-scan-tab:hover { color: var(--text-primary); border-color: var(--border-hover); }
+.plan-scan-tab.active {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+}
+.plan-scan-tab-count {
+    background: rgba(255,255,255,0.12);
+    border-radius: 10px;
+    padding: 1px 8px;
+    font-size: 11px;
+}
+.plan-scan-filter { display: flex; gap: 8px; align-items: center; font-size: 13px; color: var(--text-secondary); }
+
+.plan-scan-totals {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+.plan-scan-total-item {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 14px;
+    min-width: 90px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.plan-scan-total-value { font-size: 20px; font-weight: 700; color: var(--text-primary); }
+.plan-scan-total-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+.plan-scan-total-new      { border-left: 3px solid #4fc3f7; }
+.plan-scan-total-existing { border-left: 3px solid #8e8e93; }
+.plan-scan-total-excluded { border-left: 3px solid #ff9800; }
+.plan-scan-total-duplicate{ border-left: 3px solid #ab47bc; }
+
+.plan-scan-loading {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 0;
+    color: var(--text-muted);
+}
+.spinner-sm { width: 14px; height: 14px; border-width: 2px; }
+
+.plan-scan-tree { display: flex; flex-direction: column; gap: 16px; }
+
+.plan-scan-project {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--card);
+    overflow: hidden;
+}
+.plan-scan-project-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background: var(--elevated);
+    border-bottom: 1px solid var(--border);
+}
+.plan-scan-project-title {
+    display: flex; gap: 8px; align-items: center;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+.plan-scan-project-meta { font-size: 12px; color: var(--text-muted); }
+
+.plan-scan-kind {
+    padding: 10px 16px 14px;
+    border-bottom: 1px solid var(--border-subtle);
+}
+.plan-scan-kind:last-child { border-bottom: 0; }
+.plan-scan-kind-title {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+}
+
+.plan-scan-dir {
+    margin-top: 8px;
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    background: var(--surface);
+}
+.plan-scan-dir-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    cursor: pointer;
+    gap: 12px;
+}
+.plan-scan-dir-path {
+    display: flex; gap: 6px; align-items: center;
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+    font-size: 12px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.plan-scan-chevron { transition: transform 0.15s; flex-shrink: 0; }
+.plan-scan-dir.collapsed .plan-scan-chevron { transform: rotate(-90deg); }
+.plan-scan-dir.collapsed .plan-scan-file-list { display: none; }
+.plan-scan-dir-count {
+    background: var(--border);
+    color: var(--text-secondary);
+    border-radius: 10px;
+    padding: 1px 8px;
+    font-size: 10px;
+}
+
+.plan-scan-file-list { padding: 4px 8px 8px; }
+.plan-scan-file {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 8px;
+    border-radius: 6px;
+    gap: 12px;
+}
+.plan-scan-file:hover { background: var(--elevated); }
+.plan-scan-file-excluded { opacity: 0.55; }
+.plan-scan-file-main {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    cursor: pointer;
+    flex: 1;
+    min-width: 0;
+}
+.plan-scan-file-name {
+    font-size: 13px;
+    color: var(--text-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.plan-scan-file-badges {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.plan-scan-badge {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: var(--border);
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+.plan-scan-badge-kind { background: rgba(0,120,212,0.18); color: #4fc3f7; }
+.plan-scan-status-new      { background: rgba(79,195,247,0.18); color: #4fc3f7; }
+.plan-scan-status-existing { background: var(--border); color: var(--text-secondary); }
+.plan-scan-status-excluded { background: rgba(255,152,0,0.2); color: #ffb74d; }
+.plan-scan-badge-dup      { background: rgba(171,71,188,0.2); color: #ce93d8; }
+.plan-scan-badge-excluded-by { background: rgba(255,152,0,0.12); color: #ff9800; font-style: italic; }
+.plan-scan-badge-folder { background: rgba(79,195,247,0.18); color: #4fc3f7; }
+.plan-scan-badge-file   { background: var(--border); color: var(--text-secondary); }
+
+/* Exclusions Tab */
+.plan-scan-add-exclusion {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 20px;
+}
+.plan-scan-add-title {
+    font-weight: 600;
+    margin-bottom: 10px;
+    color: var(--text-primary);
+}
+.plan-scan-add-row {
+    display: grid;
+    grid-template-columns: 180px 110px 1fr 1fr auto;
+    gap: 8px;
+    align-items: center;
+}
+.plan-scan-input {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 13px;
+}
+.plan-scan-input:focus { outline: none; border-color: var(--accent); }
+
+.plan-scan-exclusion-list { display: flex; flex-direction: column; gap: 8px; }
+.plan-scan-exclusion-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 14px;
+    gap: 12px;
+}
+.plan-scan-exclusion-main { display: flex; gap: 10px; align-items: center; min-width: 0; flex: 1; }
+.plan-scan-exclusion-pattern {
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+    font-size: 13px;
+    color: var(--text-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.plan-scan-exclusion-project {
+    font-size: 12px;
+    color: var(--text-muted);
+    padding: 2px 8px;
+    background: var(--surface);
+    border-radius: 8px;
+}
+.plan-scan-exclusion-meta { display: flex; gap: 10px; align-items: center; }
+.plan-scan-exclusion-reason { font-size: 12px; color: var(--text-secondary); font-style: italic; }
+.plan-scan-exclusion-when  { font-size: 11px; color: var(--text-muted); }
+
+.empty-state-inline {
+    padding: 40px 20px;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+/* Toast reuse */
+.toast.toast-ok    { border-color: rgba(76,175,80,0.5); }
+.toast.toast-error { border-color: rgba(244,67,54,0.5); }
+
+@media (max-width: 768px) {
+    .plan-scan-add-row { grid-template-columns: 1fr; }
+    .plan-scan-file { flex-direction: column; align-items: flex-start; }
+    .plan-scan-file-badges { flex-wrap: wrap; }
+}

@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block title %}Plan-Scan Preview - Dashboard{% endblock %}
+
+{% block breadcrumb %}Planning / Scan Preview{% endblock %}
+
+{% block topbar_actions %}
+<a href="/plans" class="btn btn-secondary btn-sm"><i data-lucide="arrow-left" class="icon icon-sm"></i> Zurueck zu Plans</a>
+<button class="btn btn-secondary btn-sm" id="planScanRefreshBtn"><i data-lucide="refresh-cw" class="icon icon-sm"></i> Re-Scan</button>
+<button class="btn btn-primary btn-sm" id="planScanSyncBtn"><i data-lucide="download" class="icon icon-sm"></i> Jetzt synchronisieren</button>
+{% endblock %}
+
+{% block head_extra %}
+<link rel="stylesheet" href="/static/css/plan_scan.css">
+{% endblock %}
+
+{% block content %}
+<div class="plan-scan-intro">
+    <div class="plan-scan-intro-kicker">Plan-Discovery</div>
+    <div class="plan-scan-intro-title">Scan Preview &amp; Exclusions</div>
+    <div class="plan-scan-intro-desc">
+        Alles, was der Scanner finden wuerde. Haken setzen um einen Ordner oder eine Datei
+        dauerhaft auszuschliessen. „Jetzt synchronisieren" importiert die sichtbaren Plaene
+        sofort (umgeht den 60 s-Cooldown, respektiert aber Circuit-Breaker und Lock).
+    </div>
+</div>
+
+<div class="plan-scan-toolbar">
+    <div class="plan-scan-tabs">
+        <button class="plan-scan-tab active" data-tab="preview">Preview</button>
+        <button class="plan-scan-tab" data-tab="exclusions">Exclusions <span class="plan-scan-tab-count" id="planScanExclusionsCount">0</span></button>
+    </div>
+    <div class="plan-scan-filter" data-tab-only="preview">
+        <label for="planScanProjectFilter">Projekt:</label>
+        <select id="planScanProjectFilter" class="filter-select">
+            <option value="">Alle</option>
+        </select>
+    </div>
+</div>
+
+<div class="plan-scan-totals" id="planScanTotals" data-tab-only="preview" style="display:none;">
+    <div class="plan-scan-total-item"><span class="plan-scan-total-value" id="totalTotal">0</span><span class="plan-scan-total-label">Gesamt</span></div>
+    <div class="plan-scan-total-item plan-scan-total-new"><span class="plan-scan-total-value" id="totalNew">0</span><span class="plan-scan-total-label">Neu</span></div>
+    <div class="plan-scan-total-item plan-scan-total-existing"><span class="plan-scan-total-value" id="totalExisting">0</span><span class="plan-scan-total-label">Bestehend</span></div>
+    <div class="plan-scan-total-item plan-scan-total-excluded"><span class="plan-scan-total-value" id="totalExcluded">0</span><span class="plan-scan-total-label">Ausgeschlossen</span></div>
+    <div class="plan-scan-total-item plan-scan-total-duplicate"><span class="plan-scan-total-value" id="totalDuplicates">0</span><span class="plan-scan-total-label">Duplikate</span></div>
+</div>
+
+<div class="plan-scan-tab-pane active" data-tab-pane="preview">
+    <div id="planScanLoading" class="plan-scan-loading">
+        <div class="spinner"></div>
+        <div>Scanne Plan-Quellen...</div>
+    </div>
+    <div id="planScanTree" class="plan-scan-tree" style="display:none;"></div>
+    <div id="planScanEmpty" class="empty-state" style="display:none;">
+        <div class="empty-icon"><i data-lucide="search" style="width:48px;height:48px;opacity:0.3"></i></div>
+        <h3>Keine Dateien gefunden</h3>
+        <p>Kein Projekt unter <code>/mnt/projects/</code> enthaelt Plan-Dateien, oder der Filter greift zu hart.</p>
+    </div>
+</div>
+
+<div class="plan-scan-tab-pane" data-tab-pane="exclusions" style="display:none;">
+    <div class="plan-scan-add-exclusion">
+        <div class="plan-scan-add-title">Neue Exclusion</div>
+        <div class="plan-scan-add-row">
+            <select id="exAddProject" class="filter-select">
+                <option value="">Global (alle Projekte)</option>
+            </select>
+            <select id="exAddScope" class="filter-select">
+                <option value="folder">Ordner</option>
+                <option value="file">Datei</option>
+            </select>
+            <input type="text" id="exAddPattern" class="plan-scan-input" placeholder="z.B. sprints/retros/** oder docs/plans/old.md" />
+            <input type="text" id="exAddReason" class="plan-scan-input" placeholder="Grund (optional)" />
+            <button id="exAddBtn" class="btn btn-primary btn-sm">Hinzufuegen</button>
+        </div>
+    </div>
+    <div class="plan-scan-exclusion-list" id="planScanExclusionList">
+        <div class="plan-scan-loading"><div class="spinner"></div><div>Lade Exclusions...</div></div>
+    </div>
+</div>
+
+<div class="toast" id="planScanToast"></div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/plan_scan_panel.js"></script>
+{% endblock %}

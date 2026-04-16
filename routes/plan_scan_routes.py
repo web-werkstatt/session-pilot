@@ -13,7 +13,7 @@ Details: sprints/sprint-plan-discovery.md (Nachtrag 3).
 import logging
 import os
 
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, render_template, request
 
 from routes.api_utils import api_route
 from services.db_service import execute, ensure_plan_source_schema
@@ -28,6 +28,15 @@ from services.plans_sync_service import sync_all_plans
 logger = logging.getLogger(__name__)
 
 plan_scan_bp = Blueprint("plan_scan", __name__)
+
+
+# ---------------------------------------------------------------------------
+# Page
+# ---------------------------------------------------------------------------
+
+@plan_scan_bp.route("/plans/scan")
+def plan_scan_page():
+    return render_template("plan_scan.html", active_page="plans")
 
 
 def _requester() -> str:
