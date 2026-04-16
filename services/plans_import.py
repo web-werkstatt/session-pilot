@@ -6,7 +6,7 @@ import os
 import re
 import hashlib
 from datetime import datetime, timezone
-from services.db_service import execute, ensure_plans_schema
+from services.db_service import execute
 
 
 from config import PROJECTS_DIR
@@ -246,7 +246,14 @@ def detect_status_from_sessions(project_name, plan_created):
 
 
 def scan_plans():
-    """Scannt ~/.claude/plans/ und gibt Liste von Plan-Metadaten zurueck."""
+    """Scannt NUR ~/.claude/plans/ (Legacy-Single-Source).
+
+    DEPRECATED: Sprint sprint-plan-discovery hat den Multi-Source-Scanner
+    eingefuehrt. Aktiver Discovery-Pfad:
+    `services.plan_discovery_service.discover_plans()`. Diese Funktion bleibt
+    als Rueckwaertskompatibilitaet fuer externe Skripte; `sync_plans()` nutzt
+    sie nicht mehr.
+    """
     if not os.path.isdir(PLANS_DIR):
         return []
 
@@ -286,76 +293,20 @@ def scan_plans():
     return sorted(plans, key=lambda p: p['file_mtime'], reverse=True)
 
 
-def sync_plans():
-    """Synchronisiert Plans aus dem Dateisystem in die Datenbank."""
-    ensure_plans_schema()
-    plans = scan_plans()
+def sync_plans(force=False):
+    """Synchronisiert Plans aus allen Scan-Quellen in die Datenbank.
 
-    stats = {'imported': 0, 'updated': 0, 'unchanged': 0, 'total': len(plans)}
-
-    for plan in plans:
-        # Pruefen ob bereits importiert
-        existing = execute(
-            "SELECT id, file_hash, status FROM project_plans WHERE filename = %s",
-            (plan['filename'],),
-            fetch=True
-        )
-
-        if existing:
-            row = existing[0]
-            old_id, old_hash = row['id'], row['file_hash']
-            if old_hash == plan['file_hash']:
-                # Datei unveraendert, aber Status neu berechnen falls noch draft
-                if row['status'] == 'draft':
-                    new_status = detect_status_from_sessions(
-                        plan['project_name'], plan['created_at'])
-                    if new_status != 'draft':
-                        session_uuid = find_related_session(
-                            plan['project_name'], plan['file_mtime'])
-                        execute(
-                            """UPDATE project_plans
-                               SET status = %s,
-                                   session_uuid = COALESCE(%s, session_uuid),
-                                   updated_at = NOW()
-                               WHERE id = %s""",
-                            (new_status, session_uuid, old_id)
-                        )
-                        stats['updated'] += 1
-                    else:
-                        stats['unchanged'] += 1
-                else:
-                    stats['unchanged'] += 1
-                continue
-            # Datei geaendert -> Update (Status beibehalten wenn manuell gesetzt)
-            session_uuid = find_related_session(plan['project_name'], plan['file_mtime'])
-            execute(
-                """UPDATE project_plans
-                   SET title = %s, project_name = %s, content = %s,
-                       context_summary = %s, category = %s,
-                       session_uuid = COALESCE(%s, session_uuid),
-                       file_hash = %s, file_mtime = %s, updated_at = NOW()
-                   WHERE id = %s""",
-                (plan['title'], plan['project_name'], plan['content'],
-                 plan['context_summary'], plan['category'],
-                 session_uuid,
-                 plan['file_hash'], plan['file_mtime'], old_id)
-            )
-            stats['updated'] += 1
-        else:
-            # Neu importieren - Status automatisch erkennen
-            session_uuid = find_related_session(plan['project_name'], plan['file_mtime'])
-            auto_status = detect_status_from_sessions(
-                plan['project_name'], plan['created_at'])
-            execute(
-                """INSERT INTO project_plans
-                   (filename, title, project_name, content, context_summary,
-                    category, status, session_uuid, file_hash, file_mtime, created_at)
-                   VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
-                (plan['filename'], plan['title'], plan['project_name'],
-                 plan['content'], plan['context_summary'], plan['category'],
-                 auto_status, session_uuid, plan['file_hash'],
-                 plan['file_mtime'], plan['created_at'])
-            )
-            stats['imported'] += 1
-
+    Delegiert an `services.plans_sync_service.sync_all_plans` (Multi-Source
+    + 4-stufige Upsert + Cooldown + Circuit-Breaker). Liefert ein Stats-
+    Dict mit zusaetzlichem `imported`-Key als Alias auf `inserted` fuer
+    Rueckwaertskompatibilitaet mit bestehenden Callern.
+    """
+    from services.plans_sync_service import sync_all_plans
+    stats = sync_all_plans(force=force)
+    if "skipped_reason" in stats:
+        return {
+            "imported": 0, "updated": 0, "unchanged": 0, "total": 0,
+            "skipped_reason": stats["skipped_reason"],
+        }
+    stats["imported"] = stats.get("inserted", 0)
     return stats
