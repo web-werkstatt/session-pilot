@@ -159,6 +159,35 @@ def detect_category(content, title):
     return 'plan'
 
 
+# Status-Heuristik fuer Sprint-Plaene (Kopfzeilen wie "**Status:** DONE").
+_PLAN_STATUS_PATTERNS = [
+    (re.compile(r"\*{0,2}\s*status\s*\*{0,2}\s*:\s*\*{0,2}\s*(done|completed|abgeschlossen|fertig|erledigt)\b", re.IGNORECASE), "completed"),
+    (re.compile(r"\*{0,2}\s*status\s*\*{0,2}\s*:\s*\*{0,2}\s*(active|in[-_\s]*progress|aktiv|laufend|wip)\b", re.IGNORECASE), "active"),
+    (re.compile(r"\*{0,2}\s*status\s*\*{0,2}\s*:\s*\*{0,2}\s*(archived|archive|archiv|obsolet)\b", re.IGNORECASE), "archived"),
+    (re.compile(r"\*{0,2}\s*status\s*\*{0,2}\s*:\s*\*{0,2}\s*(draft|entwurf|geplant|planned)\b", re.IGNORECASE), "draft"),
+]
+
+_PLAN_DONE_HEADING_RE = re.compile(r"^##\s*(abschluss|done|erledigt|completed)\b", re.IGNORECASE | re.MULTILINE)
+
+
+def detect_plan_status(content, fallback="draft"):
+    """Leitet Plan-Status aus dem Markdown-Kopf ab.
+
+    - Explizite `**Status:** DONE|Active|Draft|Archived`-Zeilen (auch deutsch).
+    - Heuristik: `## Abschluss` / `## Done` im Dokument -> completed.
+    - Fallback: draft (damit Filter All/Draft/Active/Done/Archive greift).
+    """
+    if not content:
+        return fallback
+    head = content[:800]
+    for pattern, status in _PLAN_STATUS_PATTERNS:
+        if pattern.search(head):
+            return status
+    if _PLAN_DONE_HEADING_RE.search(content[:3000]):
+        return "completed"
+    return fallback
+
+
 def _build_session_name_variants(project_name):
     """Erzeugt alle moeglichen Session-Projektnamen fuer einen Plan-Projektnamen.
 

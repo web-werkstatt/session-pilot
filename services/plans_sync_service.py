@@ -191,13 +191,21 @@ def _auto_tag_plan_file(plan, backup_dir: str):
     if new_content == original:
         return 0
 
+    # Original-mtime merken und nach dem Write zurueckstellen. Das Tag-Append
+    # ist eine System-Modifikation, keine User-Aenderung — die Datei-mtime und
+    # damit auch die UI-Anzeige "zuletzt geaendert" sollen unveraendert bleiben.
+    original_mtime = live_mtime
     _atomic_write(source_path, new_content, encoding)
+    os.utime(source_path, (original_mtime, original_mtime))
+
     new_hash = compute_content_hash(new_content)
-    new_mtime = os.path.getmtime(source_path)
 
     plan["content"] = new_content
     plan["content_hash"] = new_hash
-    plan["mtime"] = new_mtime
+    plan["mtime"] = original_mtime
+    # Flag fuer den nachfolgenden DB-Upsert: Content hat sich geaendert,
+    # aber updated_at soll NICHT hochgesetzt werden (System-Change, nicht User).
+    plan["_auto_tag_applied"] = True
 
     logger.warning(
         "plan_auto_tag applied=%d file=%s backup=%s",
@@ -248,20 +256,28 @@ def _auto_tag_all_plans(plans) -> dict:
 # ---------------------------------------------------------------------------
 
 def _legacy_session_fields(plan):
-    """Fuer source_kind='claude_plans' (Legacy-Single-Source): Session-UUID
-    und Auto-Status via detect_status_from_sessions. Fuer alle anderen
-    Scan-Quellen neutrale Defaults gemaess Sprint-Plan (Nachtrag 1)."""
-    if plan.get("source_kind") != "claude_plans":
-        return None, "unknown"
-    from services.plans_import import (
-        detect_status_from_sessions,
-        find_related_session,
-    )
-    session_uuid = find_related_session(plan["project_name"], plan["mtime"])
-    auto_status = detect_status_from_sessions(
-        plan["project_name"], plan["created_at"],
-    )
-    return session_uuid, auto_status
+    """Auto-Status + Session-UUID je nach Plan-Quelle.
+
+    - claude_plans: Session-UUID + Session-basierter Status (Legacy).
+    - project_sprints / project_plans: Status aus Markdown-Header
+      (`**Status:** DONE|Active|Draft|Archived` etc.), Fallback 'draft'.
+    - alle anderen Quellen: neutrale Defaults (session=None, status='draft').
+    """
+    source_kind = plan.get("source_kind") or ""
+    if source_kind == "claude_plans":
+        from services.plans_import import (
+            detect_status_from_sessions,
+            find_related_session,
+        )
+        session_uuid = find_related_session(plan["project_name"], plan["mtime"])
+        auto_status = detect_status_from_sessions(
+            plan["project_name"], plan["created_at"],
+        )
+        return session_uuid, auto_status
+    if source_kind in ("project_sprints", "project_plans"):
+        from services.plans_import import detect_plan_status
+        return None, detect_plan_status(plan.get("content") or "", fallback="draft")
+    return None, "draft"
 
 
 def _upsert_step1_source_path(cur, plan, stats) -> bool:
@@ -289,19 +305,21 @@ def _upsert_step1_source_path(cur, plan, stats) -> bool:
         # Datei unveraendert — aber evtl. Struktur-Felder nachfuehren:
         #   - project_name: rekonziliert, wenn neue Discovery einen Wert
         #     liefert und der DB-Wert NULL ist (Legacy-Repair)
-        #   - status: Draft-Re-Evaluation fuer claude_plans wie gehabt
+        #   - status: Draft/Unknown-Re-Evaluation aus Markdown-Header
+        #     (Sprint/Plans) oder Session-Heuristik (claude_plans)
         reconcile_project = (
             plan.get("project_name") is not None and old_project is None
         )
-        if old_status == "draft" and plan.get("source_kind") == "claude_plans":
+        is_default_status = old_status in ("draft", "unknown", None, "")
+        source_kind = plan.get("source_kind") or ""
+        if is_default_status and source_kind in ("claude_plans", "project_sprints", "project_plans"):
             session_uuid, new_status = _legacy_session_fields(plan)
-            if new_status != "draft" or reconcile_project:
+            if new_status and new_status != old_status or reconcile_project:
                 cur.execute(
                     """UPDATE project_plans
                        SET status=%s,
                            project_name=COALESCE(%s, project_name),
-                           session_uuid=COALESCE(%s, session_uuid),
-                           updated_at=NOW()
+                           session_uuid=COALESCE(%s, session_uuid)
                        WHERE id=%s""",
                     (new_status, plan.get("project_name"), session_uuid, plan_id),
                 )
@@ -310,7 +328,7 @@ def _upsert_step1_source_path(cur, plan, stats) -> bool:
         if reconcile_project:
             cur.execute(
                 """UPDATE project_plans
-                   SET project_name=%s, updated_at=NOW()
+                   SET project_name=%s
                    WHERE id=%s""",
                 (plan["project_name"], plan_id),
             )
@@ -319,20 +337,41 @@ def _upsert_step1_source_path(cur, plan, stats) -> bool:
         stats["unchanged"] += 1
         return True
 
-    # Datei geaendert: Content-Felder neu, Status/session_uuid beibehalten
-    session_uuid, _ = _legacy_session_fields(plan)
-    cur.execute(
-        """UPDATE project_plans
-           SET title=%s, project_name=%s, content=%s, context_summary=%s,
-               category=%s, file_hash=%s, file_mtime=%s, content_hash=%s,
-               session_uuid=COALESCE(%s, session_uuid),
-               updated_at=NOW()
-           WHERE id=%s""",
-        (plan["title"], plan["project_name"], plan["content"],
-         plan["context_summary"], plan["category"],
-         plan["content_hash"], plan["mtime"], plan["content_hash"],
-         session_uuid, plan_id),
-    )
+    # Datei geaendert: Content-Felder neu. Status wird nur ueberschrieben,
+    # wenn er auf Default-Wert stand (User-manuelle Werte bleiben erhalten).
+    # updated_at: Nur bei echten User-Aenderungen bumpen, NICHT bei reinem
+    # Auto-Tag-Append (System-Change ohne inhaltliche User-Absicht).
+    session_uuid, derived_status = _legacy_session_fields(plan)
+    is_default_status = old_status in ("draft", "unknown", None, "")
+    auto_tag_only = bool(plan.get("_auto_tag_applied"))
+    updated_at_clause = "" if auto_tag_only else ", updated_at=NOW()"
+
+    if is_default_status and derived_status:
+        cur.execute(
+            f"""UPDATE project_plans
+               SET title=%s, project_name=%s, content=%s, context_summary=%s,
+                   category=%s, status=%s, file_hash=%s, file_mtime=%s,
+                   content_hash=%s, session_uuid=COALESCE(%s, session_uuid)
+                   {updated_at_clause}
+               WHERE id=%s""",
+            (plan["title"], plan["project_name"], plan["content"],
+             plan["context_summary"], plan["category"], derived_status,
+             plan["content_hash"], plan["mtime"], plan["content_hash"],
+             session_uuid, plan_id),
+        )
+    else:
+        cur.execute(
+            f"""UPDATE project_plans
+               SET title=%s, project_name=%s, content=%s, context_summary=%s,
+                   category=%s, file_hash=%s, file_mtime=%s, content_hash=%s,
+                   session_uuid=COALESCE(%s, session_uuid)
+                   {updated_at_clause}
+               WHERE id=%s""",
+            (plan["title"], plan["project_name"], plan["content"],
+             plan["context_summary"], plan["category"],
+             plan["content_hash"], plan["mtime"], plan["content_hash"],
+             session_uuid, plan_id),
+        )
     stats["updated"] += 1
     return True
 

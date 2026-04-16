@@ -68,7 +68,7 @@ def get_plans():
                    p.category, p.status, p.session_uuid, p.created_at, p.updated_at,
                    p.workflow_stage, p.current_state, p.target_state, p.next_action,
                    p.latest_executor_status, p.latest_review_status, p.open_items_count,
-                   p.source_kind, p.source_path,
+                   p.source_kind, p.source_path, p.file_mtime,
                    s.slug as session_slug
             FROM project_plans p
             LEFT JOIN sessions s ON s.session_uuid = p.session_uuid
@@ -94,6 +94,17 @@ def get_plans():
         plans = []
         for row in (rows or []):
             source_kind = row.get('source_kind') or ''
+            # file_mtime als ISO-String (POSIX-Float -> UTC-ISO). Die Card-
+            # Anzeige zeigt diese echte Datei-Aenderungszeit statt updated_at,
+            # weil updated_at durch System-Syncs gebumpt werden kann.
+            file_mtime_raw = row.get('file_mtime')
+            file_mtime_iso = None
+            if file_mtime_raw is not None:
+                try:
+                    from datetime import datetime as _dt, timezone as _tz
+                    file_mtime_iso = _dt.fromtimestamp(float(file_mtime_raw), tz=_tz.utc).isoformat()
+                except (TypeError, ValueError):
+                    file_mtime_iso = None
             plans.append({
                 'id': row['id'],
                 'filename': row['filename'],
@@ -116,6 +127,7 @@ def get_plans():
                 'source_kind': source_kind,
                 'source_path': row.get('source_path') or '',
                 'plan_type': _plan_type_from_source_kind(source_kind),
+                'file_mtime_iso': file_mtime_iso,
             })
 
         return jsonify({'plans': plans})

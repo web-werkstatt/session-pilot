@@ -177,10 +177,12 @@ function _buildCardHtml(plan, draggable) {
         ? `<span class="card-project"><i data-lucide="folder" class="icon icon-xs"></i> ${escapeHtml(plan.project_name)}</span>`
         : '';
     const sourceBadge = _buildPlanSourceBadge(plan);
-    // Phase 7 (2026-04-14): absolutes Datum auf der Card (updated_at bevorzugt, sonst created_at).
-    const planDate = plan.updated_at || plan.created_at || '';
+    // Card-Date zeigt die echte Datei-Aenderungszeit (file_mtime_iso),
+    // nicht DB-updated_at — Letzteres kann durch System-Syncs gebumpt werden
+    // (z.B. Auto-Tagging-Lauf) und ist dann irrefuehrend.
+    const planDate = plan.file_mtime_iso || plan.updated_at || plan.created_at || '';
     const dateBadge = planDate
-        ? `<span class="card-date" title="Zuletzt aktualisiert">${formatDate(planDate)}</span>`
+        ? `<span class="card-date" title="Datei zuletzt geaendert">${formatDate(planDate)}</span>`
         : '';
     const cockpitUrl = buildCopilotUrl(plan.id, plan.title, plan.project_name || filters.project || '');
     const detailUrl = buildPlanDetailUrl(plan);
