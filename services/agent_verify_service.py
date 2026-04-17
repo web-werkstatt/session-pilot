@@ -31,6 +31,10 @@ from services.agent_orchestrator_service import (
     _as_list,
     _iso,
 )
+from services.agent_append_only_diff import (
+    check_append_only_required_verification,
+    CLAIM_APPEND_ONLY_RESPECTED,
+)
 
 
 CLOSE_GATE_REASON_OK = "verify_pass"
@@ -40,6 +44,7 @@ CLOSE_GATE_REASON_NOT_PASS = "verify_not_pass"
 CLAIM_TYPES_COMMAND = ("tests_passed", "syntax_check_passed")
 CLAIM_TYPE_SMOKE = "smoke_test_done"
 CLAIM_TYPE_FEATURE = "feature_complete"
+CLAIM_TYPE_APPEND_ONLY = CLAIM_APPEND_ONLY_RESPECTED
 
 VERIFY_STATUS_PASS = "pass"
 VERIFY_STATUS_BLOCKED = "blocked"
@@ -339,6 +344,12 @@ def _check_required_verification(req, execution_claims, runner):
             "claim": claim,
             "details": f"exit={rc} command='{command}' output={_truncate(out)}",
         }, claim)
+
+    if rtype == "append_only_diff":
+        # Phase 3: Diff-Regelpruefung, delegiert komplett an
+        # services/agent_append_only_diff.py, damit die Verify-Service-Datei
+        # keine Append-only-spezifische Logik traegt.
+        return check_append_only_required_verification(req)
 
     if rtype == "smoke_test_evidence":
         evidence_ok = any(

@@ -2,8 +2,8 @@
 
 <!-- DASHBOARD-GENERATED:START source=session-handoff updated=2026-04-17 -->
 > **Letzte Aktualisierung:** 2026-04-17
-> **Status:** Agent-Orchestrator Phase 2 (Verify-Gate MVP verschlankt) ist im Code. `agent_execution_results` + `agent_verify_results` Schemata, Claim-Runner (tests_passed / syntax_check_passed / smoke_test_done / feature_complete), Close-Gate, 5 neue Endpunkte — 32 Tests gruen (13 Phase 2 + 19 Phase 1).
-> **Naechste Aufgabe:** Phase 3 verschlankt — Append-only-Diff-Check + Recovery-Snapshot (`sprints/sprint-agent-orchestrator-phase-2-3-reshaped.md`).
+> **Status:** Agent-Orchestrator Phase 3 verschlankt ist im Code. Gemeinsamer Append-only-Diff-Check (`services/agent_append_only_diff.py`), Claim `append_only_respected` als `required_verification`-Typ `append_only_diff` im Verify-Gate, Recovery-Snapshot-Builder + Persistenz (`services/agent_recovery_snapshot.py`), `agent_session_states.recovery_snapshot_json` (ALTER TABLE IF NOT EXISTS), `POST /api/agent-sessions/<id>/recover`. 44 Tests gruen (32 Phase 1+2 + 12 Phase 3).
+> **Naechste Aufgabe:** Keine offene Phase aus dem 5-Tage-Plan. Nur bei Bedarf: Scanner-Tuning-Folgepunkte.
 
 ---
 
@@ -11,21 +11,21 @@
 
 Der aktuelle Critical Path:
 
-- **NOW:** Append-only-Gate + Recovery-Snapshot (verschlankt)
+- **NOW:** — (alle Tage aus dem 5-Tage-Plan DONE)
 - **NEXT:** Scanner-Tuning-Folgepunkte nur bei echtem Bedarf
 - **LATER:** —
 
 Referenz dafuer:
 
 - `sprints/NOW-next-critical-path.md`
-- `sprints/sprint-agent-orchestrator-phase-2-3-reshaped.md` (Phase 2 DONE, Phase 3 offen)
+- `sprints/sprint-agent-orchestrator-phase-2-3-reshaped.md` (Phase 2 + Phase 3 DONE)
 - `docs/agent-orchestrator-hardening-technical-spec.md`
 
 ## Naechste Aufgaben
 
 ### NOW
 
-- [ ] Phase 3 verschlankt: gemeinsamer Append-only-Diff-Check fuer `next-session.md` / `handoff.md` / `sprints/master-plan-2026-04-01.md`, Claim `append_only_respected`, Recovery-Snapshot ohne Restore
+- [ ] —
 
 ### NEXT
 
@@ -37,7 +37,7 @@ Referenz dafuer:
 
 ### DONE (diese Session)
 
-- [x] Agent-Orchestrator Phase 2 (Verify-Gate MVP, verschlankt): `agent_execution_results` + `agent_verify_results` Schemata, Claim-Runner (tests_passed, syntax_check_passed, smoke_test_done, feature_complete) mit Command-Runner per DI, Close-Gate `done` nur bei `verify=pass`, 5 neue Endpunkte unter `/api/agent-tasks/<id>/{execution,verify,close}` — siehe Sprint-Nachtrag 2026-04-17 in `sprint-agent-orchestrator-phase-2-3-reshaped.md`
+- [x] Agent-Orchestrator Phase 3 verschlankt (Append-only-Gate + Recovery-Snapshot): `services/agent_append_only_diff.py` (neu), `services/agent_recovery_snapshot.py` (neu), Claim `append_only_respected` via `required_verification`-Typ `append_only_diff` in `services/agent_verify_service.py`, `agent_session_states.recovery_snapshot_json` per ALTER TABLE IF NOT EXISTS in `services/db_agent_orchestrator_schema.py`, `get_session_state` liefert `recovery_snapshot`, neuer Endpoint `POST /api/agent-sessions/<id>/recover`, 12 neue Tests (`test_agent_append_only_diff.py` + `test_agent_recovery.py`) — siehe Sprint-Nachtrag 2026-04-17 in `sprint-agent-orchestrator-phase-2-3-reshaped.md` §spec-phase3-done
 <!-- DASHBOARD-GENERATED:END -->
 
 ## Was funktioniert (= Bestand)
@@ -137,3 +137,9 @@ Dashboard laeuft als systemd-Service auf Port 5055, Backup taeglich 12:30.
 - Files: `services/db_agent_verify_schema.py` (neu), `services/agent_verify_service.py` (neu), `services/db_service.py`, `routes/agent_orchestrator_routes.py`, `tests/test_agent_verify.py` (neu), `next-session.md`, `sprints/NOW-next-critical-path.md`, `sprints/sprint-agent-orchestrator-phase-2-3-reshaped.md`
 - Verify: `python3 -m py_compile services/agent_verify_service.py services/db_agent_verify_schema.py routes/agent_orchestrator_routes.py services/db_service.py tests/test_agent_verify.py` → `ALL_OK`; `pytest tests/test_agent_verify.py tests/test_agent_orchestrator.py -v` → `32 passed in 1.34s`; `from app import app` listet `/api/agent-tasks/<int:task_id>/execution`, `/verify` (GET+POST) und `/close` (POST). AC1-AC4 aus `sprint-agent-orchestrator-phase-2-3-reshaped.md §spec-phase2-akzeptanz` belegt durch dedizierte Tests (AC1 `test_ac1_tests_passed_without_runner_is_blocked`, AC2 `test_ac2_tests_passed_with_exit_zero_is_pass`, AC3 `test_ac3_close_rejected_without_verify` + `test_ac3_close_rejected_when_verify_not_pass` + `test_ac3_close_ok_when_verify_pass_sets_session_done`, AC4 `test_ac4_execution_and_verify_readable_after_write`).
 - Next: Phase 3 verschlankt angehen (Append-only-Diff-Check fuer sensitive Dateien + Recovery-Snapshot ohne Restore). Zielschnitt steht in `sprints/sprint-agent-orchestrator-phase-2-3-reshaped.md §spec-phase3-*`.
+
+## Update 2026-04-17 — Agent-Orchestrator Phase 3 (Append-only-Gate + Recovery-Snapshot) umgesetzt
+- Changed: Phase 3 verschlankt implementiert. Gemeinsamer Append-only-Diff-Check mit DASHBOARD-GENERATED-Block-Awareness, Claim `append_only_respected` via `required_verification`-Typ `append_only_diff` im Verify-Gate, Recovery-Snapshot-Builder (git status + diff-stat + risk_flags) + Persistenz auf `agent_session_states.recovery_snapshot_json` (ALTER TABLE IF NOT EXISTS), neuer Endpoint `POST /api/agent-sessions/<id>/recover`. Kein Auto-Trigger, kein Restore — nur Snapshot, wie im Sprint festgelegt.
+- Files: `services/agent_append_only_diff.py` (neu), `services/agent_recovery_snapshot.py` (neu), `services/agent_verify_service.py`, `services/agent_orchestrator_service.py`, `services/db_agent_orchestrator_schema.py`, `routes/agent_orchestrator_routes.py`, `tests/test_agent_append_only_diff.py` (neu), `tests/test_agent_recovery.py` (neu), `next-session.md`, `sprints/NOW-next-critical-path.md`, `sprints/sprint-agent-orchestrator-5-day-execution-plan.md`, `sprints/sprint-agent-orchestrator-phase-2-3-reshaped.md`
+- Verify: `python3 -m py_compile services/agent_append_only_diff.py services/agent_recovery_snapshot.py services/agent_orchestrator_service.py services/agent_verify_service.py services/db_agent_orchestrator_schema.py routes/agent_orchestrator_routes.py tests/test_agent_append_only_diff.py tests/test_agent_recovery.py` → `ALL_OK`; `pytest tests/test_agent_verify.py tests/test_agent_orchestrator.py tests/test_agent_append_only_diff.py tests/test_agent_recovery.py -v` → `44 passed in 0.68s` (32 Phase 1+2 + 7 Append-only-Diff + 5 Recovery); `from app import app` + `url_map` listet `/api/agent-sessions/<session_id>/recover` zusaetzlich zu allen vorherigen Agent-Routen. AC1-AC4 aus `sprint-agent-orchestrator-phase-2-3-reshaped.md §spec-phase3-akzeptanz` belegt durch dedizierte Tests (AC1 `test_ac1_diff_in_generated_block_passes`, AC2 `test_ac2_diff_in_manual_text_outside_block_is_blocked`, AC3 `test_ac3_append_at_eof_passes`, AC4 `test_ac4_recovery_api_persists_snapshot_and_sets_state` + `test_ac4_recovery_api_accepts_explicit_snapshot`).
+- Next: 5-Tage-Plan ist damit komplett umgesetzt. Offen bleibt nur (nicht beauftragt): Auto-Trigger von `recover` durch Preflight-Ergebnisse, Restore-Logik, Claim `docs_updated` — alle bewusst ausserhalb Scope.

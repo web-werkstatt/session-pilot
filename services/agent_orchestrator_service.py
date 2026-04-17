@@ -155,7 +155,7 @@ def get_session_state(session_id):
     row = execute(
         """
         SELECT session_id, state, previous_state, reason, locked,
-               blocking_issues_json, updated_at
+               blocking_issues_json, recovery_snapshot_json, updated_at
         FROM agent_session_states
         WHERE session_id = %s
         """,
@@ -219,8 +219,25 @@ def _state_row_to_dict(row):
         "reason": row.get("reason"),
         "locked": bool(row.get("locked")),
         "blocking_issues": _as_list(row.get("blocking_issues_json")),
+        "recovery_snapshot": _as_dict(row.get("recovery_snapshot_json")),
         "updated_at": _iso(row.get("updated_at")),
     }
+
+
+def _as_dict(value):
+    """Parst JSONB-Werte defensiv zu dict, sonst None."""
+    if value is None:
+        return None
+    if isinstance(value, dict):
+        return value
+    if isinstance(value, str):
+        try:
+            parsed = json.loads(value)
+            if isinstance(parsed, dict):
+                return parsed
+        except Exception:
+            return None
+    return None
 
 
 # ---------------------------------------------------------------------------

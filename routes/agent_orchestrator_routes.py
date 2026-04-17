@@ -18,6 +18,7 @@ from flask import Blueprint, jsonify, request
 from routes.api_utils import api_route
 import services.agent_orchestrator_service as agent_orchestrator_service
 import services.agent_verify_service as agent_verify_service
+import services.agent_recovery_snapshot as agent_recovery_snapshot
 
 agent_orchestrator_bp = Blueprint("agent_orchestrator", __name__)
 
@@ -165,6 +166,38 @@ def api_get_verify_gate(task_id):
     if not result:
         return jsonify({"error": "no verify_gate_result for task"}), 404
     return jsonify(result)
+
+
+@agent_orchestrator_bp.route("/api/agent-sessions/<session_id>/recover", methods=["POST"])
+@api_route
+def api_recover_agent_session(session_id):
+    """Phase 3: setzt Session auf `recovery` und speichert Snapshot.
+
+    Optionales JSON-Body:
+      {
+        "repo_path": "...",         # optional, sonst Projekt-Root
+        "reason": "...",            # optional, Default "recovery snapshot captured"
+        "snapshot": {...}           # optional, ueberschreibt automatisch erzeugten Snapshot
+      }
+    """
+    payload = request.get_json(silent=True) or {}
+    snapshot = payload.get("snapshot")
+    if snapshot is None:
+        snapshot = agent_recovery_snapshot.build_recovery_snapshot(
+            repo_path=payload.get("repo_path"),
+        )
+    try:
+        state = agent_recovery_snapshot.persist_recovery_snapshot(
+            session_id,
+            snapshot,
+            reason=payload.get("reason"),
+        )
+    except ValueError as err:
+        return jsonify({"error": str(err)}), 400
+    return jsonify({
+        "session_state": state,
+        "snapshot": snapshot,
+    }), 201
 
 
 @agent_orchestrator_bp.route("/api/agent-tasks/<int:task_id>/close", methods=["POST"])

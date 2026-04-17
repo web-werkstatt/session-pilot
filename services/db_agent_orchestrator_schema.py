@@ -54,4 +54,9 @@ def ensure_agent_orchestrator_schema_impl(execute):
             )
         """)
 
+        # Phase 3 (2026-04-17): Recovery-Snapshot als JSONB-Feld am Session-State.
+        # ADD COLUMN IF NOT EXISTS ist idempotent und laeuft auch auf bestehenden
+        # Instanzen, bei denen die Tabelle vor Phase 3 angelegt wurde.
+        execute("ALTER TABLE agent_session_states ADD COLUMN IF NOT EXISTS recovery_snapshot_json JSONB")
+
         _agent_orchestrator_ready = True
