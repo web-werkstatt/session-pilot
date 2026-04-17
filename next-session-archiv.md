@@ -4,6 +4,56 @@
 
 ---
 
+## Session 2026-04-17 — Sprint 2 Executor-Handoff Commit 1 (Prompt-Export)
+
+### Was wurde erledigt
+
+Commit 1 aus `sprints/sprint-agent-orchestrator-executor-handoff.md` umgesetzt (Modell B: Dashboard als Empfaenger, User startet Claude interaktiv selbst). Damit ist der erste von vier Commits dieses Sprints abgeschlossen.
+
+**Neue Services:**
+- `services/agent_prompt_export_service.py` — `build_prompt_markdown(task, context=None, handoff_tail_lines=50, read_handoff_fn=None)` rendert einen Markdown-Block mit genau 8 Abschnitten: Titel, Ziel, Erlaubte Dateien, Verbotene Aktionen, Geforderte Nachweise (aus `required_verification`), Stop-Bedingungen, Handoff-Kontext (Pfad + letzte 50 Zeilen + Marker als ID+Titel + Plan), Abschluss-Protokoll (3 Shell-Zeilen `claude-task finish|verify|close <id>` + UI-Fallback-Hinweis).
+- `services/agent_task_auth.py` — Shared-Secret-Check `X-Agent-Task-Token` gegen `~/.agent-task-token` (Plaintext, erste nicht-leere Zeile). `check_agent_task_token()` liefert `None` bei Erfolg oder `(Response, 401)`-Tupel fuer Route-Return. Fehlende Datei oder falscher Header -> 401.
+
+**Neue Route:**
+- `GET /api/agent-tasks/<int:task_id>/prompt` in `routes/agent_orchestrator_routes.py`. Content-Type `text/markdown; charset=utf-8`. Optionale Query-Params `?project=&plan=&marker=` werden an `agent_orchestrator_service.resolve_context(...)` durchgereicht; ohne `project`-Param kein Resolver-Aufruf, Handoff-Abschnitt zeigt "kein Handoff konfiguriert".
+
+**v1-Design-Entscheidungen (in Sprint-Nachtrag dokumentiert):**
+- Auth-Check explizit nur am neuen /prompt-Endpunkt, nicht als globales `before_request`-Hook — damit AC5 (keine Aenderung am Orchestrator-Kern, bestehende Tests unveraendert) eingehalten bleibt.
+- Handoff-Tail = 50 Zeilen (Default in `HANDOFF_TAIL_LINES`).
+- Aktiver Marker kompakt als `marker_id + titel`, nicht mit Volltext.
+- Token-Datei fehlt -> 401 (kein Open-in-Dev-Fallback).
+- `make_response()` statt 3-Tuple-Return, weil Pyright das 3-Tuple nicht korrekt als `ResponseReturnValue` narrow'te.
+
+### Git-Commits
+
+Ein einzelner Commit erzeugt am Session-Ende (siehe commit SHA im Log). Davor keine Commits in dieser Session.
+
+### Betroffene Dateien
+
+| Datei | Aenderung |
+|-------|-----------|
+| `services/agent_prompt_export_service.py` | neu (196 Zeilen) |
+| `services/agent_task_auth.py` | neu (65 Zeilen) |
+| `tests/test_agent_prompt_export.py` | neu (326 Zeilen, 14 Tests) |
+| `routes/agent_orchestrator_routes.py` | `GET /prompt`-Route + 2 neue Imports + `make_response` |
+| `next-session.md` | Update-Block angefuegt (append-only) |
+| `sprints/sprint-agent-orchestrator-executor-handoff.md` | `## Nachtrag 2026-04-17 — Commit 1 umgesetzt` angefuegt (gitignored, lokal) |
+
+### Tests
+
+`pytest tests/test_agent_prompt_export.py tests/test_agent_orchestrator.py tests/test_agent_orchestrator_resolver.py tests/test_agent_verify.py tests/test_agent_verify_project_config.py tests/test_agent_append_only_diff.py tests/test_agent_recovery.py tests/test_agent_project_config.py` -> `83 passed in 2.09s`. Davon 69 Bestands-Tests unveraendert gruen (AC5 belegt) + 14 neu: 8 Service-Tests (alle Handoff/Marker/Plan-Kombinationen, leere Listen, 50-Zeilen-Default, ValueError bei leerem Task) + 6 Route-Tests (401 ohne Token, 401 bei falschem Token, 401 wenn Token-Datei fehlt, 200 mit korrektem Token, 404 fuer unbekannten Task, Query-Param-Durchreichung an Resolver).
+
+AC1 aus `§spec-akzeptanz` belegt durch `test_prompt_has_all_eight_sections_with_full_context` + Varianten.
+
+### Offene Punkte fuer naechste Session
+
+- Commit 2: CLI-Helper `scripts/claude_task.py` mit Subcommands `pull`, `finish`, `verify`, `close` (argparse, `~/.agent-task.toml` oder ENV `AGENT_TASK_URL`/`AGENT_TASK_TOKEN`). Tests mit gemocktem HTTP-Client und temporaerem Git-Repo.
+- Commit 3: UI-Minimum auf Task-Detail-Seite — Copy-Prompt-Button (ruft `/api/agent-tasks/<id>/prompt`, kopiert in Zwischenablage) + Textarea "Execution-Result pasten" als Fallback ohne CLI.
+- Commit 4: `docs/agent-orchestrator-executor-handoff.md` + manueller Smoke-Test auf trivialem Task.
+- Offen aus Policy: Gitea-Issue fuer diesen Commit nachtraeglich anlegen, falls Workflow-Regel (CLAUDE.md) streng interpretiert wird.
+
+---
+
 ## Session 2026-04-15 (Session 17) — Phase 7 + Guided Flow + Implementierungs-Check
 
 ### Was wurde erledigt

@@ -13,13 +13,15 @@ Tag 3 (2026-04-17) ergaenzt den Handoff-/Marker-Resolver:
   POST /api/agent-tasks/resolve-context -> Resolver (read-only)
   POST /api/agent-tasks/bootstrap       -> Resolver + Task-Contract anlegen
 """
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, make_response, request
 
 from routes.api_utils import api_route
 import services.agent_orchestrator_service as agent_orchestrator_service
 import services.agent_verify_service as agent_verify_service
 import services.agent_recovery_snapshot as agent_recovery_snapshot
 import services.agent_project_config_service as agent_project_config_service
+import services.agent_prompt_export_service as agent_prompt_export_service
+import services.agent_task_auth as agent_task_auth
 
 agent_orchestrator_bp = Blueprint("agent_orchestrator", __name__)
 
@@ -79,6 +81,55 @@ def api_bootstrap_agent_task():
     except ValueError as err:
         return jsonify({"error": str(err)}), 400
     return jsonify(result), 201
+
+
+@agent_orchestrator_bp.route("/api/agent-tasks/<int:task_id>/prompt", methods=["GET"])
+@api_route
+def api_get_agent_task_prompt(task_id):
+    """Sprint Executor-Handoff Commit 1 (2026-04-17):
+    Liefert einen fertig formulierten Markdown-Prompt fuer eine interaktive
+    Claude-Session. Der Prompt kann direkt gepastet werden.
+
+    Query-Parameter (optional):
+      * project — Resolver-Projekt-Slug
+      * plan    — numerische project_plans.id
+      * marker  — Marker-Slug
+
+    Ohne Query-Parameter wird der Handoff-Abschnitt als
+    "kein Handoff konfiguriert" gefuehrt; der restliche Prompt bleibt
+    vollstaendig.
+
+    Auth: Pflicht-Header `X-Agent-Task-Token` gegen `~/.agent-task-token`.
+    """
+    auth_err = agent_task_auth.check_agent_task_token()
+    if auth_err is not None:
+        return auth_err
+
+    contract = agent_orchestrator_service.get_task(task_id)
+    if not contract:
+        return jsonify({"error": "task not found"}), 404
+
+    project_slug = (request.args.get("project") or "").strip()
+    plan_id = (request.args.get("plan") or "").strip() or None
+    marker_id = (request.args.get("marker") or "").strip() or None
+
+    context = None
+    if project_slug:
+        try:
+            context = agent_orchestrator_service.resolve_context(
+                project_slug,
+                plan_id=plan_id,
+                marker_id=marker_id,
+            )
+        except ValueError:
+            context = None
+
+    markdown = agent_prompt_export_service.build_prompt_markdown(
+        contract, context=context
+    )
+    response = make_response(markdown, 200)
+    response.headers["Content-Type"] = "text/markdown; charset=utf-8"
+    return response
 
 
 @agent_orchestrator_bp.route("/api/agent-tasks/<int:task_id>/preflight", methods=["POST"])
