@@ -22,8 +22,15 @@ from typing import Optional
 
 
 _HUNK_HEADER = re.compile(r"^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@")
-_BLOCK_START = re.compile(r"<!--\s*DASHBOARD-GENERATED:START")
-_BLOCK_END = re.compile(r"<!--\s*DASHBOARD-GENERATED:END")
+
+# Sprint Project-Config (2026-04-17): Die Marker-Regexe sind nicht mehr hart
+# verdrahtet. `_BLOCK_START` / `_BLOCK_END` bleiben als Default fuer Aufrufe
+# ohne projektspezifischen Override. Aufrufer (Verify-Gate) reichen die
+# projektbezogenen Regexe aus agent_project_config_service durch.
+DEFAULT_BLOCK_START_REGEX = r"<!--\s*DASHBOARD-GENERATED:START"
+DEFAULT_BLOCK_END_REGEX = r"<!--\s*DASHBOARD-GENERATED:END"
+_BLOCK_START = re.compile(DEFAULT_BLOCK_START_REGEX)
+_BLOCK_END = re.compile(DEFAULT_BLOCK_END_REGEX)
 
 STATUS_PASS = "pass"
 STATUS_FAIL = "fail"
@@ -47,6 +54,8 @@ def check_append_only_diff(
     diff: str,
     *,
     file_content_before: Optional[str] = None,
+    block_start_regex: Optional[str] = None,
+    block_end_regex: Optional[str] = None,
 ) -> dict:
     """Prueft, ob ein unified-diff auf `path` die Append-only-Policy einhaelt.
 
@@ -81,7 +90,11 @@ def check_append_only_diff(
         else _read_file_or_empty(path)
     )
     total_lines = len(content.splitlines())
-    block_ranges = _find_generated_blocks(content)
+    block_ranges = _find_generated_blocks(
+        content,
+        block_start_regex=block_start_regex,
+        block_end_regex=block_end_regex,
+    )
     hunks = _parse_hunks(diff)
 
     violations = []
@@ -105,16 +118,20 @@ def check_append_only_diff(
     }
 
 
-def check_append_only_required_verification(req: dict):
+def check_append_only_required_verification(
+    req: dict,
+    *,
+    block_start_regex: Optional[str] = None,
+    block_end_regex: Optional[str] = None,
+):
     """Verify-Gate-Adapter fuer required_verification-Eintrag vom Typ
     `append_only_diff`.
 
     Rueckgabe: (check_dict, claim_name)
     check_dict enthaelt `type`, `status`, `claim`, `details`.
 
-    Dieser Helper bleibt bewusst hier, damit agent_verify_service.py schlank
-    bleibt und die komplette Append-only-Logik — inklusive ihrer Anbindung
-    an den Verify-Gate-Dispatcher — in genau einem Modul liegt.
+    Block-Regex wird projekt-spezifisch ueber Kwargs durchgereicht
+    (#spec-commit-3-append-only). Default bleibt DASHBOARD-GENERATED:*.
     """
     claim = req.get("claim") or CLAIM_APPEND_ONLY_RESPECTED
 
@@ -143,7 +160,13 @@ def check_append_only_required_verification(req: dict):
         if not path or diff is None:
             violations.append({"path": path, "reason": "missing_path_or_diff"})
             continue
-        result = check_append_only_diff(path, diff, file_content_before=file_before)
+        result = check_append_only_diff(
+            path,
+            diff,
+            file_content_before=file_before,
+            block_start_regex=block_start_regex,
+            block_end_regex=block_end_regex,
+        )
         if result["status"] != STATUS_PASS:
             violations.append({
                 "path": path,
@@ -176,20 +199,28 @@ def _read_file_or_empty(path: str) -> str:
     return ""
 
 
-def _find_generated_blocks(content: str):
+def _find_generated_blocks(
+    content: str,
+    *,
+    block_start_regex: Optional[str] = None,
+    block_end_regex: Optional[str] = None,
+):
     """Liefert Liste von (start_line, end_line) 1-indexiert, inklusive beide.
 
     Ein Block erstreckt sich von der START-Marker-Zeile bis zur END-Marker-Zeile
     (beide Marker-Zeilen selbst gelten als zum Block gehoerig, damit ein Diff
     auf der START- oder END-Zeile den Block intakt halten kann).
     """
+    start_pattern = re.compile(block_start_regex) if block_start_regex else _BLOCK_START
+    end_pattern = re.compile(block_end_regex) if block_end_regex else _BLOCK_END
+
     ranges = []
     open_start: Optional[int] = None
     for idx, line in enumerate(content.splitlines(), start=1):
-        if _BLOCK_START.search(line):
+        if start_pattern.search(line):
             if open_start is None:
                 open_start = idx
-        elif _BLOCK_END.search(line):
+        elif end_pattern.search(line):
             if open_start is not None:
                 ranges.append((open_start, idx))
                 open_start = None

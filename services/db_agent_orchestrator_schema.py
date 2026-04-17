@@ -59,4 +59,9 @@ def ensure_agent_orchestrator_schema_impl(execute):
         # Instanzen, bei denen die Tabelle vor Phase 3 angelegt wurde.
         execute("ALTER TABLE agent_session_states ADD COLUMN IF NOT EXISTS recovery_snapshot_json JSONB")
 
+        # Sprint Project-Config (2026-04-17): optionaler project_id-Bezug pro
+        # Task, damit Preflight / Verify-Gate projektspezifische Configs lesen.
+        execute("ALTER TABLE agent_task_contracts ADD COLUMN IF NOT EXISTS project_id INTEGER")
+        execute("CREATE INDEX IF NOT EXISTS idx_agent_task_contracts_project ON agent_task_contracts(project_id)")
+
         _agent_orchestrator_ready = True

@@ -19,6 +19,7 @@ from routes.api_utils import api_route
 import services.agent_orchestrator_service as agent_orchestrator_service
 import services.agent_verify_service as agent_verify_service
 import services.agent_recovery_snapshot as agent_recovery_snapshot
+import services.agent_project_config_service as agent_project_config_service
 
 agent_orchestrator_bp = Blueprint("agent_orchestrator", __name__)
 
@@ -198,6 +199,34 @@ def api_recover_agent_session(session_id):
         "session_state": state,
         "snapshot": snapshot,
     }), 201
+
+
+# ---------------------------------------------------------------------------
+# Sprint Project-Config: Admin-API
+# ---------------------------------------------------------------------------
+
+@agent_orchestrator_bp.route(
+    "/api/agent-projects/<int:project_id>/config", methods=["GET"]
+)
+@api_route
+def api_get_agent_project_config(project_id):
+    """Liefert die effektive Config (inkl. Default-Fallback je Feld)."""
+    cfg = agent_project_config_service.get_config(project_id)
+    return jsonify(cfg)
+
+
+@agent_orchestrator_bp.route(
+    "/api/agent-projects/<int:project_id>/config", methods=["PUT"]
+)
+@api_route
+def api_set_agent_project_config(project_id):
+    """Upsertet uebergebene Felder. Unbekannte Felder -> 400."""
+    payload = request.get_json(silent=True) or {}
+    try:
+        cfg = agent_project_config_service.set_config(project_id, **payload)
+    except ValueError as err:
+        return jsonify({"error": str(err)}), 400
+    return jsonify(cfg)
 
 
 @agent_orchestrator_bp.route("/api/agent-tasks/<int:task_id>/close", methods=["POST"])

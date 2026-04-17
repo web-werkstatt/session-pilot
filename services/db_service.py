@@ -474,3 +474,9 @@ def ensure_agent_verify_schema():
     """Sprint Agent-Orchestrator Phase 2: agent_execution_results + agent_verify_results."""
     from services.db_agent_verify_schema import ensure_agent_verify_schema_impl
     ensure_agent_verify_schema_impl(execute)
+
+
+def ensure_agent_project_config_schema():
+    """Sprint Agent-Orchestrator Project-Config: agent_project_configs."""
+    from services.db_agent_project_config_schema import ensure_agent_project_config_schema_impl
+    ensure_agent_project_config_schema_impl(execute)

@@ -21,7 +21,6 @@ subprocess-basierter Runner mit Timeout, damit der Service in Tests ohne
 echten Prozess laeuft.
 """
 import json
-import subprocess
 from typing import Callable, Optional
 
 from services.db_service import execute, ensure_agent_verify_schema
@@ -34,6 +33,11 @@ from services.agent_orchestrator_service import (
 from services.agent_append_only_diff import (
     check_append_only_required_verification,
     CLAIM_APPEND_ONLY_RESPECTED,
+)
+from services.agent_verify_claim_checks import (
+    check_docs_updated as _check_docs_updated,
+    default_command_runner,
+    load_project_config as _load_project_config,
 )
 
 
@@ -205,8 +209,13 @@ def run_verify_gate(task_id, *, command_runner: Optional[Callable] = None):
 
     # required_verification pro Eintrag
     runner = command_runner  # keine Default-Ausfuehrung bis explizit injiziert
+    project_config = _load_project_config(contract.get("project_id"))
     for req in contract.get("required_verification") or []:
-        check, failing_claim = _check_required_verification(req, execution_claims, runner)
+        check, failing_claim = _check_required_verification(
+            req, execution_claims, runner,
+            changed_files=changed_files,
+            project_config=project_config,
+        )
         checks.append(check)
         if failing_claim and check["status"] != VERIFY_STATUS_PASS:
             if failing_claim not in unverified:
@@ -308,18 +317,21 @@ def get_verify_gate(task_id):
     }
 
 
-def _check_required_verification(req, execution_claims, runner):
+def _check_required_verification(req, execution_claims, runner,
+                                 *, changed_files=None, project_config=None):
     """Fuehrt einen einzelnen required_verification-Eintrag aus.
 
-    Unterstuetzte Typen in Phase 2:
+    Unterstuetzte Typen:
       * command_exit_zero  -> runner(command) muss Exit 0 liefern
-      * smoke_test_evidence -> expliziter Beleg in execution.claims mit
-        type=smoke_test_done, value=true, evidence/details nicht leer
+      * smoke_test_evidence -> expliziter Beleg in execution.claims
+      * append_only_diff   -> Append-only-Regel mit projekt-spezifischem Block-Regex
+      * docs_updated       -> Doku-Diff gegen docs_paths der Project-Config
 
     Rueckgabe: (check_dict, claim_name_or_None)
     """
     claim = req.get("claim") or req.get("type")
     rtype = req.get("type")
+    project_config = project_config or {}
 
     if rtype == "command_exit_zero":
         command = req.get("command") or ""
@@ -346,10 +358,16 @@ def _check_required_verification(req, execution_claims, runner):
         }, claim)
 
     if rtype == "append_only_diff":
-        # Phase 3: Diff-Regelpruefung, delegiert komplett an
-        # services/agent_append_only_diff.py, damit die Verify-Service-Datei
-        # keine Append-only-spezifische Logik traegt.
-        return check_append_only_required_verification(req)
+        # Phase 3 / Sprint Project-Config: Diff-Regelpruefung mit projekt-
+        # spezifischem Block-Regex-Paar. Default bleibt DASHBOARD-GENERATED:*.
+        return check_append_only_required_verification(
+            req,
+            block_start_regex=project_config.get("append_only_block_start_regex"),
+            block_end_regex=project_config.get("append_only_block_end_regex"),
+        )
+
+    if rtype == "docs_updated":
+        return _check_docs_updated(req, runner, changed_files or [], project_config)
 
     if rtype == "smoke_test_evidence":
         evidence_ok = any(
@@ -397,27 +415,6 @@ def _truncate(text, limit=200):
     if len(text) <= limit:
         return text
     return text[:limit] + "..."
-
-
-def default_command_runner(command, *, timeout=30, cwd=None):
-    """Default-Runner fuer Command-Exit-Checks.
-
-    Bewusst nicht automatisch aktiv: run_verify_gate nutzt ihn nur, wenn der
-    Aufrufer ihn explizit uebergibt. Das haelt Tests und API-Aufrufe ohne
-    Subprocess-Seiteneffekte stabil.
-    """
-    try:
-        result = subprocess.run(
-            command if isinstance(command, list) else command,
-            shell=not isinstance(command, list),
-            capture_output=True,
-            text=True,
-            timeout=timeout,
-            cwd=cwd,
-        )
-        return result.returncode, (result.stdout or "") + (result.stderr or "")
-    except Exception as exc:
-        return 1, f"command_runner_error: {exc}"
 
 
 # ---------------------------------------------------------------------------

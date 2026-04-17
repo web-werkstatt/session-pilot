@@ -28,6 +28,11 @@ ALLOWED_STATES = {"inspect", "implement", "verify", "document", "done", "recover
 DEFAULT_MODE = "executor"
 ALLOWED_MODES = {"executor", "reviewer", "recovery"}
 
+# Sprint Project-Config (2026-04-17): Die historischen Dashboard-Defaults
+# werden nicht mehr direkt im Preflight geprueft, sondern kommen pro Task ueber
+# `agent_project_config_service.get_config(task.project_id)`. Die Konstante
+# bleibt erhalten, damit Altaufrufe (externe Tools, alte Migrations-Snippets)
+# den gleichen Blick auf den Default behalten. Sie ist nicht mehr autoritativ.
 SENSITIVE_FILES = (
     "next-session.md",
     "handoff.md",
@@ -55,15 +60,24 @@ def create_task(payload):
     if mode not in ALLOWED_MODES:
         raise ValueError(f"ungueltiger mode: {mode}")
 
+    project_id = payload.get("project_id")
+    if project_id is not None and str(project_id).strip() != "":
+        try:
+            project_id = int(project_id)
+        except (TypeError, ValueError) as exc:
+            raise ValueError(f"project_id muss numerisch sein: {project_id}") from exc
+    else:
+        project_id = None
+
     row = execute(
         """
         INSERT INTO agent_task_contracts (
             session_id, title, goal, mode,
             allowed_files_json, forbidden_actions_json,
             required_verification_json, required_outputs_json,
-            stop_conditions_json
+            stop_conditions_json, project_id
         )
-        VALUES (%s, %s, %s, %s, %s::jsonb, %s::jsonb, %s::jsonb, %s::jsonb, %s::jsonb)
+        VALUES (%s, %s, %s, %s, %s::jsonb, %s::jsonb, %s::jsonb, %s::jsonb, %s::jsonb, %s)
         RETURNING id, created_at
         """,
         (
@@ -76,6 +90,7 @@ def create_task(payload):
             json.dumps(payload.get("required_verification") or []),
             json.dumps(payload.get("required_outputs") or []),
             json.dumps(payload.get("stop_conditions") or []),
+            project_id,
         ),
         fetchone=True,
     )
@@ -93,7 +108,7 @@ def get_task(task_id):
         SELECT id, session_id, title, goal, mode,
                allowed_files_json, forbidden_actions_json,
                required_verification_json, required_outputs_json,
-               stop_conditions_json, created_at
+               stop_conditions_json, project_id, created_at
         FROM agent_task_contracts
         WHERE id = %s
         """,
@@ -109,6 +124,7 @@ def _task_row_to_contract(row):
     return {
         "task_id": row["id"],
         "session_id": row.get("session_id"),
+        "project_id": row.get("project_id"),
         "title": row.get("title"),
         "goal": row.get("goal") or "",
         "mode": row.get("mode") or DEFAULT_MODE,
@@ -274,7 +290,8 @@ def run_preflight(task_id, repo_path=None, git_runner=None):
     if not allowed:
         out_of_scope = list(touched)
 
-    sensitive_touched = [path for path in touched if path in SENSITIVE_FILES]
+    sensitive = _resolve_sensitive_files(task.get("project_id"))
+    sensitive_touched = [path for path in touched if path in sensitive]
 
     risk_flags = []
     if untracked or modified:
@@ -308,6 +325,24 @@ def run_preflight(task_id, repo_path=None, git_runner=None):
         "risk_flags": risk_flags,
         "blocking_reason": blocking_reason,
     }
+
+
+def _resolve_sensitive_files(project_id):
+    """Liest sensitive_files aus der Project-Config.
+
+    Fallback: Dashboard-Defaults (SENSITIVE_FILES). Lazy-Import vermeidet einen
+    Zirkel beim Modulstart, falls agent_project_config_service spaeter einmal
+    selbst Teile aus dem Orchestrator braucht.
+    """
+    try:
+        from services.agent_project_config_service import get_config
+        cfg = get_config(project_id)
+        files = cfg.get("sensitive_files")
+        if isinstance(files, list):
+            return set(files)
+    except Exception:
+        pass
+    return set(SENSITIVE_FILES)
 
 
 def _default_git_runner(repo_path):
@@ -347,7 +382,7 @@ from services.agent_orchestrator_resolver import resolve_context  # noqa: E402,F
 def bootstrap_task(project_id, title, goal="", plan_id=None, marker_id=None,
                    session_id=None, overrides=None,
                    *, marker_lookup=None, plan_lookup=None,
-                   handoff_path_fn=None):
+                   handoff_path_fn=None, project_id_for_contract=None):
     """Loest den Kontext auf und legt direkt einen agent_task_contract an.
 
     `overrides` erlaubt punktuelles Ueberschreiben der Resolver-Defaults
@@ -373,8 +408,19 @@ def bootstrap_task(project_id, title, goal="", plan_id=None, marker_id=None,
     else:
         allowed_files = list(context["start_scope"])
 
+    # `project_id` auf dem Task-Contract ist numerisch (FK-Kandidat zu projects),
+    # der Resolver arbeitet aber mit Slug/String. Wenn der Aufrufer einen
+    # expliziten numerischen Bezug setzen will, laeuft das ueber
+    # `project_id_for_contract` oder `overrides["project_id"]`.
+    contract_project_id = (
+        project_id_for_contract
+        if project_id_for_contract is not None
+        else overrides.get("project_id")
+    )
+
     payload = {
         "session_id": session_id,
+        "project_id": contract_project_id,
         "title": title,
         "goal": goal or "",
         "mode": overrides.get("mode") or DEFAULT_MODE,

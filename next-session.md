@@ -2,8 +2,8 @@
 
 <!-- DASHBOARD-GENERATED:START source=session-handoff updated=2026-04-17 -->
 > **Letzte Aktualisierung:** 2026-04-17
-> **Status:** Agent-Orchestrator Phase 3 verschlankt ist im Code. Gemeinsamer Append-only-Diff-Check (`services/agent_append_only_diff.py`), Claim `append_only_respected` als `required_verification`-Typ `append_only_diff` im Verify-Gate, Recovery-Snapshot-Builder + Persistenz (`services/agent_recovery_snapshot.py`), `agent_session_states.recovery_snapshot_json` (ALTER TABLE IF NOT EXISTS), `POST /api/agent-sessions/<id>/recover`. 44 Tests gruen (32 Phase 1+2 + 12 Phase 3).
-> **Naechste Aufgabe:** Keine offene Phase aus dem 5-Tage-Plan. Nur bei Bedarf: Scanner-Tuning-Folgepunkte.
+> **Status:** Drei neue Sprint-Plaene fuer Multi-Projekt-Einsatz entworfen; Executor-Adapter-Sprint (Modell A, Dashboard startet Claude selbst) zurueckgestellt. Operativer Pfad: Project-Config → Executor-Handoff (Modell B) → Copilot-Chat. Code unveraendert, 44 Orchestrator-Tests weiter gruen. Phase 1-3 Stand: DONE (siehe Historien-Block am Ende der Datei).
+> **Naechste Aufgabe:** Sprint 1 Project-Config implementieren.
 
 ---
 
@@ -11,33 +11,38 @@
 
 Der aktuelle Critical Path:
 
-- **NOW:** — (alle Tage aus dem 5-Tage-Plan DONE)
-- **NEXT:** Scanner-Tuning-Folgepunkte nur bei echtem Bedarf
-- **LATER:** —
+- **NOW:** Sprint 1 — Project-Config (`sprints/sprint-agent-orchestrator-project-config.md`)
+- **NEXT:** Sprint 2 — Executor-Handoff Modell B (`sprints/sprint-agent-orchestrator-executor-handoff.md`)
+- **LATER:** Sprint 3 — Copilot-Chat inkl. `during_task` + versionierbare System-Prompts (`sprints/sprint-agent-orchestrator-copilot-chat.md`); Modell A spaeter als eigenes Modul (`sprints/sprint-agent-orchestrator-executor-adapter.md`, zurueckgestellt); Scanner-Tuning-Folgepunkte nur bei echtem Bedarf
 
 Referenz dafuer:
 
 - `sprints/NOW-next-critical-path.md`
-- `sprints/sprint-agent-orchestrator-phase-2-3-reshaped.md` (Phase 2 + Phase 3 DONE)
-- `docs/agent-orchestrator-hardening-technical-spec.md`
+- `sprints/sprint-agent-orchestrator-project-config.md`
+- `sprints/sprint-agent-orchestrator-executor-handoff.md`
+- `sprints/sprint-agent-orchestrator-copilot-chat.md`
 
 ## Naechste Aufgaben
 
 ### NOW
 
-- [ ] —
+- [ ] Sprint 1 Project-Config umsetzen (6 Commits, AC1-AC5, siehe Sprint-Datei)
 
 ### NEXT
 
-- [ ] Scanner-Tuning-Folgepunkte nur bei echtem Bedarf (False-Positive-Haertung, Bulk-Materialize, Auto-Tag-Policy)
+- [ ] Sprint 2 Executor-Handoff Modell B umsetzen (4 Commits, AC1-AC5)
 
 ### LATER
 
-- [ ] —
+- [ ] Sprint 3 Copilot-Chat inkl. `during_task` und versionierbare System-Prompts (10 Commits insg.)
+- [ ] Modell A (Dashboard startet Executor) reaktivieren bei echtem Bedarf (autonome/getriggerte Runs, API-Key-Pfad)
+- [ ] Scanner-Tuning-Folgepunkte nur bei echtem Bedarf
 
 ### DONE (diese Session)
 
-- [x] Agent-Orchestrator Phase 3 verschlankt (Append-only-Gate + Recovery-Snapshot): `services/agent_append_only_diff.py` (neu), `services/agent_recovery_snapshot.py` (neu), Claim `append_only_respected` via `required_verification`-Typ `append_only_diff` in `services/agent_verify_service.py`, `agent_session_states.recovery_snapshot_json` per ALTER TABLE IF NOT EXISTS in `services/db_agent_orchestrator_schema.py`, `get_session_state` liefert `recovery_snapshot`, neuer Endpoint `POST /api/agent-sessions/<id>/recover`, 12 neue Tests (`test_agent_append_only_diff.py` + `test_agent_recovery.py`) — siehe Sprint-Nachtrag 2026-04-17 in `sprint-agent-orchestrator-phase-2-3-reshaped.md` §spec-phase3-done
+- [x] Drei neue Sprint-Plaene entworfen: Project-Config, Executor-Handoff (Modell B), Copilot-Chat (inkl. `during_task`-Modus und versionierbare, file-geseedete, DB-gepflegte System-Prompts)
+- [x] Executor-Adapter-Sprint (Modell A) zurueckgestellt mit Nachtrag (Max-Policy, synchroner HTTP-Block, tatsaechlicher Workflow interaktiv)
+- [x] `next-session.md`, `NOW-next-critical-path.md`, `plan-directory.md` auf neuen Critical Path ausgerichtet
 <!-- DASHBOARD-GENERATED:END -->
 
 ## Was funktioniert (= Bestand)
@@ -143,3 +148,15 @@ Dashboard laeuft als systemd-Service auf Port 5055, Backup taeglich 12:30.
 - Files: `services/agent_append_only_diff.py` (neu), `services/agent_recovery_snapshot.py` (neu), `services/agent_verify_service.py`, `services/agent_orchestrator_service.py`, `services/db_agent_orchestrator_schema.py`, `routes/agent_orchestrator_routes.py`, `tests/test_agent_append_only_diff.py` (neu), `tests/test_agent_recovery.py` (neu), `next-session.md`, `sprints/NOW-next-critical-path.md`, `sprints/sprint-agent-orchestrator-5-day-execution-plan.md`, `sprints/sprint-agent-orchestrator-phase-2-3-reshaped.md`
 - Verify: `python3 -m py_compile services/agent_append_only_diff.py services/agent_recovery_snapshot.py services/agent_orchestrator_service.py services/agent_verify_service.py services/db_agent_orchestrator_schema.py routes/agent_orchestrator_routes.py tests/test_agent_append_only_diff.py tests/test_agent_recovery.py` → `ALL_OK`; `pytest tests/test_agent_verify.py tests/test_agent_orchestrator.py tests/test_agent_append_only_diff.py tests/test_agent_recovery.py -v` → `44 passed in 0.68s` (32 Phase 1+2 + 7 Append-only-Diff + 5 Recovery); `from app import app` + `url_map` listet `/api/agent-sessions/<session_id>/recover` zusaetzlich zu allen vorherigen Agent-Routen. AC1-AC4 aus `sprint-agent-orchestrator-phase-2-3-reshaped.md §spec-phase3-akzeptanz` belegt durch dedizierte Tests (AC1 `test_ac1_diff_in_generated_block_passes`, AC2 `test_ac2_diff_in_manual_text_outside_block_is_blocked`, AC3 `test_ac3_append_at_eof_passes`, AC4 `test_ac4_recovery_api_persists_snapshot_and_sets_state` + `test_ac4_recovery_api_accepts_explicit_snapshot`).
 - Next: 5-Tage-Plan ist damit komplett umgesetzt. Offen bleibt nur (nicht beauftragt): Auto-Trigger von `recover` durch Preflight-Ergebnisse, Restore-Logik, Claim `docs_updated` — alle bewusst ausserhalb Scope.
+
+## Update 2026-04-17 — Drei neue Sprint-Plaene fuer Multi-Projekt-Einsatz
+- Changed: Drei neue Sprints angelegt (Project-Config, Executor-Handoff Modell B, Copilot-Chat mit Nachtrag `during_task` + versionierbare Prompts); Executor-Adapter-Sprint (Modell A) zurueckgestellt mit Begruendung (Max-Policy, synchroner HTTP-Block). `NOW-next-critical-path.md`, `plan-directory.md` und Kopfblock dieses Files auf neuen Pfad ausgerichtet.
+- Files: `sprints/sprint-agent-orchestrator-project-config.md` (neu), `sprints/sprint-agent-orchestrator-executor-handoff.md` (neu), `sprints/sprint-agent-orchestrator-copilot-chat.md` (neu), `sprints/sprint-agent-orchestrator-executor-adapter.md` (Status + Nachtrag), `sprints/NOW-next-critical-path.md`, `sprints/plan-directory.md`, `next-session.md`
+- Verify: Kein Code veraendert. 44 Orchestrator-Tests unveraendert gruen. Alle vier Sprint-Dateien Status "Proposed" bzw. "Proposed — zurueckgestellt". Reihenfolge: Sprint 1 NOW, Sprint 2 NEXT, Sprint 3 LATER.
+- Next: Sprint 1 Project-Config implementieren — Schema + Service-Grundlagen, Preflight auf Project-Config umstellen, Append-only-Diff parametrisieren, Resolver-Registry, Claim `docs_updated`, Admin-API.
+
+## Update 2026-04-17 — Sprint 1 Project-Config umgesetzt
+- Changed: Agent-Orchestrator ist nicht mehr dashboard-hardcoded. Neue Tabelle `agent_project_configs` (lazy), Service `agent_project_config_service` (get/set/delete mit Default-Fallback je Feld), `agent_task_contracts.project_id` als optionaler Bezug, `run_preflight` liest `sensitive_files` pro Task-Projekt, `agent_append_only_diff` nimmt Block-Regex-Paar projektspezifisch, Verify-Gate reicht Block-Regex und neuen Claim `docs_updated` (Diff via command_runner oder execution.changed_files; Match gegen `docs_paths`) durch, Resolver hat jetzt `register_project_lookups` / `unregister_project_lookups`, Admin-API GET/PUT `/api/agent-projects/<id>/config`.
+- Files: `services/db_agent_project_config_schema.py` (neu), `services/agent_project_config_service.py` (neu), `services/db_service.py`, `services/db_agent_orchestrator_schema.py`, `services/agent_orchestrator_service.py`, `services/agent_append_only_diff.py`, `services/agent_verify_service.py`, `services/agent_orchestrator_resolver.py`, `routes/agent_orchestrator_routes.py`, `tests/test_agent_project_config.py` (neu), `tests/test_agent_orchestrator.py`, `tests/test_agent_verify.py`, `tests/test_agent_append_only_diff.py`, `next-session.md`, `sprints/sprint-agent-orchestrator-project-config.md`
+- Verify: `python3 -m py_compile services/agent_project_config_service.py services/db_agent_project_config_schema.py services/agent_orchestrator_service.py services/agent_orchestrator_resolver.py services/agent_append_only_diff.py services/agent_verify_service.py services/db_agent_orchestrator_schema.py services/db_service.py routes/agent_orchestrator_routes.py` -> `ALL OK`; `pytest tests/test_agent_orchestrator.py tests/test_agent_verify.py tests/test_agent_append_only_diff.py tests/test_agent_recovery.py tests/test_agent_project_config.py -v` -> `69 passed in 1.63s` (44 Bestands-Tests gruen + 25 neue: 10 Project-Config-Tests inkl. Admin-API, 2 Preflight-mit-Project-Config, 3 Custom-Block-Regex Append-only, 6 Claim-`docs_updated`, 4 Resolver-Registry); `from app import app` listet `/api/agent-projects/<int:project_id>/config` (GET+PUT). Akzeptanzkriterien AC1-AC5 aus `sprint-agent-orchestrator-project-config.md §spec-akzeptanz` belegt: AC1 Lazy-Schema via `ensure_agent_project_config_schema`; AC2 Default-Fallback je Feld (`test_get_config_without_row_returns_defaults`, `test_set_config_overrides_only_given_field`); AC3 Preflight/Append-only/docs_updated ueber Config (`test_agent_orchestrator.py::test_preflight_uses_project_specific_sensitive_files`, `test_agent_verify.py::test_append_only_uses_project_specific_block_regex`, `test_docs_updated_*`); AC4 44 Bestandstests gruen; AC5 Dashboard laeuft ohne Eintrag dank Default-Fallback (`test_preflight_defaults_for_task_without_project`).
+- Next: Sprint 2 Executor-Handoff Modell B angehen (`sprints/sprint-agent-orchestrator-executor-handoff.md`).

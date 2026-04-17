@@ -116,6 +116,72 @@ def test_insertion_inside_generated_block_passes():
     assert result["status"] == "pass", result
 
 
+FILE_CUSTOM_BLOCK = """\
+# Fremdprojekt Handoff
+
+<!-- GENERATED:START scope=handoff -->
+old line A
+old line B
+<!-- GENERATED:END -->
+
+## Manuell
+Darf nicht geaendert werden.
+"""
+
+
+def test_custom_block_regex_allows_change_in_custom_block():
+    """#spec-commit-3-append-only: Andere Block-Marker werden akzeptiert,
+    wenn sie als Regex uebergeben werden."""
+    diff = (
+        "@@ -4,2 +4,2 @@\n"
+        "-old line A\n"
+        "-old line B\n"
+        "+new line A\n"
+        "+new line B\n"
+    )
+    result = check_append_only_diff(
+        "handoff.md",
+        diff,
+        file_content_before=FILE_CUSTOM_BLOCK,
+        block_start_regex=r"<!--\s*GENERATED:START",
+        block_end_regex=r"<!--\s*GENERATED:END",
+    )
+    assert result["status"] == "pass", result
+
+
+def test_custom_block_regex_blocks_change_in_manual_section():
+    diff = (
+        "@@ -9,1 +9,1 @@\n"
+        "-Darf nicht geaendert werden.\n"
+        "+Wurde geaendert.\n"
+    )
+    result = check_append_only_diff(
+        "handoff.md",
+        diff,
+        file_content_before=FILE_CUSTOM_BLOCK,
+        block_start_regex=r"<!--\s*GENERATED:START",
+        block_end_regex=r"<!--\s*GENERATED:END",
+    )
+    assert result["status"] == "fail"
+
+
+def test_default_regex_still_works_when_no_override():
+    """Ohne Override wird das Dashboard-Regex-Paar genutzt (Rueckwaertskompat)."""
+    diff = (
+        "@@ -4,2 +4,2 @@\n"
+        "-old line A\n"
+        "-old line B\n"
+        "+new line A\n"
+        "+new line B\n"
+    )
+    # Ohne Override findet der Checker KEINEN Block -> fail, weil
+    # Zeilen 4-5 ausserhalb "Block" liegen.
+    result = check_append_only_diff(
+        "handoff.md", diff, file_content_before=FILE_CUSTOM_BLOCK,
+    )
+    assert result["status"] == "fail"
+
+
 def test_insertion_in_middle_of_manual_text_is_blocked():
     # Fuegt eine Zeile zwischen zwei manuellen Zeilen ein — kein EOF, kein Block
     diff = (

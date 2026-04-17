@@ -57,6 +57,7 @@ def fake_db(monkeypatch):
                 "required_verification_json": _as_json(params[6]),
                 "required_outputs_json": _as_json(params[7]),
                 "stop_conditions_json": _as_json(params[8]),
+                "project_id": params[9] if len(params) > 9 else None,
                 "created_at": _now(),
             }
             return {"id": task_id, "created_at": contracts[task_id]["created_at"]}
@@ -236,166 +237,77 @@ def test_preflight_raises_for_unknown_task(fake_db):
 
 
 # ---------------------------------------------------------------------------
-# Handoff-/Marker-Resolver (Tag 3)
+# Project-Config: Preflight liest sensitive_files pro Projekt
 # ---------------------------------------------------------------------------
 
-class _FakeMarker:
-    """Minimale Marker-Stand-in-Dataclass fuer Resolver-Tests."""
+def test_preflight_uses_project_specific_sensitive_files(fake_db, monkeypatch):
+    """AC3 aus Sprint Project-Config:
+    Task mit project_id=42 und sensitive_files=['custom-notes.md'] erkennt
+    custom-notes.md, aber NICHT das Default-Dashboard-File next-session.md.
+    """
+    # Projekt 42 hat eine eigene Config, die next-session.md NICHT sensitiv macht.
+    import services.agent_project_config_service as cfg
 
-    def __init__(self, marker_id, plan_id=None, titel="", status="todo",
-                 ziel="", naechster_schritt="", last_session=""):
-        self.marker_id = marker_id
-        self.plan_id = plan_id
-        self.titel = titel
-        self.status = status
-        self.ziel = ziel
-        self.naechster_schritt = naechster_schritt
-        self.last_session = last_session
+    def fake_get_config(project_id):
+        if project_id == 42:
+            return {
+                "project_id": 42,
+                "sensitive_files": ["custom-notes.md"],
+                "append_only_block_start_regex": cfg.DEFAULT_BLOCK_START_REGEX,
+                "append_only_block_end_regex": cfg.DEFAULT_BLOCK_END_REGEX,
+                "handoff_path_relative": "custom-notes.md",
+                "docs_paths": [],
+            }
+        return {
+            "project_id": project_id,
+            "sensitive_files": cfg.DEFAULT_SENSITIVE_FILES,
+            "append_only_block_start_regex": cfg.DEFAULT_BLOCK_START_REGEX,
+            "append_only_block_end_regex": cfg.DEFAULT_BLOCK_END_REGEX,
+            "handoff_path_relative": cfg.DEFAULT_HANDOFF_PATH_RELATIVE,
+            "docs_paths": cfg.DEFAULT_DOCS_PATHS,
+        }
 
+    monkeypatch.setattr(cfg, "get_config", fake_get_config)
+
+    contract = orchestrator.create_task({
+        "title": "Fremdprojekt-Task",
+        "project_id": 42,
+        "allowed_files": ["custom-notes.md", "next-session.md"],
+    })
+    runner = _git_runner(status_lines=[
+        " M custom-notes.md",
+        " M next-session.md",
+    ])
+    result = orchestrator.run_preflight(contract["task_id"], git_runner=runner)
+
+    # custom-notes.md muss jetzt sensitive sein, next-session.md NICHT mehr.
+    assert "custom-notes.md" in result["sensitive_files_touched"]
+    assert "next-session.md" not in result["sensitive_files_touched"]
+    assert result["blocking_reason"] == "sensitive_file_touched"
+
+
+def test_preflight_defaults_for_task_without_project(fake_db):
+    """Task ohne project_id faellt auf Dashboard-Default sensitive_files zurueck."""
+    contract = orchestrator.create_task({
+        "title": "Default-Preflight",
+        "allowed_files": ["next-session.md"],
+    })
+    runner = _git_runner(status_lines=[" M next-session.md"])
+    result = orchestrator.run_preflight(contract["task_id"], git_runner=runner)
+
+    assert "next-session.md" in result["sensitive_files_touched"]
+    assert result["blocking_reason"] == "sensitive_file_touched"
+
+
+# ---------------------------------------------------------------------------
+# Bootstrap (Tag 3 Handoff-/Marker-Resolver Integration)
+# Detailtests fuer resolve_context und register_project_lookups liegen in
+# tests/test_agent_orchestrator_resolver.py, damit diese Datei unter dem
+# 500-Zeilen-Limit bleibt.
+# ---------------------------------------------------------------------------
 
 def _fixed_handoff_path(_project_id):
     return "/tmp/does-not-exist/handoff.md"
-
-
-def test_resolver_requires_project_id():
-    with pytest.raises(ValueError):
-        resolver.resolve_context("")
-
-
-def test_resolver_returns_handoff_path_without_plan_or_marker():
-    result = resolver.resolve_context(
-        "demo_project",
-        handoff_path_fn=_fixed_handoff_path,
-    )
-    assert result["project_id"] == "demo_project"
-    assert result["handoff_path"] == "/tmp/does-not-exist/handoff.md"
-    assert result["handoff_exists"] is False
-    assert result["active_marker"] is None
-    assert result["relevant_plan"] is None
-    assert result["start_scope"] == []
-    assert result["notes"] == []
-
-
-def test_resolver_with_plan_id_sets_start_scope_from_source_path():
-    plan_row = {
-        "id": 42,
-        "project_name": "demo_project",
-        "title": "Sprint X",
-        "status": "active",
-        "source_path": "sprints/sprint-x.md",
-        "source_kind": "project_sprints",
-        "updated_at": None,
-    }
-
-    result = resolver.resolve_context(
-        "demo_project",
-        plan_id=42,
-        plan_lookup=lambda pid: plan_row if int(pid) == 42 else None,
-        handoff_path_fn=_fixed_handoff_path,
-    )
-    assert result["relevant_plan"]["id"] == 42
-    assert result["relevant_plan"]["source_path"] == "sprints/sprint-x.md"
-    assert result["start_scope"] == ["sprints/sprint-x.md"]
-    assert result["notes"] == []
-
-
-def test_resolver_with_unknown_plan_id_notes_not_found():
-    result = resolver.resolve_context(
-        "demo_project",
-        plan_id=999,
-        plan_lookup=lambda pid: None,
-        handoff_path_fn=_fixed_handoff_path,
-    )
-    assert result["relevant_plan"] is None
-    assert result["start_scope"] == []
-    assert "plan_not_found:999" in result["notes"]
-
-
-def test_resolver_with_marker_id_derives_plan_id_from_marker():
-    marker = _FakeMarker(
-        marker_id="mkr-1",
-        plan_id="7",
-        titel="Scope A",
-        status="in_progress",
-        naechster_schritt="Weiter machen",
-    )
-    plan_row = {
-        "id": 7,
-        "project_name": "demo_project",
-        "title": "Plan 7",
-        "status": "active",
-        "source_path": "sprints/plan-7.md",
-        "source_kind": "project_sprints",
-        "updated_at": None,
-    }
-
-    lookups = {"marker_called_with": None, "plan_called_with": None}
-
-    def marker_lookup(project_id, marker_id):
-        lookups["marker_called_with"] = (project_id, marker_id)
-        return marker
-
-    def plan_lookup(plan_id):
-        lookups["plan_called_with"] = plan_id
-        return plan_row
-
-    result = resolver.resolve_context(
-        "demo_project",
-        marker_id="mkr-1",
-        marker_lookup=marker_lookup,
-        plan_lookup=plan_lookup,
-        handoff_path_fn=_fixed_handoff_path,
-    )
-    assert lookups["marker_called_with"] == ("demo_project", "mkr-1")
-    assert lookups["plan_called_with"] == "7"
-    assert result["active_marker"]["marker_id"] == "mkr-1"
-    assert result["active_marker"]["status"] == "in_progress"
-    assert result["relevant_plan"]["id"] == 7
-    assert result["start_scope"] == ["sprints/plan-7.md"]
-
-
-def test_resolver_with_unknown_marker_notes_not_found():
-    result = resolver.resolve_context(
-        "demo_project",
-        marker_id="missing",
-        marker_lookup=lambda pid, mid: None,
-        plan_lookup=lambda pid: None,
-        handoff_path_fn=_fixed_handoff_path,
-    )
-    assert result["active_marker"] is None
-    assert "marker_not_found:missing" in result["notes"]
-
-
-def test_resolver_explicit_plan_id_overrides_marker_plan():
-    # marker zeigt auf plan "7", aber der Caller uebergibt plan_id=99 explizit.
-    marker = _FakeMarker(marker_id="mkr-1", plan_id="7")
-    calls = {"plan_ids": []}
-
-    def plan_lookup(plan_id):
-        calls["plan_ids"].append(plan_id)
-        if int(plan_id) == 99:
-            return {
-                "id": 99,
-                "project_name": "demo_project",
-                "title": "Explicit Plan",
-                "status": "draft",
-                "source_path": "sprints/explicit.md",
-                "source_kind": "project_sprints",
-                "updated_at": None,
-            }
-        return None
-
-    result = resolver.resolve_context(
-        "demo_project",
-        plan_id=99,
-        marker_id="mkr-1",
-        marker_lookup=lambda pid, mid: marker,
-        plan_lookup=plan_lookup,
-        handoff_path_fn=_fixed_handoff_path,
-    )
-    assert calls["plan_ids"] == [99]
-    assert result["relevant_plan"]["id"] == 99
-    assert result["start_scope"] == ["sprints/explicit.md"]
 
 
 def test_bootstrap_task_uses_start_scope_as_allowed_files(fake_db):

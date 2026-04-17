@@ -63,6 +63,7 @@ def fake_db(monkeypatch):
                 "required_verification_json": _as_json(p[6]),
                 "required_outputs_json": _as_json(p[7]),
                 "stop_conditions_json": _as_json(p[8]),
+                "project_id": p[9] if len(p) > 9 else None,
                 "created_at": _now(),
             }
             return {"id": tid, "created_at": contracts[tid]["created_at"]}

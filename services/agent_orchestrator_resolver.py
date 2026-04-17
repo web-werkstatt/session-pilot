@@ -18,6 +18,46 @@ import os
 from services.db_service import execute
 
 
+# Sprint Project-Config (2026-04-17): Registry fuer pro-Projekt-Lookups.
+# Erlaubt, `handoff_path_fn`, `marker_lookup` und `plan_lookup` projektweise
+# auszutauschen, ohne den Default-Pfad fuer andere Projekte zu aendern.
+# Reiner Dict-Mapping — kein Plugin-System, keine dynamische Modul-Aufloesung.
+_project_lookups: dict = {}
+
+
+def register_project_lookups(project_id, *, handoff_path_fn=None,
+                             marker_lookup=None, plan_lookup=None):
+    """Registriert projekt-spezifische Lookup-Funktionen.
+
+    `project_id` wird als str-Schluessel gespeichert, damit die Registry sowohl
+    mit numerischen IDs als auch mit Slugs aus `resolve_context` konsistent
+    bleibt. Uebergebene Funktionen koennen None sein — sie ueberschreiben die
+    Defaults dann NICHT.
+    """
+    if project_id is None or str(project_id).strip() == "":
+        raise ValueError("project_id darf nicht leer sein")
+    key = str(project_id).strip()
+    entry = _project_lookups.setdefault(key, {})
+    if handoff_path_fn is not None:
+        entry["handoff_path_fn"] = handoff_path_fn
+    if marker_lookup is not None:
+        entry["marker_lookup"] = marker_lookup
+    if plan_lookup is not None:
+        entry["plan_lookup"] = plan_lookup
+
+
+def unregister_project_lookups(project_id):
+    """Entfernt den Registry-Eintrag (Teardown/Tests)."""
+    if project_id is None:
+        return
+    _project_lookups.pop(str(project_id).strip(), None)
+
+
+def _registry_lookup(project_id, key):
+    entry = _project_lookups.get(str(project_id).strip()) if project_id else None
+    return entry.get(key) if entry else None
+
+
 def resolve_context(project_id, plan_id=None, marker_id=None,
                     *, marker_lookup=None, plan_lookup=None,
                     handoff_path_fn=None):
@@ -46,7 +86,27 @@ def resolve_context(project_id, plan_id=None, marker_id=None,
     if not project_id:
         raise ValueError("project_id darf nicht leer sein")
 
-    handoff_path = (handoff_path_fn or _default_handoff_path)(project_id)
+    # Aufloesungsreihenfolge pro Lookup:
+    #   1) explizites Keyword-Argument (fuer Tests / ad-hoc Overrides)
+    #   2) per register_project_lookups() registrierte Funktion
+    #   3) Default (Dashboard-spezifisch)
+    effective_handoff_fn = (
+        handoff_path_fn
+        or _registry_lookup(project_id, "handoff_path_fn")
+        or _default_handoff_path
+    )
+    effective_marker_lookup = (
+        marker_lookup
+        or _registry_lookup(project_id, "marker_lookup")
+        or _default_marker_lookup
+    )
+    effective_plan_lookup = (
+        plan_lookup
+        or _registry_lookup(project_id, "plan_lookup")
+        or _default_plan_lookup
+    )
+
+    handoff_path = effective_handoff_fn(project_id)
     handoff_exists = bool(handoff_path) and os.path.exists(handoff_path)
 
     notes = []
@@ -56,7 +116,7 @@ def resolve_context(project_id, plan_id=None, marker_id=None,
     effective_plan_id = plan_id
 
     if marker_id is not None and str(marker_id).strip() != "":
-        marker = (marker_lookup or _default_marker_lookup)(project_id, str(marker_id).strip())
+        marker = effective_marker_lookup(project_id, str(marker_id).strip())
         if marker is not None:
             active_marker = _marker_to_public_dict(marker)
             if effective_plan_id in (None, "") and active_marker.get("plan_id"):
@@ -65,7 +125,7 @@ def resolve_context(project_id, plan_id=None, marker_id=None,
             notes.append(f"marker_not_found:{marker_id}")
 
     if effective_plan_id is not None and str(effective_plan_id).strip() != "":
-        plan_row = (plan_lookup or _default_plan_lookup)(effective_plan_id)
+        plan_row = effective_plan_lookup(effective_plan_id)
         if plan_row is not None:
             relevant_plan = _plan_row_to_dict(plan_row)
         else:
