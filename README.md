@@ -12,8 +12,8 @@
 </p>
 
 <p align="center">
-  Self-hosted dashboard to monitor, analyze, and review Claude Code sessions in real-time.<br>
-  Track costs, manage projects, and keep your dev infrastructure in check — all in one place.
+  Self-hosted dashboard to monitor, analyze, and review AI coding sessions in real-time.<br>
+  Track Claude Code, Codex, Gemini, OpenCode, and Kilo activity, manage projects, and keep your dev infrastructure in check — all in one place.
 </p>
 
 <p align="center">
@@ -33,9 +33,9 @@
 
 ## The Problem
 
-You use Claude Code across multiple projects and accounts. After a few days you have dozens of sessions — but no way to find, review, or learn from them. What did Claude change last Tuesday? Which session broke that config? How much did that refactor actually cost?
+You use AI coding assistants across multiple projects and accounts. After a few days you have dozens of sessions — but no way to find, review, or learn from them. What changed last Tuesday? Which session broke that config? How much did that refactor actually cost?
 
-Claude Code stores everything locally as JSONL files, but gives you no tools to work with that data. Sessions vanish behind UUIDs, costs are invisible, and when something goes wrong you're scrolling through raw logs.
+Claude Code, Codex, Gemini, and similar tools store their history locally, but give you no real cockpit to work with that data. Sessions vanish behind UUIDs, costs are invisible, and when something goes wrong you're scrolling through raw logs.
 
 **SessionPilot turns your local session data into an actionable dashboard:**
 
@@ -49,12 +49,14 @@ No API keys needed. No cloud service. Just point it at `~/.claude/` and go.
 
 ## Features
 
-### Claude Code Session Management
+### AI Session Management
+- **Multi-Tool Session Import** — Imports and normalizes local session data from Claude Code, Codex CLI, Gemini CLI, OpenCode, and Kilo
 - **Live Session Viewer** — Browse sessions with full Markdown rendering, syntax-highlighted code blocks, and timestamps per message
 - **Smart Message Types** — Distinguishes between User input, Assistant responses, and Tool Results (Bash, Grep, Read, etc.)
 - **Table of Contents** — Right sidebar with navigable TOC, numbered user questions as "chapters", scroll tracking
 - **Multi-Account Support** — Monitor multiple Claude Code accounts simultaneously
 - **Session Reviews** — Rate sessions (OK / Needs Fix / Reverted / Partial), add notes, link review threads across sessions
+- **Robust Sync Guard** — Session sync no longer skips cached files when the DB row is missing, so existing Codex `resume` runs can be re-imported after DB resets or partial data loss
 - **Export** — JSON, Markdown, HTML, XLSX, TXT
 
 ### Live Usage Monitor
@@ -267,8 +269,8 @@ All paths are configurable via environment variables. Set `DASHBOARD_PROJECTS_DI
 |---|---|---|
 | `/api/data` | GET | All project data + stats |
 | `/api/containers` | GET | Docker container list |
-| `/api/sessions` | GET | Claude Code sessions |
-| `/api/sessions/sync` | POST | Import/sync sessions |
+| `/api/sessions` | GET | Imported AI coding sessions |
+| `/api/sessions/sync` | POST | Import/sync sessions from local assistant stores |
 | `/api/sessions/analysis` | GET | Cost & usage analytics |
 | `/api/sessions/<uuid>` | GET | Session detail with messages |
 | `/api/sessions/<uuid>/export` | GET | Export (json/md/html/xlsx/txt) |
@@ -334,7 +336,7 @@ project_dashboard/
 │   ├── quality_routes.py     # Code quality dashboard & API
 │   └── ...                   # Groups, ideas, news, etc.
 ├── services/                 # 50+ service modules
-│   ├── session_import.py     # JSONL parser for Claude sessions
+│   ├── session_import.py     # Multi-tool session sync + shared import flow
 │   ├── session_export.py     # Multi-format export
 │   ├── project_scanner.py    # Auto-discovery & caching
 │   ├── project_detector.py   # Type detection (monorepo, fork, etc.)
@@ -387,18 +389,20 @@ MIT
 
 ### Warum SessionPilot?
 
-Wenn Du **Claude Code** taeglich mit mehreren Projekten nutzt, kennst Du das Problem: Sessions ueber verschiedene Accounts verstreut, keine Kostenuebersicht, kein Weg um nachzuvollziehen was gestern passiert ist. SessionPilot loest das, indem es deine Claude Code JSONL-Session-Dateien in eine durchsuchbare, browsbare und analysierbare Weboberflaeche importiert.
+Wenn Du **AI Coding Assistants** taeglich mit mehreren Projekten nutzt, kennst Du das Problem: Sessions ueber verschiedene Accounts und Tools verstreut, keine Kostenuebersicht, kein Weg um nachzuvollziehen was gestern passiert ist. SessionPilot loest das, indem es lokale Session-Dateien von Claude Code, Codex, Gemini, OpenCode und Kilo in eine durchsuchbare, browsbare und analysierbare Weboberflaeche importiert.
 
 Aber das ist nicht alles — es ueberwacht auch Docker-Container, scannt Projektverzeichnisse, integriert sich mit Gitea und gibt dir ein einheitliches Kontrollzentrum fuer deine gesamte Entwicklungsumgebung.
 
 ### Features
 
-**Claude Code Session-Verwaltung**
+**AI Session-Verwaltung**
+- Multi-Tool-Import fuer Claude Code, Codex CLI, Gemini CLI, OpenCode und Kilo
 - Live Session Viewer mit Markdown-Rendering, Syntax-Highlighting und Zeitstempel pro Nachricht
 - Intelligente Message-Typen: User-Eingaben, Assistant-Antworten und Tool-Results (Bash, Grep, Read etc.)
 - Inhaltsverzeichnis-Sidebar mit Scroll-Tracking und nummerierten User-Fragen
 - Multi-Account-Support fuer mehrere Claude Code Accounts
 - Session-Bewertungen mit Status, Notizen und uebergreifenden Review-Threads
+- Robuster Sync-Guard: gecachte Session-Dateien werden nicht mehr als `unchanged` uebersprungen, wenn der DB-Eintrag fehlt; dadurch koennen vorhandene Codex-`resume`-Sessions sauber erneut importiert werden
 - Export als JSON, Markdown, HTML, XLSX, TXT
 
 **Live Usage Monitor**

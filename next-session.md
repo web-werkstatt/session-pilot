@@ -94,3 +94,9 @@ Dashboard laeuft als systemd-Service auf Port 5055, Backup taeglich 12:30.
 - Files: `services/session_import.py`, `tests/test_session_import.py`, `next-session.md`, `sprints/master-plan-2026-04-01.md`
 - Verify: `parse_codex_jsonl()` liest die echte `019d99fa-e6f3-70a1-8035-f9c947483a8e`-Datei korrekt (`session_uuid`, `cwd`, Zeitfenster, Messages); `pytest tests/test_session_import.py -q` -> `25 passed`.
 - Next: Auf der laufenden Instanz einen Session-Sync anstossen, damit ggf. bisher nur gecachte, aber nicht persistierte Codex-Sessions neu eingelesen werden.
+
+## Update 2026-04-17
+- Changed: `README.md` auf den aktuellen Produktstand gezogen. SessionPilot beschreibt jetzt explizit Multi-Tool-Sessionimport (Claude, Codex, Gemini, OpenCode, Kilo), den robusteren Session-Sync und die allgemeineren `/api/sessions`-Beschreibungen.
+- Files: `README.md`, `next-session.md`, `sprints/master-plan-2026-04-01.md`
+- Verify: README-Abschnitte fuer Intro, Features, API und deutsche Produktbeschreibung spiegeln den aktuellen Import-/Sync-Stand wider.
+- Next: Bei weiteren Session-Import-Aenderungen die Produktbeschreibung in README synchron halten, damit GitHub/Gitea-Stand nicht wieder hinter dem Code liegt.

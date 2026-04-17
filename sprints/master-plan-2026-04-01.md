@@ -1998,3 +1998,35 @@ auftaucht.
 - `sprints/master-plan-2026-04-01.md`
 
 **Commit-Hash:** `pending`
+
+---
+
+## Nachtrag 2026-04-17 — README auf Multi-Tool-Sessionstand aktualisiert
+
+**Ziel:** Produktdokumentation an den tatsaechlichen Stand des Session-
+Imports anpassen, damit GitHub/Gitea nicht weiter nur von
+Claude-Sessionmanagement sprechen, obwohl bereits mehrere Tools und der
+neue Session-Sync-Guard vorhanden sind.
+
+**Umgesetzt:**
+- `README.md` Intro von reinen Claude-Sessions auf allgemeine
+  AI-Coding-Sessions erweitert.
+- Feature-Abschnitt um Multi-Tool-Import fuer Claude Code, Codex CLI,
+  Gemini CLI, OpenCode und Kilo ergaenzt.
+- Session-Sync-Guard fuer Cache-/DB-Drift dokumentiert, inklusive
+  Re-Import bestehender Codex-`resume`-Runs.
+- API- und Architektur-Beschreibungen von reinem Claude-Wording auf
+  allgemeine importierte AI-Sessions angepasst.
+- Deutsche README-Sektion entsprechend nachgezogen.
+
+**Verifikation:**
+- README-Abschnitte fuer Intro, Features, API und deutsche
+  Produktbeschreibung manuell gegen den aktuellen Code-/Importstand
+  abgeglichen.
+
+**Geaenderte Dateien:**
+- `README.md`
+- `next-session.md`
+- `sprints/master-plan-2026-04-01.md`
+
+**Commit-Hash:** `pending`
