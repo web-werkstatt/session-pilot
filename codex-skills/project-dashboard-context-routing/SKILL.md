@@ -107,3 +107,69 @@ Wenn du eine neue Aufgabe übernimmst:
 - Nicht aus `docs/next-session-archive-2026-04-05.md` operativ arbeiten
 - Nicht den Recursive-Scanner wieder als Hauptbaustelle behandeln
 - Nicht neue Meta-Sprints aufmachen, solange Phase 1 und Resolver offen sind
+
+## Update-Block-Format für `next-session.md`
+
+`next-session.md` ist **Kurz-Handoff**, nicht Chronik. Wenn nach erledigter
+Arbeit ein Update-Block angehängt wird, gilt:
+
+### Pflichtformat
+
+```
+## Update <YYYY-MM-DD> — <ein Satz, was erledigt wurde>
+- Changed: 1–2 Sätze, keine Changelog-Auflistung
+- Files: Bullet-Liste, nur die wirklich geänderten Pfade, keine Kommentare
+- Verify: nur echte Belege (Command → Ergebnis), keine Wiederholung des Sprint-Nachtrags
+- Next: 1 Satz, was als Nächstes ansteht (Referenz auf NOW-next-critical-path.md)
+```
+
+### Regeln
+
+- Ziel-Länge: **max ~10 Zeilen pro Update-Block**.
+- Details (Tabellen, Modulübersichten, Akzeptanz-Kreuze, komplette
+  Commit-Listen) gehören in den `## Nachtrag <Datum>`-Block der passenden
+  Sprint-Datei, **nicht** in `next-session.md`.
+- Wenn beide Dateien dasselbe beschreiben: `next-session.md` **verweist** auf
+  den Sprint-Nachtrag, wiederholt ihn nicht.
+- Append-only bleibt **ausserhalb** des `DASHBOARD-GENERATED`-Blocks
+  (`source=session-handoff`). Der Kopfbereich (Status-Zitat, "Was gilt
+  jetzt", NOW/NEXT/LATER/DONE) darf und soll nach erledigter Arbeit
+  überschrieben werden, damit die Prioritäten aktuell bleiben. Alles unterhalb
+  des Blocks (Bestand-Tabelle, Update-Chronik, operative Hinweise) bleibt
+  append-only.
+- Semantik der Listen im generierten Block:
+  - `### NOW`: genau eine aktuell anliegende Aufgabe. Bei Sessionende auf die
+    Nachfolge-Aufgabe umziehen.
+  - `### NEXT`: 1–3 Punkte direkt nach NOW, nicht kumulativ.
+  - `### LATER`: Rest-Scope, selten angefasst, aber überschreibbar wenn sich
+    Prioritäten ändern.
+  - `### DONE (diese Session)`: nur die aktuell abgeschlossene Session, nicht
+    kumulativ. Historische DONEs gehören in die `## Was funktioniert
+    (= Bestand)`-Tabelle oder in Update-Block + Sprint-Nachtrag.
+- Keine Emojis, keine Markdown-Ornamente.
+
+### Gilt genauso fuer `sprints/NOW-next-critical-path.md`
+
+- Kopfbereich (Zweck, NOW, NEXT, LATER, DONE) ist in
+  `<!-- DASHBOARD-GENERATED:START source=critical-path --> ... :END -->`
+  gewrappt und wird nach erledigter Arbeit überschrieben.
+- Alles unterhalb des Blocks ("Nicht jetzt", "Abbruchregel", "Nachtrag ...")
+  bleibt append-only.
+- `next-session.md` und `NOW-next-critical-path.md` müssen inhaltlich
+  konsistent bleiben: Was in `next-session.md` NOW steht, ist auch in
+  `NOW-next-critical-path.md` NOW.
+
+### Reine Execution-Pläne
+
+Sprint-Dateien wie `sprint-agent-orchestrator-5-day-execution-plan.md` bleiben
+vollständig append-only. Tages- oder Etappenstatus wird nur über
+`## Nachtrag <Datum>`-Blöcke mit DONE/OPEN-Markierungen nachgezogen, nicht
+durch generierte Kopfbereiche.
+
+### Gegenbeispiele (vermeiden)
+
+- Ausführliche File-Kommentare pro Datei im `Files:`-Block.
+- `Verify:` mit Commands UND Ergebnissen UND Akzeptanz-Kreuzen.
+- Wiederholung der Modul-Struktur oder Architektur-Entscheidung aus dem
+  Sprint-Nachtrag.
+- „Was funktioniert / Bestand"-Tabellen am Sessionende erneut anfügen.

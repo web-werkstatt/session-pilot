@@ -462,3 +462,15 @@ def ensure_audit_schema():
     """SPEC-AUDIT-001: Tabellen fuer Spec-Audit-System."""
     from services.db_audit_schema import ensure_audit_schema_impl
     ensure_audit_schema_impl(execute)
+
+
+def ensure_agent_orchestrator_schema():
+    """Sprint Agent-Orchestrator Phase 1: agent_task_contracts + agent_session_states."""
+    from services.db_agent_orchestrator_schema import ensure_agent_orchestrator_schema_impl
+    ensure_agent_orchestrator_schema_impl(execute)
+
+
+def ensure_agent_verify_schema():
+    """Sprint Agent-Orchestrator Phase 2: agent_execution_results + agent_verify_results."""
+    from services.db_agent_verify_schema import ensure_agent_verify_schema_impl
+    ensure_agent_verify_schema_impl(execute)

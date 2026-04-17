@@ -46,6 +46,7 @@ from routes.cockpit_routes import cockpit_bp
 from routes.plan_task_routes import plan_task_bp
 from routes.plan_task_match_routes import plan_task_match_bp
 from routes.plan_scan_routes import plan_scan_bp
+from routes.agent_orchestrator_routes import agent_orchestrator_bp
 
 
 def register_blueprints(app):
@@ -96,3 +97,4 @@ def register_blueprints(app):
     app.register_blueprint(plan_task_bp)
     app.register_blueprint(plan_task_match_bp)
     app.register_blueprint(plan_scan_bp)
+    app.register_blueprint(agent_orchestrator_bp)

@@ -2030,3 +2030,45 @@ neue Session-Sync-Guard vorhanden sind.
 - `sprints/master-plan-2026-04-01.md`
 
 **Commit-Hash:** `pending`
+
+---
+
+## Nachtrag 2026-04-17 — Fehlmerge mit GitHub-Mirror erkannt und rueckgaengig gemacht
+
+**Ziel:** Festhalten, dass ein Versuch, den oeffentlichen GitHub-Mirror in
+das interne Repo zu integrieren, nicht zum Repo-Modell passt und
+versehentlich interne Dateien entfernt hat.
+
+**Vorfall:**
+- `github/main` ist ein bereinigter Open-Source-Mirror ohne interne
+  Handoff-, Sprint-, Agent- und Testdateien.
+- Der Merge-Commit `7331fda` (`Merge github main mirror cleanup into
+  main`) uebernahm diese Loeschungen in `main`.
+- Dadurch fehlten im internen Repo anschliessend u. a. `AGENTS.md`,
+  `handoff.md`, `next-session.md`, grosse Teile von `sprints/` und
+  `tests/`.
+
+**Korrektur:**
+- Fehler sofort mit `git revert -m 1 --no-edit 7331fda` rueckgaengig
+  gemacht.
+- Revert-Commit: `280b6f8`
+- Interne Repo-Dateien damit lokal und auf `origin/main`
+  wiederhergestellt.
+
+**Verifikation:**
+- Nach dem Revert existieren wieder:
+  `AGENTS.md`, `next-session.md`, `handoff.md`,
+  `sprints/master-plan-2026-04-01.md`,
+  `tests/test_session_import.py`.
+- Revert erfolgreich nach Gitea gepusht (`origin/main`).
+
+**Lehre / Folgeregel:**
+- Den oeffentlichen GitHub-Mirror nicht mehr in internes `main` mergen.
+- Falls GitHub weiter gepflegt werden soll, nur ueber separaten
+  Mirror-Branch oder einen expliziten Export-/Cleanup-Workflow.
+
+**Geaenderte Dateien:**
+- `next-session.md`
+- `sprints/master-plan-2026-04-01.md`
+
+**Commit-Hash:** `pending`

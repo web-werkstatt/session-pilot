@@ -1,0 +1,61 @@
+"""
+Sprint sprint-agent-orchestrator-phase-2-3-reshaped (Phase 2, 2026-04-17):
+DB-Schema fuer den Verify-Gate MVP.
+
+Legt zwei Tabellen an:
+  * agent_execution_results -> rohes Ergebnis einer Agenten-Ausfuehrung
+  * agent_verify_results    -> Verify-Gate-Ergebnis pro Task
+
+Schema bewusst schlank gemaess Technical Spec §2.4/§2.5:
+`append_only_respected` und `docs_updated` sind NICHT Teil dieser Phase
+und wandern nach Phase 3.
+
+Idempotent und thread-safe nach Muster db_agent_orchestrator_schema.py.
+"""
+import threading
+
+_agent_verify_ready = False
+_agent_verify_lock = threading.Lock()
+
+
+def ensure_agent_verify_schema_impl(execute):
+    """Erstellt agent_execution_results + agent_verify_results. Idempotent."""
+    global _agent_verify_ready
+    if _agent_verify_ready:
+        return
+    with _agent_verify_lock:
+        if _agent_verify_ready:
+            return
+
+        execute("""
+            CREATE TABLE IF NOT EXISTS agent_execution_results (
+                id SERIAL PRIMARY KEY,
+                task_id INTEGER NOT NULL,
+                agent VARCHAR(64),
+                started_at TIMESTAMPTZ,
+                finished_at TIMESTAMPTZ,
+                changed_files_json JSONB NOT NULL DEFAULT '[]'::jsonb,
+                created_files_json JSONB NOT NULL DEFAULT '[]'::jsonb,
+                deleted_files_json JSONB NOT NULL DEFAULT '[]'::jsonb,
+                claims_json JSONB NOT NULL DEFAULT '[]'::jsonb,
+                summary TEXT,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            )
+        """)
+        execute("CREATE INDEX IF NOT EXISTS idx_agent_execution_results_task ON agent_execution_results(task_id, created_at DESC)")
+
+        execute("""
+            CREATE TABLE IF NOT EXISTS agent_verify_results (
+                id SERIAL PRIMARY KEY,
+                task_id INTEGER NOT NULL,
+                status VARCHAR(20) NOT NULL,
+                checks_json JSONB NOT NULL DEFAULT '[]'::jsonb,
+                unverified_claims_json JSONB NOT NULL DEFAULT '[]'::jsonb,
+                next_state VARCHAR(20),
+                execution_result_id INTEGER,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            )
+        """)
+        execute("CREATE INDEX IF NOT EXISTS idx_agent_verify_results_task ON agent_verify_results(task_id, created_at DESC)")
+
+        _agent_verify_ready = True

@@ -1,41 +1,44 @@
 # Projekt-Dashboard - Naechste Session
 
+<!-- DASHBOARD-GENERATED:START source=session-handoff updated=2026-04-17 -->
 > **Letzte Aktualisierung:** 2026-04-17
-> **Status:** Task-Entity, Task-Backfill, Multi-Source-Plan-Discovery und der neue `project_recursive`-Pfad sind im Code und live quergeprueft; offene Punkte sind jetzt Agent-Orchestrator Phase 1 und der Handoff-/Marker-Resolver.
-> **Naechste Aufgabe:** 1. Agent-Orchestrator Phase 1 bauen, 2. Handoff-/Marker-Resolver umsetzen, 3. spaetere Scanner-Tuning-Themen nur bei echtem Bedarf anfassen.
+> **Status:** Agent-Orchestrator Phase 2 (Verify-Gate MVP verschlankt) ist im Code. `agent_execution_results` + `agent_verify_results` Schemata, Claim-Runner (tests_passed / syntax_check_passed / smoke_test_done / feature_complete), Close-Gate, 5 neue Endpunkte — 32 Tests gruen (13 Phase 2 + 19 Phase 1).
+> **Naechste Aufgabe:** Phase 3 verschlankt — Append-only-Diff-Check + Recovery-Snapshot (`sprints/sprint-agent-orchestrator-phase-2-3-reshaped.md`).
 
 ---
 
 ## Was gilt jetzt
 
-Der relevante Arbeitsstand fuer die naechste Session ist nicht mehr
-`sprint-task-entity-und-drilldown`, sondern der aktuelle Critical Path:
+Der aktuelle Critical Path:
 
-- **NOW:** Agent-Orchestrator Phase 1 (`task_contract`, `session_state`, `preflight`)
-- **NEXT:** automatischen Handoff-/Marker-Resolver bauen
-- **LATER:** Scanner-Tuning nur fuer echte Folgeprobleme
+- **NOW:** Append-only-Gate + Recovery-Snapshot (verschlankt)
+- **NEXT:** Scanner-Tuning-Folgepunkte nur bei echtem Bedarf
+- **LATER:** —
 
 Referenz dafuer:
 
 - `sprints/NOW-next-critical-path.md`
-- `sprints/sprint-agent-orchestrator-5-day-execution-plan.md`
+- `sprints/sprint-agent-orchestrator-phase-2-3-reshaped.md` (Phase 2 DONE, Phase 3 offen)
+- `docs/agent-orchestrator-hardening-technical-spec.md`
 
 ## Naechste Aufgaben
 
 ### NOW
 
-- [ ] Agent-Orchestrator Phase 1 bauen:
-  `task_contract`, `session_state`, `preflight`
+- [ ] Phase 3 verschlankt: gemeinsamer Append-only-Diff-Check fuer `next-session.md` / `handoff.md` / `sprints/master-plan-2026-04-01.md`, Claim `append_only_respected`, Recovery-Snapshot ohne Restore
 
 ### NEXT
 
-- [ ] automatischen Handoff-/Marker-Resolver fuer `project_id` / `plan_id` / `marker_id` bauen
-- [ ] Scanner-Tuning-Folgepunkte nur bei echtem Bedarf aufnehmen (nicht sofort: False-Positive-Haertung, Bulk-Materialize, Auto-Tag-Policy)
+- [ ] Scanner-Tuning-Folgepunkte nur bei echtem Bedarf (False-Positive-Haertung, Bulk-Materialize, Auto-Tag-Policy)
 
 ### LATER
 
-- [ ] Verify-Gates (`execution_result`, Claims, `verify_gate_result`, Close-Gate)
-- [ ] Recovery + Doku-Gates (`recovery`, Append-only-/Sensitive-File-Regeln)
+- [ ] —
+
+### DONE (diese Session)
+
+- [x] Agent-Orchestrator Phase 2 (Verify-Gate MVP, verschlankt): `agent_execution_results` + `agent_verify_results` Schemata, Claim-Runner (tests_passed, syntax_check_passed, smoke_test_done, feature_complete) mit Command-Runner per DI, Close-Gate `done` nur bei `verify=pass`, 5 neue Endpunkte unter `/api/agent-tasks/<id>/{execution,verify,close}` — siehe Sprint-Nachtrag 2026-04-17 in `sprint-agent-orchestrator-phase-2-3-reshaped.md`
+<!-- DASHBOARD-GENERATED:END -->
 
 ## Was funktioniert (= Bestand)
 
@@ -100,3 +103,37 @@ Dashboard laeuft als systemd-Service auf Port 5055, Backup taeglich 12:30.
 - Files: `README.md`, `next-session.md`, `sprints/master-plan-2026-04-01.md`
 - Verify: README-Abschnitte fuer Intro, Features, API und deutsche Produktbeschreibung spiegeln den aktuellen Import-/Sync-Stand wider.
 - Next: Bei weiteren Session-Import-Aenderungen die Produktbeschreibung in README synchron halten, damit GitHub/Gitea-Stand nicht wieder hinter dem Code liegt.
+
+## Update 2026-04-17
+- Changed: Fehlversuch beim Zusammenfuehren von `github/main` in das interne Repo dokumentiert. Der Commit `7331fda` entfernte versehentlich interne Projektdateien (`AGENTS.md`, `handoff.md`, `next-session.md`, `sprints/`, `tests/`), weil der oeffentliche GitHub-Mirror eine bereinigte Historie ohne diese Dateien hat. Der Fehler wurde sofort mit `280b6f8` revertiert; die fehlenden Repo-Dateien sind lokal und auf `origin/main` wiederhergestellt.
+- Files: `AGENTS.md`, `handoff.md`, `next-session.md`, `sprints/master-plan-2026-04-01.md`, `tests/test_session_import.py`, `next-session.md`
+- Verify: Nach `git revert -m 1 --no-edit 7331fda` existieren `AGENTS.md`, `next-session.md`, `handoff.md`, `sprints/master-plan-2026-04-01.md` und `tests/test_session_import.py` wieder; Revert-Commit `280b6f8` ist nach `origin/main` gepusht.
+- Next: GitHub-Mirror kuenftig nicht mehr in `main` mergen. Falls der oeffentliche Mirror weiter gepflegt werden soll, nur ueber einen separaten Mirror-Branch oder einen expliziten Export-/Cleanup-Workflow arbeiten.
+
+## Update 2026-04-17 — Handoff-/Marker-Resolver (Tag 3) umgesetzt
+- Changed: Resolver + Bootstrap fuer den Agent-Orchestrator gebaut. `resolve_context(project_id, plan_id?, marker_id?)` liefert `handoff_path`, aktiven Marker, relevanten Plan und `start_scope`; `bootstrap_task(...)` kombiniert Resolver + `create_task` und setzt `allowed_files` per Default auf den Start-Scope.
+- Files: `services/agent_orchestrator_resolver.py` (neu), `services/agent_orchestrator_service.py`, `routes/agent_orchestrator_routes.py`, `tests/test_agent_orchestrator.py`, `next-session.md`, `sprints/NOW-next-critical-path.md`, `sprints/sprint-agent-orchestrator-5-day-execution-plan.md`
+- Verify: `python3 -m py_compile services/*.py routes/*.py` -> ALL_OK; `pytest tests/test_agent_orchestrator.py -v` -> 19 passed; `from app import app` zeigt `/api/agent-tasks/resolve-context` und `/api/agent-tasks/bootstrap` als POST registriert.
+- Next: Verify-Gate MVP gemaess `sprints/sprint-agent-orchestrator-phase-2-3-reshaped.md` (Phase 2 verschlankt) anfangen.
+
+## Update 2026-04-17 — Agent-Orchestrator Phase 1 (Foundation) umgesetzt
+- Changed: Fundament fuer den Agent-Orchestrator gebaut. Das Programm hat jetzt erstmals einen maschinenlesbaren `agent_task_contract`, einen expliziten `agent_session_state` und einen `preflight_result`-Check vor Executor-Start. Scope strikt auf Phase 1 begrenzt (kein Verify-Gate, keine Recovery, keine Doku-Gates).
+- Files:
+  - `services/db_agent_orchestrator_schema.py` (neu) — Tabellen `agent_task_contracts` + `agent_session_states`, lazy idempotent nach Muster der anderen `ensure_*_schema_impl`.
+  - `services/agent_orchestrator_service.py` (neu) — `create_task`, `get_task`, `get_session_state`, `set_session_state` (upsert mit automatischem `previous_state`), `run_preflight` mit injizierbarem `git_runner` fuer Tests, Scope-Diff gegen `allowed_files` und Sensitive-File-Flag fuer `next-session.md` / `handoff.md` / `sprints/master-plan-2026-04-01.md`.
+  - `services/db_service.py` — `ensure_agent_orchestrator_schema()` als Delegator ergaenzt.
+  - `routes/agent_orchestrator_routes.py` (neu) — `POST /api/agent-tasks`, `GET /api/agent-tasks/<id>`, `POST /api/agent-tasks/<id>/preflight`, `GET/POST /api/agent-sessions/<session_id>/state`. Fehler-Handling ueber `@api_route`.
+  - `routes/__init__.py` — Blueprint importiert und registriert.
+  - `tests/test_agent_orchestrator.py` (neu) — In-Memory-Fake fuer `execute`, 9 Tests fuer Task-CRUD, Session-State-Transitionen und alle Preflight-Pfade (Scope-Hit, Scope-Miss, Sensitive-File, Untracked, unbekannter Task).
+- Verify:
+  - `python3 -m py_compile services/*.py routes/*.py` → `ALL OK`.
+  - `pytest tests/test_agent_orchestrator.py -v` → `9 passed in 0.06s`.
+  - `from app import app` + `url_map` listet alle vier neuen Routes: `/api/agent-tasks`, `/api/agent-tasks/<int:task_id>`, `/api/agent-tasks/<int:task_id>/preflight`, `/api/agent-sessions/<session_id>/state` (GET + POST).
+  - Akzeptanzkriterien AC1-AC5 aus `sprints/sprint-agent-orchestrator-phase-1-foundation.md` durch Tests belegt.
+- Next: Gemaess `sprints/NOW-next-critical-path.md` als naechstes den Handoff-/Marker-Resolver bauen (`project_id` / `plan_id` / `marker_id` → `handoff_path`, aktiver Marker, relevanter Plan, Start-Scope). Verify-Gates, Claim-Modell, Close-Gate und Recovery-/Doku-Gates bleiben bewusst NEXT/LATER und werden erst nach dem Resolver angefasst.
+
+## Update 2026-04-17 — Agent-Orchestrator Phase 2 (Verify-Gate MVP) umgesetzt
+- Changed: Verify-Gate MVP verschlankt implementiert. Neue Schemata `agent_execution_results` + `agent_verify_results`, Service mit `record_execution`, `run_verify_gate` (Command-Runner per DI), `evaluate_close` + `close_task`, fuenf neue Endpunkte (`POST/GET /api/agent-tasks/<id>/execution`, `POST/GET /api/agent-tasks/<id>/verify`, `POST /api/agent-tasks/<id>/close`). Claim-Typen in Scope: `tests_passed`, `syntax_check_passed`, `smoke_test_done`, `feature_complete`. `append_only_respected` und `docs_updated` bewusst nicht dabei (Phase 3).
+- Files: `services/db_agent_verify_schema.py` (neu), `services/agent_verify_service.py` (neu), `services/db_service.py`, `routes/agent_orchestrator_routes.py`, `tests/test_agent_verify.py` (neu), `next-session.md`, `sprints/NOW-next-critical-path.md`, `sprints/sprint-agent-orchestrator-phase-2-3-reshaped.md`
+- Verify: `python3 -m py_compile services/agent_verify_service.py services/db_agent_verify_schema.py routes/agent_orchestrator_routes.py services/db_service.py tests/test_agent_verify.py` → `ALL_OK`; `pytest tests/test_agent_verify.py tests/test_agent_orchestrator.py -v` → `32 passed in 1.34s`; `from app import app` listet `/api/agent-tasks/<int:task_id>/execution`, `/verify` (GET+POST) und `/close` (POST). AC1-AC4 aus `sprint-agent-orchestrator-phase-2-3-reshaped.md §spec-phase2-akzeptanz` belegt durch dedizierte Tests (AC1 `test_ac1_tests_passed_without_runner_is_blocked`, AC2 `test_ac2_tests_passed_with_exit_zero_is_pass`, AC3 `test_ac3_close_rejected_without_verify` + `test_ac3_close_rejected_when_verify_not_pass` + `test_ac3_close_ok_when_verify_pass_sets_session_done`, AC4 `test_ac4_execution_and_verify_readable_after_write`).
+- Next: Phase 3 verschlankt angehen (Append-only-Diff-Check fuer sensitive Dateien + Recovery-Snapshot ohne Restore). Zielschnitt steht in `sprints/sprint-agent-orchestrator-phase-2-3-reshaped.md §spec-phase3-*`.
