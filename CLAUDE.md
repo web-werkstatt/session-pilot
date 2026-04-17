@@ -100,3 +100,56 @@ Bei **jeder Code-Aenderung** (neue Features, Bugfixes, Refactoring) wird ein Git
 
 Befehle, Scheduled Tasks, RemoteTrigger und Backup-Details: Skill `/project-ops` laden.
 
+## Handoff- und Prioritaetslogik (ab 2026-04-17)
+
+Diese Regel hat Vorrang vor Punkt 1 des `## Fokusauftrag`-Blocks oben,
+wenn sich Angaben widersprechen. Punkt 2-4 des Fokusauftrags
+(`marker-context.md`) bleiben unveraendert.
+
+Verbindliche Lese-Reihenfolge fuer Kontextaufnahme:
+
+1. `next-session.md` — ausschliesslich fuer aktuellen Kurzstatus, naechste
+   Aufgabe und operative Hinweise. Schlanker Handoff, keine Langchronik.
+2. `sprints/NOW-next-critical-path.md` — primaere operative
+   Prioritaetsdatei. Bestimmt, was JETZT, als NAECHSTES und SPAETER
+   relevant ist.
+3. themenspezifische Sprint-Datei passend zur aktuellen Aufgabe, z.B.:
+   - Agent-Orchestrator Foundation:
+     `sprints/sprint-agent-orchestrator-phase-1-foundation.md`
+   - Handoff-/Marker-Resolver:
+     `sprints/sprint-agent-orchestrator-5-day-execution-plan.md`
+     + `docs/agent-orchestrator-hardening-technical-spec.md`
+   - historische Einordnung Recursive-Scanner:
+     `sprints/sprint-full-project-recursive-plan-scanner.md`
+4. historische Details nur bei Bedarf:
+   - `sprints/master-plan-2026-04-01.md` — nur fuer historische
+     Sprint-Historie, nicht fuer unmittelbaren Critical Path.
+   - `docs/next-session-archive-2026-04-05.md` — nur fuer alte
+     Entscheidungen oder Recovery-Kontext. Niemals primaer daraus
+     arbeiten.
+
+Arbeitsregeln:
+
+- `next-session.md` nicht als Langchronik lesen.
+- `docs/next-session-archive-2026-04-05.md` nicht fuer aktuelle
+  Priorisierung.
+- `sprints/master-plan-2026-04-01.md` nur fuer historische Sprint-Historie,
+  nicht fuer den unmittelbaren Critical Path.
+- Wenn alte Session-Bloecke oder archivierte Update-Texte etwas anderes
+  sagen als die neuen operativen Dateien, gelten die neuen Dateien.
+
+Aktueller Stand, der zu respektieren ist:
+
+- `project_recursive`-Scanner ist live verifiziert, bereinigt und nicht mehr
+  Hauptbaustelle.
+- Offener Hauptfokus:
+  1. Agent-Orchestrator Phase 1
+  2. Handoff-/Marker-Resolver
+- Scanner-Tuning ist aktuell kein Default-Scope.
+
+Antwortverhalten bei neuer Aufgabe:
+
+- Am Anfang der Session oder neuen Aufgabe kurz nennen:
+  - welche der Prioritaetsdateien gelesen wurden
+  - welche davon fuer den aktuellen Auftrag fuehrend ist
+

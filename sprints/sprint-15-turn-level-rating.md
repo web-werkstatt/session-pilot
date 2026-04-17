@@ -1,4 +1,4 @@
-# Sprint 15: Turn-Level Rating
+# Sprint 15: Turn-Level Rating #sprint-sprint-15-turn-level-rating
 
 **Ziel:** Sessions nicht nur als Ganzes bewerten, sondern einzelne Abschnitte
 (Aufgaben/Turns) innerhalb einer Session separat raten. Ergibt praezisere
@@ -25,7 +25,7 @@ Session verliert die Info, dass 2 von 3 Aufgaben korrekt waren. Das verfaelscht:
 
 ## Aufgaben
 
-### 15.1 Konzept: Was ist ein "Abschnitt"?
+### 15.1 Konzept: Was ist ein "Abschnitt"? #spec-15-1-konzept-was-ist-ein-abschnitt
 
 **Definition:** Ein Abschnitt (Segment) ist eine zusammenhaengende Gruppe von
 Messages die eine logische Aufgabe behandeln.
@@ -49,7 +49,7 @@ per Klick zwischen Messages.
 
 **Empfehlung:** Automatische Erkennung als Default, manuelle Korrektur moeglich.
 
-### 15.2 DB-Schema: Segmente
+### 15.2 DB-Schema: Segmente #spec-15-2-db-schema-segmente
 
 ```sql
 CREATE TABLE session_segments (
@@ -84,7 +84,7 @@ CREATE TABLE session_segments (
 );
 ```
 
-### 15.3 Segment-Erkennung Service
+### 15.3 Segment-Erkennung Service #spec-15-3-segment-erkennung-service
 
 **`services/segment_detector.py` (neu):**
 
@@ -150,7 +150,7 @@ def _create_segment(messages, start_idx, end_idx):
     }
 ```
 
-### 15.4 Backend: Segment-API
+### 15.4 Backend: Segment-API #spec-15-4-backend-segment-api
 
 **GET `/api/sessions/<uuid>/segments`:**
 - Liefert alle Segmente einer Session
@@ -206,7 +206,7 @@ def _create_segment(messages, start_idx, end_idx):
 **POST `/api/sessions/<uuid>/segments/regenerate`:**
 - Loescht alle Segmente und erkennt neu (Reset)
 
-### 15.5 UI: Segment-Rating in Session-Detail
+### 15.5 UI: Segment-Rating in Session-Detail #spec-15-5-ui-segment-rating-in-session-detail
 
 **Segment-Leiste ueber dem Chat-Verlauf:**
 
@@ -238,7 +238,7 @@ def _create_segment(messages, start_idx, end_idx):
 - Automatisch generierter 1-Zeiler aus erster User-Message
 - Editierbar per Klick
 
-### 15.6 Aggregation: Segment → Session Outcome
+### 15.6 Aggregation: Segment → Session Outcome #spec-15-6-aggregation-segment-session-outcome
 
 **Automatisches Session-Outcome aus Segmenten:**
 
@@ -255,7 +255,7 @@ Wenn alle Segmente bewertet sind, wird das Session-Outcome automatisch abgeleite
 
 **Override:** User kann Session-Outcome manuell ueberschreiben (hat Vorrang).
 
-### 15.7 Integration mit bestehenden Features
+### 15.7 Integration mit bestehenden Features #spec-15-7-integration-mit-bestehenden-features
 
 **Rework-API (Sprint 9.3):**
 - `reason_distribution` zaehlt jetzt Segment-Outcomes statt Session-Outcomes
@@ -273,7 +273,7 @@ Wenn alle Segmente bewertet sind, wird das Session-Outcome automatisch abgeleite
 - `files_touched` pro Segment ermoeglicht Zuordnung: Welche Datei in welchem Segment beruehrt
 - Rework-Korrelation: "style.css wurde in 3 needs_fix Segmenten bearbeitet"
 
-### 15.8 Backfill: Segmente fuer bestehende Sessions
+### 15.8 Backfill: Segmente fuer bestehende Sessions #spec-15-8-backfill-segmente-fuer-bestehende-sessions
 
 **`scripts/backfill_segments.py` (neu):**
 

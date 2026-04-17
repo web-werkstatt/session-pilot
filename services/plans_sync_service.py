@@ -153,6 +153,12 @@ def _auto_tag_plan_file(plan, backup_dir: str):
     if _is_auto_tag_protected(plan):
         return 0
 
+    # Fast-Path aus discover_plans(): Datei war seit letztem Sync unveraendert,
+    # Auto-Tagging hat dort bereits gegriffen (oder explizit nichts zu tun
+    # gefunden). Kein erneutes Lesen + Backup + Write noetig.
+    if plan.get("_fast_path"):
+        return 0
+
     source_path = plan.get("source_path")
     if not source_path or not os.path.isfile(source_path):
         return 0
@@ -274,7 +280,7 @@ def _legacy_session_fields(plan):
             plan["project_name"], plan["created_at"],
         )
         return session_uuid, auto_status
-    if source_kind in ("project_sprints", "project_plans"):
+    if source_kind in ("project_sprints", "project_plans", "project_recursive"):
         from services.plans_import import detect_plan_status
         return None, detect_plan_status(plan.get("content") or "", fallback="draft")
     return None, "draft"
@@ -312,7 +318,7 @@ def _upsert_step1_source_path(cur, plan, stats) -> bool:
         )
         is_default_status = old_status in ("draft", "unknown", None, "")
         source_kind = plan.get("source_kind") or ""
-        if is_default_status and source_kind in ("claude_plans", "project_sprints", "project_plans"):
+        if is_default_status and source_kind in ("claude_plans", "project_sprints", "project_plans", "project_recursive"):
             session_uuid, new_status = _legacy_session_fields(plan)
             if new_status and new_status != old_status or reconcile_project:
                 cur.execute(
@@ -474,7 +480,14 @@ def _upsert_step4_insert(cur, plan, stats) -> None:
     session_uuid=NULL) gemaess Sprint-Plan Nachtrag 1.
 
     Fehlerfall (z.B. UNIQUE(filename)-Kollision mit Alt-Row, die weder
-    Schritt 2 noch 3 matchte): Skip mit Warn-Log, kein Crash.
+    Schritt 2 noch 3 matchte): Log mit Fehler-Kontext, dann Exception
+    hochreichen, damit der aeussere Savepoint-Handler die aborted
+    Transaction via ROLLBACK TO SAVEPOINT aufraeumt und `skipped` genau
+    einmal pro echtem Insert-Fehler hochzaehlt. Frueher hatte dieser
+    Block den Fehler selbst geschluckt UND skipped bereits hochgezaehlt
+    — dann scheiterte das folgende RELEASE SAVEPOINT auf der aborted
+    Transaction, der aeussere Handler sprang ein und zaehlte skipped ein
+    zweites Mal.
     """
     session_uuid, auto_status = _legacy_session_fields(plan)
     try:
@@ -491,12 +504,12 @@ def _upsert_step4_insert(cur, plan, stats) -> None:
              plan["source_path"], plan["source_kind"], plan["created_at"]),
         )
         stats["inserted"] += 1
-    except Exception as exc:  # noqa: BLE001 — Insert-Fehler darf Sync nicht kippen
+    except Exception as exc:  # noqa: BLE001
         logger.warning(
             "plan_scan_insert_failed filename=%s path=%s error=%s",
             plan["filename"], plan["source_path"], exc,
         )
-        stats["skipped"] += 1
+        raise
 
 
 def _upsert_plan(cur, plan, stats) -> None:

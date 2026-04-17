@@ -1,4 +1,4 @@
-# Sprint ADR-002 Stufe 1 — AI-Control-Plane (1a + 1b)
+# Sprint ADR-002 Stufe 1 — AI-Control-Plane (1a + 1b) #sprint-sprint-adr-002-stufe-1-ai-control-plane-1a-1b
 
 Stand: 2026-04-11
 Status: **FREIGEGEBEN** (Review Joseph)
@@ -16,7 +16,7 @@ Damit wird das Fundament gelegt, auf dem Stufen 2-4 (Cross-Project-Reviews, Arbe
 
 ## Relation zu bestehenden Plaenen
 
-### ADR-001 Welle 1 (DB-First Marker Core)
+### ADR-001 Welle 1 (DB-First Marker Core) #spec-adr-001-welle-1-db-first-marker-core
 
 **Beziehung: Dieser Sprint setzt ADR-001 fort.**
 
@@ -26,13 +26,13 @@ Damit wird das Fundament gelegt, auf dem Stufen 2-4 (Cross-Project-Reviews, Arbe
 - `workflow_core_service` (ADR-001 Prio 4) bleibt zentrale Domaenenschicht. In Stufe 1b wird `get_handoff_view()` um aktive Policies erweitert.
 - Write-Guard + Block-Marker-Parser (ADR-001 Prio 2) schuetzen weiterhin alle Markdown-Schreibvorgaenge.
 
-### Sprint Workflow-v2 (GUI/UX)
+### Sprint Workflow-v2 (GUI/UX) #spec-sprint-workflow-v2-gui-ux
 
 **Beziehung: Orthogonal.**
 
 Der Workflow-Tab bleibt unveraendert. Die neue `/policies`-Seite aus Stufe 1b ist eine eigene Route und beruehrt Workflow-v2 nicht. Der Setup-Reviewer aus Stufe 1a nutzt ausschliesslich das bestehende Tool-Files-Modal auf der Projekt-Detailseite.
 
-### Sprint QS (DB-First State Consolidation)
+### Sprint QS (DB-First State Consolidation) #spec-sprint-qs-db-first-state-consolidation
 
 **Beziehung: Phase 1 wird respektiert.**
 
@@ -46,7 +46,7 @@ Nach Commit 3 ist Stufe 1a vollstaendig lauffaehig. Joseph kann an diesem Punkt 
 
 ## Commits 1-10 (sequentielle Umsetzung)
 
-### Commit 1 — Doku-Rahmen
+### Commit 1 — Doku-Rahmen #spec-commit-1-doku-rahmen
 
 **Ziel:** Architektur-Rahmen und Sprint-Plan festschreiben, append-only Nachtraege an bestehende Dokumente anhaengen.
 
@@ -66,7 +66,7 @@ Nach Commit 3 ist Stufe 1a vollstaendig lauffaehig. Joseph kann an diesem Punkt 
 
 ---
 
-### Commit 2 (Stufe 1a) — Setup-Reviewer Core + project_reviews-Schema
+### Commit 2 (Stufe 1a) — Setup-Reviewer Core + project_reviews-Schema #spec-commit-2-stufe-1a-setup-reviewer-core-project-reviews-schema
 
 **Ziel:** Context-Collector, Reviewer-Service und Storage als Python-Fundament. Kein REST, keine UI, aber voll getestet.
 
@@ -98,7 +98,7 @@ Nach Commit 3 ist Stufe 1a vollstaendig lauffaehig. Joseph kann an diesem Punkt 
 
 ---
 
-### Commit 3 (Stufe 1a) — Setup-Reviewer REST + minimale UI-Anzeige
+### Commit 3 (Stufe 1a) — Setup-Reviewer REST + minimale UI-Anzeige #spec-commit-3-stufe-1a-setup-reviewer-rest-minimale-ui-anzeige
 
 **Ziel:** Stufe 1a wird lauffaehig. Joseph kann per Button im Dashboard den Review ausloesen und das Ergebnis sehen.
 
@@ -133,7 +133,7 @@ Nach Commit 3 ist Stufe 1a vollstaendig lauffaehig. Joseph kann an diesem Punkt 
 
 ---
 
-### Commit 4 (Stufe 1b) — Policy-Schema + Service + Tests
+### Commit 4 (Stufe 1b) — Policy-Schema + Service + Tests #spec-commit-4-stufe-1b-policy-schema-service-tests
 
 **Ziel:** 4 Policy-Tabellen, Policy-Service mit CRUD, Versionierung, Suggestion-Flow. Kein Perplexity-Call, keine REST, keine UI.
 
@@ -168,7 +168,7 @@ Nach Commit 3 ist Stufe 1a vollstaendig lauffaehig. Joseph kann an diesem Punkt 
 
 ---
 
-### Commit 5 (Stufe 1b) — Seed-Defaults (6 Rollen + Tool-Profile)
+### Commit 5 (Stufe 1b) — Seed-Defaults (6 Rollen + Tool-Profile) #spec-commit-5-stufe-1b-seed-defaults-6-rollen-tool-profile
 
 **Ziel:** Bootstrap-Daten fuer die Policy-Schicht. Explizit, nicht auto-boot.
 
@@ -194,7 +194,7 @@ Nach Commit 3 ist Stufe 1a vollstaendig lauffaehig. Joseph kann an diesem Punkt 
 
 ---
 
-### Commit 6 (Stufe 1b) — Perplexity-Policy-Reviewer
+### Commit 6 (Stufe 1b) — Perplexity-Policy-Reviewer #spec-commit-6-stufe-1b-perplexity-policy-reviewer
 
 **Ziel:** Perplexity analysiert den aktuellen Policy-Stand (aktive Policies + Tool-Profile + Session-Stats) und gibt strukturierte Vorschlaege.
 
@@ -222,7 +222,7 @@ Nach Commit 3 ist Stufe 1a vollstaendig lauffaehig. Joseph kann an diesem Punkt 
 
 ---
 
-### Commit 7 (Stufe 1b) — Policy-REST-Endpoints
+### Commit 7 (Stufe 1b) — Policy-REST-Endpoints #spec-commit-7-stufe-1b-policy-rest-endpoints
 
 **Ziel:** Alle Policy-Funktionen ueber HTTP erreichbar.
 
@@ -253,7 +253,7 @@ Nach Commit 3 ist Stufe 1a vollstaendig lauffaehig. Joseph kann an diesem Punkt 
 
 ---
 
-### Commit 8 (Stufe 1b) — Policy-UI Seite /policies
+### Commit 8 (Stufe 1b) — Policy-UI Seite /policies #spec-commit-8-stufe-1b-policy-ui-seite-policies
 
 **Ziel:** Joseph kann Rollen, Tool-Profile, aktive Policies und Pending Suggestions sehen und Suggestions freigeben/ablehnen.
 
@@ -287,7 +287,7 @@ Nach Commit 3 ist Stufe 1a vollstaendig lauffaehig. Joseph kann an diesem Punkt 
 
 ---
 
-### Commit 9 (Stufe 1b) — workflow_core_service Integration
+### Commit 9 (Stufe 1b) — workflow_core_service Integration #spec-commit-9-stufe-1b-workflow-core-service-integration
 
 **Ziel:** Aktive Policies sind aus dem Core-Service lesbar, damit spaeter der Tool-Adapter oder Handoff-Mirror sie rendern kann.
 
@@ -314,7 +314,7 @@ Nach Commit 3 ist Stufe 1a vollstaendig lauffaehig. Joseph kann an diesem Punkt 
 
 ---
 
-### Commit 10 — Session-Close + Push
+### Commit 10 — Session-Close + Push #spec-commit-10-session-close-push
 
 **Ziel:** Dokumentation aktualisieren, final Testsuite, Push.
 

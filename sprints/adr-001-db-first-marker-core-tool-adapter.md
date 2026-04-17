@@ -1,4 +1,4 @@
-# ADR-001: DB-First Marker Core + Tool-Adapter, Compatible Migration
+# ADR-001: DB-First Marker Core + Tool-Adapter, Compatible Migration #sprint-adr-001-db-first-marker-core-tool-adapter-compatible-migration
 
 Stand: 2026-04-10
 Status: **ACCEPTED**
@@ -25,7 +25,7 @@ Zusaetzlich fehlen:
 
 ## Entscheidung
 
-### 1. Marker und Workflow-State werden DB-first
+### 1. Marker und Workflow-State werden DB-first #spec-1-marker-und-workflow-state-werden-db-first
 
 Ab sofort gilt: Marker-Definitionen und -State werden **DB-first** gefuehrt.
 
@@ -33,7 +33,7 @@ Ab sofort gilt: Marker-Definitionen und -State werden **DB-first** gefuehrt.
 - Fruehere Aussagen in Sprint 17 und Sprint CP (*"handoff.md bleibt immer fuehrend"*) gelten als ueberholt.
 - Sprint QS Phase 2 wird damit zur bindenden Architekturrichtung.
 
-### 2. workflow_core_service als zentrale Domaenenschicht
+### 2. workflow_core_service als zentrale Domaenenschicht #spec-2-workflow-core-service-als-zentrale-domaenenschicht
 
 Ein neuer `services/workflow_core_service.py` wird eingefuehrt als kanonische Schicht fuer:
 
@@ -44,14 +44,14 @@ Plan -> Sprint -> Spec -> Marker -> WorkflowState -> HandoffState -> Zeiger
 - `workflow_loop_service.py` und `copilot_marker_service.py` werden schrittweise so umgebaut, dass sie nur noch ueber den Core lesen/schreiben.
 - Marker werden nie mehr direkt aus `handoff.md` geparst fuer operative Logik.
 
-### 3. Kompatible Migration fuer bestehende Projekte
+### 3. Kompatible Migration fuer bestehende Projekte #spec-3-kompatible-migration-fuer-bestehende-projekte
 
 - Bestehende `handoff.md`-Dateien werden beim Lesen importiert, normalisiert und in den DB-Core ueberfuehrt.
 - Konflikte (handoff.md sagt X, DB sagt Y) werden **angezeigt**, nicht heimlich ueberschrieben.
 - Write-Back-Richtung ist ausschliesslich: `Core (DB) -> handoff.md (Mirror) -> Tool-Bloecke`.
 - Manuelle Aenderungen in `handoff.md` ausserhalb der generierten Marker-Bloecke bleiben erhalten.
 
-### 4. Tool-Adapter-Service (nach dem Core)
+### 4. Tool-Adapter-Service (nach dem Core) #spec-4-tool-adapter-service-nach-dem-core
 
 Ein neuer `services/tool_profile_adapter_service.py` pflegt pro AI-Tool einen klar markierten Block:
 
@@ -64,13 +64,13 @@ Ein neuer `services/tool_profile_adapter_service.py` pflegt pro AI-Tool einen kl
 - Ersetzt nur den markierten Bereich, nie manuelle Inhalte davor/danach.
 - Erweitert den bestehenden `instruction_generator.py` (der nur bei neuen Projekten greift) um Update-Faehigkeit fuer bestehende Projekte.
 
-### 5. Capability-/Skill-Modell als nachgelagerte Erweiterung
+### 5. Capability-/Skill-Modell als nachgelagerte Erweiterung #spec-5-capability-skill-modell-als-nachgelagerte-erweiterung
 
 - Zuerst nur ein simples DB-Modell + Dashboard-Anzeige, ohne komplexe Logik.
 - Spaeter nutzen die Tool-Adapter Capabilities fuer Tool-spezifische Hinweise.
 - **Nicht** Voraussetzung fuer den Core-Umbau oder den Tool-Adapter.
 
-### 6. Perplexity-Copilot als Read-Only-Validierungsschicht
+### 6. Perplexity-Copilot als Read-Only-Validierungsschicht #spec-6-perplexity-copilot-als-read-only-validierungsschicht
 
 Der bestehende Perplexity-Copilot wird zum **Faktenpruefer / Reviewer** ueber dem Canonical Core:
 
@@ -111,7 +111,7 @@ Damit entsteht ein klarer Dreiklang:
 Executor (Claude, Codex, Gemini, jedes Modell) duerfen nicht auf Modelldisziplin vertrauen muessen.
 Das System muss unautorisierte Eingriffe in manuellen Text **technisch und regelbasiert** verhindern.
 
-### Schreib-Policies pro Datei
+### Schreib-Policies pro Datei #spec-schreib-policies-pro-datei
 
 | Datei | Policy | Bedeutung |
 |---|---|---|
@@ -120,13 +120,13 @@ Das System muss unautorisierte Eingriffe in manuellen Text **technisch und regel
 | `CLAUDE.md`, `AGENTS.md`, `GEMINI.md` | **generated-blocks-only** | Nur markierte Bereiche ueberschreiben |
 | `sprints/*.md` | **append-only** | Nachtraege anfuegen, bestehenden Text nie aendern |
 
-### Block-Marker-Konvention
+### Block-Marker-Konvention #spec-block-marker-konvention
 
 - `<!-- MANUAL:START owner=joseph -->` ... `<!-- MANUAL:END -->` — fuer jeden Executor schreibgeschuetzt
 - `<!-- DASHBOARD-GENERATED:START source=<service> updated=<datum> -->` ... `<!-- DASHBOARD-GENERATED:END -->` — darf nur vom genannten Service ueberschrieben werden
 - Unmarkierter Text gilt als manuell (= geschuetzt)
 
-### Produktfeature: Block-Marker-Parser und Write-Guard
+### Produktfeature: Block-Marker-Parser und Write-Guard #spec-produktfeature-block-marker-parser-und-write-guard
 
 Dies ist kein reines Regelthema, sondern ein **Kernfeature des Produkts**, das auch fuer andere Kunden/Projekte greift.
 
@@ -201,7 +201,7 @@ Neue Projekte bekommen diese Policies automatisch via Scaffolding. Bestehende Pr
 
 Das Feature ist generisch: Jedes Projekt das ueber das Dashboard verwaltet wird, bekommt automatisch Block-Marker-Schutz. Der Write-Guard ist nicht project_dashboard-spezifisch, sondern schuetzt beliebige Markdown-Dateien in beliebigen Projekten unter `/mnt/projects/`.
 
-### Herkunft
+### Herkunft #spec-herkunft
 
 Anlassfall: Session 2026-04-10, Claude hat bestehenden manuellen Text in `next-session.md` eigenmaechtig gekuerzt/umformuliert. Problem ist kein Modelldefekt, sondern fehlende Governance-Leitplanken. Executor ohne klare Schreib-Policy wird frueher oder spaeter „optimieren", was nicht optimiert werden soll. Daraus folgt: **technische Durchsetzung im Produkt, nicht Vertrauen auf Modelldisziplin.**
 
@@ -231,7 +231,7 @@ Anlassfall: Session 2026-04-10, Claude hat bestehenden manuellen Text in `next-s
 
 ## Konsequenzen
 
-### Positiv
+### Positiv #spec-positiv
 
 - Genau eine primaere Wahrheit pro Datentyp (Marker -> DB)
 - Saubere Domaenenschicht statt verteilter Koordination
@@ -240,14 +240,14 @@ Anlassfall: Session 2026-04-10, Claude hat bestehenden manuellen Text in `next-s
 - Konflikte werden sichtbar statt versteckt
 - Perplexity-Copilot kann als unabhaengiger Reviewer die Qualitaet der generierten Artefakte pruefen, ohne den State zu gefaehrden
 
-### Negativ / Risiken
+### Negativ / Risiken #spec-negativ-risiken
 
 - Umfangreicher Umbau der Marker-Lese-/Schreibpfade
 - Uebergangsphase mit zwei Marker-Quellen (handoff.md + DB) bis Migration abgeschlossen
 - Write-Back-Logik muss manuelle handoff.md-Abschnitte zuverlaessig erkennen und bewahren
 - Tool-Adapter muss mit unterschiedlichen bestehenden CLAUDE.md-Formaten umgehen koennen
 
-### Leitregeln fuer die Umsetzung
+### Leitregeln fuer die Umsetzung #spec-leitregeln-fuer-die-umsetzung
 
 - Kein Big-Bang: schrittweise Migration, jeder Schritt einzeln testbar
 - Importer-Phase (handoff.md -> DB) muss idempotent und re-runnable sein
@@ -257,15 +257,15 @@ Anlassfall: Session 2026-04-10, Claude hat bestehenden manuellen Text in `next-s
 
 ## Alternativen (verworfen)
 
-### A: handoff.md-first beibehalten (Status quo)
+### A: handoff.md-first beibehalten (Status quo) #spec-a-handoff-md-first-beibehalten-status-quo
 
 Verworfen, weil: wachsende Inkonsistenz zwischen DB-States und Markdown-Definitionen, kein sauberes Konfliktmodell moeglich, kein Tool-Adapter ohne kanonische DB-Quelle.
 
-### B: Kompletter Neubau ohne Migration
+### B: Kompletter Neubau ohne Migration #spec-b-kompletter-neubau-ohne-migration
 
 Verworfen, weil: bestehende Projekte mit handoff.md wuerden brechen, zu hohes Risiko fuer ein produktives System.
 
-### C: Zwei gleichrangige Quellen mit Sync
+### C: Zwei gleichrangige Quellen mit Sync #spec-c-zwei-gleichrangige-quellen-mit-sync
 
 Verworfen, weil: Sprint QS explizit als Anti-Pattern identifiziert ("dieselbe fachliche Information gleichrangig in JSON, Markdown und DB").
 

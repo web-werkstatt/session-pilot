@@ -1,4 +1,4 @@
-# Sprint SB - Session-Marker-Binding hart
+# Sprint SB - Session-Marker-Binding hart #sprint-sprint-sb-session-marker-binding-hart
 
 Stand: 2026-04-07
 Status: DONE 2026-04-07
@@ -93,14 +93,14 @@ bleibt unveraendert.
 
 ## Arbeitspakete
 
-### A - Schema-Migration
+### A - Schema-Migration #spec-a-schema-migration
 
 - [x] A1 `services/db_service.py`: neue Funktion `ensure_session_marker_schema()`
       mit `ALTER TABLE sessions ADD COLUMN IF NOT EXISTS marker_id VARCHAR(120)`,
       `marker_handoff_path TEXT`, Index `idx_sessions_marker_id`.
 - [x] A2 Lazy-Init-Aufruf in `_api_session_detail_inner` und im Backfill-Script (Pattern wie `ensure_ai_scope_schema`, kein expliziter Startup-Call in `app.py` noetig).
 
-### B - Backfill-Script
+### B - Backfill-Script #spec-b-backfill-script
 
 - [x] B1 `scripts/backfill_session_marker_id.py`: scannt alle Projekte,
       lockerer Aufbau wie `backfill_marker_last_sessions.py`.
@@ -108,7 +108,7 @@ bleibt unveraendert.
       mit `last_session != ''` -> `UPDATE sessions SET marker_id=?, marker_handoff_path=? WHERE session_uuid=? AND marker_id IS NULL`.
 - [x] B3 Logging: pro Projekt {markers_with_session, sessions_updated, sessions_already_set}.
 
-### C - Post-Sync-Hook
+### C - Post-Sync-Hook #spec-c-post-sync-hook
 
 - [x] C1 `services/session_import.py`: neue Funktion
       `_stamp_marker_context_after_sync()` - iteriert ueber alle Projekte
@@ -117,7 +117,7 @@ bleibt unveraendert.
 - [x] C2 Aufruf am Ende von `sync_all()` nach `_save_hash_cache()`.
 - [x] C3 Defensive: Fehler im Hook brechen den Sync nicht ab, nur Warning-Print.
 
-### D - Read-Path
+### D - Read-Path #spec-d-read-path
 
 - [x] D1 `routes/session_routes.py`: neuer Helfer `_resolve_session_marker(s)`
       der erst `s["marker_id"]` aus DB nutzt, dann Fallback auf
@@ -127,7 +127,7 @@ bleibt unveraendert.
 - [x] D3 Neue Route `GET /api/markers/<marker_id>/sessions` mit
       optionalem `project`-Query-Param.
 
-### E - Tests + Deploy
+### E - Tests + Deploy #spec-e-tests-deploy
 
 - [x] E1 Smoke-Test-Script (Python): Schema da, Backfill idempotent,
       Hook stempelt korrekt, Read-Path liefert Marker fuer historische Session.
@@ -136,7 +136,7 @@ bleibt unveraendert.
 - [x] E4 End-to-End-Verifikation: `curl /api/sessions/<uuid>` zeigt Marker,
       `curl /api/markers/<id>/sessions?project=...` zeigt Verlauf.
 
-### F - Doku
+### F - Doku #spec-f-doku
 
 - [x] F1 `CLAUDE.md`: neuer Patterns-Eintrag "Session-Marker-Binding" unter
       "Wichtige Patterns".

@@ -1,4 +1,4 @@
-# Sprint ADR-001 Welle 1 — DB-First Marker Core + Write-Guard
+# Sprint ADR-001 Welle 1 — DB-First Marker Core + Write-Guard #sprint-sprint-adr-001-welle-1-db-first-marker-core-write-guard
 
 Stand: 2026-04-10
 Status: **FREIGEGEBEN** (Review Joseph)
@@ -13,7 +13,7 @@ Damit wird das Architektur-Fundament gelegt, auf dem alle weiteren Workflow-Feat
 
 ## Relation zu bestehenden Plaenen
 
-### `project-dashboard-workflow-v2-system-plan.md` (Workflow-UI, 5 Sprints)
+### `project-dashboard-workflow-v2-system-plan.md` (Workflow-UI, 5 Sprints) #spec-project-dashboard-workflow-v2-system-plan-md-workflow-ui-5-sprints
 
 **Beziehung: Dieser Sprint baut das Fundament unter dem Workflow-v2-Plan.**
 
@@ -32,7 +32,7 @@ Damit wird das Architektur-Fundament gelegt, auf dem alle weiteren Workflow-Feat
 | Sprint 4 (Sync) | **Wird teilweise ersetzt:** Session-Rueckkanal laeuft ueber Core |
 | Sprint 5 (UX-Haertung) | Profitiert: Stabilere Daten = bessere UX |
 
-### `polished-finding-haven.md` (Dead-Code im Workflow)
+### `polished-finding-haven.md` (Dead-Code im Workflow) #spec-polished-finding-haven-md-dead-code-im-workflow
 
 **Beziehung: Unabhaengig, kein Konflikt.**
 
@@ -40,7 +40,7 @@ Dead-Code-Findings nutzen die bestehende Workflow-API (`signals.priority_hints`)
 Unser Sprint aendert die Datenquelle unter der API, nicht die API selbst.
 Dead-Code-Plan kann parallel oder danach umgesetzt werden.
 
-### `sprint-cp-control-plane-loop-closure.md` (Control-Plane Loop)
+### `sprint-cp-control-plane-loop-closure.md` (Control-Plane Loop) #spec-sprint-cp-control-plane-loop-closure-md-control-plane-loop
 
 **Beziehung: Wird teilweise durch diesen Sprint erledigt.**
 
@@ -48,7 +48,7 @@ Sprint CP Arbeitspaket A (Fachliches Workflow-Modell konsolidieren) wird durch d
 `workflow_core_service` (Ticket 2) direkt adressiert. Arbeitspakete B-F (Gate, Post-Execution,
 Rating, Signale, UX) bleiben als eigenstaendige Folgearbeit bestehen.
 
-### `sprint-qs-db-first-state-consolidation.md` (DB-First Strategie)
+### `sprint-qs-db-first-state-consolidation.md` (DB-First Strategie) #spec-sprint-qs-db-first-state-consolidation-md-db-first-strategie
 
 **Beziehung: Phase 2 wird durch diesen Sprint implementiert.**
 
@@ -56,7 +56,7 @@ Sprint QS Phase 2 ("Marker-State von Markdown-only zu DB-first") ist exakt das,
 was Ticket 1+2 umsetzen. Phase 1 (JSON-Stores migrieren) und Phase 3 (UI entkoppeln)
 bleiben als separate Folgearbeit.
 
-### `sprint-17-marker-driven-copilot-orchestration.md` (Marker-Driven Copilot)
+### `sprint-17-marker-driven-copilot-orchestration.md` (Marker-Driven Copilot) #spec-sprint-17-marker-driven-copilot-orchestration-md-marker-driven-copilot
 
 **Beziehung: Architekturprinzip wird umgekehrt, Code bleibt.**
 
@@ -86,7 +86,7 @@ durch ADR-001 umgekehrt (Nachtrag bereits gesetzt).
 
 ## Architektur-Korrekturen (aus Review)
 
-### Wrapper statt Modell modellieren
+### Wrapper statt Modell modellieren #spec-wrapper-statt-modell-modellieren
 
 Chinesische LLMs haben keine eigenen CLIs. Sie laufen ueber Wrapper (Cline, aider, Continue).
 Darum modellieren wir das tatsaechliche Runtime-Werkzeug:
@@ -97,12 +97,12 @@ tool_type = "aider"    backend_model = "qwen"
 tool_type = "claude"   backend_model = "claude-opus-4-6"
 ```
 
-### Atomic Write Pattern
+### Atomic Write Pattern #spec-atomic-write-pattern
 
 Nicht nur Locking, sondern: `temp -> fsync/close -> rename`.
 Damit bleiben Dateien bei Crash nicht halbgeschrieben.
 
-### Idempotente Re-Generierung
+### Idempotente Re-Generierung #spec-idempotente-re-generierung
 
 Derselbe Core-State muss bei erneutem Schreiben denselben generierten Block erzeugen.
 - Keine Timestamps im generierten Content (nur im Marker-Attribut `updated=`)
@@ -266,7 +266,7 @@ Ticket 2 braucht Ticket 1. Ticket 4 braucht Ticket 3.
 
 ## Status-Nachtraege
 
-### Ticket 3 — DONE (2026-04-10)
+### Ticket 3 — DONE (2026-04-10) #spec-ticket-3-done-2026-04-10
 
 **Commit:** `44f52f6` Feature: ADR-001 Prio 2 — Block-Marker-Parser + Write-Guard (7/7 Akzeptanzkriterien)
 

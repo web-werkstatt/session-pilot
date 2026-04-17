@@ -367,6 +367,16 @@ def _file_hash(filepath):
         return None
 
 
+def _db_has_session_for_path(filepath):
+    """Prueft, ob fuer eine JSONL-Datei bereits ein Session-Row existiert."""
+    row = execute(
+        "SELECT 1 AS ok FROM sessions WHERE jsonl_path = %s LIMIT 1",
+        (filepath,),
+        fetchone=True,
+    )
+    return bool(row)
+
+
 def sync_account(account, hash_cache=None):
     """Synchronisiert alle Sessions eines Accounts (alle Tools)"""
     name = account["name"]
@@ -386,7 +396,7 @@ def sync_account(account, hash_cache=None):
         """Prueft Hash und importiert nur bei Aenderung"""
         current_hash = _file_hash(filepath)
         key = _cache_key(filepath)
-        if current_hash and hash_cache.get(key) == current_hash:
+        if current_hash and hash_cache.get(key) == current_hash and _db_has_session_for_path(filepath):
             stats["unchanged"] += 1
             return
         try:

@@ -1,4 +1,4 @@
-# Sprint CWO — Context Window Optimizer
+# Sprint CWO — Context Window Optimizer #sprint-sprint-cwo-context-window-optimizer
 
 Stand: 2026-04-13
 Status: PLAN (freigegeben zur Implementierung)
@@ -21,14 +21,14 @@ Observe (regel-basiert)  →  Review (Perplexity)  →  Steer (Aktionen mit Appr
      kostenlos                 Qualitaetssicherung    nach Joseph-Freigabe
 ```
 
-### Kernprinzip: Migrations-Plan statt Loeschung
+### Kernprinzip: Migrations-Plan statt Loeschung #spec-kernprinzip-migrations-plan-statt-loeschung
 
 **Nichts wird geloescht — alles wird verschoben.** Jede Optimierung zeigt eine Zuordnungstabelle (Migration-Map) mit Vorher/Nachher pro Sektion. Joseph sieht VOR der Freigabe:
 - Wo ist der Inhalt danach verfuegbar?
 - Unter welcher Bedingung wird er geladen?
 - Welches Risiko besteht?
 
-### 6 Load-Modes
+### 6 Load-Modes #spec-6-load-modes
 
 | Mode | Bedeutung | Beispiel |
 |------|-----------|---------|
@@ -39,7 +39,7 @@ Observe (regel-basiert)  →  Review (Perplexity)  →  Steer (Aktionen mit Appr
 | `archived` | In Archivdatei verschoben | Alte Session-Historie |
 | `summarized` | Summary ersetzt Vollversion, Original bleibt | master-plan-summary.md |
 
-### Sprint-Plan-Schutz
+### Sprint-Plan-Schutz #spec-sprint-plan-schutz
 
 Sprint-Plaene werden NUR zusammengefasst wenn Status DONE ist. Offene/aktive Sprints bleiben vollstaendig erhalten. Der Context Collector erkennt den Status ueber:
 1. Dateiname-Pattern (`sprint-*.md`, `adr-*.md`)
@@ -183,7 +183,7 @@ class CWOFinding:
 
 **Phase 2:** Eigene `/cwo`-Uebersichtsseite mit allen Projekten, sortiert nach Token-Budget.
 
-### Navigation (Phase 2)
+### Navigation (Phase 2) #spec-navigation-phase-2
 
 Die CWO-Seite gehoert in die Sidebar unter **STEUERN**, direkt nach Quality:
 
@@ -208,7 +208,7 @@ Begruendung: CWO ist ein Quality-Check fuer Context-Windows (automatisierte Chec
 
 ## Tickets
 
-### Phase 1a — Analyse (Read-Only)
+### Phase 1a — Analyse (Read-Only) #spec-phase-1a-analyse-read-only
 
 | # | Ticket | Dateien |
 |---|--------|---------|
@@ -221,7 +221,7 @@ Begruendung: CWO ist ein Quality-Check fuer Context-Windows (automatisierte Chec
 | 1.7 | REST-Endpoints (Analyse) | `routes/context_window_optimizer_routes.py` |
 | 1.8 | UI (Analyse-Anzeige) | `context-window-optimizer.js`, Template |
 
-### Phase 1b — Perplexity-Review
+### Phase 1b — Perplexity-Review #spec-phase-1b-perplexity-review
 
 | # | Ticket | Dateien |
 |---|--------|---------|
@@ -229,7 +229,7 @@ Begruendung: CWO ist ein Quality-Check fuer Context-Windows (automatisierte Chec
 | 1.10 | Reviewer-Modul (Perplexity-Call + Dedup) | `reviewer.py`, Tests |
 | 1.11 | UI: Review-Button + Bewertungs-Anzeige | JS-Erweiterung |
 
-### Phase 2 — Aktionen mit Approval
+### Phase 2 — Aktionen mit Approval #spec-phase-2-aktionen-mit-approval
 
 | # | Ticket | Dateien |
 |---|--------|---------|
@@ -241,7 +241,7 @@ Begruendung: CWO ist ein Quality-Check fuer Context-Windows (automatisierte Chec
 | 2.6 | REST-Endpoints (Aktionen) | Route-Erweiterung |
 | 2.7 | UI (Aktions-Panel) | JS-Erweiterung |
 
-### Phase 3 — Perplexity-generierte Inhalte (Optional)
+### Phase 3 — Perplexity-generierte Inhalte (Optional) #spec-phase-3-perplexity-generierte-inhalte-optional
 
 - Perplexity generiert Unterverz.-CLAUDE.md Inhalte (statt regelbasierte Kopie)
 - LLM-gestuetzte Summary-Generierung (statt H2-Extraktion)

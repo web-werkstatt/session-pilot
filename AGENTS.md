@@ -6,6 +6,20 @@
 ## Architecture & Repo Workflow
 Follow the existing Blueprint architecture: add endpoints in the appropriate route module and register them through `routes/__init__.py`. Do not build project paths manually; use `services/path_resolver.py` helpers so monorepos and sub-projects resolve correctly. Keep Git, Docker, Gitea, search, and session logic in `services/` rather than route files. Preserve the repo handoff process by updating `next-session.md` after meaningful changes.
 
+## Context Routing / Handoff Priority
+For this repo, use the handoff and sprint files in this order:
+1. `next-session.md` — current short handoff only; do not treat it as long-form history
+2. `sprints/NOW-next-critical-path.md` — primary operational priority
+3. The sprint file that matches the current task
+4. `sprints/master-plan-2026-04-01.md` — historical sprint chronicle, not the default current-priority source
+5. `docs/next-session-archive-2026-04-05.md` — archive/recovery only, never primary operational guidance
+
+Additional repo-specific rules:
+- The `project_recursive` scanner is already live-verified and not the default focus anymore.
+- Current default focus is `Agent-Orchestrator Phase 1`, then the `Handoff-/Marker-Resolver`.
+- If `next-session.md` or `sprints/NOW-next-critical-path.md` conflict with archived or historical text, follow the newer operational files.
+- For immediate context in new sessions, also consult `codex-skills/project-dashboard-context-routing/SKILL.md` and `codex-skills/project-dashboard-context-routing/references/session-2026-04-17.md`.
+
 ## Build, Test, and Development Commands
 Install dependencies with `pip3 install -r requirements.txt`. Run locally with `python3 app.py`; the app serves on `DASHBOARD_PORT` from `.env` and defaults to `5055`. Use `./setup.sh` for bare-metal setup, or `docker compose up -d` to start the app and PostgreSQL together. Production runs as the `project-dashboard` systemd service; inspect runtime issues with `tail -f /mnt/projects/project_dashboard/dashboard.log`.
 

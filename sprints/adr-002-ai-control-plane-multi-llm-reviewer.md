@@ -1,4 +1,4 @@
-# ADR-002: AI-Control-Plane fuer kooperierende Multi-LLM-Systeme
+# ADR-002: AI-Control-Plane fuer kooperierende Multi-LLM-Systeme #sprint-adr-002-ai-control-plane-fuer-kooperierende-multi-llm-systeme
 
 Stand: 2026-04-11
 Status: **ACCEPTED**
@@ -22,7 +22,7 @@ Zwei Sprint-Plaene widersprechen sich nicht mehr, sondern erweitern sich:
 
 ## Entscheidung
 
-### 1. Produktdefinition
+### 1. Produktdefinition #spec-1-produktdefinition
 
 Das Projekt ist ab sofort offiziell definiert als **modellagnostische AI-Control-Plane fuer Software-Projekte**, die:
 
@@ -42,7 +42,7 @@ Was das System **nicht** ist:
 - Kein autonomes Remediation-System
 - Kein Ersatz fuer menschliche Priorisierung
 
-### 2. Fuenf-Ebenen-Architektur
+### 2. Fuenf-Ebenen-Architektur #spec-2-fuenf-ebenen-architektur
 
 Die Control-Plane wird konzeptionell in fuenf Ebenen geschnitten. Die Ebenen sind **Rollen**, nicht zwingend getrennte Services:
 
@@ -56,7 +56,7 @@ Die Control-Plane wird konzeptionell in fuenf Ebenen geschnitten. Die Ebenen sin
 
 Diese Schichten werden nicht als Code-Module abgebildet. Sie sind die **sprachliche Struktur**, in der Entscheidungen und Artefakte eingeordnet werden.
 
-### 3. Observe / Review / Steer als Control-Plane-Schichten
+### 3. Observe / Review / Steer als Control-Plane-Schichten #spec-3-observe-review-steer-als-control-plane-schichten
 
 Technisch teilt sich die Control-Plane in drei strikt getrennte Funktionsgruppen:
 
@@ -88,7 +88,7 @@ Technisch teilt sich die Control-Plane in drei strikt getrennte Funktionsgruppen
 - **Review** schreibt ausschliesslich in **Suggestion-Tabellen** (`project_reviews`, `policy_review_suggestions`). Niemals direkt in Runtime-Artefakte.
 - **Steer** ist der einzige Schreibweg in Runtime-Artefakte. Er nutzt ausschliesslich bestehende Schreibpfade (`write_guard`, `tool_profile_adapter_service`) und braucht immer explizite Freigabe durch Joseph.
 
-### 4. Reviewer-Rolle als Provider-agnostische Abstraktion
+### 4. Reviewer-Rolle als Provider-agnostische Abstraktion #spec-4-reviewer-rolle-als-provider-agnostische-abstraktion
 
 Der Reviewer ist eine **Rolle**, kein konkreter Provider. Perplexity ist die erste Backend-Implementierung und kann durch andere Modelle ersetzt werden, sobald Perplexity selbst unzuverlaessig wird. Die Architektur-Regel lautet: **das System spricht intern nur mit einer generischen Reviewer-API; der konkrete Provider ist eine austauschbare Backend-Implementierung.**
 
@@ -112,7 +112,7 @@ Der Reviewer hat im Vollausbau acht Funktionen, davon sind in Stufe 1 drei imple
 - Der Reviewer kann **nie** den Menschen ueberstimmen. Sein einziger Durchgriff ist eine Finding- oder Suggestion-Liste.
 - Reviewer-Prompts sind **tool-agnostisch** formuliert: Sie sprechen von „dem schreibenden Tool", nicht von „Claude".
 
-### 5. Policy-Schicht als DB-Governance
+### 5. Policy-Schicht als DB-Governance #spec-5-policy-schicht-als-db-governance
 
 **Die Arbeitsteilung zwischen Tools wird nicht durch harte Architektur-Annahmen im Code definiert, sondern ueber eine DB-Policy-Schicht.** Das ist die zentrale Korrektur gegenueber einer fruehen Version dieses ADR.
 
@@ -135,7 +135,7 @@ Begruendung: Aussagen darueber, welches Tool fuer welche Aufgabe am besten ist, 
 
 **Seed-Rollen als Vorschlag, nicht als Wahrheit:** Beim ersten Bootstrap werden sechs initiale Rollen (`programming`, `saas_webdesign`, `ux_ui`, `code_fix`, `quality_review`, `research_review`) als Startpunkt angelegt. Sie sind **vollstaendig aenderbar, erweiterbar, deaktivierbar**. Sie stehen nicht als Konstanten im Code, sondern als Datensaetze in der DB.
 
-### 6. Kernregeln der Control-Plane (bindend)
+### 6. Kernregeln der Control-Plane (bindend) #spec-6-kernregeln-der-control-plane-bindend
 
 Diese Regeln gelten fuer jeden Code, jede UI und jeden neuen Reviewer, der unter ADR-002 gebaut wird:
 
@@ -150,7 +150,7 @@ Diese Regeln gelten fuer jeden Code, jede UI und jeden neuen Reviewer, der unter
 9. **Provider-Trennung:** Der Reviewer ist eine Rolle, nicht Perplexity. Perplexity ist **eine** Backend-Implementierung.
 10. **Jede Policy-Aenderung hat einen Audit-Trail** ueber `valid_from`/`valid_until` + `approved_by` + `applied_policy_id`.
 
-### 7. Stufenplan
+### 7. Stufenplan #spec-7-stufenplan
 
 Die Control-Plane wird in vier Stufen gebaut. Jede Stufe ist eigenstaendig lauffaehig und committable.
 
@@ -192,7 +192,7 @@ Begruendung fuer den Schnitt: Stufe 1a ist die kleinste funktionierende Control-
 - Auto-Routing-Vorschlaege basierend auf Rating-Historie
 - Capability-/Skill-Modell (falls dann noch sinnvoll — ADR-001 Prio 7 bleibt bis dahin zurueckgestellt)
 
-### 8. Beziehung zu ADR-001
+### 8. Beziehung zu ADR-001 #spec-8-beziehung-zu-adr-001
 
 ADR-001 bleibt **vollstaendig gueltig**. ADR-002 setzt darauf auf:
 
@@ -209,7 +209,7 @@ ADR-001 bleibt **vollstaendig gueltig**. ADR-002 setzt darauf auf:
 
 Prio 8 aus ADR-001 wird durch ADR-002 vollstaendig abgeloest und erweitert. Der urspruengliche Scope von ADR-001 Prio 8 (Perplexity prueft generierte `handoff.md` und Tool-Bloecke) bleibt enthalten — er wird unter ADR-002 als Artefakt-Reviewer (Stufe 2) geplant.
 
-### 9. Was ADR-002 NICHT ist
+### 9. Was ADR-002 NICHT ist #spec-9-was-adr-002-nicht-ist
 
 - **Kein Code.** Konkrete Implementierung steht im Sprint-Plan `sprint-adr002-stufe1-control-plane.md`.
 - **Keine vollstaendigen DB-Schemas.** Die stehen im Sprint-Plan.
@@ -220,29 +220,29 @@ Prio 8 aus ADR-001 wird durch ADR-002 vollstaendig abgeloest und erweitert. Der 
 
 ## Alternativen (verworfen)
 
-### A: Claude Code als Single-Tool-Basis
+### A: Claude Code als Single-Tool-Basis #spec-a-claude-code-als-single-tool-basis
 
 **Verworfen:** Das Problem (einzelne LLMs werden unzuverlaessig) besteht genau deshalb, weil Joseph **nicht** auf ein einzelnes Tool setzen kann. Eine Architektur, die Claude Code bevorzugt, zementiert das Risiko statt es zu adressieren.
 
-### B: Routing-Heuristik im Code
+### B: Routing-Heuristik im Code #spec-b-routing-heuristik-im-code
 
 **Verworfen:** Konstanten wie `PREFERRED_TOOL_PER_ROLE = {...}` in Python altern schnell, haben keinen Audit-Trail, keine Versionierung, keine Freigabe-Historie. Jede Aenderung braeuchte einen Code-Deploy. Das widerspricht dem Prinzip, dass Policies lebende Daten sind.
 
-### C: Auto-Apply bei hohem Confidence
+### C: Auto-Apply bei hohem Confidence #spec-c-auto-apply-bei-hohem-confidence
 
 **Verworfen:** Auch 99/100 ist keine Gewissheit. Der Wert der Control-Plane liegt gerade darin, dass Joseph die finale Autoritaet behaelt. Auto-Apply macht das System zu einem weiteren autonomen LLM — das Gegenteil der Zielsetzung.
 
-### D: Separate DB pro Tool
+### D: Separate DB pro Tool #spec-d-separate-db-pro-tool
 
 **Verworfen:** Zerlegt den Projektkontext in Silos, widerspricht ADR-001 DB-first, erzwingt kuenstlich getrennte Wahrheit pro Tool. Eine Control-Plane braucht **eine** gemeinsame Wahrheit, nicht mehrere parallele.
 
-### E: Reviewer als MCP-Server oder Side-Process
+### E: Reviewer als MCP-Server oder Side-Process #spec-e-reviewer-als-mcp-server-oder-side-process
 
 **Verworfen fuer Stufe 1:** Zusaetzliche Infrastruktur-Komplexitaet ohne kurzfristigen Gewinn. Der Reviewer ist heute ein synchroner Perplexity-Call im bestehenden Python-Prozess. Bei spaeterem Skalierungsbedarf kann er ausgelagert werden, ohne die Datenvertraege zu brechen.
 
 ## Konsequenzen
 
-### Positiv
+### Positiv #spec-positiv
 
 - **Modellagnostisch:** Neue Tools (auch chinesische LLMs via Wrapper) fuegen sich als neue `tool_profiles`-Zeilen ein, ohne Code-Aenderung.
 - **Audit-Trail fuer alle Policy-Entscheidungen** durch Versionierung und `approved_by`.
@@ -252,7 +252,7 @@ Prio 8 aus ADR-001 wird durch ADR-002 vollstaendig abgeloest und erweitert. Der 
 - **Joseph bleibt in Kontrolle.** Alle wichtigen Entscheidungen gehen durch seine Haende.
 - **Kontextkonsistenz:** `context_drift`-Check verhindert, dass mehrere Tools mit verschiedenen Wahrheiten arbeiten.
 
-### Negativ / Risiken
+### Negativ / Risiken #spec-negativ-risiken
 
 - **Policy-Pflege ist eine neue Arbeitsdomaene** fuer Joseph. Initial-Freigabe der Seed-Rollen + Tool-Profile + initiale Policies kostet Zeit.
 - **Perplexity-Reviews kosten Tokens.** Dedup ueber `context_hash` und Cooldown sind Pflicht.
@@ -261,7 +261,7 @@ Prio 8 aus ADR-001 wird durch ADR-002 vollstaendig abgeloest und erweitert. Der 
 - **Perplexity selbst kann schlechter werden.** Die Architektur adressiert das durch Provider-Trennung: der Reviewer ist eine Rolle, nicht Perplexity. Aber der Wechsel waere Arbeit.
 - **Zwei Review-Tabellen** (`project_reviews` fuer Setup-Reviews, `policy_review_suggestions` fuer Policy-Vorschlaege) muessen sauber getrennt gehalten werden, sonst verschmieren die Zustaendigkeiten.
 
-### Leitregeln fuer die Umsetzung
+### Leitregeln fuer die Umsetzung #spec-leitregeln-fuer-die-umsetzung
 
 - **Kein Big-Bang:** Schrittweise Umsetzung wie in ADR-001, jeder Schritt einzeln testbar und committbar.
 - **Seed-Daten sind Vorschlaege, nicht Wahrheit.** Joseph kann sie jederzeit aendern.
@@ -285,7 +285,7 @@ Das Ergebnis ist dieses ADR. Prio 7 aus ADR-001 wird bis auf Weiteres zurueckges
 
 ## Nachtrag 2026-04-11: Dispatch/Execute als explizite Schicht + Autonomie-Regel
 
-### 1. Anlass und Befund
+### 1. Anlass und Befund #spec-1-anlass-und-befund
 
 Beim Lesen von Abschnitt 3 („Observe / Review / Steer") wurde klar, dass ADR-002 zwar den Schreibvorgang in Runtime-Artefakte beschreibt (Write-Guard, Tool-Profile-Adapter, Policy-Apply), aber nicht den Schritt, der aus einer freigegebenen Entscheidung einen konkreten Arbeitsauftrag an ein CLI ableitet.
 
@@ -294,7 +294,7 @@ Steer definiert, was sich wie aendern darf, nutzt bestehende Schreibpfade und ve
 
 Ohne diese Schicht kann die Control-Plane beobachten, bewerten und freigeben, aber sie kann keine Arbeitszuweisung an CLIs aussprechen. Sie bleibt Review-Ebene, keine Arbeitssteuerung.
 
-### 2. Erweiterte Domaenenfolge: Observe → Review → Steer → Dispatch → Execute
+### 2. Erweiterte Domaenenfolge: Observe → Review → Steer → Dispatch → Execute #spec-2-erweiterte-domaenenfolge-observe-review-steer-dispatch-execute
 
 Die bisherige Dreiteilung
 
@@ -318,7 +318,7 @@ Damit gilt als Grundregel:
 
 Ein Tool arbeitet nicht, weil ein Review existiert, sondern weil ein freigegebenes Assignment mit klarer Zustaendigkeit und Scope erzeugt wurde.
 
-### 3. work_assignments als neue Datenentitaet
+### 3. work_assignments als neue Datenentitaet #spec-3-work-assignments-als-neue-datenentitaet
 
 Zur Abbildung von Dispatch wird eine neue, eigenstaendige Datenentitaet `work_assignments` eingefuehrt. Sie ist konzeptionell Teil des Datenlayers der Control-Plane (neben `project_reviews`, `policies`, Marker-Workflow-Zustaenden usw.).
 
@@ -355,7 +355,7 @@ Lebenszyklus (konzeptionell):
 - `completed` — Arbeit ist abgeschlossen; Ergebnis ist in Artefakten/Reviews referenziert.
 - `failed` / `expired` / `escalated` — Auftrag gescheitert, abgelaufen oder zur manuellen Klaerung eskaliert.
 
-### 4. Dispatch-Varianten: manuell, Pull, Push
+### 4. Dispatch-Varianten: manuell, Pull, Push #spec-4-dispatch-varianten-manuell-pull-push
 
 Dispatch wird als eigene Operation gefuehrt, die sich in drei Varianten manifestieren kann. Alle drei erzeugen denselben Typ von `work_assignment`, unterscheiden sich aber darin, wie der Auftrag beim Tool ankommt.
 
@@ -385,7 +385,7 @@ Fuer dein System gilt:
 
 Kurzfristig ist A bindend, B ist Zielbild fuer hoehere Autonomie-Stufen, C bleibt explizit nachgelagerte Option und erfordert separate Freigabe/ADRs.
 
-### 5. Autonomie-Regel: Risikobasierte Automatisierung
+### 5. Autonomie-Regel: Risikobasierte Automatisierung #spec-5-autonomie-regel-risikobasierte-automatisierung
 
 Die Autonomie-Regel wird direkt an Dispatch gekoppelt. Fuer jede Operation wird festgelegt, ob und unter welchen Bedingungen sie automatisch gestartet werden darf.
 
@@ -443,7 +443,7 @@ Jeder `work_assignment` muss ein `risk_level` und ein `automation_level` tragen.
 - der Auftrag automatisch im Pull/Push-Modus `dispatched` werden darf oder
 - eine explizite Freigabe durch Joseph erforderlich ist.
 
-### 6. Auswirkungen auf bestehende Artefakte
+### 6. Auswirkungen auf bestehende Artefakte #spec-6-auswirkungen-auf-bestehende-artefakte
 
 **HTML-Grafik (Systemuebersicht)**
 

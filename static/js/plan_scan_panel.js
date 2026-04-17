@@ -24,12 +24,13 @@
 
     function kindLabel(kind) {
         switch (kind) {
-            case 'claude_plans':   return 'Claude Plan';
-            case 'project_sprints': return 'Sprint';
-            case 'project_plans':  return 'Plan';
-            case 'project_docs':   return 'Docs';
-            case 'project_root':   return 'Projekt-Root';
-            default:               return kind || '?';
+            case 'claude_plans':      return 'Claude Plan';
+            case 'project_sprints':   return 'Sprint';
+            case 'project_plans':     return 'Plan';
+            case 'project_docs':      return 'Docs';
+            case 'project_root':      return 'Projekt-Root';
+            case 'project_recursive': return 'Recursive';
+            default:                  return kind || '?';
         }
     }
 

@@ -1,4 +1,4 @@
-# Master Sprint Plan v0.3
+# Master Sprint Plan v0.3 #sprint-master-sprint-plan-v0-3
 
 Stand: 2026-04-05 (Session-Update)
 
@@ -40,7 +40,7 @@ Messen          Auditieren        Bewerten          Steuern           Copilot
 
 ## Done
 
-### AI Observability (Sprints 1-4)
+### AI Observability (Sprints 1-4) #spec-ai-observability-sprints-1-4
 
 | Sprint | Feature | Status |
 |--------|---------|--------|
@@ -52,7 +52,7 @@ Messen          Auditieren        Bewerten          Steuern           Copilot
 Ergebnis: Mess- und Beobachtungsbasis fuer alle AI-Sessions steht.
 277+ Sessions, 5 AI-Tools, Token-/Duration-Tracking, Projekt-Zuordnung.
 
-### Audit-System (ausserhalb der alten Roadmaps)
+### Audit-System (ausserhalb der alten Roadmaps) #spec-audit-system-ausserhalb-der-alten-roadmaps
 
 | Komponente | Was | Status |
 |------------|-----|--------|
@@ -69,12 +69,12 @@ das Ergebnis inspizieren und persistierte Runs spaeter wieder abrufen.
 
 ## Open Blocks
 
-### Quality Pipeline (historisch Sprints 5-8)
+### Quality Pipeline (historisch Sprints 5-8) #spec-quality-pipeline-historisch-sprints-5-8
 
 Code-Qualitaet systematisch messen und verbessern. Scanner, Fixer, Score pro Projekt.
 Bisher: Architektur und Checks-Module geplant (auto_coder/), kein Code.
 
-### AI Governance Analytics (historisch Sprints 9-14)
+### AI Governance Analytics (historisch Sprints 9-14) #spec-ai-governance-analytics-historisch-sprints-9-14
 
 **Status-Korrektur 2026-04-07 (Sprint QT):** Sprint 9, 10 und 11 sind
 entgegen der frueheren Einschaetzung substanziell implementiert. Der
@@ -95,14 +95,14 @@ Masterplan-Eintrag "Roadmap komplett, kein Code" war nicht mehr korrekt.
 aus Sprint 11.6). Die Code-Module und Endpoints entsprechen aber klar
 dem Sprint-Scope, die Einordnung als "kein Code" war falsch.
 
-### Audit-Weiterentwicklung
+### Audit-Weiterentwicklung #spec-audit-weiterentwicklung
 
 Audit v1 ist funktional, aber isoliert. Offene Verbindungen:
 - Audit kennt noch keine Quality-Scores (Scanner-Ergebnisse als input_facts).
 - Audit kennt noch keine Governance-Policies (kein Gate-Endpoint).
 - Kein automatischer Trigger (nur manuell via UI oder API).
 
-### Data Persistence Consolidation
+### Data Persistence Consolidation #spec-data-persistence-consolidation
 
 Das Repo nutzt aktuell parallel DB, Root-JSON-Dateien und Markdown-Artefakte.
 Fuer kleine Konfig- und Seed-Faelle ist das akzeptabel, fuer operative Produktdaten aber zunehmend zu teuer.
@@ -125,7 +125,7 @@ Referenz:
 
 ## Completed Sprints (diese Session)
 
-### Sprint Workflow-v2 UX Follow-up — Cards reduziert, Details ins Modal — DONE (2026-04-10)
+### Sprint Workflow-v2 UX Follow-up — Cards reduziert, Details ins Modal — DONE (2026-04-10) #spec-sprint-workflow-v2-ux-follow-up-cards-reduziert-details-ins-modal-done-2026-04-10
 
 **Ziel:** Die Workflow-Cards auf `/project/project_dashboard?tab=workflow` nach Live-Feedback beruhigen, damit dort keine Mischung aus echten Workflow-Aktionen, Owner-Verwaltung, Rating-Formularen und Write-Back-Checklisten mehr direkt in der Card steht.
 
@@ -155,7 +155,7 @@ Referenz:
 
 **Commit-Hash:** `pending`
 
-### Sprint Workflow-v2 GUI/UX — Operativer Workflow-Tab mit lebendiger Grafik — DONE (2026-04-09)
+### Sprint Workflow-v2 GUI/UX — Operativer Workflow-Tab mit lebendiger Grafik — DONE (2026-04-09) #spec-sprint-workflow-v2-gui-ux-operativer-workflow-tab-mit-lebendiger-grafik-done-2026-04-09
 
 **Ziel:** Die bestehende Workflow-Grafik auf `/project/<name>?tab=workflow` behalten, aber darunter echte operative Arbeit ermoeglichen: Marker gruppieren, starten, blockieren, reaktivieren, Write Back vorbereiten und Ratings direkt im Tab abschliessen.
 
@@ -180,7 +180,7 @@ Referenz:
 
 **Commit-Hash:** `e2e5a15`
 
-### Sprint CP Follow-up — Session-Detail Back-Navigation im Planning — DONE (2026-04-09)
+### Sprint CP Follow-up — Session-Detail Back-Navigation im Planning — DONE (2026-04-09) #spec-sprint-cp-follow-up-session-detail-back-navigation-im-planning-done-2026-04-09
 
 **Ziel:** Ruecksprung aus Session-Details, die aus dem Projekt-Planning geoeffnet wurden, wieder stabil in den `Planning`-Tab der Projektseite fuehren und den falsch platzierten `Zurueck`-Eintrag im Breadcrumb entfernen.
 
@@ -234,7 +234,7 @@ Referenz:
 
 **Commit-Hash:** `pending`
 
-### Sprint CP — Workflow Loop v1 auf der Projektseite — DONE (2026-04-08)
+### Sprint CP — Workflow Loop v1 auf der Projektseite — DONE (2026-04-08) #spec-sprint-cp-workflow-loop-v1-auf-der-projektseite-done-2026-04-08
 
 **Ziel:** `/project/<name>` als klare Control Plane staerken und den Marker-Workflow als lesbaren 5-Step-Loop auf der Projektseite sichtbar machen, waehrend `/copilot?...` der Execution Workspace bleibt.
 
@@ -273,7 +273,7 @@ Referenz:
 
 **Commit-Hash:** `4d70fc3`
 
-### Sprint SB — Session-Marker-Binding hart — DONE (2026-04-07)
+### Sprint SB — Session-Marker-Binding hart — DONE (2026-04-07) #spec-sprint-sb-session-marker-binding-hart-done-2026-04-07
 
 **Ziel:** Sessions sollen ihre Marker-Zugehoerigkeit explizit in der DB tragen, statt nur ueber `marker.last_session` aufgeloest zu werden (1:1, nur letzte Session pro Marker findbar).
 
@@ -310,7 +310,7 @@ Referenz:
 
 ---
 
-### Sprint 17 — Marker-Driven Copilot Orchestration — DONE (Reality-Check 2026-04-07)
+### Sprint 17 — Marker-Driven Copilot Orchestration — DONE (Reality-Check 2026-04-07) #spec-sprint-17-marker-driven-copilot-orchestration-done-reality-check-2026-04-07
 
 **Ziel:** Copilot-Board von DB-zentrierten `plan_sections` auf einen Markdown-gefuehrten Marker-Workflow umstellen.
 
@@ -338,7 +338,7 @@ Referenz:
 
 **Commit-Hash:** `n/a`
 
-### Sprint QT — Plan-Reality-Sync — DONE (2026-04-07)
+### Sprint QT — Plan-Reality-Sync — DONE (2026-04-07) #spec-sprint-qt-plan-reality-sync-done-2026-04-07
 
 **Ziel:** Master-Plan, Gitea-Issues und Repo-Stand in einen konsistenten Zustand bringen, bevor weitere Feature-Sprints gestartet werden.
 
@@ -372,7 +372,7 @@ Referenz:
 
 **Commit-Hash:** `n/a` (wird beim Commit vergeben)
 
-### Hotfix DW — Dashboard Widgets Initial Load
+### Hotfix DW — Dashboard Widgets Initial Load #spec-hotfix-dw-dashboard-widgets-initial-load
 
 **Ziel:** Den Laufzeitfehler `Uncaught ReferenceError: loadWidgets is not defined` beim direkten Oeffnen des Overview-/Widgets-Tabs beheben.
 
@@ -389,7 +389,7 @@ Referenz:
 
 **Commit-Hash:** `n/a`
 
-### Hotfix DX — Persistente Projekt-Navigation
+### Hotfix DX — Persistente Projekt-Navigation #spec-hotfix-dx-persistente-projekt-navigation
 
 **Ziel:** Das zuletzt geoeffnete Projekt beim Seitenwechsel ueber globale Navigation erhalten, konkret fuer den Wechsel `Project -> Activity -> Projects`.
 
@@ -406,7 +406,7 @@ Referenz:
 
 **Commit-Hash:** `n/a`
 
-### Hotfix DY — Planning Detail Panel Scrollbarkeit
+### Hotfix DY — Planning Detail Panel Scrollbarkeit #spec-hotfix-dy-planning-detail-panel-scrollbarkeit
 
 **Ziel:** Lange Task-/Detail-Cards im `Planning`-Tab einer Projektseite beim Scrollen vollstaendig sichtbar halten.
 
@@ -422,7 +422,7 @@ Referenz:
 
 **Commit-Hash:** `n/a`
 
-### Hotfix DZ — Projekt-Detail Script-Reihenfolge
+### Hotfix DZ — Projekt-Detail Script-Reihenfolge #spec-hotfix-dz-projekt-detail-script-reihenfolge
 
 **Ziel:** Den Laufzeitfehler `Uncaught ReferenceError: loadRiskRadarPanel is not defined` auf der Projekt-Detailseite beseitigen.
 
@@ -439,7 +439,7 @@ Referenz:
 
 **Commit-Hash:** `n/a`
 
-### Hotfix EA — Direktes Oeffnen verlinkter Planning-Sessions
+### Hotfix EA — Direktes Oeffnen verlinkter Planning-Sessions #spec-hotfix-ea-direktes-oeffnen-verlinkter-planning-sessions
 
 **Ziel:** Verlinkte Sessions im Projekt-Tab `Planning` nicht nur selektieren, sondern direkt oeffnen koennen.
 
@@ -456,7 +456,7 @@ Referenz:
 
 **Commit-Hash:** `n/a`
 
-### Hotfix EB — Session-Zeile statt Extra-Button
+### Hotfix EB — Session-Zeile statt Extra-Button #spec-hotfix-eb-session-zeile-statt-extra-button
 
 **Ziel:** Die UX fuer verlinkte Sessions im Projekt-Tab `Planning` vereinfachen und den unnoetigen Extra-Button entfernen.
 
@@ -473,7 +473,7 @@ Referenz:
 
 **Commit-Hash:** `n/a`
 
-### Hotfix EC — Session Detail Zurueck-Navigation
+### Hotfix EC — Session Detail Zurueck-Navigation #spec-hotfix-ec-session-detail-zurueck-navigation
 
 **Ziel:** Auf der Session-Detailseite statt eines starren `Activity`-Links eine echte Ruecknavigation bereitstellen.
 
@@ -490,7 +490,7 @@ Referenz:
 
 **Commit-Hash:** `n/a`
 
-### Refactoring ED — Modulare Session-Importer
+### Refactoring ED — Modulare Session-Importer #spec-refactoring-ed-modulare-session-importer
 
 **Ziel:** Den weiter anwachsenden Multi-Tool-Session-Import von einer Sammeldatei in eine modulare Struktur ueberfuehren, damit neue Tools wie OpenCode und Kilo sauber pro Quelle gepflegt werden koennen.
 
@@ -518,7 +518,7 @@ Referenz:
 
 **Commit-Hash:** `n/a`
 
-### Hotfix EE — Session-ID-Validierung und OpenCode-Message-Pfad
+### Hotfix EE — Session-ID-Validierung und OpenCode-Message-Pfad #spec-hotfix-ee-session-id-validierung-und-opencode-message-pfad
 
 **Ziel:** Die neu importierten `kilo`- und `opencode`-Sessions auch in Detailansicht und Export wirklich benutzbar machen und einen gefundenen OpenCode-Importfehler im Live-Test beheben.
 
@@ -537,7 +537,7 @@ Referenz:
 
 **Commit-Hash:** `n/a`
 
-### Hotfix ED — Session Account Badge Contrast
+### Hotfix ED — Session Account Badge Contrast #spec-hotfix-ed-session-account-badge-contrast
 
 **Ziel:** `Claude` und `Codex` in Session-Tabellen visuell klarer unterscheiden.
 
@@ -554,7 +554,7 @@ Referenz:
 
 **Commit-Hash:** `n/a`
 
-### Hotfix EE — Konfigurierbare Account-/Tool-Badges
+### Hotfix EE — Konfigurierbare Account-/Tool-Badges #spec-hotfix-ee-konfigurierbare-account-tool-badges
 
 **Ziel:** Neue oder seltene Tools wie `hermes`, `opencode`, `kilo`, `copilot` oder `amazonq` ohne weitere CSS-Patches im Dashboard visuell pflegbar machen.
 
@@ -581,7 +581,7 @@ Referenz:
 
 **Commit-Hash:** `n/a`
 
-### Sprint QX — Dashboard Self-Discovery konfigurierbar
+### Sprint QX — Dashboard Self-Discovery konfigurierbar #spec-sprint-qx-dashboard-self-discovery-konfigurierbar
 
 **Ziel:** `project_dashboard` nicht mehr hart aus der Projekt-Discovery ausfiltern, sondern das Verhalten direkt im Dashboard unter Settings steuerbar machen.
 
@@ -607,7 +607,7 @@ Referenz:
 
 **Commit-Hash:** `61be781`
 
-### Sprint PX — Hashtag-First Markdown Routine — MODULARER REPO-ABSCHLUSS
+### Sprint PX — Hashtag-First Markdown Routine — MODULARER REPO-ABSCHLUSS #spec-sprint-px-hashtag-first-markdown-routine-modularer-repo-abschluss
 
 **Ziel:** Den verbleibenden Copilot-/Markdown-Block so modularisieren, dass die Repo-Regeln fuer kleine Dateien eingehalten werden und der gesamte PX-Stand sauber commitbar bleibt.
 
@@ -639,7 +639,7 @@ Referenz:
 
 **Commit-Hash:** `bbaf112`
 
-### Sprint QY — Plans-Detail gegen Legacy-DB-Schema gehaertet
+### Sprint QY — Plans-Detail gegen Legacy-DB-Schema gehaertet #spec-sprint-qy-plans-detail-gegen-legacy-db-schema-gehaertet
 
 **Ziel:** Den HTTP-500 beim Oeffnen von Plan-Details auf Systemen mit aelterer `specs`-Tabelle beheben.
 
@@ -657,7 +657,7 @@ Referenz:
 
 **Commit-Hash:** `61be781`
 
-### Sprint QZ — Plan-Detailseite mit Tabs
+### Sprint QZ — Plan-Detailseite mit Tabs #spec-sprint-qz-plan-detailseite-mit-tabs
 
 **Ziel:** Plan-Cards nicht mehr ueber ein Auto-Modal auf `/plans?plan=...` oeffnen, sondern ueber eine eigene Detailseite mit klaren Tabs.
 
@@ -682,7 +682,7 @@ Referenz:
 
 **Commit-Hash:** `04f96b7`
 
-### Sprint QR — Projektzentrierter Planning Workspace geplant
+### Sprint QR — Projektzentrierter Planning Workspace geplant #spec-sprint-qr-projektzentrierter-planning-workspace-geplant
 
 **Ziel:** Die GUI fachlich klar auf `Project -> Master Plan -> Sprint Plan -> Task/Spec -> Session` ausrichten.
 
@@ -702,7 +702,7 @@ Referenz:
 
 **Commit-Hash:** `04f96b7`
 
-### Sprint QR — Session 1 Navigation und Begriffssystem festgezogen
+### Sprint QR — Session 1 Navigation und Begriffssystem festgezogen #spec-sprint-qr-session-1-navigation-und-begriffssystem-festgezogen
 
 **Ziel:** Den Einstiegspunkt fachlich korrekt machen, sichtbare Begriffe normieren und `/plans` als globalen Index statt als konkurrierende Arbeitsflaeche rahmen.
 
@@ -726,7 +726,7 @@ Referenz:
 
 **Commit-Hash:** `04f96b7`
 
-### Sprint QR — Session 2 Projekt-Hierarchie sichtbar gemacht
+### Sprint QR — Session 2 Projekt-Hierarchie sichtbar gemacht #spec-sprint-qr-session-2-projekt-hierarchie-sichtbar-gemacht
 
 **Ziel:** Die Planungsstruktur im Projekt erstmals als echte Hierarchie `Plan -> Sprint -> Task/Spec` rendern.
 
@@ -748,7 +748,7 @@ Referenz:
 
 **Commit-Hash:** `04f96b7`
 
-### Sprint QR — Session 3 Detailpanel fuer operative Arbeit angebunden
+### Sprint QR — Session 3 Detailpanel fuer operative Arbeit angebunden #spec-sprint-qr-session-3-detailpanel-fuer-operative-arbeit-angebunden
 
 **Ziel:** Aus der neuen Hierarchie direkt in konkrete operative Arbeit fuer `Spec` und `Task` wechseln koennen.
 
@@ -772,7 +772,7 @@ Referenz:
 
 **Commit-Hash:** `04f96b7`
 
-### Sprint QR — Session 4 Session-Historie an Task und Spec gehaengt
+### Sprint QR — Session 4 Session-Historie an Task und Spec gehaengt #spec-sprint-qr-session-4-session-historie-an-task-und-spec-gehaengt
 
 **Ziel:** Sessions fachlich korrekt als Ausfuehrungshistorie der operativen Ebene sichtbar machen.
 
@@ -794,7 +794,7 @@ Referenz:
 
 **Commit-Hash:** `noch nicht committed`
 
-### Sprint QR — Session 4 Follow-up: last_session Preservation und Backfill
+### Sprint QR — Session 4 Follow-up: last_session Preservation und Backfill #spec-sprint-qr-session-4-follow-up-last-session-preservation-und-backfill
 
 **Ziel:** Die neue Session-Historie nicht nur im Code, sondern auch im echten Bestand wirksam machen.
 
@@ -816,7 +816,7 @@ Referenz:
 
 **Commit-Hash:** `noch nicht committed`
 
-### Sprint PX — Hashtag-First Markdown Routine — MODUL 1 START
+### Sprint PX — Hashtag-First Markdown Routine — MODUL 1 START #spec-sprint-px-hashtag-first-markdown-routine-modul-1-start
 
 **Ziel:** Den Sprint modular beginnen: erst einen projektuebergreifenden Markdown-Kernservice bauen und den ersten produktiven Marker-Flow daran anbinden.
 
@@ -845,7 +845,7 @@ Referenz:
 
 **Commit-Hash:** `bbaf112`
 
-### Sprint PX — Hashtag-First Markdown Routine — MODUL 2 CHECK/APPLY
+### Sprint PX — Hashtag-First Markdown Routine — MODUL 2 CHECK/APPLY #spec-sprint-px-hashtag-first-markdown-routine-modul-2-check-apply
 
 **Ziel:** Die neue Tag-Architektur operativ machen, indem fehlende Sprint-/Spec-Tags projektweit erkannt und idempotent geschrieben werden koennen.
 
@@ -873,7 +873,7 @@ Referenz:
 
 **Commit-Hash:** `bbaf112`
 
-### Sprint PX — Hashtag-First Markdown Routine — MODUL 3 MARKER-BACKFILL
+### Sprint PX — Hashtag-First Markdown Routine — MODUL 3 MARKER-BACKFILL #spec-sprint-px-hashtag-first-markdown-routine-modul-3-marker-backfill
 
 **Ziel:** Bestehende Marker in `handoff.md` konservativ auf `sprint_tag` und optional `spec_tag` nachziehen, ohne unklare Volltext-Zuordnungen.
 
@@ -894,7 +894,7 @@ Referenz:
 
 **Commit-Hash:** `bbaf112`
 
-### Sprint PX — Hashtag-First Markdown Routine — MODUL 4 PARSER/UI-INTEGRATION
+### Sprint PX — Hashtag-First Markdown Routine — MODUL 4 PARSER/UI-INTEGRATION #spec-sprint-px-hashtag-first-markdown-routine-modul-4-parser-ui-integration
 
 **Ziel:** Den ersten sichtbaren Produktpfad von lokaler Frontend-Heuristik auf serverseitige Tag-Hierarchie umstellen.
 
@@ -919,7 +919,7 @@ Referenz:
 
 **Commit-Hash:** `bbaf112`
 
-### Sprint PX — Hashtag-First Markdown Routine — REPO-ABSCHLUSS
+### Sprint PX — Hashtag-First Markdown Routine — REPO-ABSCHLUSS #spec-sprint-px-hashtag-first-markdown-routine-repo-abschluss
 
 **Ziel:** Die letzten sinnvollen Legacy-Pfade im Repo schliessen, damit fuer Sprint PX nur noch Live-Validierung gegen reale Plaene offen bleibt.
 
@@ -946,7 +946,7 @@ Referenz:
 
 **Commit-Hash:** `bbaf112`
 
-### Session-Status 2026-04-03
+### Session-Status 2026-04-03 #spec-session-status-2026-04-03
 
 **Konsolidiert live:**
 - Copilot Sprint P3 auf `main` inkl. Marker-Aktivierung, `marker-context.md` und OK-Flow ohne Auto-Session-Start
@@ -956,7 +956,7 @@ Referenz:
 **Rest-Risiko / offen:**
 - Copilot-Workspace braucht weiter gezielten UI-Feinschliff; die globale Navigation und die Filterlogik sind dagegen fuer den Moment stabil
 
-### Sprint PX — Hashtag-First Markdown Routine — PLAN ERSTELLT
+### Sprint PX — Hashtag-First Markdown Routine — PLAN ERSTELLT #spec-sprint-px-hashtag-first-markdown-routine-plan-erstellt
 
 **Ziel:** Die Kette `Plan -> Sprint -> Spec -> Marker` explizit als Markdown-first Architektur planen, inklusive projektuebergreifender Parser-Routine fuer alte und neue Projekte.
 
@@ -975,7 +975,7 @@ Referenz:
 
 **Commit-Hash:** noch nicht committed
 
-### Sprint P4 — Session Write-back — DONE
+### Sprint P4 — Session Write-back — DONE #spec-sprint-p4-session-write-back-done
 
 **Ziel:** Den Status eines aktiv bearbeiteten Markers am Session-Ende explizit in `handoff.md` zurueckschreiben, ohne P3 um Auto-Start oder neue Aktivierungslogik zu erweitern.
 
@@ -1004,7 +1004,7 @@ Referenz:
 
 **Commit-Hash:** noch nicht committed
 
-### Sprint P5 — Sprint to Markers — DONE
+### Sprint P5 — Sprint to Markers — DONE #spec-sprint-p5-sprint-to-markers-done
 
 **Ziel:** Sprint-Aufgaben aus einem Sprint-Plan per Klick als Marker in `handoff.md` erzeugen oder aktualisieren, ohne Duplikate.
 
@@ -1036,7 +1036,7 @@ Referenz:
 
 **Commit-Hash:** noch nicht committed
 
-### Sprint P-E3 — Execution-Rating & Feedback fuer Marker — DONE
+### Sprint P-E3 — Execution-Rating & Feedback fuer Marker — DONE #spec-sprint-p-e3-execution-rating-feedback-fuer-marker-done
 
 **Ziel:** Nach jeder markerbezogenen Session eine leichte Execution-Bewertung erfassen, die am Marker und optional an der Session haengt.
 
@@ -1068,7 +1068,7 @@ Referenz:
 
 **Commit-Hash:** 338fd8c
 
-### Sprint M2.11a — Governance auf aktive Projekte begrenzen — DONE
+### Sprint M2.11a — Governance auf aktive Projekte begrenzen — DONE #spec-sprint-m2-11a-governance-auf-aktive-projekte-begrenzen-done
 
 **Ziel:** Die Governance-Seite soll wie die Quality-Seite nur Projekte mit relevanten Datei-Aenderungen in den letzten 90 Tagen anzeigen.
 
@@ -1081,62 +1081,62 @@ Referenz:
 - `services/governance_service.py`
 - `tests/test_governance_gate.py`
 
-### Sprint A — Quality Scanner Spec & Scope Lock — DONE
+### Sprint A — Quality Scanner Spec & Scope Lock — DONE #spec-sprint-a-quality-scanner-spec-scope-lock-done
 Spec erstellt: `sprints/spec-quality-scanner-mvp-001.md`
 
-### Sprint B — Quality Scanner MVP — DONE
+### Sprint B — Quality Scanner MVP — DONE #spec-sprint-b-quality-scanner-mvp-done
 Scanner validiert, 2 Fixes (Pfadaufloesung, History-Felder), 20 Abnahmetests.
 
-### Sprint C — Governance Light — DONE
+### Sprint C — Governance Light — DONE #spec-sprint-c-governance-light-done
 GET /api/governance/gate/<project>, green/yellow/red Logik, Health-Ampel in UI, 11 Tests.
 
-### Sprint D — LLM Command Hub MVP — DONE
+### Sprint D — LLM Command Hub MVP — DONE #spec-sprint-d-llm-command-hub-mvp-done
 3 Markdown-Commands, POST /api/llm/commands/run, Perplexity-Connector, Persistenz, UI, 15 Tests.
 
-### Copilot Chat — DONE
+### Copilot Chat — DONE #spec-copilot-chat-done
 POST /api/copilot/chat, Thread-Historie, Plan-Bindung, Chat-UI, 12 Tests.
 
-### Sprint E — Plan-Workflow Micro-Ebene — DONE
+### Sprint E — Plan-Workflow Micro-Ebene — DONE #spec-sprint-e-plan-workflow-micro-ebene-done
 14 Workflow-Spalten auf project_plans, GET/PUT /api/plans/<id>/workflow, Ist/Soll/Next,
 Signal-Integration (Quality+Audit+Governance), Copilot plan_id-Binding, 16 Tests.
 
-### Sprint F — Drag & Drop Board — DONE
+### Sprint F — Drag & Drop Board — DONE #spec-sprint-f-drag-drop-board-done
 Kanban-Board-Ansicht fuer Plans-Seite. Plan-Cards per Drag & Drop zwischen 8 Workflow-Spalten
 verschiebbar (idea → spec_ready → prompt_ready → executing → review_pending → fixed → done → blocked).
 HTML5 native D&D, optimistisches Move mit API-Rollback bei Fehler, View-Toggle Grid/Board.
 Geaendert: plans.html, plans.js, plans.css. 6 neue Tests (22 total).
 
-### Sprint G — Plan-Handoff Generator — DONE
+### Sprint G — Plan-Handoff Generator — DONE #spec-sprint-g-plan-handoff-generator-done
 Standardisierte Markdown-Zusammenfassung pro Plan fuer LLM-Executor-Uebergabe.
 YAML-Frontmatter (type/stage/scope/expected_output/priority) + 7 Sektionen (Projektkontext,
 Ist, Soll, Ergebnisse, Blocker, Auftrag, Output-Format). build_plan_handoff_markdown() in
 plan_workflow_service.py, GET /api/plans/<id>/handoff (text/markdown), Handoff-Button im
 Plan-Modal mit Kopieren+Download. 9 neue Tests (31 total).
 
-### Sprint H — DB-first Copilot-Architektur — DONE
+### Sprint H — DB-first Copilot-Architektur — DONE #spec-sprint-h-db-first-copilot-architektur-done
 Neue DB-Tabellen: plan_sections (Level-2-Cards), copilot_threads (Thread pro Section),
 copilot_messages (Messages mit Usage/Kosten). Service-Layer: plan_section_service.py
 (CRUD + Chat), section_routes.py (API). Board-Spalten: backlog/ready/in_progress/review/done/blocked.
 /copilot?plan_id=X zeigt Section-Board + Modal-Chat. 27 neue Tests (94 total).
 
-### Sprint I — Zentraler Handoff-Service — DONE
+### Sprint I — Zentraler Handoff-Service — DONE #spec-sprint-i-zentraler-handoff-service-done
 project_handoff_service.py: get_handoff_path(), ensure_handoff_for_plan(), read_handoff_for_plan(),
 ensure_handoffs_for_project(). Alle Aufrufer (API, Memory, LLM Commands) umverdrahtet.
 Handoff-Erkennung im Projekt-Scanner. LLM Command handoff-status.md mit {{handoff_data}}/
 {{sections_data}} Platzhaltern. CLAUDE.md aktualisiert. 13 neue Tests.
 
-### Sprint J — Level-Trennung Korrektur — DONE
+### Sprint J — Level-Trennung Korrektur — DONE #spec-sprint-j-level-trennung-korrektur-done
 /plans = einziges Plan-Board (Level 1). /copilot?plan_id=X = Section-Board + Chat (Level 2).
 /copilot ohne plan_id = Redirect (1 aktiver Plan → direkt, sonst → /plans).
 Copilot-Tab/Chat/Upload aus Plan-Modal entfernt. Copilot-Link auf Plan-Cards + Modal-Toolbar.
 Keine dritte Board-Ebene.
 
-### Sprint M — Test-Cleanup fuer Plan-Tests — DONE
+### Sprint M — Test-Cleanup fuer Plan-Tests — DONE #spec-sprint-m-test-cleanup-fuer-plan-tests-done
 pytest-Fixtures in test_plan_workflow.py und test_plan_sections.py auf yield+DELETE umgebaut.
 Alle Test-Plans tragen jetzt [TEST]-Prefix. Kaskadierender Teardown (Messages→Threads→Sections→Plans).
 Inline-Plan in test_handoff_missing_signals mit try/finally gesichert. 68 Tests gruen, 0 DB-Leichen.
 
-### Sprint M2.7 — Plans-Cards & Modal Redesign — DONE
+### Sprint M2.7 — Plans-Cards & Modal Redesign — DONE #spec-sprint-m2-7-plans-cards-modal-redesign-done
 **Ziel:** Plans-Cards aufgeräumt, Modal auf Linear/Notion Level.
 
 **Änderungen:**
@@ -1152,7 +1152,7 @@ Inline-Plan in test_handoff_missing_signals mit try/finally gesichert. 68 Tests 
 **Dateien:** templates/plans.html, static/js/plans.js, static/css/plans.css
 **Commit:** 54b521c
 
-### Sprint M2.8 — Quality-Scanner Re-Scan — DONE
+### Sprint M2.8 — Quality-Scanner Re-Scan — DONE #spec-sprint-m2-8-quality-scanner-re-scan-done
 **Ziel:** Test `TestR6IgnoreDirs` reparieren, 259/259 Tests gruen.
 
 **Problem:** jscpd `--ignore` Pattern `node_modules` ignoriert nur direct node_modules/, 
@@ -1165,7 +1165,7 @@ aber nicht verschachteltes `.kilo/node_modules/`.
 
 **Ergebnis:** Test gruen, keine node_modules-Issues mehr im Report.
 
-### Sprint M2.9 — Copilot-Board QA — DONE
+### Sprint M2.9 — Copilot-Board QA — DONE #spec-sprint-m2-9-copilot-board-qa-done
 **Ziel:** Copilot-Board funktional testen, Level-Trennung verifizieren.
 
 **Tests:**
@@ -1177,7 +1177,7 @@ aber nicht verschachteltes `.kilo/node_modules/`.
 - Copilot-Landing-Page (/copilot ohne plan_id) mit Stats ✓
 - 28 Tests in test_plan_sections.py alle gruen
 
-### Sprint N — Copilot UX Redesign: AI-native Work OS — DONE
+### Sprint N — Copilot UX Redesign: AI-native Work OS — DONE #spec-sprint-n-copilot-ux-redesign-ai-native-work-os-done
 **Ziel:** Von "Kanban + Chat" zu "AI-native Work OS" — Split View, Rich Cards, Side Panel.
 
 **Änderungen:**
@@ -1198,7 +1198,7 @@ aber nicht verschachteltes `.kilo/node_modules/`.
 
 **Hinweis:** Server-Restart erforderlich für Template-Aktualisierung.
 
-### Sprint O — Release v1.2.0 + Test-Suite Komplett — DONE (2026-04-02)
+### Sprint O — Release v1.2.0 + Test-Suite Komplett — DONE (2026-04-02) #spec-sprint-o-release-v1-2-0-test-suite-komplett-done-2026-04-02
 **Ziel:** Release-Prozess etablieren, Test-Abdeckung von 20% auf 75%+ bringen, Produktions-Bugs fixen.
 
 **Release v1.2.0:**
@@ -1220,7 +1220,7 @@ aber nicht verschachteltes `.kilo/node_modules/`.
 
 **Commits:** e42ed29, ab65270, 5c752de, 3142cc2, 83e5774, 94d2e18, d430d51
 
-### Sprint P — Copilot Dark Design-System Seed — DONE (2026-04-03)
+### Sprint P — Copilot Dark Design-System Seed — DONE (2026-04-03) #spec-sprint-p-copilot-dark-design-system-seed-done-2026-04-03
 **Ziel:** Ohne Architekturumbau ein konsistentes Dark-SaaS-Design-System fuer den bestehenden Copilot-Workspace anlegen.
 
 **Aenderungen:**
@@ -1240,7 +1240,7 @@ aber nicht verschachteltes `.kilo/node_modules/`.
 
 **Commit:** uncommitted
 
-### Sprint P1 — Copilot Workspace Header + Progress Refactor — DONE (2026-04-03)
+### Sprint P1 — Copilot Workspace Header + Progress Refactor — DONE (2026-04-03) #spec-sprint-p1-copilot-workspace-header-progress-refactor-done-2026-04-03
 **Ziel:** Den oberen Bereich von `/copilot?plan_id=X` wie einen echten AI-Workspace wirken lassen, ohne weitere UI-Bereiche anzufassen.
 
 **Aenderungen:**
@@ -1251,7 +1251,7 @@ aber nicht verschachteltes `.kilo/node_modules/`.
 
 **Dateien:**
 
-### Sprint P3.1 — Leerer Handoff fuer neue Projektordner — DONE (2026-04-03)
+### Sprint P3.1 — Leerer Handoff fuer neue Projektordner — DONE (2026-04-03) #spec-sprint-p3-1-leerer-handoff-fuer-neue-projektordner-done-2026-04-03
 **Ziel:** `handoff.md` auch fuer existierende Projektordner ohne `project_plans` robust anlegen, damit Copilot-/Handoff-Flows nicht an `None` scheitern.
 
 **Aenderungen:**
@@ -1265,7 +1265,7 @@ aber nicht verschachteltes `.kilo/node_modules/`.
 
 **Commit:** uncommitted
 
-### Sprint P3.2 — Marker-Chat-Verlauf Fix — DONE (2026-04-03)
+### Sprint P3.2 — Marker-Chat-Verlauf Fix — DONE (2026-04-03) #spec-sprint-p3-2-marker-chat-verlauf-fix-done-2026-04-03
 **Ziel:** Das Copilot-Panel soll Marker-Threads wieder laden koennen, ohne dass `/api/copilot/runs` bei `plan_id`-Filtern mit 500 scheitert.
 
 **Aenderungen:**
@@ -1278,7 +1278,7 @@ aber nicht verschachteltes `.kilo/node_modules/`.
 
 **Commit:** uncommitted
 
-### Sprint P3.3 — Responsive Sidebar Layout — DONE (2026-04-03)
+### Sprint P3.3 — Responsive Sidebar Layout — DONE (2026-04-03) #spec-sprint-p3-3-responsive-sidebar-layout-done-2026-04-03
 **Ziel:** Die globale linke Navigation soll auf kleineren Viewports als sauberer Off-Canvas-Drawer funktionieren, ohne den Content zu quetschen.
 
 **Aenderungen:**
@@ -1296,7 +1296,7 @@ aber nicht verschachteltes `.kilo/node_modules/`.
 
 **Commit:** uncommitted
 
-### Sprint P3.4 — Sidebar-Navigation gestrafft — DONE (2026-04-03)
+### Sprint P3.4 — Sidebar-Navigation gestrafft — DONE (2026-04-03) #spec-sprint-p3-4-sidebar-navigation-gestrafft-done-2026-04-03
 **Ziel:** Die globale Navigation soll fachlich klarer gruppiert und textlich kompakter werden.
 
 **Aenderungen:**
@@ -1309,7 +1309,7 @@ aber nicht verschachteltes `.kilo/node_modules/`.
 
 **Commit:** uncommitted
 
-### Sprint P3.5 — Sidebar Density Tuning — DONE (2026-04-03)
+### Sprint P3.5 — Sidebar Density Tuning — DONE (2026-04-03) #spec-sprint-p3-5-sidebar-density-tuning-done-2026-04-03
 **Ziel:** Die globale Sidebar soll visuell kompakter und ruhiger wirken, ohne Funktion oder Struktur weiter zu aendern.
 
 **Aenderungen:**
@@ -1322,7 +1322,7 @@ aber nicht verschachteltes `.kilo/node_modules/`.
 
 **Commit:** uncommitted
 
-### Sprint P3.6 — Sidebar auf Task-Navigation umgestellt — DONE (2026-04-03)
+### Sprint P3.6 — Sidebar auf Task-Navigation umgestellt — DONE (2026-04-03) #spec-sprint-p3-6-sidebar-auf-task-navigation-umgestellt-done-2026-04-03
 **Ziel:** Die globale Navigation soll sich an Nutzeraufgaben statt an technischen Systemkategorien orientieren.
 
 **Aenderungen:**
@@ -1339,7 +1339,7 @@ aber nicht verschachteltes `.kilo/node_modules/`.
 
 **Commit:** uncommitted
 
-### Sprint P3.7 — Startseite in Sidebar entdoppelt — DONE (2026-04-03)
+### Sprint P3.7 — Startseite in Sidebar entdoppelt — DONE (2026-04-03) #spec-sprint-p3-7-startseite-in-sidebar-entdoppelt-done-2026-04-03
 **Ziel:** Die Startseite `/` soll in der Sidebar nicht mehr doppelt als `Dashboard` und `Projects` erscheinen.
 
 **Aenderungen:**
@@ -1352,7 +1352,7 @@ aber nicht verschachteltes `.kilo/node_modules/`.
 
 **Commit:** uncommitted
 
-### Sprint P3.8 — Models nach Auswerten verschoben — DONE (2026-04-03)
+### Sprint P3.8 — Models nach Auswerten verschoben — DONE (2026-04-03) #spec-sprint-p3-8-models-nach-auswerten-verschoben-done-2026-04-03
 **Ziel:** Der Menüpunkt `Models` soll fachlich im Analyse-/Auswertungsbereich statt im Systemblock liegen.
 
 **Aenderungen:**
@@ -1364,7 +1364,7 @@ aber nicht verschachteltes `.kilo/node_modules/`.
 
 **Commit:** uncommitted
 
-### Sprint P3.9 — Steuerungsfunktionen aus System herausgezogen — DONE (2026-04-03)
+### Sprint P3.9 — Steuerungsfunktionen aus System herausgezogen — DONE (2026-04-03) #spec-sprint-p3-9-steuerungsfunktionen-aus-system-herausgezogen-done-2026-04-03
 **Ziel:** `Quality`, `Governance`, `Audits` und `Commands` sollen als eigener Steuerungsblock statt als Teil von `System` erscheinen.
 
 **Aenderungen:**
@@ -1377,7 +1377,7 @@ aber nicht verschachteltes `.kilo/node_modules/`.
 
 **Commit:** uncommitted
 
-### Sprint P3.10 — Inhalte und Integrationen als Accordion — DONE (2026-04-03)
+### Sprint P3.10 — Inhalte und Integrationen als Accordion — DONE (2026-04-03) #spec-sprint-p3-10-inhalte-und-integrationen-als-accordion-done-2026-04-03
 **Ziel:** Seltenere Sidebar-Bereiche sollen Platz sparen und dieselbe Collapse-Logik wie der Systemblock nutzen.
 
 **Aenderungen:**
@@ -1391,7 +1391,7 @@ aber nicht verschachteltes `.kilo/node_modules/`.
 
 **Commit:** uncommitted
 
-### Sprint P3.11 — Auswerten als Accordion nach Steuern — DONE (2026-04-03)
+### Sprint P3.11 — Auswerten als Accordion nach Steuern — DONE (2026-04-03) #spec-sprint-p3-11-auswerten-als-accordion-nach-steuern-done-2026-04-03
 **Ziel:** Der Bereich `Auswerten` soll dieselbe Accordion-Logik wie die restlichen Nebenbereiche nutzen und in der Reihenfolge hinter `Steuern` liegen.
 
 **Aenderungen:**
@@ -1405,7 +1405,7 @@ aber nicht verschachteltes `.kilo/node_modules/`.
 
 **Commit:** uncommitted
 
-### Sprint P3.12 — Kontextaktionen vor globaler Hilfe — DONE (2026-04-03)
+### Sprint P3.12 — Kontextaktionen vor globaler Hilfe — DONE (2026-04-03) #spec-sprint-p3-12-kontextaktionen-vor-globaler-hilfe-done-2026-04-03
 **Ziel:** Seitenspezifische Header-Aktionen sollen vor dem globalen Help-Center-Shortcut stehen.
 
 **Aenderungen:**
@@ -1417,7 +1417,7 @@ aber nicht verschachteltes `.kilo/node_modules/`.
 
 **Commit:** uncommitted
 
-### Sprint P3.13 — Hauptnavigation fachlogisch vereinheitlicht — DONE (2026-04-05)
+### Sprint P3.13 — Hauptnavigation fachlogisch vereinheitlicht — DONE (2026-04-05) #spec-sprint-p3-13-hauptnavigation-fachlogisch-vereinheitlicht-done-2026-04-05
 **Ziel:** Die primaeren Menuepunkte sprachlich von technischen Systembegriffen auf fachlich lesbare Arbeitsbegriffe umstellen.
 
 **Aenderungen:**
@@ -1443,7 +1443,7 @@ aber nicht verschachteltes `.kilo/node_modules/`.
 
 **Commit:** uncommitted
 
-### Sprint P3.14 — Projects-Header als direkter Einstieg — DONE (2026-04-05)
+### Sprint P3.14 — Projects-Header als direkter Einstieg — DONE (2026-04-05) #spec-sprint-p3-14-projects-header-als-direkter-einstieg-done-2026-04-05
 **Ziel:** Den redundanten Unterpunkt `Projects` aus der Sidebar entfernen, ohne den direkten Rueckweg zur Hauptansicht zu verlieren.
 
 **Aenderungen:**
@@ -1460,7 +1460,7 @@ aber nicht verschachteltes `.kilo/node_modules/`.
 
 **Commit:** uncommitted
 
-### Sprint P3.15 — Projektseite von Overview zu Details geschaerft — DONE (2026-04-05)
+### Sprint P3.15 — Projektseite von Overview zu Details geschaerft — DONE (2026-04-05) #spec-sprint-p3-15-projektseite-von-overview-zu-details-geschaerft-done-2026-04-05
 **Ziel:** Die Projektseite sprachlich und visuell klarer strukturieren: Detailinformationen als eigener Tab, die eigentliche Uebersicht als Karten-Summary im Seitenkopf.
 
 **Aenderungen:**
@@ -1479,7 +1479,7 @@ aber nicht verschachteltes `.kilo/node_modules/`.
 
 **Commit:** uncommitted
 
-### Sprint P3.16 — Projektuebersicht als handlungsfuehrende Karten — DONE (2026-04-05)
+### Sprint P3.16 — Projektuebersicht als handlungsfuehrende Karten — DONE (2026-04-05) #spec-sprint-p3-16-projektuebersicht-als-handlungsfuehrende-karten-done-2026-04-05
 **Ziel:** Die neue Projektuebersicht nicht als reine KPI-Flaeche, sondern als fachliche `Was jetzt?`-Navigation nutzbar machen.
 
 **Aenderungen:**
@@ -1496,7 +1496,7 @@ aber nicht verschachteltes `.kilo/node_modules/`.
 
 **Commit:** uncommitted
 
-### Sprint P3.17 — AI Workspace wieder zu Cockpit vereinheitlicht — DONE (2026-04-05)
+### Sprint P3.17 — AI Workspace wieder zu Cockpit vereinheitlicht — DONE (2026-04-05) #spec-sprint-p3-17-ai-workspace-wieder-zu-cockpit-vereinheitlicht-done-2026-04-05
 **Ziel:** Den primaeren KI-Arbeitsbereich wieder mit dem etablierten Fachbegriff `Cockpit` fuehren statt mit dem generischen Begriff `AI Workspace`.
 
 **Aenderungen:**
@@ -1514,7 +1514,7 @@ aber nicht verschachteltes `.kilo/node_modules/`.
 
 **Commit:** uncommitted
 
-### Sprint P3.18 — Projektkontext zwischen Screens persistent gemacht — DONE (2026-04-05)
+### Sprint P3.18 — Projektkontext zwischen Screens persistent gemacht — DONE (2026-04-05) #spec-sprint-p3-18-projektkontext-zwischen-screens-persistent-gemacht-done-2026-04-05
 **Ziel:** Das aktuell bearbeitete Projekt nicht bei jedem Wechsel in das `Cockpit` oder zwischen Plan-/Projektansichten neu auswaehlen muessen.
 
 **Aenderungen:**
@@ -1541,7 +1541,7 @@ aber nicht verschachteltes `.kilo/node_modules/`.
 
 **Commit:** uncommitted
 
-### Sprint P1.1 — Marker-Schema & handoff.md Generator — DONE (2026-04-03)
+### Sprint P1.1 — Marker-Schema & handoff.md Generator — DONE (2026-04-03) #spec-sprint-p1-1-marker-schema-handoff-md-generator-done-2026-04-03
 **Ziel:** `handoff.md` als fuehrende State-Datei auf ein maschinenlesbares Marker-Format umstellen. *Nachtrag 2026-04-10 (ADR-001): "handoff.md als fuehrende State-Datei" gilt als ueberholt; Marker-Definitionen werden kuenftig DB-first gefuehrt, handoff.md wird Mirror-Artefakt.*
 
 **Aenderungen:**
@@ -1559,7 +1559,7 @@ aber nicht verschachteltes `.kilo/node_modules/`.
 
 **Commit:** uncommitted
 
-### Sprint P2 — Cards aus Markdown + Status Write-back — DONE (2026-04-03)
+### Sprint P2 — Cards aus Markdown + Status Write-back — DONE (2026-04-03) #spec-sprint-p2-cards-aus-markdown-status-write-back-done-2026-04-03
 **Ziel:** Copilot-Board auf Marker aus `handoff.md` umstellen und Status-/Prompt-Aenderungen direkt in die Marker-Datei zurueckschreiben.
 
 **Aenderungen:**
@@ -1584,7 +1584,7 @@ aber nicht verschachteltes `.kilo/node_modules/`.
 
 **Commit:** uncommitted
 
-### Sprint P3 — Prompt-Chain & Execution — DONE (2026-04-03)
+### Sprint P3 — Prompt-Chain & Execution — DONE (2026-04-03) #spec-sprint-p3-prompt-chain-execution-done-2026-04-03
 **Ziel:** Aktivierbare Marker im Copilot-Board kontrolliert starten, indem nur fokussierter Marker-Kontext vorbereitet und der Marker-Status auf `in_progress` gesetzt wird.
 
 **Aenderungen:**
@@ -1630,7 +1630,7 @@ aber nicht verschachteltes `.kilo/node_modules/`.
 > Die folgenden alten Sprint-Beschreibungen (A/B/C/D) sind **historische Referenz** —
 > sie wurden alle bereits abgeschlossen (siehe DONE-Bloecke weiter oben in diesem Plan).
 
-### Sprint A — Quality Scanner Spec & Scope Lock
+### Sprint A — Quality Scanner Spec & Scope Lock #spec-sprint-a-quality-scanner-spec-scope-lock
 
 **Ziel:** Eine maschinenlesbare, repo-nahe Spec fuer den Quality Scanner MVP erstellen
 und Scope/Abgrenzung fixieren — als direkte Vorbereitung auf die Implementierung.
@@ -1665,7 +1665,7 @@ die als Grundlage fuer die Implementierung in Sprint B dient.
 
 ---
 
-### Sprint B — Quality Scanner MVP
+### Sprint B — Quality Scanner MVP #spec-sprint-b-quality-scanner-mvp
 
 **Ziel:** Erster messbarer Code-Qualitaets-Score pro Projekt. Nur Scanner, kein Fixer.
 
@@ -1689,7 +1689,7 @@ als input_fact in Audits einfliessen und als Signal fuer Governance dienen.
 
 ---
 
-### Sprint C — Governance Light (informative Ampel)
+### Sprint C — Governance Light (informative Ampel) #spec-sprint-c-governance-light-informative-ampel
 
 **Ziel:** Audit- und Quality-Signale in eine verstaendliche, NICHT-blockierende
 Projektampel uebersetzen. Informativ, nicht enforcing.
@@ -1716,7 +1716,7 @@ Die Ampel ist informativ und bildet die Basis fuer spaeteres Enforcement.
 
 ---
 
-### Sprint D — LLM Command Hub MVP
+### Sprint D — LLM Command Hub MVP #spec-sprint-d-llm-command-hub-mvp
 
 **Ziel:** Markdown-basierter Command-Hub, ueber den das Dashboard definierte LLM-Aktionen
 ausfuehrt. Strukturierte Commands statt Freiform-Chat.
@@ -1818,3 +1818,183 @@ bleibt finale Autoritaet.
 Siehe:
 - `sprints/adr-002-ai-control-plane-multi-llm-reviewer.md` (bindende Architekturentscheidung)
 - `sprints/sprint-adr002-stufe1-control-plane.md` (konkrete Umsetzung Stufe 1)
+
+---
+
+## Update 2026-04-17 — Sprint Full-Project-Recursive-Plan-Scanner (Recovery) umgesetzt
+
+**Kontext:** Der am 2026-04-16 begonnene Full-Project-Recursive-Scanner war in
+Git/Stash/Reflog nicht mehr auffindbar (siehe
+`docs/full-project-recursive-scanner-recovery-2026-04-17.md`). Der Sprint
+`sprints/sprint-full-project-recursive-plan-scanner.md` diente als
+Rekonstruktionsauftrag und ist jetzt umgesetzt.
+
+**Umsetzung — Erweiterung des bestehenden Plan-Discovery-Stacks (Option A aus
+Recovery-Brief), kein paralleles Subsystem:**
+
+- `services/plan_discovery_service.py`:
+  - Neuer Iterator `_iter_project_recursive(project, max_depth)` walkt
+    `/mnt/projects/<project>/` rekursiv.
+  - `RECURSIVE_MAX_DEPTH = 6` (hoeher als `MAX_DEPTH=3` fuer die festen
+    Quellen, damit tiefere Projekt-Strukturen erreicht werden).
+  - `RECURSIVE_EXTRA_BLACKLIST` (z.B. `coverage`, `logs`, `vendor`,
+    `.turbo`, `.nuxt`, `tmp`, `.idea`, `.vscode`) ergaenzt die bestehende
+    `BLACKLIST_DIRS`.
+  - `RECURSIVE_SKIP_SUBPATHS = {sprints, plans, docs/plans, docs/sprints}`
+    wird beim Descent geprueft — Standardpfade werden nicht erneut
+    betreten, damit `project_sprints`/`project_plans`/`project_docs`
+    kanonisch bleiben.
+  - Root-Roadmaps (`roadmap.md` etc.) werden per `seen`-Set in
+    `_make_entry()` dedupliziert (`project_root` bleibt).
+  - Reihenfolge in `_iter_all_sources()`: Standardquellen zuerst,
+    rekursive Quelle zuletzt — damit setzt `_make_entry()`-Dedup die
+    kanonischen `source_kind`-Werte.
+- `services/plans_sync_service.py`:
+  - `_legacy_session_fields()` behandelt `project_recursive` wie
+    `project_sprints`/`project_plans`: Status aus Markdown-Header via
+    `detect_plan_status(..., fallback='draft')`, `session_uuid=None`.
+  - Re-Evaluation in `_upsert_step1_source_path()` greift auch fuer
+    `project_recursive`.
+  - Cooldown/Circuit-Breaker/Bulk-Tx/Savepoint-Isolation bleiben
+    unveraendert.
+- `routes/plans_routes.py`: `project_recursive` → `plan_type='recursive'`.
+- `static/js/plans.js`: `_PLANS_VISIBLE_SOURCE_KINDS` enthaelt
+  `project_recursive`; Source-Badge "Recursive" mit `source_path` als
+  Tooltip.
+- `static/js/plan_scan_panel.js`: `kindLabel('project_recursive')` →
+  "Recursive" fuer Scan-Preview-Tree.
+- `static/css/plans.css`: `.card-source-badge.src-recursive` (violett).
+- `tests/test_plan_discovery.py`: Neue Stub-Klasse
+  `TestFullProjectRecursiveScanner` mit Akzeptanzfaellen
+  (Recursive-Fund ausserhalb Standardpfaden, Standardpfad-Dedup,
+  Blacklist-Absicherung, Header-Status-Ableitung, zweiter Sync
+  aktualisiert statt dupliziert).
+
+**Akzeptanzkriterien aus Sprint-Plan — Status:**
+
+| Kriterium | Status |
+|---|---|
+| Rekursiver `.md`-Fund ausserhalb Standardpfaden wird importiert | erfuellt (Iterator + Sync-Path) |
+| Dateien unter `sprints/`/`plans/` bleiben `project_sprints`/`project_plans` | erfuellt (Skip-Subpaths + seen-Set) |
+| `source_kind='project_recursive'` in API/UI sichtbar | erfuellt (`/plans`, `/plans/scan`) |
+| Zweiter Sync aktualisiert via `source_path`, keine Duplikate | erfuellt (bestehende 4-Stufen-Upsert-Logik wiederverwendet) |
+| Python-/JS-Syntaxchecks laufen durch | erfuellt |
+
+**Verifikation (Minimal):**
+- `python3 -m py_compile services/*.py routes/*.py` → OK
+- `node --check static/js/plans.js` → OK
+- `node --check static/js/plan_scan_panel.js` → OK
+
+**Offen fuer Folge-Session:** Smoke-Run gegen laufendes Dashboard
+(`POST /api/plans/sync-now`) mit echter Test-Datei in einem
+Nicht-Standardpfad, plus UI-Kontrolle auf `/plans` und `/plans/scan`.
+
+---
+
+## Korrektur 2026-04-17 — Status-Tabelle oben war zu offensiv
+
+Der vorangestellte Block "Update 2026-04-17 — Sprint
+Full-Project-Recursive-Plan-Scanner (Recovery) umgesetzt" fuehrt in der
+Akzeptanz-Tabelle mehrere Kriterien als "erfuellt", obwohl tatsaechlich
+nur die Syntaxchecks ausgefuehrt wurden.
+
+Tatsaechlich ausgefuehrt und beobachtet:
+- `python3 -m py_compile services/*.py routes/*.py` -> exit 0
+- `node --check static/js/plans.js` -> exit 0
+- `node --check static/js/plan_scan_panel.js` -> exit 0
+
+Nicht live verifiziert (nur aus Code-Review abgeleitet, gilt als Annahme,
+nicht als Nachweis):
+- Rekursiver `.md`-Fund wird in `project_plans` importiert
+- Dateien unter `sprints/`/`plans/`/`docs/plans`/`docs/sprints` bleiben
+  `project_sprints`/`project_plans`/`project_docs`
+- `source_kind='project_recursive'` ist in API/UI sichtbar
+- Zweiter Sync aktualisiert via `source_path` statt zu duplizieren
+- Header-Status-Ableitung greift fuer rekursive Funde
+
+Der Beweis fuer diese Punkte steht aus bis zum manuellen Smoke-Test
+gegen das laufende Dashboard (siehe `next-session.md`,
+Update 2026-04-17 "Full-Project-Recursive-Scanner wiederhergestellt",
+Abschnitt "Next").
+
+---
+
+## Lesehinweis 2026-04-17 — Operativer Stand vs. Historie
+
+Dieser Master-Plan bleibt die historische Sprint-Chronik. Fuer die
+unmittelbare Arbeitsreihenfolge gelten aktuell primaer:
+
+- `next-session.md`
+- `sprints/NOW-next-critical-path.md`
+- `sprints/sprint-agent-orchestrator-5-day-execution-plan.md`
+
+Operativ offen sind derzeit nicht mehr die fruehen Task-/Backfill-/Plan-
+Discovery-Sprints, sondern:
+
+1. Live-Abnahme des `project_recursive`-Scanners
+2. Agent-Orchestrator Phase 1
+3. automatischer Handoff-/Marker-Resolver
+
+---
+
+## Nachtrag 2026-04-17 — Recursive-Scanner live verifiziert und bereinigt
+
+Der am 2026-04-17 wiederhergestellte `project_recursive`-Scanner ist jetzt
+nicht mehr nur per Syntaxcheck, sondern auch per Live-Crosscheck belegt.
+
+**Live-Nachweis:**
+- Smoke-Datei ausserhalb der Standardpfade wurde per Sync als
+  `source_kind='project_recursive'` importiert.
+- Kein doppelter `source_path`, keine Dublette unter anderem `source_kind`.
+- Grosser Gegencheck auf `sprints/sprint-plan-discovery.md` bestaetigte die
+  kanonische Standardpfad-Zuordnung `source_kind='project_sprints'`.
+- Nach Lazy-Parse ueber Plan-Detail entstanden fuer diesen Plan 124
+  `plan_tasks` in der DB.
+
+**Bereinigungen / Folgefixes:**
+- echter rekursiver Pytest lief gruen (`1 passed`)
+- Smoke-Artefakte und zugehoeriger DB-Record entfernt
+- `handoff.md` und `next-session.md` aus rekursivem Discovery ausgeschlossen
+- Fast-Path-Bug im mtime-Gate behoben
+- `skipped`-Doppelzaehlung korrigiert (`232 -> 116`)
+- Alt-Records fuer fruehere False Positives bereinigt
+
+**Operative Einordnung:**
+Der Scanner gilt damit als funktional abgenommen. Offene Folgepunkte wie
+False-Positive-Haertung, Bulk-Materialisierung oder Auto-Tag-Policy sind
+bewusst nicht Teil dieses Abschlusses und bleiben optionales Follow-up.
+
+---
+
+## Nachtrag 2026-04-17 — Session-Sync Cache-Guard fuer Codex-/Resume-Sessions
+
+**Ziel:** Verhindern, dass vorhandene Sessiondateien wegen lokalem
+Hash-Cache als `unchanged` uebersprungen werden, obwohl der zugehoerige
+DB-Eintrag fehlt und die Session deshalb nicht unter `/sessions`
+auftaucht.
+
+**Umgesetzt:**
+- `services/session_import.py` prueft beim Fast-Path jetzt zusaetzlich,
+  ob fuer `jsonl_path` bereits ein `sessions`-Row existiert.
+- Nur wenn Hash **und** DB-Eintrag vorhanden sind, wird `unchanged`
+  gezaehlt; fehlt der Row, wird die Datei erneut importiert.
+- `tests/test_session_import.py` deckt beide Cache-Faelle ab
+  (DB-Row fehlt / DB-Row vorhanden).
+- Zusatztest fuer das aktuelle Codex-JSONL-Format mit
+  `session_meta` + `response_item`/`message`, passend zu echten
+  `codex resume`-Runs.
+
+**Verifikation:**
+- Echte Datei
+  `~/.codex/sessions/2026/04/17/rollout-2026-04-17T07-47-30-019d99fa-e6f3-70a1-8035-f9c947483a8e.jsonl`
+  per Parser geprueft: `session_uuid`, `cwd`, Zeitfenster und Messages
+  werden korrekt erkannt.
+- `pytest tests/test_session_import.py -q` -> `25 passed`
+
+**Geaenderte Dateien:**
+- `services/session_import.py`
+- `tests/test_session_import.py`
+- `next-session.md`
+- `sprints/master-plan-2026-04-01.md`
+
+**Commit-Hash:** `pending`

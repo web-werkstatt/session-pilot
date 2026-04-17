@@ -1,4 +1,4 @@
-# Plan: Voll funktionsfaehiges Workflow-System im Project Dashboard
+# Plan: Voll funktionsfaehiges Workflow-System im Project Dashboard #sprint-plan-voll-funktionsfaehiges-workflow-system-im-project-dashboard
 
 ## Context
 Das aktuelle Workflow-Tab im Project Dashboard zeigt bereits echte Daten aus Markern, Sessions, Ratings und Risiko-Hinweisen. Es ist aber noch vor allem eine Status- und Navigationsansicht. Die Visualisierung funktioniert, doch der Workflow wird noch nicht direkt im Tab gesteuert.

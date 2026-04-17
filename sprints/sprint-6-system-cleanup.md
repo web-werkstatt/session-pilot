@@ -1,4 +1,4 @@
-# Sprint 6: System Cleanup & Hardening
+# Sprint 6: System Cleanup & Hardening #sprint-sprint-6-system-cleanup-hardening
 
 **Datum:** 2026-03-28
 **Ziel:** Versteckte Systemprobleme beseitigen - DB-Bloat, Docker-Muell, offene Ports, tote Services
@@ -104,7 +104,7 @@ mit Tool-Outputs, Screenshots und Base64-Daten gespeichert.
 
 ## Bereits erledigt
 
-### Sprint 5.1 - Performance & Sync
+### Sprint 5.1 - Performance & Sync #spec-sprint-5-1-performance-sync
 - [x] 20 Docker Container gestoppt (irtours, seo-suite, expense-manager, steuerrecht, etc.)
 - [x] Ollama deaktiviert
 - [x] PCP (Performance Co-Pilot) deaktiviert
@@ -113,14 +113,14 @@ mit Tool-Outputs, Screenshots und Base64-Daten gespeichert.
 - [x] Auto-Sync bei Sessions-Seitenaufruf mit 1h Cooldown
 - [x] JSONL-Import Escape-Fehler behoben (\u0000, \x00)
 
-### Sprint 6 - System Cleanup
+### Sprint 6 - System Cleanup #spec-sprint-6-system-cleanup
 - [x] messages-Tabelle: 11 GB -> 713 MB (4.4 Mio Duplikate entfernt, Bug gefixt)
 - [x] Docker aufgeraeumt: ~300 GB freigegeben (Images, Build Cache, Volumes, Container)
 - [x] docker-mec-autostart.service deaktiviert (kaputtes Netzwerk)
 - [x] Message-Duplikat-Bug gefixt (DELETE vor INSERT)
 - [x] NoneType-Absicherung bei Session-INSERT
 
-### Sprint 6.1 - Code Cleanup
+### Sprint 6.1 - Code Cleanup #spec-sprint-6-1-code-cleanup
 - [x] Verwaiste Dateien entfernt: context_tracker.py, dashboard.js, session-reviews.css, sessions-list.css
 - [x] Ungenutzte Funktionen entfernt: get_git_status(), get_tool_for_model()
 - [x] Python-Duplikate: WHERE-Builder (_build_timesheet_filter), Search-Parser (_parse_search_output)
@@ -130,6 +130,6 @@ mit Tool-Outputs, Screenshots und Base64-Daten gespeichert.
 - [x] scheduled_tasks.js: formatDate -> formatTimeAgo (korrekte Semantik)
 - [x] CLAUDE.md aktualisiert mit neuen Patterns und Services
 
-### Offen
+### Offen #spec-offen
 - [x] Modal-Handling vereinheitlichen (generische openModal/closeModal in base.js)
 - [ ] Fetch-Wrapper einfuehren (globale fetchJson() Funktion)

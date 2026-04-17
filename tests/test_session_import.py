@@ -207,3 +207,119 @@ class TestFileHash:
         f.write_text("x" * 20000)
         result = _file_hash(str(f))
         assert result is not None
+
+
+# ---------------------------------------------------------------------------
+# sync_account cache guard
+# ---------------------------------------------------------------------------
+
+class TestSyncAccountCacheGuard:
+
+    def test_cached_file_is_reimported_when_db_row_is_missing(self, tmp_path, monkeypatch):
+        from services import session_import as mod
+
+        fpath = tmp_path / "codex-session.jsonl"
+        fpath.write_text('{"type":"session_meta","payload":{"id":"sess-1"}}\n')
+
+        monkeypatch.setattr(mod, "_file_hash", lambda path: "hash-1")
+        monkeypatch.setattr(mod, "_db_has_session_for_path", lambda path: False)
+        monkeypatch.setattr(mod, "find_sessions_codex", lambda config_dir: [(str(fpath), None)])
+
+        calls = []
+
+        def fake_import(path, account_name):
+            calls.append((path, account_name))
+            return "imported"
+
+        monkeypatch.setattr(mod, "import_codex_session", fake_import)
+
+        account = {"name": "codex", "tool": "codex", "config_dir": "/tmp/codex"}
+        stats = mod.sync_account(account, hash_cache={f"codex:v1:{fpath}": "hash-1"})
+
+        assert stats["imported"] == 1
+        assert stats["unchanged"] == 0
+        assert calls == [(str(fpath), "codex")]
+
+    def test_cached_file_stays_unchanged_when_db_row_exists(self, tmp_path, monkeypatch):
+        from services import session_import as mod
+
+        fpath = tmp_path / "codex-session.jsonl"
+        fpath.write_text('{"type":"session_meta","payload":{"id":"sess-1"}}\n')
+
+        monkeypatch.setattr(mod, "_file_hash", lambda path: "hash-1")
+        monkeypatch.setattr(mod, "_db_has_session_for_path", lambda path: True)
+        monkeypatch.setattr(mod, "find_sessions_codex", lambda config_dir: [(str(fpath), None)])
+
+        def fail_import(path, account_name):
+            raise AssertionError("import should not run for cached DB-backed session")
+
+        monkeypatch.setattr(mod, "import_codex_session", fail_import)
+
+        account = {"name": "codex", "tool": "codex", "config_dir": "/tmp/codex"}
+        stats = mod.sync_account(account, hash_cache={f"codex:v1:{fpath}": "hash-1"})
+
+        assert stats["imported"] == 0
+        assert stats["unchanged"] == 1
+
+
+# ---------------------------------------------------------------------------
+# codex importer
+# ---------------------------------------------------------------------------
+
+class TestCodexImporter:
+
+    def test_parse_codex_jsonl_reads_current_message_format(self, tmp_path):
+        from services.importers.codex_importer import parse_codex_jsonl
+
+        fpath = tmp_path / "codex.jsonl"
+        lines = [
+            {
+                "timestamp": "2026-04-17T05:48:36.779Z",
+                "type": "session_meta",
+                "payload": {
+                    "id": "019d99fa-e6f3-70a1-8035-f9c947483a8e",
+                    "cwd": "/mnt/projects/project_dashboard",
+                    "cli_version": "0.121.0",
+                    "git": {"branch": "main"},
+                },
+            },
+            {
+                "timestamp": "2026-04-17T05:48:40.000Z",
+                "type": "response_item",
+                "payload": {
+                    "type": "message",
+                    "role": "user",
+                    "content": [{"type": "input_text", "text": "Bitte fortsetzen"}],
+                },
+            },
+            {
+                "timestamp": "2026-04-17T05:48:42.000Z",
+                "type": "response_item",
+                "payload": {
+                    "type": "message",
+                    "role": "assistant",
+                    "model": "gpt-5.4",
+                    "usage": {"input_tokens": 123, "output_tokens": 45},
+                    "content": [{"type": "output_text", "text": "Weiter geht es."}],
+                },
+            },
+        ]
+
+        with open(fpath, "w", encoding="utf-8") as f:
+            for line in lines:
+                f.write(json.dumps(line) + "\n")
+
+        meta, messages = parse_codex_jsonl(str(fpath))
+
+        assert meta["session_uuid"] == "019d99fa-e6f3-70a1-8035-f9c947483a8e"
+        assert meta["cwd"] == "/mnt/projects/project_dashboard"
+        assert meta["git_branch"] == "main"
+        assert meta["model"] == "gpt-5.4"
+        assert meta["user_message_count"] == 1
+        assert meta["assistant_message_count"] == 1
+        assert meta["total_input_tokens"] == 123
+        assert meta["total_output_tokens"] == 45
+        assert len(messages) == 2
+        assert messages[0]["type"] == "user"
+        assert messages[1]["type"] == "assistant"
+        assert messages[1]["content"] == "Weiter geht es."

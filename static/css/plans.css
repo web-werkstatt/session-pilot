@@ -269,6 +269,12 @@
     font-style: italic;
 }
 
+.card-source-badge.src-recursive {
+    background: rgba(168,85,247,0.16);
+    color: #d8b4fe;
+    border-color: rgba(168,85,247,0.35);
+}
+
 /* Spin Animation */
 .spin {
     animation: spin 1s linear infinite;

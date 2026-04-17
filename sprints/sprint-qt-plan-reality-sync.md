@@ -1,4 +1,4 @@
-# Sprint QT - Plan-Reality-Sync
+# Sprint QT - Plan-Reality-Sync #sprint-sprint-qt-plan-reality-sync
 
 Stand: 2026-04-07
 Status: DONE 2026-04-07
@@ -35,7 +35,7 @@ Keine. Reiner Bestandsaufnahme- und Aufraeum-Sprint.
 
 Jedes Arbeitspaket ist in 2-5-Minuten-Tasks zerlegt. Reihenfolge: A vor B vor C.
 
-### Arbeitspaket A - Master-Plan Reality-Check (~20 Min) - DONE 2026-04-07
+### Arbeitspaket A - Master-Plan Reality-Check (~20 Min) - DONE 2026-04-07 #spec-arbeitspaket-a-master-plan-reality-check-20-min-done-2026-04-07
 
 - [x] **A1** `services/ai_scope_service.py` (86 Zeilen): `extract_tool_names`, `extract_ai_flags`, `analyze_from_db_messages`
 - [x] **A2** `routes/session_filter_routes.py` (187 Zeilen): `/api/sessions/outcome-reasons`, `/filters`, `/<uuid>/outcome-detail`, `/scope-stats`
@@ -47,7 +47,7 @@ Jedes Arbeitspaket ist in 2-5-Minuten-Tasks zerlegt. Reihenfolge: A vor B vor C.
 - [x] **A8** Sprint 11 Status: **DONE**. Modell-Vergleich Seite + 4 API-Endpoints + Empfehlungs-Engine.
 - [x] **A9** Master-Plan-Block "AI Governance Analytics" sowie Historische-Referenz-Tabelle mit Status-Korrektur 2026-04-07 aktualisiert. Current-State-Block ergaenzt.
 
-### Arbeitspaket B - Gitea-Issue-Triage (~15 Min) - DONE 2026-04-07
+### Arbeitspaket B - Gitea-Issue-Triage (~15 Min) - DONE 2026-04-07 #spec-arbeitspaket-b-gitea-issue-triage-15-min-done-2026-04-07
 
 - [x] **B1** Issue #13 Body gelesen: Audit-Integration (POST /api/audits/run, /audits-Seite, Sidebar). Verifiziert: `routes/audit_routes.py` Zeile 89 hat `/api/audits/run`, `templates/audit.html` + Sidebar-Link in `base.html` Zeile 88 vorhanden.
 - [x] **B2** Issue #14 Body gelesen: Sprint P3 Prompt-Chain, Body nennt selbst Commit `afd218c`. `git log` bestaetigt: `afd218c Feature: Sprint P3 Prompt-Chain activation` auf main.
@@ -56,13 +56,13 @@ Jedes Arbeitspaket ist in 2-5-Minuten-Tasks zerlegt. Reihenfolge: A vor B vor C.
 - [x] **B5** Issue #18 Body gelesen: Copilot CSS + handoff regeneration. Verifiziert: `templates/copilot_board.html` Zeilen 6-7 laden `design-tokens.css` + `components.css`, `static/css/components.css` hat `ui-panel`, `ui-button`, `ui-badge`. Commit `5bcb2af fix: Copilot CSS and handoff regeneration refs #18` auf main.
 - [x] **B6** Alle 5 Issues mit Schliess-Kommentar + Commit-Referenz geschlossen (Gitea API).
 
-### Arbeitspaket C - Marker-Context klaeren (~5 Min) - DONE 2026-04-07
+### Arbeitspaket C - Marker-Context klaeren (~5 Min) - DONE 2026-04-07 #spec-arbeitspaket-c-marker-context-klaeren-5-min-done-2026-04-07
 
 - [x] **C1** User-Rueckfrage: "Ist `marker-context.md` noch relevant?" -> Antwort: **behalten**.
 - [x] **C2** entfaellt (keine Aktion noetig)
 - [x] **C3** entfaellt (Marker bleibt wie er ist)
 
-### Arbeitspaket D - next-session.md Follow-ups (~25 Min) - TEILWEISE DONE
+### Arbeitspaket D - next-session.md Follow-ups (~25 Min) - TEILWEISE DONE #spec-arbeitspaket-d-next-session-md-follow-ups-25-min-teilweise-done
 
 - [x] **D1** `services/plan_structure_helpers.py` geprueft: Session-Bindung laeuft ueber `Marker.last_session` (einzelne Session-ID pro Marker) und `build_task_items` matcht Tasks an Marker ueber **Titel-Lowercase**. Sessions bubble up Spec->Sprint->Plan via `collect_session_summaries`.
 - [x] **D2** **verschoben**: Echte Session <-> Spec/Task Bindung erfordert Schema-Aenderung (FK `spec_id`/`task_id` in `sessions` oder Relation-Tabelle) + Anpassung aller Importer. Groesser als ein 5-Min-Task. Als eigener Mini-Sprint in `next-session.md` eingetragen.
@@ -71,7 +71,7 @@ Jedes Arbeitspaket ist in 2-5-Minuten-Tasks zerlegt. Reihenfolge: A vor B vor C.
 - [x] **D5** `next-session-archiv.md` geprueft: juengster Eintrag war `Session 2026-04-05`, Session 2026-04-06 fehlte.
 - [x] **D6** Session 2026-04-06 Block aus `next-session.md` nach `next-session-archiv.md` verschoben.
 
-### Arbeitspaket E - Master-Plan & next-session.md updaten (~10 Min) - DONE 2026-04-07
+### Arbeitspaket E - Master-Plan & next-session.md updaten (~10 Min) - DONE 2026-04-07 #spec-arbeitspaket-e-master-plan-next-session-md-updaten-10-min-done-2026-04-07
 
 - [x] **E1** Master-Plan: neuer Abschnitt "Sprint QT - Plan-Reality-Sync - DONE (2026-04-07)" mit Ergebnissen aller Arbeitspakete in "Completed Sprints (diese Session)" ergaenzt.
 - [x] **E2** Master-Plan-Prioritaeten: Sprint QS und Sprint 17 als naechste Kandidaten im `next-session.md` benannt.

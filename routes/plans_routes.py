@@ -29,9 +29,11 @@ _SOURCE_KIND_TO_PLAN_TYPE = {
     'claude_plans': 'claude',
     'project_sprints': 'sprint',
     'project_plans': 'plan',
+    'project_docs': 'docs',
     'project_docs_plans': 'docs',
     'project_docs_sprints': 'docs',
     'project_root': 'root',
+    'project_recursive': 'recursive',
 }
 
 

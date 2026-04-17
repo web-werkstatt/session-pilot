@@ -69,7 +69,14 @@ function loadPlans() {
         });
 }
 
-var _PLANS_VISIBLE_SOURCE_KINDS = new Set(['project_sprints', 'project_plans']);
+var _PLANS_VISIBLE_SOURCE_KINDS = new Set([
+    'project_sprints',
+    'project_plans',
+    // Full-Project-Recursive-Scanner: planartige Markdown-Dateien ausserhalb
+    // der Standardpfade (sprints/, plans/, docs/plans, docs/sprints) werden
+    // mit source_kind='project_recursive' importiert und hier mitgezeigt.
+    'project_recursive',
+]);
 
 function _isLocalPlanOrSprint(plan) {
     return _PLANS_VISIBLE_SOURCE_KINDS.has(plan && plan.source_kind || '');
@@ -254,10 +261,11 @@ function _buildPlanSourceBadge(plan) {
     if (!type || type === 'sprint' || type === 'plan') return '';
     var label;
     switch (type) {
-        case 'claude': label = 'Claude Plan'; break;
-        case 'docs':   label = 'Docs'; break;
-        case 'root':   label = 'Projekt-Root'; break;
-        default:       return '';
+        case 'claude':    label = 'Claude Plan'; break;
+        case 'docs':      label = 'Docs'; break;
+        case 'root':      label = 'Projekt-Root'; break;
+        case 'recursive': label = 'Recursive'; break;
+        default:          return '';
     }
     var tip = plan.source_path ? ' title="' + escapeHtml(plan.source_path) + '"' : '';
     return '<span class="card-source-badge src-' + escapeHtml(type) + '"' + tip + '>' + escapeHtml(label) + '</span>';

@@ -1,4 +1,4 @@
-# Sprint FINAL — Dashboard Closeout
+# Sprint FINAL — Dashboard Closeout #sprint-sprint-final-dashboard-closeout
 
 Stand: 2026-04-07
 Status: **DONE 2026-04-07** (umgesetzt als M1-M14 im Closeout)
@@ -50,7 +50,7 @@ Am Ende des Tages gilt:
 
 ## Arbeitspakete (sequentiell)
 
-### AP1 — Bestandsaufnahme & Branch-Hygiene (30 min)
+### AP1 — Bestandsaufnahme & Branch-Hygiene (30 min) #spec-ap1-bestandsaufnahme-branch-hygiene-30-min
 
 - `git status`, `git log --oneline -20`, `git branch -a` pruefen
 - Sprint SB Commit ist `0bac136` (bereits gepusht) — nichts zu tun
@@ -63,7 +63,7 @@ Am Ende des Tages gilt:
 
 ---
 
-### AP2 — Dokumentations-Snapshot (45 min)
+### AP2 — Dokumentations-Snapshot (45 min) #spec-ap2-dokumentations-snapshot-45-min
 
 **README.md** — pruefen ob es das Dashboard akkurat beschreibt:
 - Features-Liste aktuell? (Sprint SB, alle P3.x, Audit, Copilot-Board)
@@ -90,7 +90,7 @@ warum das Dashboard jetzt frozen ist und wie er einen deferred Sprint reaktivier
 
 ---
 
-### AP3 — Betrieb & Datenintegritaet (45 min)
+### AP3 — Betrieb & Datenintegritaet (45 min) #spec-ap3-betrieb-datenintegritaet-45-min
 
 - `sudo systemctl status project-dashboard` — Service active
 - `sudo journalctl -u project-dashboard --since today` — keine Fehler-Spam
@@ -107,7 +107,7 @@ warum das Dashboard jetzt frozen ist und wie er einen deferred Sprint reaktivier
 
 ---
 
-### AP4 — Offene Arbeitsartefakte aufraeumen (30 min)
+### AP4 — Offene Arbeitsartefakte aufraeumen (30 min) #spec-ap4-offene-arbeitsartefakte-aufraeumen-30-min
 
 - `marker-context.md` (im Root, unversioniert): ist das noch aktiver Arbeitskontext?
   - Wenn nein: in `sprints/archive/` verschieben oder loeschen (Rueckfrage)
@@ -120,7 +120,7 @@ warum das Dashboard jetzt frozen ist und wie er einen deferred Sprint reaktivier
 
 ---
 
-### AP5 — Release-Tag & Commit (15 min)
+### AP5 — Release-Tag & Commit (15 min) #spec-ap5-release-tag-commit-15-min
 
 - Alle Aenderungen aus AP1-AP4 committen:
   `docs: dashboard feature-freeze + closeout (refs #NN)`

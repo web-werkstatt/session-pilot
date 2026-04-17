@@ -1,4 +1,4 @@
-# Sprint: Unified Cockpit — Konsolidierung der operativen Oberflaeche
+# Sprint: Unified Cockpit — Konsolidierung der operativen Oberflaeche #sprint-sprint-unified-cockpit-konsolidierung-der-operativen-oberflaeche
 
 Stand: 2026-04-14
 Status: **IN PROGRESS** (Phase 1-6 fertig, Phase 7 deferred)
@@ -15,7 +15,7 @@ visuelle Design bleibt unveraendert.
 
 ## Kontext
 
-### Probleme im Ist-Zustand
+### Probleme im Ist-Zustand #spec-probleme-im-ist-zustand
 
 1. **Cockpit** (`/copilot?plan_id=N`) ist Plan-zentriert — zeigt oft "Keine AI Tasks"
    weil Marker ueber mehrere Plaene verteilt oder noch nicht importiert sind.
@@ -23,7 +23,7 @@ visuelle Design bleibt unveraendert.
    Marker-Gruppen, Aktionen) aber kein Dispatch.
 3. **Projekt-Detail → Dispatch-Tab** dupliziert die Cockpit-Panel-Funktionalitaet.
 
-### Design-Prinzip
+### Design-Prinzip #spec-design-prinzip
 
 Das visuelle Design des Cockpit-Boards bleibt exakt wie es ist. Keine neuen Layouts,
 keine neuen Card-Styles, keine CSS-Ueberarbeitung. Nur fehlende Funktionalitaet wird
@@ -42,7 +42,7 @@ hinzugefuegt und bestehende Features konsolidiert.
 
 ## Commits (sequentielle Umsetzung)
 
-### Commit 1 — Backend: Aggregierter Projekt-API-Endpoint [DONE]
+### Commit 1 — Backend: Aggregierter Projekt-API-Endpoint [DONE] #spec-commit-1-backend-aggregierter-projekt-api-endpoint-done
 
 **Ziel:** Ein Endpoint liefert alles was das Cockpit fuer ein Projekt braucht.
 
@@ -62,7 +62,7 @@ hinzugefuegt und bestehende Features konsolidiert.
 
 ---
 
-### Commit 2 — Workflow-Loop JS parametrisieren [DONE]
+### Commit 2 — Workflow-Loop JS parametrisieren [DONE] #spec-commit-2-workflow-loop-js-parametrisieren-done
 
 **Ziel:** `WorkflowLoop` ohne `PROJECT_NAME`-Global nutzbar machen.
 
@@ -79,7 +79,7 @@ hinzugefuegt und bestehende Features konsolidiert.
 
 ---
 
-### Commit 3 — Cockpit-Route: project= Parameter [DONE]
+### Commit 3 — Cockpit-Route: project= Parameter [DONE] #spec-commit-3-cockpit-route-project-parameter-done
 
 **Ziel:** `/copilot?project=<name>` als neuer Einstieg ins Cockpit.
 
@@ -99,7 +99,7 @@ hinzugefuegt und bestehende Features konsolidiert.
 
 ---
 
-### Commit 4 — Workflow-Uebersicht im Cockpit
+### Commit 4 — Workflow-Uebersicht im Cockpit #spec-commit-4-workflow-uebersicht-im-cockpit
 
 **Ziel:** Kompakte Workflow-Info zwischen Progress-Bar und Sprint-Sections.
 
@@ -125,7 +125,7 @@ hinzugefuegt und bestehende Features konsolidiert.
 
 ---
 
-### Commit 5 — Board: Projekt-Datenquelle + Workflow-Badges
+### Commit 5 — Board: Projekt-Datenquelle + Workflow-Badges #spec-commit-5-board-projekt-datenquelle-workflow-badges
 
 **Ziel:** Board zeigt alle Marker des Projekts (nicht nur eines Plans).
 
@@ -149,7 +149,7 @@ hinzugefuegt und bestehende Features konsolidiert.
 
 ---
 
-### Commit 6 — Sprint-Sections demoten + Plan-Filter
+### Commit 6 — Sprint-Sections demoten + Plan-Filter #spec-commit-6-sprint-sections-demoten-plan-filter
 
 **Ziel:** Sprint-Sections werden sekundaer, Plan-Filter im Header.
 
@@ -171,7 +171,7 @@ hinzugefuegt und bestehende Features konsolidiert.
 
 ---
 
-### Commit 7 — Projekt-Detail bereinigen (Deferred)
+### Commit 7 — Projekt-Detail bereinigen (Deferred) #spec-commit-7-projekt-detail-bereinigen-deferred
 
 **Ziel:** Keine duplizierten operativen UIs.
 
@@ -228,7 +228,7 @@ hinzugefuegt und bestehende Features konsolidiert.
 
 ## Status-Nachtraege
 
-### Session 2026-04-14 (Commits 1-3)
+### Session 2026-04-14 (Commits 1-3) #spec-session-2026-04-14-commits-1-3
 
 - Commit 1 (Backend): `routes/cockpit_routes.py` mit aggregiertem Endpoint, getestet
 - Commit 2 (JS-Parametrisierung): 4 Workflow-Loop-Dateien, `WL.getProjectName()` mit Fallback
@@ -236,7 +236,7 @@ hinzugefuegt und bestehende Features konsolidiert.
 - Git-Commit: `a514bcb` (alle 3 Phasen zusammen)
 - Abwaertskompatibilitaet verifiziert: Workflow-Tab auf Projekt-Detail-Seite unveraendert
 
-### Session 2026-04-14 (Commit 4)
+### Session 2026-04-14 (Commit 4) #spec-session-2026-04-14-commit-4
 
 - Commit 4 (Workflow-Uebersicht): SVG-Ring 240px, Current/Next-Pills, Signal-Dots, Kollaps-Toggle
 - Neue Dateien: `_cockpit_workflow_overview.html`, `cockpit-workflow.css`, `cockpit-workflow.js`
@@ -246,7 +246,7 @@ hinzugefuegt und bestehende Features konsolidiert.
 - Git-Commit: `3e6b696`
 - Alle 5 Akzeptanzkriterien verifiziert im Browser
 
-### Session 2026-04-14 (Commit 5)
+### Session 2026-04-14 (Commit 5) #spec-session-2026-04-14-commit-5
 
 - Commit 5 (Board-Umstellung): Alle 15 Projekt-Marker auf dem Board im Projekt-Modus
 - Cockpit-API um `assignments` erweitert (`_get_active_assignments` in `cockpit_routes.py`)
@@ -262,7 +262,7 @@ hinzugefuegt und bestehende Features konsolidiert.
 - Git-Commit: `d9993d3`
 - Alle 5 Akzeptanzkriterien verifiziert im Browser
 
-### Session 2026-04-14 (Commit 6)
+### Session 2026-04-14 (Commit 6) #spec-session-2026-04-14-commit-6
 
 - Commit 6 (Sprint-Sections demoten + Plan-Filter): Sections kollapsiert by default, Toggle-Button
 - Plan-Filter-Dropdown im Header: "Alle Plaene (15)" + 6 aktive Plaene mit Marker-Counts

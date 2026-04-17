@@ -1,4 +1,4 @@
-# Sprint N — Copilot UX Redesign: "AI-native Work OS"
+# Sprint N — Copilot UX Redesign: "AI-native Work OS" #sprint-sprint-n-copilot-ux-redesign-ai-native-work-os
 
 **Stand:** 2026-04-02
 **Ziel:** Copilot Board von "Kanban + Chat" zu "AI-native Work OS" transformieren
@@ -28,7 +28,7 @@ Das Copilot Board soll sich anfühlen wie Linear/GitHub PRs — ein lebendiges, 
 
 ## Lösungen (nachher)
 
-### 1. Split View — Chat sichtbar machen
+### 1. Split View — Chat sichtbar machen #spec-1-split-view-chat-sichtbar-machen
 
 ```
 ┌─────────────────────┬──────────────────────┐
@@ -48,7 +48,7 @@ Das Copilot Board soll sich anfühlen wie Linear/GitHub PRs — ein lebendiges, 
 - Panel mit Transition: `transform: translateX(100%)` → `translateX(0)`
 - Panel zeigt: Section-Header, AI-Preview, Chat-Verlauf, Input
 
-### 2. Rich Cards mit AI-Preview
+### 2. Rich Cards mit AI-Preview #spec-2-rich-cards-mit-ai-preview
 
 **Neue Card-Struktur:**
 ```
@@ -67,7 +67,7 @@ Das Copilot Board soll sich anfühlen wie Linear/GitHub PRs — ein lebendiges, 
 - Letzte Aktivität (timestamp)
 - **Preview der letzten AI-Antwort** (erste Zeile, 80 chars)
 
-### 3. Side Panel statt Modal
+### 3. Side Panel statt Modal #spec-3-side-panel-statt-modal
 
 **Warum:**
 - Modal = isoliert, underbricht Flow
@@ -101,7 +101,7 @@ Das Copilot Board soll sich anfühlen wie Linear/GitHub PRs — ein lebendiges, 
 └────────────────────────────────────┘
 ```
 
-### 4. Spalten mit Semantik + Microcopy
+### 4. Spalten mit Semantik + Microcopy #spec-4-spalten-mit-semantik-microcopy
 
 **Vorher:**
 ```
@@ -147,7 +147,7 @@ Das Copilot Board soll sich anfühlen wie Linear/GitHub PRs — ein lebendiges, 
 | done | ✅ | Fertig | "Abgeschlossen" |
 | blocked | 🚧 | Blockiert | "Wartet auf..." |
 
-### 5. Flow Guidance
+### 5. Flow Guidance #spec-5-flow-guidance
 
 **Oben im Board:**
 ```
@@ -156,7 +156,7 @@ Das Copilot Board soll sich anfühlen wie Linear/GitHub PRs — ein lebendiges, 
 └────────────────────────────────────────────────────────┘
 ```
 
-### 6. Section → "AI Step"
+### 6. Section → "AI Step" #spec-6-section-ai-step
 
 **Rename:**
 - UI: "Step" oder "AI Step" als Label
@@ -166,7 +166,7 @@ Das Copilot Board soll sich anfühlen wie Linear/GitHub PRs — ein lebendiges, 
 - "AI Step": Ein Arbeitsschritt mit Copilot-Support
 - "Spec": Detaillierte Spezifikation
 
-### 7. Landing Page — "Continue where you left off"
+### 7. Landing Page — "Continue where you left off" #spec-7-landing-page-continue-where-you-left-off
 
 **Neue Struktur:**
 ```
@@ -192,7 +192,7 @@ Das Copilot Board soll sich anfühlen wie Linear/GitHub PRs — ein lebendiges, 
 └────────────────────────────────────────────────────────┘
 ```
 
-### 8. Visuelle Energie erhöhen
+### 8. Visuelle Energie erhöhen #spec-8-visuelle-energie-erh-hen
 
 **Cards:**
 - Hover: subtle glow (`box-shadow: 0 0 20px rgba(59,130,246,0.3)`)
@@ -229,7 +229,7 @@ Das Copilot Board soll sich anfühlen wie Linear/GitHub PRs — ein lebendiges, 
 
 ## API-Erweiterungen
 
-### GET /api/copilot/last-activity
+### GET /api/copilot/last-activity #spec-get-api-copilot-last-activity
 ```json
 {
   "last_section": {
