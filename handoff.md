@@ -3,29 +3,29 @@ handoff:
   project_id: "project_dashboard"
   state_format: "copilot_markers_v1"
   stage: "idea"
-  scope: "66 Plan(s) fuer project_dashboard"
+  scope: "87 Plan(s) fuer project_dashboard"
 ---
 
 # Handoff fuer Projekt project_dashboard
 
 ## Copilot Markers
 
-<!-- MARKER:2585
+<!-- MARKER:4334
 {
-  "marker_id": "2585",
-  "titel": "Sprint N — Copilot UX Redesign: \"AI-native Work OS\" #sprint-sprint-n-copilot-ux-redesign-ai-native-work-os",
-  "plan_id": "2585",
-  "status": "todo",
-  "ziel": "Sprint N — Copilot UX Redesign: \"AI-native Work OS\" #sprint-sprint-n-copilot-ux-redesign-ai-native-work-os",
+  "marker_id": "4334",
+  "titel": "Sprint: Agent-Orchestrator Hardening — 5-Tage Execution Plan #sprint-sprint-agent-orchestrator-hardening-5-tage-execution-plan",
+  "plan_id": "4334",
+  "status": "in_progress",
+  "ziel": "Sprint: Agent-Orchestrator Hardening — 5-Tage Execution Plan #sprint-sprint-agent-orchestrator-hardening-5-tage-execution-plan",
   "naechster_schritt": "Noch nicht definiert",
   "prompt": "",
-  "prompt_suggestion": "Arbeite an: Sprint N — Copilot UX Redesign: \"AI-native Work OS\".",
+  "prompt_suggestion": "Arbeite an: Sprint: Agent-Orchestrator Hardening — 5-Tage Execution Plan #sprint-sprint-agent-orchestrator-hardening-5-tage-execution-plan.",
   "risiko": "",
   "checks": [
     "Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen"
   ],
   "last_session": "",
-  "updated_at": "2026-04-16T09:07:08.724508+00:00",
+  "updated_at": "2026-04-17T15:58:33.514539+00:00",
   "execution_score": null,
   "execution_comment": "",
   "last_execution_at": "",
@@ -38,9 +38,56 @@ handoff:
 }
 -->
 
-## Sprint N — Copilot UX Redesign: "AI-native Work OS" #sprint-sprint-n-copilot-ux-redesign-ai-native-work-os · todo
+## Sprint: Agent-Orchestrator Hardening — 5-Tage Execution Plan #sprint-sprint-agent-orchestrator-hardening-5-tage-execution-plan · in_progress
 
-**Ziel:** Sprint N — Copilot UX Redesign: "AI-native Work OS" #sprint-sprint-n-copilot-ux-redesign-ai-native-work-os
+**Ziel:** Sprint: Agent-Orchestrator Hardening — 5-Tage Execution Plan #sprint-sprint-agent-orchestrator-hardening-5-tage-execution-plan
+**Naechster Schritt:** Noch nicht definiert
+**Risiko:** -
+**Execution Score:** -
+**Execution Comment:** -
+**Last Execution:** -
+**Sprint Tag:** -
+**Spec Tag:** -
+
+**Prompt:**
+_(noch nicht gesetzt)_
+
+**Checks:**
+- Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen
+
+---
+
+<!-- MARKER:4335
+{
+  "marker_id": "4335",
+  "titel": "NOW / Next / Critical Path #sprint-now-next-critical-path",
+  "plan_id": "4335",
+  "status": "in_progress",
+  "ziel": "NOW / Next / Critical Path #sprint-now-next-critical-path",
+  "naechster_schritt": "Noch nicht definiert",
+  "prompt": "",
+  "prompt_suggestion": "Arbeite an: NOW / Next / Critical Path #sprint-now-next-critical-path.",
+  "risiko": "",
+  "checks": [
+    "Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen"
+  ],
+  "last_session": "",
+  "updated_at": "2026-04-17T15:58:33.514539+00:00",
+  "execution_score": null,
+  "execution_comment": "",
+  "last_execution_at": "",
+  "sprint_tag": "",
+  "spec_tag": "",
+  "sprint_plan_id": null,
+  "spec_id": null,
+  "source_line": null,
+  "rating_skipped": false
+}
+-->
+
+## NOW / Next / Critical Path #sprint-now-next-critical-path · in_progress
+
+**Ziel:** NOW / Next / Critical Path #sprint-now-next-critical-path
 **Naechster Schritt:** Noch nicht definiert
 **Risiko:** -
 **Execution Score:** -
@@ -88,6 +135,53 @@ _(noch nicht gesetzt)_
 ## Sprint: Unified Cockpit — Konsolidierung der operativen Oberflaeche #sprint-sprint-unified-cockpit-konsolidierung-der-operativen-oberflaeche · todo
 
 **Ziel:** Sprint: Unified Cockpit — Konsolidierung der operativen Oberflaeche #sprint-sprint-unified-cockpit-konsolidierung-der-operativen-oberflaeche
+**Naechster Schritt:** Noch nicht definiert
+**Risiko:** -
+**Execution Score:** -
+**Execution Comment:** -
+**Last Execution:** -
+**Sprint Tag:** -
+**Spec Tag:** -
+
+**Prompt:**
+_(noch nicht gesetzt)_
+
+**Checks:**
+- Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen
+
+---
+
+<!-- MARKER:2585
+{
+  "marker_id": "2585",
+  "titel": "Sprint N — Copilot UX Redesign: \"AI-native Work OS\" #sprint-sprint-n-copilot-ux-redesign-ai-native-work-os",
+  "plan_id": "2585",
+  "status": "todo",
+  "ziel": "Sprint N — Copilot UX Redesign: \"AI-native Work OS\" #sprint-sprint-n-copilot-ux-redesign-ai-native-work-os",
+  "naechster_schritt": "Noch nicht definiert",
+  "prompt": "",
+  "prompt_suggestion": "Arbeite an: Sprint N — Copilot UX Redesign: \"AI-native Work OS\".",
+  "risiko": "",
+  "checks": [
+    "Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen"
+  ],
+  "last_session": "",
+  "updated_at": "2026-04-16T09:07:08.724508+00:00",
+  "execution_score": null,
+  "execution_comment": "",
+  "last_execution_at": "",
+  "sprint_tag": "",
+  "spec_tag": "",
+  "sprint_plan_id": null,
+  "spec_id": null,
+  "source_line": null,
+  "rating_skipped": false
+}
+-->
+
+## Sprint N — Copilot UX Redesign: "AI-native Work OS" #sprint-sprint-n-copilot-ux-redesign-ai-native-work-os · todo
+
+**Ziel:** Sprint N — Copilot UX Redesign: "AI-native Work OS" #sprint-sprint-n-copilot-ux-redesign-ai-native-work-os
 **Naechster Schritt:** Noch nicht definiert
 **Risiko:** -
 **Execution Score:** -
@@ -339,16 +433,862 @@ _(noch nicht gesetzt)_
 
 ---
 
-<!-- MARKER:2586
+<!-- MARKER:10720
 {
-  "marker_id": "2586",
-  "titel": "Sprint CP - Workflow Loop Contracts #sprint-sprint-cp-workflow-loop-contracts",
-  "plan_id": "2586",
+  "marker_id": "10720",
+  "titel": "Sprint: Agent-Orchestrator Executor-Handoff — Modell B (Dashboard als Empfaenger) #sprint-sprint-agent-orchestrator-executor-handoff",
+  "plan_id": "10720",
   "status": "todo",
-  "ziel": "Sprint CP - Workflow Loop Contracts #sprint-sprint-cp-workflow-loop-contracts",
+  "ziel": "Sprint: Agent-Orchestrator Executor-Handoff — Modell B (Dashboard als Empfaenger) #sprint-sprint-agent-orchestrator-executor-handoff",
   "naechster_schritt": "Noch nicht definiert",
   "prompt": "",
-  "prompt_suggestion": "Arbeite an: Sprint CP - Workflow Loop Contracts.",
+  "prompt_suggestion": "Arbeite an: Sprint: Agent-Orchestrator Executor-Handoff — Modell B (Dashboard als Empfaenger) #sprint-sprint-agent-orchestrator-executor-handoff.",
+  "risiko": "",
+  "checks": [
+    "Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen"
+  ],
+  "last_session": "",
+  "updated_at": "2026-04-18T07:05:28.444071+00:00",
+  "execution_score": null,
+  "execution_comment": "",
+  "last_execution_at": "",
+  "sprint_tag": "",
+  "spec_tag": "",
+  "sprint_plan_id": null,
+  "spec_id": null,
+  "source_line": null,
+  "rating_skipped": false
+}
+-->
+
+## Sprint: Agent-Orchestrator Executor-Handoff — Modell B (Dashboard als Empfaenger) #sprint-sprint-agent-orchestrator-executor-handoff · todo
+
+**Ziel:** Sprint: Agent-Orchestrator Executor-Handoff — Modell B (Dashboard als Empfaenger) #sprint-sprint-agent-orchestrator-executor-handoff
+**Naechster Schritt:** Noch nicht definiert
+**Risiko:** -
+**Execution Score:** -
+**Execution Comment:** -
+**Last Execution:** -
+**Sprint Tag:** -
+**Spec Tag:** -
+
+**Prompt:**
+_(noch nicht gesetzt)_
+
+**Checks:**
+- Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen
+
+---
+
+<!-- MARKER:10486
+{
+  "marker_id": "10486",
+  "titel": "Sprint: Agent-Orchestrator Project-Config — Multi-Projekt-Abstraktion #sprint-sprint-agent-orchestrator-project-config",
+  "plan_id": "10486",
+  "status": "todo",
+  "ziel": "Sprint: Agent-Orchestrator Project-Config — Multi-Projekt-Abstraktion #sprint-sprint-agent-orchestrator-project-config",
+  "naechster_schritt": "Noch nicht definiert",
+  "prompt": "",
+  "prompt_suggestion": "Arbeite an: Sprint: Agent-Orchestrator Project-Config — Multi-Projekt-Abstraktion #sprint-sprint-agent-orchestrator-project-config.",
+  "risiko": "",
+  "checks": [
+    "Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen"
+  ],
+  "last_session": "",
+  "updated_at": "2026-04-17T17:49:03.361857+00:00",
+  "execution_score": null,
+  "execution_comment": "",
+  "last_execution_at": "",
+  "sprint_tag": "",
+  "spec_tag": "",
+  "sprint_plan_id": null,
+  "spec_id": null,
+  "source_line": null,
+  "rating_skipped": false
+}
+-->
+
+## Sprint: Agent-Orchestrator Project-Config — Multi-Projekt-Abstraktion #sprint-sprint-agent-orchestrator-project-config · todo
+
+**Ziel:** Sprint: Agent-Orchestrator Project-Config — Multi-Projekt-Abstraktion #sprint-sprint-agent-orchestrator-project-config
+**Naechster Schritt:** Noch nicht definiert
+**Risiko:** -
+**Execution Score:** -
+**Execution Comment:** -
+**Last Execution:** -
+**Sprint Tag:** -
+**Spec Tag:** -
+
+**Prompt:**
+_(noch nicht gesetzt)_
+
+**Checks:**
+- Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen
+
+---
+
+<!-- MARKER:9441
+{
+  "marker_id": "9441",
+  "titel": "Sprint: Agent-Orchestrator Phase 2 + 3 — Neu zugeschnitten durch Markdown-Disziplin #sprint-sprint-agent-orchestrator-phase-2-3-reshaped",
+  "plan_id": "9441",
+  "status": "todo",
+  "ziel": "Sprint: Agent-Orchestrator Phase 2 + 3 — Neu zugeschnitten durch Markdown-Disziplin #sprint-sprint-agent-orchestrator-phase-2-3-reshaped",
+  "naechster_schritt": "Noch nicht definiert",
+  "prompt": "",
+  "prompt_suggestion": "Arbeite an: Sprint: Agent-Orchestrator Phase 2 + 3 — Neu zugeschnitten durch Markdown-Disziplin #sprint-sprint-agent-orchestrator-phase-2-3-reshaped.",
+  "risiko": "",
+  "checks": [
+    "Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen"
+  ],
+  "last_session": "",
+  "updated_at": "2026-04-17T15:58:33.514539+00:00",
+  "execution_score": null,
+  "execution_comment": "",
+  "last_execution_at": "",
+  "sprint_tag": "",
+  "spec_tag": "",
+  "sprint_plan_id": null,
+  "spec_id": null,
+  "source_line": null,
+  "rating_skipped": false
+}
+-->
+
+## Sprint: Agent-Orchestrator Phase 2 + 3 — Neu zugeschnitten durch Markdown-Disziplin #sprint-sprint-agent-orchestrator-phase-2-3-reshaped · todo
+
+**Ziel:** Sprint: Agent-Orchestrator Phase 2 + 3 — Neu zugeschnitten durch Markdown-Disziplin #sprint-sprint-agent-orchestrator-phase-2-3-reshaped
+**Naechster Schritt:** Noch nicht definiert
+**Risiko:** -
+**Execution Score:** -
+**Execution Comment:** -
+**Last Execution:** -
+**Sprint Tag:** -
+**Spec Tag:** -
+
+**Prompt:**
+_(noch nicht gesetzt)_
+
+**Checks:**
+- Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen
+
+---
+
+<!-- MARKER:3869
+{
+  "marker_id": "3869",
+  "titel": "Sprint: Agent-Orchestrator Hardening Phase 2 — Verify Gates #sprint-sprint-agent-orchestrator-hardening-phase-2-verify-gates",
+  "plan_id": "3869",
+  "status": "todo",
+  "ziel": "Sprint: Agent-Orchestrator Hardening Phase 2 — Verify Gates #sprint-sprint-agent-orchestrator-hardening-phase-2-verify-gates",
+  "naechster_schritt": "Noch nicht definiert",
+  "prompt": "",
+  "prompt_suggestion": "Arbeite an: Sprint: Agent-Orchestrator Hardening Phase 2 — Verify Gates #sprint-sprint-agent-orchestrator-hardening-phase-2-verify-gates.",
+  "risiko": "",
+  "checks": [
+    "Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen"
+  ],
+  "last_session": "",
+  "updated_at": "2026-04-17T14:44:39.007249+00:00",
+  "execution_score": null,
+  "execution_comment": "",
+  "last_execution_at": "",
+  "sprint_tag": "",
+  "spec_tag": "",
+  "sprint_plan_id": null,
+  "spec_id": null,
+  "source_line": null,
+  "rating_skipped": false
+}
+-->
+
+## Sprint: Agent-Orchestrator Hardening Phase 2 — Verify Gates #sprint-sprint-agent-orchestrator-hardening-phase-2-verify-gates · todo
+
+**Ziel:** Sprint: Agent-Orchestrator Hardening Phase 2 — Verify Gates #sprint-sprint-agent-orchestrator-hardening-phase-2-verify-gates
+**Naechster Schritt:** Noch nicht definiert
+**Risiko:** -
+**Execution Score:** -
+**Execution Comment:** -
+**Last Execution:** -
+**Sprint Tag:** -
+**Spec Tag:** -
+
+**Prompt:**
+_(noch nicht gesetzt)_
+
+**Checks:**
+- Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen
+
+---
+
+<!-- MARKER:3867
+{
+  "marker_id": "3867",
+  "titel": "Sprint: Agent-Orchestrator Hardening Phase 3 — Recovery & Doc Gates #sprint-sprint-agent-orchestrator-hardening-phase-3-recovery-and-doc-gates",
+  "plan_id": "3867",
+  "status": "todo",
+  "ziel": "Sprint: Agent-Orchestrator Hardening Phase 3 — Recovery & Doc Gates #sprint-sprint-agent-orchestrator-hardening-phase-3-recovery-and-doc-gates",
+  "naechster_schritt": "Noch nicht definiert",
+  "prompt": "",
+  "prompt_suggestion": "Arbeite an: Sprint: Agent-Orchestrator Hardening Phase 3 — Recovery & Doc Gates #sprint-sprint-agent-orchestrator-hardening-phase-3-recovery-and-doc-gates.",
+  "risiko": "",
+  "checks": [
+    "Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen"
+  ],
+  "last_session": "",
+  "updated_at": "2026-04-17T14:44:39.007249+00:00",
+  "execution_score": null,
+  "execution_comment": "",
+  "last_execution_at": "",
+  "sprint_tag": "",
+  "spec_tag": "",
+  "sprint_plan_id": null,
+  "spec_id": null,
+  "source_line": null,
+  "rating_skipped": false
+}
+-->
+
+## Sprint: Agent-Orchestrator Hardening Phase 3 — Recovery & Doc Gates #sprint-sprint-agent-orchestrator-hardening-phase-3-recovery-and-doc-gates · todo
+
+**Ziel:** Sprint: Agent-Orchestrator Hardening Phase 3 — Recovery & Doc Gates #sprint-sprint-agent-orchestrator-hardening-phase-3-recovery-and-doc-gates
+**Naechster Schritt:** Noch nicht definiert
+**Risiko:** -
+**Execution Score:** -
+**Execution Comment:** -
+**Last Execution:** -
+**Sprint Tag:** -
+**Spec Tag:** -
+
+**Prompt:**
+_(noch nicht gesetzt)_
+
+**Checks:**
+- Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen
+
+---
+
+<!-- MARKER:3868
+{
+  "marker_id": "3868",
+  "titel": "Sprint: Agent-Orchestrator Hardening Phase 1 — Foundation #sprint-sprint-agent-orchestrator-hardening-phase-1-foundation",
+  "plan_id": "3868",
+  "status": "todo",
+  "ziel": "Sprint: Agent-Orchestrator Hardening Phase 1 — Foundation #sprint-sprint-agent-orchestrator-hardening-phase-1-foundation",
+  "naechster_schritt": "Noch nicht definiert",
+  "prompt": "",
+  "prompt_suggestion": "Arbeite an: Sprint: Agent-Orchestrator Hardening Phase 1 — Foundation #sprint-sprint-agent-orchestrator-hardening-phase-1-foundation.",
+  "risiko": "",
+  "checks": [
+    "Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen"
+  ],
+  "last_session": "",
+  "updated_at": "2026-04-17T13:34:17.510376+00:00",
+  "execution_score": null,
+  "execution_comment": "",
+  "last_execution_at": "",
+  "sprint_tag": "",
+  "spec_tag": "",
+  "sprint_plan_id": null,
+  "spec_id": null,
+  "source_line": null,
+  "rating_skipped": false
+}
+-->
+
+## Sprint: Agent-Orchestrator Hardening Phase 1 — Foundation #sprint-sprint-agent-orchestrator-hardening-phase-1-foundation · todo
+
+**Ziel:** Sprint: Agent-Orchestrator Hardening Phase 1 — Foundation #sprint-sprint-agent-orchestrator-hardening-phase-1-foundation
+**Naechster Schritt:** Noch nicht definiert
+**Risiko:** -
+**Execution Score:** -
+**Execution Comment:** -
+**Last Execution:** -
+**Sprint Tag:** -
+**Spec Tag:** -
+
+**Prompt:**
+_(noch nicht gesetzt)_
+
+**Checks:**
+- Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen
+
+---
+
+<!-- MARKER:2582
+{
+  "marker_id": "2582",
+  "titel": "Master Sprint Plan v0.3 #sprint-master-sprint-plan-v0-3",
+  "plan_id": "2582",
+  "status": "todo",
+  "ziel": "Master Sprint Plan v0.3 #sprint-master-sprint-plan-v0-3",
+  "naechster_schritt": "Noch nicht definiert",
+  "prompt": "",
+  "prompt_suggestion": "Arbeite an: Master Sprint Plan v0.3.",
+  "risiko": "",
+  "checks": [
+    "Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen"
+  ],
+  "last_session": "",
+  "updated_at": "2026-04-16T16:52:59.416844+00:00",
+  "execution_score": null,
+  "execution_comment": "",
+  "last_execution_at": "",
+  "sprint_tag": "",
+  "spec_tag": "",
+  "sprint_plan_id": null,
+  "spec_id": null,
+  "source_line": null,
+  "rating_skipped": false
+}
+-->
+
+## Master Sprint Plan v0.3 #sprint-master-sprint-plan-v0-3 · todo
+
+**Ziel:** Master Sprint Plan v0.3 #sprint-master-sprint-plan-v0-3
+**Naechster Schritt:** Noch nicht definiert
+**Risiko:** -
+**Execution Score:** -
+**Execution Comment:** -
+**Last Execution:** -
+**Sprint Tag:** -
+**Spec Tag:** -
+
+**Prompt:**
+_(noch nicht gesetzt)_
+
+**Checks:**
+- Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen
+
+---
+
+<!-- MARKER:4568
+{
+  "marker_id": "4568",
+  "titel": "Next Session Archive 2026-04-05",
+  "plan_id": "4568",
+  "status": "todo",
+  "ziel": "Next Session Archive 2026-04-05",
+  "naechster_schritt": "Noch nicht definiert",
+  "prompt": "",
+  "prompt_suggestion": "Arbeite an: Next Session Archive 2026-04-05.",
+  "risiko": "",
+  "checks": [
+    "Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen"
+  ],
+  "last_session": "",
+  "updated_at": "2026-04-17T09:23:12.273991+00:00",
+  "execution_score": null,
+  "execution_comment": "",
+  "last_execution_at": "",
+  "sprint_tag": "",
+  "spec_tag": "",
+  "sprint_plan_id": null,
+  "spec_id": null,
+  "source_line": null,
+  "rating_skipped": false
+}
+-->
+
+## Next Session Archive 2026-04-05 · todo
+
+**Ziel:** Next Session Archive 2026-04-05
+**Naechster Schritt:** Noch nicht definiert
+**Risiko:** -
+**Execution Score:** -
+**Execution Comment:** -
+**Last Execution:** -
+**Sprint Tag:** -
+**Spec Tag:** -
+
+**Prompt:**
+_(noch nicht gesetzt)_
+
+**Checks:**
+- Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen
+
+---
+
+<!-- MARKER:2663
+{
+  "marker_id": "2663",
+  "titel": "Sprint: Full-Project-Recursive Plan Scanner wiederherstellen #sprint-sprint-full-project-recursive-plan-scanner-wiederherstellen",
+  "plan_id": "2663",
+  "status": "todo",
+  "ziel": "Sprint: Full-Project-Recursive Plan Scanner wiederherstellen #sprint-sprint-full-project-recursive-plan-scanner-wiederherstellen",
+  "naechster_schritt": "Noch nicht definiert",
+  "prompt": "",
+  "prompt_suggestion": "Arbeite an: Sprint: Full-Project-Recursive Plan Scanner wiederherstellen #sprint-sprint-full-project-recursive-plan-scanner-wiederherstellen.",
+  "risiko": "",
+  "checks": [
+    "Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen"
+  ],
+  "last_session": "",
+  "updated_at": "2026-04-17T08:32:59.394195+00:00",
+  "execution_score": null,
+  "execution_comment": "",
+  "last_execution_at": "",
+  "sprint_tag": "",
+  "spec_tag": "",
+  "sprint_plan_id": null,
+  "spec_id": null,
+  "source_line": null,
+  "rating_skipped": false
+}
+-->
+
+## Sprint: Full-Project-Recursive Plan Scanner wiederherstellen #sprint-sprint-full-project-recursive-plan-scanner-wiederherstellen · todo
+
+**Ziel:** Sprint: Full-Project-Recursive Plan Scanner wiederherstellen #sprint-sprint-full-project-recursive-plan-scanner-wiederherstellen
+**Naechster Schritt:** Noch nicht definiert
+**Risiko:** -
+**Execution Score:** -
+**Execution Comment:** -
+**Last Execution:** -
+**Sprint Tag:** -
+**Spec Tag:** -
+
+**Prompt:**
+_(noch nicht gesetzt)_
+
+**Checks:**
+- Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen
+
+---
+
+<!-- MARKER:3427
+{
+  "marker_id": "3427",
+  "titel": "Master-Plan — Marker-Workflow Implementierung #sprint-master-plan-marker-workflow-implementierung",
+  "plan_id": "3427",
+  "status": "todo",
+  "ziel": "Master-Plan — Marker-Workflow Implementierung #sprint-master-plan-marker-workflow-implementierung",
+  "naechster_schritt": "Noch nicht definiert",
+  "prompt": "",
+  "prompt_suggestion": "Arbeite an: Master-Plan — Marker-Workflow Implementierung #sprint-master-plan-marker-workflow-implementierung.",
+  "risiko": "",
+  "checks": [
+    "Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen"
+  ],
+  "last_session": "",
+  "updated_at": "2026-04-17T07:08:18.769892+00:00",
+  "execution_score": null,
+  "execution_comment": "",
+  "last_execution_at": "",
+  "sprint_tag": "",
+  "spec_tag": "",
+  "sprint_plan_id": null,
+  "spec_id": null,
+  "source_line": null,
+  "rating_skipped": false
+}
+-->
+
+## Master-Plan — Marker-Workflow Implementierung #sprint-master-plan-marker-workflow-implementierung · todo
+
+**Ziel:** Master-Plan — Marker-Workflow Implementierung #sprint-master-plan-marker-workflow-implementierung
+**Naechster Schritt:** Noch nicht definiert
+**Risiko:** -
+**Execution Score:** -
+**Execution Comment:** -
+**Last Execution:** -
+**Sprint Tag:** -
+**Spec Tag:** -
+
+**Prompt:**
+_(noch nicht gesetzt)_
+
+**Checks:**
+- Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen
+
+---
+
+<!-- MARKER:3428
+{
+  "marker_id": "3428",
+  "titel": "Sprint P5 — Sprint-to-Markers Automatisierung #sprint-sprint-p5-sprint-to-markers-automatisierung",
+  "plan_id": "3428",
+  "status": "todo",
+  "ziel": "Sprint P5 — Sprint-to-Markers Automatisierung #sprint-sprint-p5-sprint-to-markers-automatisierung",
+  "naechster_schritt": "Noch nicht definiert",
+  "prompt": "",
+  "prompt_suggestion": "Arbeite an: Sprint P5 — Sprint-to-Markers Automatisierung #sprint-sprint-p5-sprint-to-markers-automatisierung.",
+  "risiko": "",
+  "checks": [
+    "Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen"
+  ],
+  "last_session": "",
+  "updated_at": "2026-04-17T07:08:18.769892+00:00",
+  "execution_score": null,
+  "execution_comment": "",
+  "last_execution_at": "",
+  "sprint_tag": "",
+  "spec_tag": "",
+  "sprint_plan_id": null,
+  "spec_id": null,
+  "source_line": null,
+  "rating_skipped": false
+}
+-->
+
+## Sprint P5 — Sprint-to-Markers Automatisierung #sprint-sprint-p5-sprint-to-markers-automatisierung · todo
+
+**Ziel:** Sprint P5 — Sprint-to-Markers Automatisierung #sprint-sprint-p5-sprint-to-markers-automatisierung
+**Naechster Schritt:** Noch nicht definiert
+**Risiko:** -
+**Execution Score:** -
+**Execution Comment:** -
+**Last Execution:** -
+**Sprint Tag:** -
+**Spec Tag:** -
+
+**Prompt:**
+_(noch nicht gesetzt)_
+
+**Checks:**
+- Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen
+
+---
+
+<!-- MARKER:3429
+{
+  "marker_id": "3429",
+  "titel": "Automatische Code-Qualitaets-Pipeline im Dashboard #sprint-plan-automatische-code-qualitaets-pipeline-im-dashboard",
+  "plan_id": "3429",
+  "status": "todo",
+  "ziel": "Automatische Code-Qualitaets-Pipeline im Dashboard #sprint-plan-automatische-code-qualitaets-pipeline-im-dashboard",
+  "naechster_schritt": "Noch nicht definiert",
+  "prompt": "",
+  "prompt_suggestion": "Arbeite an: Automatische Code-Qualitaets-Pipeline im Dashboard #sprint-plan-automatische-code-qualitaets-pipeline-im-dashboard.",
+  "risiko": "",
+  "checks": [
+    "Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen"
+  ],
+  "last_session": "",
+  "updated_at": "2026-04-17T07:08:18.769892+00:00",
+  "execution_score": null,
+  "execution_comment": "",
+  "last_execution_at": "",
+  "sprint_tag": "",
+  "spec_tag": "",
+  "sprint_plan_id": null,
+  "spec_id": null,
+  "source_line": null,
+  "rating_skipped": false
+}
+-->
+
+## Automatische Code-Qualitaets-Pipeline im Dashboard #sprint-plan-automatische-code-qualitaets-pipeline-im-dashboard · todo
+
+**Ziel:** Automatische Code-Qualitaets-Pipeline im Dashboard #sprint-plan-automatische-code-qualitaets-pipeline-im-dashboard
+**Naechster Schritt:** Noch nicht definiert
+**Risiko:** -
+**Execution Score:** -
+**Execution Comment:** -
+**Last Execution:** -
+**Sprint Tag:** -
+**Spec Tag:** -
+
+**Prompt:**
+_(noch nicht gesetzt)_
+
+**Checks:**
+- Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen
+
+---
+
+<!-- MARKER:3418
+{
+  "marker_id": "3418",
+  "titel": "Sprint: Agent-Orchestrator Hardening — IST/SOLL fuer verlässliche Executor-Flows #sprint-sprint-agent-orchestrator-hardening-ist-soll-fuer-verlaessliche-executor-flows",
+  "plan_id": "3418",
+  "status": "todo",
+  "ziel": "Sprint: Agent-Orchestrator Hardening — IST/SOLL fuer verlässliche Executor-Flows #sprint-sprint-agent-orchestrator-hardening-ist-soll-fuer-verlaessliche-executor-flows",
+  "naechster_schritt": "Noch nicht definiert",
+  "prompt": "",
+  "prompt_suggestion": "Arbeite an: Sprint: Agent-Orchestrator Hardening — IST/SOLL fuer verlässliche Executor-Flows #sprint-sprint-agent-orchestrator-hardening-ist-soll-fuer-verlaessliche-executor-flows.",
+  "risiko": "",
+  "checks": [
+    "Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen"
+  ],
+  "last_session": "",
+  "updated_at": "2026-04-17T07:08:18.769892+00:00",
+  "execution_score": null,
+  "execution_comment": "",
+  "last_execution_at": "",
+  "sprint_tag": "",
+  "spec_tag": "",
+  "sprint_plan_id": null,
+  "spec_id": null,
+  "source_line": null,
+  "rating_skipped": false
+}
+-->
+
+## Sprint: Agent-Orchestrator Hardening — IST/SOLL fuer verlässliche Executor-Flows #sprint-sprint-agent-orchestrator-hardening-ist-soll-fuer-verlaessliche-executor-flows · todo
+
+**Ziel:** Sprint: Agent-Orchestrator Hardening — IST/SOLL fuer verlässliche Executor-Flows #sprint-sprint-agent-orchestrator-hardening-ist-soll-fuer-verlaessliche-executor-flows
+**Naechster Schritt:** Noch nicht definiert
+**Risiko:** -
+**Execution Score:** -
+**Execution Comment:** -
+**Last Execution:** -
+**Sprint Tag:** -
+**Spec Tag:** -
+
+**Prompt:**
+_(noch nicht gesetzt)_
+
+**Checks:**
+- Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen
+
+---
+
+<!-- MARKER:3426
+{
+  "marker_id": "3426",
+  "titel": "Sprint P4 — Session Write-back & Marker-Fortschreibung #sprint-sprint-p4-session-write-back-marker-fortschreibung",
+  "plan_id": "3426",
+  "status": "todo",
+  "ziel": "Sprint P4 — Session Write-back & Marker-Fortschreibung #sprint-sprint-p4-session-write-back-marker-fortschreibung",
+  "naechster_schritt": "Noch nicht definiert",
+  "prompt": "",
+  "prompt_suggestion": "Arbeite an: Sprint P4 — Session Write-back & Marker-Fortschreibung #sprint-sprint-p4-session-write-back-marker-fortschreibung.",
+  "risiko": "",
+  "checks": [
+    "Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen"
+  ],
+  "last_session": "",
+  "updated_at": "2026-04-17T07:08:18.769892+00:00",
+  "execution_score": null,
+  "execution_comment": "",
+  "last_execution_at": "",
+  "sprint_tag": "",
+  "spec_tag": "",
+  "sprint_plan_id": null,
+  "spec_id": null,
+  "source_line": null,
+  "rating_skipped": false
+}
+-->
+
+## Sprint P4 — Session Write-back & Marker-Fortschreibung #sprint-sprint-p4-session-write-back-marker-fortschreibung · todo
+
+**Ziel:** Sprint P4 — Session Write-back & Marker-Fortschreibung #sprint-sprint-p4-session-write-back-marker-fortschreibung
+**Naechster Schritt:** Noch nicht definiert
+**Risiko:** -
+**Execution Score:** -
+**Execution Comment:** -
+**Last Execution:** -
+**Sprint Tag:** -
+**Spec Tag:** -
+
+**Prompt:**
+_(noch nicht gesetzt)_
+
+**Checks:**
+- Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen
+
+---
+
+<!-- MARKER:3425
+{
+  "marker_id": "3425",
+  "titel": "Sprint P3 — Prompt-Chain & Execution #sprint-sprint-p3-prompt-chain-execution",
+  "plan_id": "3425",
+  "status": "todo",
+  "ziel": "Sprint P3 — Prompt-Chain & Execution #sprint-sprint-p3-prompt-chain-execution",
+  "naechster_schritt": "Noch nicht definiert",
+  "prompt": "",
+  "prompt_suggestion": "Arbeite an: Sprint P3 — Prompt-Chain & Execution #sprint-sprint-p3-prompt-chain-execution.",
+  "risiko": "",
+  "checks": [
+    "Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen"
+  ],
+  "last_session": "",
+  "updated_at": "2026-04-17T07:08:18.769892+00:00",
+  "execution_score": null,
+  "execution_comment": "",
+  "last_execution_at": "",
+  "sprint_tag": "",
+  "spec_tag": "",
+  "sprint_plan_id": null,
+  "spec_id": null,
+  "source_line": null,
+  "rating_skipped": false
+}
+-->
+
+## Sprint P3 — Prompt-Chain & Execution #sprint-sprint-p3-prompt-chain-execution · todo
+
+**Ziel:** Sprint P3 — Prompt-Chain & Execution #sprint-sprint-p3-prompt-chain-execution
+**Naechster Schritt:** Noch nicht definiert
+**Risiko:** -
+**Execution Score:** -
+**Execution Comment:** -
+**Last Execution:** -
+**Sprint Tag:** -
+**Spec Tag:** -
+
+**Prompt:**
+_(noch nicht gesetzt)_
+
+**Checks:**
+- Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen
+
+---
+
+<!-- MARKER:3424
+{
+  "marker_id": "3424",
+  "titel": "Sprint P2 — Cards aus Markdown + Status Write-back #sprint-sprint-p2-cards-aus-markdown-status-write-back",
+  "plan_id": "3424",
+  "status": "todo",
+  "ziel": "Sprint P2 — Cards aus Markdown + Status Write-back #sprint-sprint-p2-cards-aus-markdown-status-write-back",
+  "naechster_schritt": "Noch nicht definiert",
+  "prompt": "",
+  "prompt_suggestion": "Arbeite an: Sprint P2 — Cards aus Markdown + Status Write-back #sprint-sprint-p2-cards-aus-markdown-status-write-back.",
+  "risiko": "",
+  "checks": [
+    "Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen"
+  ],
+  "last_session": "",
+  "updated_at": "2026-04-17T07:08:18.769892+00:00",
+  "execution_score": null,
+  "execution_comment": "",
+  "last_execution_at": "",
+  "sprint_tag": "",
+  "spec_tag": "",
+  "sprint_plan_id": null,
+  "spec_id": null,
+  "source_line": null,
+  "rating_skipped": false
+}
+-->
+
+## Sprint P2 — Cards aus Markdown + Status Write-back #sprint-sprint-p2-cards-aus-markdown-status-write-back · todo
+
+**Ziel:** Sprint P2 — Cards aus Markdown + Status Write-back #sprint-sprint-p2-cards-aus-markdown-status-write-back
+**Naechster Schritt:** Noch nicht definiert
+**Risiko:** -
+**Execution Score:** -
+**Execution Comment:** -
+**Last Execution:** -
+**Sprint Tag:** -
+**Spec Tag:** -
+
+**Prompt:**
+_(noch nicht gesetzt)_
+
+**Checks:**
+- Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen
+
+---
+
+<!-- MARKER:3423
+{
+  "marker_id": "3423",
+  "titel": "Sprint P1 — Marker-Schema & handoff.md Generator #sprint-sprint-p1-marker-schema-handoff-md-generator",
+  "plan_id": "3423",
+  "status": "todo",
+  "ziel": "Sprint P1 — Marker-Schema & handoff.md Generator #sprint-sprint-p1-marker-schema-handoff-md-generator",
+  "naechster_schritt": "Noch nicht definiert",
+  "prompt": "",
+  "prompt_suggestion": "Arbeite an: Sprint P1 — Marker-Schema & handoff.md Generator #sprint-sprint-p1-marker-schema-handoff-md-generator.",
+  "risiko": "",
+  "checks": [
+    "Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen"
+  ],
+  "last_session": "",
+  "updated_at": "2026-04-17T07:08:18.769892+00:00",
+  "execution_score": null,
+  "execution_comment": "",
+  "last_execution_at": "",
+  "sprint_tag": "",
+  "spec_tag": "",
+  "sprint_plan_id": null,
+  "spec_id": null,
+  "source_line": null,
+  "rating_skipped": false
+}
+-->
+
+## Sprint P1 — Marker-Schema & handoff.md Generator #sprint-sprint-p1-marker-schema-handoff-md-generator · todo
+
+**Ziel:** Sprint P1 — Marker-Schema & handoff.md Generator #sprint-sprint-p1-marker-schema-handoff-md-generator
+**Naechster Schritt:** Noch nicht definiert
+**Risiko:** -
+**Execution Score:** -
+**Execution Comment:** -
+**Last Execution:** -
+**Sprint Tag:** -
+**Spec Tag:** -
+
+**Prompt:**
+_(noch nicht gesetzt)_
+
+**Checks:**
+- Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen
+
+---
+
+<!-- MARKER:3421
+{
+  "marker_id": "3421",
+  "titel": "Sprint Historie",
+  "plan_id": "3421",
+  "status": "todo",
+  "ziel": "Sprint Historie",
+  "naechster_schritt": "Noch nicht definiert",
+  "prompt": "",
+  "prompt_suggestion": "Arbeite an: Sprint Historie.",
+  "risiko": "",
+  "checks": [
+    "Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen"
+  ],
+  "last_session": "",
+  "updated_at": "2026-04-17T07:08:18.769892+00:00",
+  "execution_score": null,
+  "execution_comment": "",
+  "last_execution_at": "",
+  "sprint_tag": "",
+  "spec_tag": "",
+  "sprint_plan_id": null,
+  "spec_id": null,
+  "source_line": null,
+  "rating_skipped": false
+}
+-->
+
+## Sprint Historie · todo
+
+**Ziel:** Sprint Historie
+**Naechster Schritt:** Noch nicht definiert
+**Risiko:** -
+**Execution Score:** -
+**Execution Comment:** -
+**Last Execution:** -
+**Sprint Tag:** -
+**Spec Tag:** -
+
+**Prompt:**
+_(noch nicht gesetzt)_
+
+**Checks:**
+- Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen
+
+---
+
+<!-- MARKER:2575
+{
+  "marker_id": "2575",
+  "titel": "Sprint CP - Workflow Loop Implementation #sprint-sprint-cp-workflow-loop-implementation",
+  "plan_id": "2575",
+  "status": "todo",
+  "ziel": "Sprint CP - Workflow Loop Implementation #sprint-sprint-cp-workflow-loop-implementation",
+  "naechster_schritt": "Noch nicht definiert",
+  "prompt": "",
+  "prompt_suggestion": "Arbeite an: Sprint CP - Workflow Loop Implementation.",
   "risiko": "",
   "checks": [
     "Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen"
@@ -367,9 +1307,9 @@ _(noch nicht gesetzt)_
 }
 -->
 
-## Sprint CP - Workflow Loop Contracts #sprint-sprint-cp-workflow-loop-contracts · todo
+## Sprint CP - Workflow Loop Implementation #sprint-sprint-cp-workflow-loop-implementation · todo
 
-**Ziel:** Sprint CP - Workflow Loop Contracts #sprint-sprint-cp-workflow-loop-contracts
+**Ziel:** Sprint CP - Workflow Loop Implementation #sprint-sprint-cp-workflow-loop-implementation
 **Naechster Schritt:** Noch nicht definiert
 **Risiko:** -
 **Execution Score:** -
@@ -386,63 +1326,16 @@ _(noch nicht gesetzt)_
 
 ---
 
-<!-- MARKER:2642
+<!-- MARKER:2576
 {
-  "marker_id": "2642",
-  "titel": "Sprint Plan-Auto-Tagging #sprint-sprint-plan-auto-tagging",
-  "plan_id": "2642",
+  "marker_id": "2576",
+  "titel": "Sprint 12: Projekt-Governance + Feedback-Loop #sprint-sprint-12-projekt-governance-feedback-loop",
+  "plan_id": "2576",
   "status": "todo",
-  "ziel": "Sprint Plan-Auto-Tagging #sprint-sprint-plan-auto-tagging",
+  "ziel": "Sprint 12: Projekt-Governance + Feedback-Loop #sprint-sprint-12-projekt-governance-feedback-loop",
   "naechster_schritt": "Noch nicht definiert",
   "prompt": "",
-  "prompt_suggestion": "Arbeite an: Sprint Plan-Auto-Tagging.",
-  "risiko": "",
-  "checks": [
-    "Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen"
-  ],
-  "last_session": "",
-  "updated_at": "2026-04-16T17:52:51.829049+00:00",
-  "execution_score": null,
-  "execution_comment": "",
-  "last_execution_at": "",
-  "sprint_tag": "",
-  "spec_tag": "",
-  "sprint_plan_id": null,
-  "spec_id": null,
-  "source_line": null,
-  "rating_skipped": false
-}
--->
-
-## Sprint Plan-Auto-Tagging #sprint-sprint-plan-auto-tagging · todo
-
-**Ziel:** Sprint Plan-Auto-Tagging #sprint-sprint-plan-auto-tagging
-**Naechster Schritt:** Noch nicht definiert
-**Risiko:** -
-**Execution Score:** -
-**Execution Comment:** -
-**Last Execution:** -
-**Sprint Tag:** -
-**Spec Tag:** -
-
-**Prompt:**
-_(noch nicht gesetzt)_
-
-**Checks:**
-- Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen
-
----
-
-<!-- MARKER:2556
-{
-  "marker_id": "2556",
-  "titel": "Sprint Phase 7 — UI-Konsolidierung (Mini Sprint) #sprint-sprint-phase-7-ui-konsolidierung-mini-sprint",
-  "plan_id": "2556",
-  "status": "todo",
-  "ziel": "Sprint Phase 7 — UI-Konsolidierung (Mini Sprint) #sprint-sprint-phase-7-ui-konsolidierung-mini-sprint",
-  "naechster_schritt": "Noch nicht definiert",
-  "prompt": "",
-  "prompt_suggestion": "Arbeite an: Sprint Phase 7 — UI-Konsolidierung (Mini Sprint).",
+  "prompt_suggestion": "Arbeite an: Sprint 12: Projekt-Governance + Feedback-Loop.",
   "risiko": "",
   "checks": [
     "Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen"
@@ -461,9 +1354,338 @@ _(noch nicht gesetzt)_
 }
 -->
 
-## Sprint Phase 7 — UI-Konsolidierung (Mini Sprint) #sprint-sprint-phase-7-ui-konsolidierung-mini-sprint · todo
+## Sprint 12: Projekt-Governance + Feedback-Loop #sprint-sprint-12-projekt-governance-feedback-loop · todo
 
-**Ziel:** Sprint Phase 7 — UI-Konsolidierung (Mini Sprint) #sprint-sprint-phase-7-ui-konsolidierung-mini-sprint
+**Ziel:** Sprint 12: Projekt-Governance + Feedback-Loop #sprint-sprint-12-projekt-governance-feedback-loop
+**Naechster Schritt:** Noch nicht definiert
+**Risiko:** -
+**Execution Score:** -
+**Execution Comment:** -
+**Last Execution:** -
+**Sprint Tag:** -
+**Spec Tag:** -
+
+**Prompt:**
+_(noch nicht gesetzt)_
+
+**Checks:**
+- Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen
+
+---
+
+<!-- MARKER:2577
+{
+  "marker_id": "2577",
+  "titel": "Sprint: Implementierungs-Check Persisting (Option 2) #sprint-sprint-implementierungs-check-persisting-option-2",
+  "plan_id": "2577",
+  "status": "todo",
+  "ziel": "Sprint: Implementierungs-Check Persisting (Option 2) #sprint-sprint-implementierungs-check-persisting-option-2",
+  "naechster_schritt": "Noch nicht definiert",
+  "prompt": "",
+  "prompt_suggestion": "Arbeite an: Sprint: Implementierungs-Check Persisting (Option 2).",
+  "risiko": "",
+  "checks": [
+    "Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen"
+  ],
+  "last_session": "",
+  "updated_at": "2026-04-16T09:07:08.724508+00:00",
+  "execution_score": null,
+  "execution_comment": "",
+  "last_execution_at": "",
+  "sprint_tag": "",
+  "spec_tag": "",
+  "sprint_plan_id": null,
+  "spec_id": null,
+  "source_line": null,
+  "rating_skipped": false
+}
+-->
+
+## Sprint: Implementierungs-Check Persisting (Option 2) #sprint-sprint-implementierungs-check-persisting-option-2 · todo
+
+**Ziel:** Sprint: Implementierungs-Check Persisting (Option 2) #sprint-sprint-implementierungs-check-persisting-option-2
+**Naechster Schritt:** Noch nicht definiert
+**Risiko:** -
+**Execution Score:** -
+**Execution Comment:** -
+**Last Execution:** -
+**Sprint Tag:** -
+**Spec Tag:** -
+
+**Prompt:**
+_(noch nicht gesetzt)_
+
+**Checks:**
+- Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen
+
+---
+
+<!-- MARKER:2578
+{
+  "marker_id": "2578",
+  "titel": "Sprint 11: Modell-Qualitaetsvergleich #sprint-sprint-11-modell-qualitaetsvergleich",
+  "plan_id": "2578",
+  "status": "todo",
+  "ziel": "Sprint 11: Modell-Qualitaetsvergleich #sprint-sprint-11-modell-qualitaetsvergleich",
+  "naechster_schritt": "Noch nicht definiert",
+  "prompt": "",
+  "prompt_suggestion": "Arbeite an: Sprint 11: Modell-Qualitaetsvergleich.",
+  "risiko": "",
+  "checks": [
+    "Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen"
+  ],
+  "last_session": "",
+  "updated_at": "2026-04-16T09:07:08.724508+00:00",
+  "execution_score": null,
+  "execution_comment": "",
+  "last_execution_at": "",
+  "sprint_tag": "",
+  "spec_tag": "",
+  "sprint_plan_id": null,
+  "spec_id": null,
+  "source_line": null,
+  "rating_skipped": false
+}
+-->
+
+## Sprint 11: Modell-Qualitaetsvergleich #sprint-sprint-11-modell-qualitaetsvergleich · todo
+
+**Ziel:** Sprint 11: Modell-Qualitaetsvergleich #sprint-sprint-11-modell-qualitaetsvergleich
+**Naechster Schritt:** Noch nicht definiert
+**Risiko:** -
+**Execution Score:** -
+**Execution Comment:** -
+**Last Execution:** -
+**Sprint Tag:** -
+**Spec Tag:** -
+
+**Prompt:**
+_(noch nicht gesetzt)_
+
+**Checks:**
+- Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen
+
+---
+
+<!-- MARKER:2580
+{
+  "marker_id": "2580",
+  "titel": "Sprint 9: Fehler-Kategorien + AI-Scope-Filter #sprint-sprint-9-fehler-kategorien-ai-scope-filter",
+  "plan_id": "2580",
+  "status": "todo",
+  "ziel": "Sprint 9: Fehler-Kategorien + AI-Scope-Filter #sprint-sprint-9-fehler-kategorien-ai-scope-filter",
+  "naechster_schritt": "Noch nicht definiert",
+  "prompt": "",
+  "prompt_suggestion": "Arbeite an: Sprint 9: Fehler-Kategorien + AI-Scope-Filter.",
+  "risiko": "",
+  "checks": [
+    "Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen"
+  ],
+  "last_session": "",
+  "updated_at": "2026-04-16T09:07:08.724508+00:00",
+  "execution_score": null,
+  "execution_comment": "",
+  "last_execution_at": "",
+  "sprint_tag": "",
+  "spec_tag": "",
+  "sprint_plan_id": null,
+  "spec_id": null,
+  "source_line": null,
+  "rating_skipped": false
+}
+-->
+
+## Sprint 9: Fehler-Kategorien + AI-Scope-Filter #sprint-sprint-9-fehler-kategorien-ai-scope-filter · todo
+
+**Ziel:** Sprint 9: Fehler-Kategorien + AI-Scope-Filter #sprint-sprint-9-fehler-kategorien-ai-scope-filter
+**Naechster Schritt:** Noch nicht definiert
+**Risiko:** -
+**Execution Score:** -
+**Execution Comment:** -
+**Last Execution:** -
+**Sprint Tag:** -
+**Spec Tag:** -
+
+**Prompt:**
+_(noch nicht gesetzt)_
+
+**Checks:**
+- Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen
+
+---
+
+<!-- MARKER:2581
+{
+  "marker_id": "2581",
+  "titel": "Sprint CP - Control-Plane Loop Closure #sprint-sprint-cp-control-plane-loop-closure",
+  "plan_id": "2581",
+  "status": "todo",
+  "ziel": "Sprint CP - Control-Plane Loop Closure #sprint-sprint-cp-control-plane-loop-closure",
+  "naechster_schritt": "Noch nicht definiert",
+  "prompt": "",
+  "prompt_suggestion": "Arbeite an: Sprint CP - Control-Plane Loop Closure.",
+  "risiko": "",
+  "checks": [
+    "Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen"
+  ],
+  "last_session": "",
+  "updated_at": "2026-04-16T09:07:08.724508+00:00",
+  "execution_score": null,
+  "execution_comment": "",
+  "last_execution_at": "",
+  "sprint_tag": "",
+  "spec_tag": "",
+  "sprint_plan_id": null,
+  "spec_id": null,
+  "source_line": null,
+  "rating_skipped": false
+}
+-->
+
+## Sprint CP - Control-Plane Loop Closure #sprint-sprint-cp-control-plane-loop-closure · todo
+
+**Ziel:** Sprint CP - Control-Plane Loop Closure #sprint-sprint-cp-control-plane-loop-closure
+**Naechster Schritt:** Noch nicht definiert
+**Risiko:** -
+**Execution Score:** -
+**Execution Comment:** -
+**Last Execution:** -
+**Sprint Tag:** -
+**Spec Tag:** -
+
+**Prompt:**
+_(noch nicht gesetzt)_
+
+**Checks:**
+- Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen
+
+---
+
+<!-- MARKER:2583
+{
+  "marker_id": "2583",
+  "titel": "Sprint 3: Context Effectiveness (CLAUDE.md Tracking) #sprint-sprint-3-context-effectiveness-claude-md-tracking",
+  "plan_id": "2583",
+  "status": "todo",
+  "ziel": "Sprint 3: Context Effectiveness (CLAUDE.md Tracking) #sprint-sprint-3-context-effectiveness-claude-md-tracking",
+  "naechster_schritt": "Noch nicht definiert",
+  "prompt": "",
+  "prompt_suggestion": "Arbeite an: Sprint 3: Context Effectiveness (CLAUDE.md Tracking).",
+  "risiko": "",
+  "checks": [
+    "Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen"
+  ],
+  "last_session": "",
+  "updated_at": "2026-04-16T09:07:08.724508+00:00",
+  "execution_score": null,
+  "execution_comment": "",
+  "last_execution_at": "",
+  "sprint_tag": "",
+  "spec_tag": "",
+  "sprint_plan_id": null,
+  "spec_id": null,
+  "source_line": null,
+  "rating_skipped": false
+}
+-->
+
+## Sprint 3: Context Effectiveness (CLAUDE.md Tracking) #sprint-sprint-3-context-effectiveness-claude-md-tracking · todo
+
+**Ziel:** Sprint 3: Context Effectiveness (CLAUDE.md Tracking) #sprint-sprint-3-context-effectiveness-claude-md-tracking
+**Naechster Schritt:** Noch nicht definiert
+**Risiko:** -
+**Execution Score:** -
+**Execution Comment:** -
+**Last Execution:** -
+**Sprint Tag:** -
+**Spec Tag:** -
+
+**Prompt:**
+_(noch nicht gesetzt)_
+
+**Checks:**
+- Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen
+
+---
+
+<!-- MARKER:2584
+{
+  "marker_id": "2584",
+  "titel": "Sprint: Task-Entitaet + Drill-Down Plan → Section → Task → Marker #sprint-sprint-task-entitaet-drill-down-plan-section-task-marker",
+  "plan_id": "2584",
+  "status": "todo",
+  "ziel": "Sprint: Task-Entitaet + Drill-Down Plan → Section → Task → Marker #sprint-sprint-task-entitaet-drill-down-plan-section-task-marker",
+  "naechster_schritt": "Noch nicht definiert",
+  "prompt": "",
+  "prompt_suggestion": "Arbeite an: Sprint: Task-Entitaet + Drill-Down Plan → Section → Task → Marker.",
+  "risiko": "",
+  "checks": [
+    "Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen"
+  ],
+  "last_session": "",
+  "updated_at": "2026-04-16T09:07:08.724508+00:00",
+  "execution_score": null,
+  "execution_comment": "",
+  "last_execution_at": "",
+  "sprint_tag": "",
+  "spec_tag": "",
+  "sprint_plan_id": null,
+  "spec_id": null,
+  "source_line": null,
+  "rating_skipped": false
+}
+-->
+
+## Sprint: Task-Entitaet + Drill-Down Plan → Section → Task → Marker #sprint-sprint-task-entitaet-drill-down-plan-section-task-marker · todo
+
+**Ziel:** Sprint: Task-Entitaet + Drill-Down Plan → Section → Task → Marker #sprint-sprint-task-entitaet-drill-down-plan-section-task-marker
+**Naechster Schritt:** Noch nicht definiert
+**Risiko:** -
+**Execution Score:** -
+**Execution Comment:** -
+**Last Execution:** -
+**Sprint Tag:** -
+**Spec Tag:** -
+
+**Prompt:**
+_(noch nicht gesetzt)_
+
+**Checks:**
+- Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen
+
+---
+
+<!-- MARKER:2543
+{
+  "marker_id": "2543",
+  "titel": "Sprint CWO — Context Window Optimizer #sprint-sprint-cwo-context-window-optimizer",
+  "plan_id": "2543",
+  "status": "todo",
+  "ziel": "Sprint CWO — Context Window Optimizer #sprint-sprint-cwo-context-window-optimizer",
+  "naechster_schritt": "Noch nicht definiert",
+  "prompt": "",
+  "prompt_suggestion": "Arbeite an: Sprint CWO — Context Window Optimizer.",
+  "risiko": "",
+  "checks": [
+    "Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen"
+  ],
+  "last_session": "",
+  "updated_at": "2026-04-16T09:07:08.724508+00:00",
+  "execution_score": null,
+  "execution_comment": "",
+  "last_execution_at": "",
+  "sprint_tag": "",
+  "spec_tag": "",
+  "sprint_plan_id": null,
+  "spec_id": null,
+  "source_line": null,
+  "rating_skipped": false
+}
+-->
+
+## Sprint CWO — Context Window Optimizer #sprint-sprint-cwo-context-window-optimizer · todo
+
+**Ziel:** Sprint CWO — Context Window Optimizer #sprint-sprint-cwo-context-window-optimizer
 **Naechster Schritt:** Noch nicht definiert
 **Risiko:** -
 **Execution Score:** -
@@ -981,6 +2203,147 @@ _(noch nicht gesetzt)_
 ## Sprint ADR-002 Stufe 1 — AI-Control-Plane (1a + 1b) #sprint-sprint-adr-002-stufe-1-ai-control-plane-1a-1b · todo
 
 **Ziel:** Sprint ADR-002 Stufe 1 — AI-Control-Plane (1a + 1b) #sprint-sprint-adr-002-stufe-1-ai-control-plane-1a-1b
+**Naechster Schritt:** Noch nicht definiert
+**Risiko:** -
+**Execution Score:** -
+**Execution Comment:** -
+**Last Execution:** -
+**Sprint Tag:** -
+**Spec Tag:** -
+
+**Prompt:**
+_(noch nicht gesetzt)_
+
+**Checks:**
+- Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen
+
+---
+
+<!-- MARKER:2586
+{
+  "marker_id": "2586",
+  "titel": "Sprint CP - Workflow Loop Contracts #sprint-sprint-cp-workflow-loop-contracts",
+  "plan_id": "2586",
+  "status": "todo",
+  "ziel": "Sprint CP - Workflow Loop Contracts #sprint-sprint-cp-workflow-loop-contracts",
+  "naechster_schritt": "Noch nicht definiert",
+  "prompt": "",
+  "prompt_suggestion": "Arbeite an: Sprint CP - Workflow Loop Contracts.",
+  "risiko": "",
+  "checks": [
+    "Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen"
+  ],
+  "last_session": "",
+  "updated_at": "2026-04-16T09:07:08.724508+00:00",
+  "execution_score": null,
+  "execution_comment": "",
+  "last_execution_at": "",
+  "sprint_tag": "",
+  "spec_tag": "",
+  "sprint_plan_id": null,
+  "spec_id": null,
+  "source_line": null,
+  "rating_skipped": false
+}
+-->
+
+## Sprint CP - Workflow Loop Contracts #sprint-sprint-cp-workflow-loop-contracts · todo
+
+**Ziel:** Sprint CP - Workflow Loop Contracts #sprint-sprint-cp-workflow-loop-contracts
+**Naechster Schritt:** Noch nicht definiert
+**Risiko:** -
+**Execution Score:** -
+**Execution Comment:** -
+**Last Execution:** -
+**Sprint Tag:** -
+**Spec Tag:** -
+
+**Prompt:**
+_(noch nicht gesetzt)_
+
+**Checks:**
+- Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen
+
+---
+
+<!-- MARKER:2642
+{
+  "marker_id": "2642",
+  "titel": "Sprint Plan-Auto-Tagging #sprint-sprint-plan-auto-tagging",
+  "plan_id": "2642",
+  "status": "todo",
+  "ziel": "Sprint Plan-Auto-Tagging #sprint-sprint-plan-auto-tagging",
+  "naechster_schritt": "Noch nicht definiert",
+  "prompt": "",
+  "prompt_suggestion": "Arbeite an: Sprint Plan-Auto-Tagging.",
+  "risiko": "",
+  "checks": [
+    "Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen"
+  ],
+  "last_session": "",
+  "updated_at": "2026-04-16T17:52:51.829049+00:00",
+  "execution_score": null,
+  "execution_comment": "",
+  "last_execution_at": "",
+  "sprint_tag": "",
+  "spec_tag": "",
+  "sprint_plan_id": null,
+  "spec_id": null,
+  "source_line": null,
+  "rating_skipped": false
+}
+-->
+
+## Sprint Plan-Auto-Tagging #sprint-sprint-plan-auto-tagging · todo
+
+**Ziel:** Sprint Plan-Auto-Tagging #sprint-sprint-plan-auto-tagging
+**Naechster Schritt:** Noch nicht definiert
+**Risiko:** -
+**Execution Score:** -
+**Execution Comment:** -
+**Last Execution:** -
+**Sprint Tag:** -
+**Spec Tag:** -
+
+**Prompt:**
+_(noch nicht gesetzt)_
+
+**Checks:**
+- Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen
+
+---
+
+<!-- MARKER:2556
+{
+  "marker_id": "2556",
+  "titel": "Sprint Phase 7 — UI-Konsolidierung (Mini Sprint) #sprint-sprint-phase-7-ui-konsolidierung-mini-sprint",
+  "plan_id": "2556",
+  "status": "todo",
+  "ziel": "Sprint Phase 7 — UI-Konsolidierung (Mini Sprint) #sprint-sprint-phase-7-ui-konsolidierung-mini-sprint",
+  "naechster_schritt": "Noch nicht definiert",
+  "prompt": "",
+  "prompt_suggestion": "Arbeite an: Sprint Phase 7 — UI-Konsolidierung (Mini Sprint).",
+  "risiko": "",
+  "checks": [
+    "Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen"
+  ],
+  "last_session": "",
+  "updated_at": "2026-04-16T09:07:08.724508+00:00",
+  "execution_score": null,
+  "execution_comment": "",
+  "last_execution_at": "",
+  "sprint_tag": "",
+  "spec_tag": "",
+  "sprint_plan_id": null,
+  "spec_id": null,
+  "source_line": null,
+  "rating_skipped": false
+}
+-->
+
+## Sprint Phase 7 — UI-Konsolidierung (Mini Sprint) #sprint-sprint-phase-7-ui-konsolidierung-mini-sprint · todo
+
+**Ziel:** Sprint Phase 7 — UI-Konsolidierung (Mini Sprint) #sprint-sprint-phase-7-ui-konsolidierung-mini-sprint
 **Naechster Schritt:** Noch nicht definiert
 **Risiko:** -
 **Execution Score:** -
@@ -2125,476 +3488,6 @@ _(noch nicht gesetzt)_
 
 ---
 
-<!-- MARKER:2575
-{
-  "marker_id": "2575",
-  "titel": "Sprint CP - Workflow Loop Implementation #sprint-sprint-cp-workflow-loop-implementation",
-  "plan_id": "2575",
-  "status": "todo",
-  "ziel": "Sprint CP - Workflow Loop Implementation #sprint-sprint-cp-workflow-loop-implementation",
-  "naechster_schritt": "Noch nicht definiert",
-  "prompt": "",
-  "prompt_suggestion": "Arbeite an: Sprint CP - Workflow Loop Implementation.",
-  "risiko": "",
-  "checks": [
-    "Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen"
-  ],
-  "last_session": "",
-  "updated_at": "2026-04-16T09:07:08.724508+00:00",
-  "execution_score": null,
-  "execution_comment": "",
-  "last_execution_at": "",
-  "sprint_tag": "",
-  "spec_tag": "",
-  "sprint_plan_id": null,
-  "spec_id": null,
-  "source_line": null,
-  "rating_skipped": false
-}
--->
-
-## Sprint CP - Workflow Loop Implementation #sprint-sprint-cp-workflow-loop-implementation · todo
-
-**Ziel:** Sprint CP - Workflow Loop Implementation #sprint-sprint-cp-workflow-loop-implementation
-**Naechster Schritt:** Noch nicht definiert
-**Risiko:** -
-**Execution Score:** -
-**Execution Comment:** -
-**Last Execution:** -
-**Sprint Tag:** -
-**Spec Tag:** -
-
-**Prompt:**
-_(noch nicht gesetzt)_
-
-**Checks:**
-- Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen
-
----
-
-<!-- MARKER:2576
-{
-  "marker_id": "2576",
-  "titel": "Sprint 12: Projekt-Governance + Feedback-Loop #sprint-sprint-12-projekt-governance-feedback-loop",
-  "plan_id": "2576",
-  "status": "todo",
-  "ziel": "Sprint 12: Projekt-Governance + Feedback-Loop #sprint-sprint-12-projekt-governance-feedback-loop",
-  "naechster_schritt": "Noch nicht definiert",
-  "prompt": "",
-  "prompt_suggestion": "Arbeite an: Sprint 12: Projekt-Governance + Feedback-Loop.",
-  "risiko": "",
-  "checks": [
-    "Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen"
-  ],
-  "last_session": "",
-  "updated_at": "2026-04-16T09:07:08.724508+00:00",
-  "execution_score": null,
-  "execution_comment": "",
-  "last_execution_at": "",
-  "sprint_tag": "",
-  "spec_tag": "",
-  "sprint_plan_id": null,
-  "spec_id": null,
-  "source_line": null,
-  "rating_skipped": false
-}
--->
-
-## Sprint 12: Projekt-Governance + Feedback-Loop #sprint-sprint-12-projekt-governance-feedback-loop · todo
-
-**Ziel:** Sprint 12: Projekt-Governance + Feedback-Loop #sprint-sprint-12-projekt-governance-feedback-loop
-**Naechster Schritt:** Noch nicht definiert
-**Risiko:** -
-**Execution Score:** -
-**Execution Comment:** -
-**Last Execution:** -
-**Sprint Tag:** -
-**Spec Tag:** -
-
-**Prompt:**
-_(noch nicht gesetzt)_
-
-**Checks:**
-- Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen
-
----
-
-<!-- MARKER:2577
-{
-  "marker_id": "2577",
-  "titel": "Sprint: Implementierungs-Check Persisting (Option 2) #sprint-sprint-implementierungs-check-persisting-option-2",
-  "plan_id": "2577",
-  "status": "todo",
-  "ziel": "Sprint: Implementierungs-Check Persisting (Option 2) #sprint-sprint-implementierungs-check-persisting-option-2",
-  "naechster_schritt": "Noch nicht definiert",
-  "prompt": "",
-  "prompt_suggestion": "Arbeite an: Sprint: Implementierungs-Check Persisting (Option 2).",
-  "risiko": "",
-  "checks": [
-    "Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen"
-  ],
-  "last_session": "",
-  "updated_at": "2026-04-16T09:07:08.724508+00:00",
-  "execution_score": null,
-  "execution_comment": "",
-  "last_execution_at": "",
-  "sprint_tag": "",
-  "spec_tag": "",
-  "sprint_plan_id": null,
-  "spec_id": null,
-  "source_line": null,
-  "rating_skipped": false
-}
--->
-
-## Sprint: Implementierungs-Check Persisting (Option 2) #sprint-sprint-implementierungs-check-persisting-option-2 · todo
-
-**Ziel:** Sprint: Implementierungs-Check Persisting (Option 2) #sprint-sprint-implementierungs-check-persisting-option-2
-**Naechster Schritt:** Noch nicht definiert
-**Risiko:** -
-**Execution Score:** -
-**Execution Comment:** -
-**Last Execution:** -
-**Sprint Tag:** -
-**Spec Tag:** -
-
-**Prompt:**
-_(noch nicht gesetzt)_
-
-**Checks:**
-- Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen
-
----
-
-<!-- MARKER:2578
-{
-  "marker_id": "2578",
-  "titel": "Sprint 11: Modell-Qualitaetsvergleich #sprint-sprint-11-modell-qualitaetsvergleich",
-  "plan_id": "2578",
-  "status": "todo",
-  "ziel": "Sprint 11: Modell-Qualitaetsvergleich #sprint-sprint-11-modell-qualitaetsvergleich",
-  "naechster_schritt": "Noch nicht definiert",
-  "prompt": "",
-  "prompt_suggestion": "Arbeite an: Sprint 11: Modell-Qualitaetsvergleich.",
-  "risiko": "",
-  "checks": [
-    "Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen"
-  ],
-  "last_session": "",
-  "updated_at": "2026-04-16T09:07:08.724508+00:00",
-  "execution_score": null,
-  "execution_comment": "",
-  "last_execution_at": "",
-  "sprint_tag": "",
-  "spec_tag": "",
-  "sprint_plan_id": null,
-  "spec_id": null,
-  "source_line": null,
-  "rating_skipped": false
-}
--->
-
-## Sprint 11: Modell-Qualitaetsvergleich #sprint-sprint-11-modell-qualitaetsvergleich · todo
-
-**Ziel:** Sprint 11: Modell-Qualitaetsvergleich #sprint-sprint-11-modell-qualitaetsvergleich
-**Naechster Schritt:** Noch nicht definiert
-**Risiko:** -
-**Execution Score:** -
-**Execution Comment:** -
-**Last Execution:** -
-**Sprint Tag:** -
-**Spec Tag:** -
-
-**Prompt:**
-_(noch nicht gesetzt)_
-
-**Checks:**
-- Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen
-
----
-
-<!-- MARKER:2580
-{
-  "marker_id": "2580",
-  "titel": "Sprint 9: Fehler-Kategorien + AI-Scope-Filter #sprint-sprint-9-fehler-kategorien-ai-scope-filter",
-  "plan_id": "2580",
-  "status": "todo",
-  "ziel": "Sprint 9: Fehler-Kategorien + AI-Scope-Filter #sprint-sprint-9-fehler-kategorien-ai-scope-filter",
-  "naechster_schritt": "Noch nicht definiert",
-  "prompt": "",
-  "prompt_suggestion": "Arbeite an: Sprint 9: Fehler-Kategorien + AI-Scope-Filter.",
-  "risiko": "",
-  "checks": [
-    "Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen"
-  ],
-  "last_session": "",
-  "updated_at": "2026-04-16T09:07:08.724508+00:00",
-  "execution_score": null,
-  "execution_comment": "",
-  "last_execution_at": "",
-  "sprint_tag": "",
-  "spec_tag": "",
-  "sprint_plan_id": null,
-  "spec_id": null,
-  "source_line": null,
-  "rating_skipped": false
-}
--->
-
-## Sprint 9: Fehler-Kategorien + AI-Scope-Filter #sprint-sprint-9-fehler-kategorien-ai-scope-filter · todo
-
-**Ziel:** Sprint 9: Fehler-Kategorien + AI-Scope-Filter #sprint-sprint-9-fehler-kategorien-ai-scope-filter
-**Naechster Schritt:** Noch nicht definiert
-**Risiko:** -
-**Execution Score:** -
-**Execution Comment:** -
-**Last Execution:** -
-**Sprint Tag:** -
-**Spec Tag:** -
-
-**Prompt:**
-_(noch nicht gesetzt)_
-
-**Checks:**
-- Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen
-
----
-
-<!-- MARKER:2581
-{
-  "marker_id": "2581",
-  "titel": "Sprint CP - Control-Plane Loop Closure #sprint-sprint-cp-control-plane-loop-closure",
-  "plan_id": "2581",
-  "status": "todo",
-  "ziel": "Sprint CP - Control-Plane Loop Closure #sprint-sprint-cp-control-plane-loop-closure",
-  "naechster_schritt": "Noch nicht definiert",
-  "prompt": "",
-  "prompt_suggestion": "Arbeite an: Sprint CP - Control-Plane Loop Closure.",
-  "risiko": "",
-  "checks": [
-    "Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen"
-  ],
-  "last_session": "",
-  "updated_at": "2026-04-16T09:07:08.724508+00:00",
-  "execution_score": null,
-  "execution_comment": "",
-  "last_execution_at": "",
-  "sprint_tag": "",
-  "spec_tag": "",
-  "sprint_plan_id": null,
-  "spec_id": null,
-  "source_line": null,
-  "rating_skipped": false
-}
--->
-
-## Sprint CP - Control-Plane Loop Closure #sprint-sprint-cp-control-plane-loop-closure · todo
-
-**Ziel:** Sprint CP - Control-Plane Loop Closure #sprint-sprint-cp-control-plane-loop-closure
-**Naechster Schritt:** Noch nicht definiert
-**Risiko:** -
-**Execution Score:** -
-**Execution Comment:** -
-**Last Execution:** -
-**Sprint Tag:** -
-**Spec Tag:** -
-
-**Prompt:**
-_(noch nicht gesetzt)_
-
-**Checks:**
-- Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen
-
----
-
-<!-- MARKER:2582
-{
-  "marker_id": "2582",
-  "titel": "Master Sprint Plan v0.3 #sprint-master-sprint-plan-v0-3",
-  "plan_id": "2582",
-  "status": "todo",
-  "ziel": "Master Sprint Plan v0.3 #sprint-master-sprint-plan-v0-3",
-  "naechster_schritt": "Noch nicht definiert",
-  "prompt": "",
-  "prompt_suggestion": "Arbeite an: Master Sprint Plan v0.3.",
-  "risiko": "",
-  "checks": [
-    "Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen"
-  ],
-  "last_session": "",
-  "updated_at": "2026-04-16T16:52:59.416844+00:00",
-  "execution_score": null,
-  "execution_comment": "",
-  "last_execution_at": "",
-  "sprint_tag": "",
-  "spec_tag": "",
-  "sprint_plan_id": null,
-  "spec_id": null,
-  "source_line": null,
-  "rating_skipped": false
-}
--->
-
-## Master Sprint Plan v0.3 #sprint-master-sprint-plan-v0-3 · todo
-
-**Ziel:** Master Sprint Plan v0.3 #sprint-master-sprint-plan-v0-3
-**Naechster Schritt:** Noch nicht definiert
-**Risiko:** -
-**Execution Score:** -
-**Execution Comment:** -
-**Last Execution:** -
-**Sprint Tag:** -
-**Spec Tag:** -
-
-**Prompt:**
-_(noch nicht gesetzt)_
-
-**Checks:**
-- Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen
-
----
-
-<!-- MARKER:2583
-{
-  "marker_id": "2583",
-  "titel": "Sprint 3: Context Effectiveness (CLAUDE.md Tracking) #sprint-sprint-3-context-effectiveness-claude-md-tracking",
-  "plan_id": "2583",
-  "status": "todo",
-  "ziel": "Sprint 3: Context Effectiveness (CLAUDE.md Tracking) #sprint-sprint-3-context-effectiveness-claude-md-tracking",
-  "naechster_schritt": "Noch nicht definiert",
-  "prompt": "",
-  "prompt_suggestion": "Arbeite an: Sprint 3: Context Effectiveness (CLAUDE.md Tracking).",
-  "risiko": "",
-  "checks": [
-    "Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen"
-  ],
-  "last_session": "",
-  "updated_at": "2026-04-16T09:07:08.724508+00:00",
-  "execution_score": null,
-  "execution_comment": "",
-  "last_execution_at": "",
-  "sprint_tag": "",
-  "spec_tag": "",
-  "sprint_plan_id": null,
-  "spec_id": null,
-  "source_line": null,
-  "rating_skipped": false
-}
--->
-
-## Sprint 3: Context Effectiveness (CLAUDE.md Tracking) #sprint-sprint-3-context-effectiveness-claude-md-tracking · todo
-
-**Ziel:** Sprint 3: Context Effectiveness (CLAUDE.md Tracking) #sprint-sprint-3-context-effectiveness-claude-md-tracking
-**Naechster Schritt:** Noch nicht definiert
-**Risiko:** -
-**Execution Score:** -
-**Execution Comment:** -
-**Last Execution:** -
-**Sprint Tag:** -
-**Spec Tag:** -
-
-**Prompt:**
-_(noch nicht gesetzt)_
-
-**Checks:**
-- Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen
-
----
-
-<!-- MARKER:2584
-{
-  "marker_id": "2584",
-  "titel": "Sprint: Task-Entitaet + Drill-Down Plan → Section → Task → Marker #sprint-sprint-task-entitaet-drill-down-plan-section-task-marker",
-  "plan_id": "2584",
-  "status": "todo",
-  "ziel": "Sprint: Task-Entitaet + Drill-Down Plan → Section → Task → Marker #sprint-sprint-task-entitaet-drill-down-plan-section-task-marker",
-  "naechster_schritt": "Noch nicht definiert",
-  "prompt": "",
-  "prompt_suggestion": "Arbeite an: Sprint: Task-Entitaet + Drill-Down Plan → Section → Task → Marker.",
-  "risiko": "",
-  "checks": [
-    "Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen"
-  ],
-  "last_session": "",
-  "updated_at": "2026-04-16T09:07:08.724508+00:00",
-  "execution_score": null,
-  "execution_comment": "",
-  "last_execution_at": "",
-  "sprint_tag": "",
-  "spec_tag": "",
-  "sprint_plan_id": null,
-  "spec_id": null,
-  "source_line": null,
-  "rating_skipped": false
-}
--->
-
-## Sprint: Task-Entitaet + Drill-Down Plan → Section → Task → Marker #sprint-sprint-task-entitaet-drill-down-plan-section-task-marker · todo
-
-**Ziel:** Sprint: Task-Entitaet + Drill-Down Plan → Section → Task → Marker #sprint-sprint-task-entitaet-drill-down-plan-section-task-marker
-**Naechster Schritt:** Noch nicht definiert
-**Risiko:** -
-**Execution Score:** -
-**Execution Comment:** -
-**Last Execution:** -
-**Sprint Tag:** -
-**Spec Tag:** -
-
-**Prompt:**
-_(noch nicht gesetzt)_
-
-**Checks:**
-- Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen
-
----
-
-<!-- MARKER:2543
-{
-  "marker_id": "2543",
-  "titel": "Sprint CWO — Context Window Optimizer #sprint-sprint-cwo-context-window-optimizer",
-  "plan_id": "2543",
-  "status": "todo",
-  "ziel": "Sprint CWO — Context Window Optimizer #sprint-sprint-cwo-context-window-optimizer",
-  "naechster_schritt": "Noch nicht definiert",
-  "prompt": "",
-  "prompt_suggestion": "Arbeite an: Sprint CWO — Context Window Optimizer.",
-  "risiko": "",
-  "checks": [
-    "Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen"
-  ],
-  "last_session": "",
-  "updated_at": "2026-04-16T09:07:08.724508+00:00",
-  "execution_score": null,
-  "execution_comment": "",
-  "last_execution_at": "",
-  "sprint_tag": "",
-  "spec_tag": "",
-  "sprint_plan_id": null,
-  "spec_id": null,
-  "source_line": null,
-  "rating_skipped": false
-}
--->
-
-## Sprint CWO — Context Window Optimizer #sprint-sprint-cwo-context-window-optimizer · todo
-
-**Ziel:** Sprint CWO — Context Window Optimizer #sprint-sprint-cwo-context-window-optimizer
-**Naechster Schritt:** Noch nicht definiert
-**Risiko:** -
-**Execution Score:** -
-**Execution Comment:** -
-**Last Execution:** -
-**Sprint Tag:** -
-**Spec Tag:** -
-
-**Prompt:**
-_(noch nicht gesetzt)_
-
-**Checks:**
-- Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen
-
----
-
 <!-- MARKER:2380
 {
   "marker_id": "2380",
@@ -2973,6 +3866,100 @@ _(noch nicht gesetzt)_
 
 ---
 
+<!-- MARKER:115
+{
+  "marker_id": "115",
+  "titel": "Session-Analyse: Inhalt visuell verbessern",
+  "plan_id": "115",
+  "status": "done",
+  "ziel": "Session-Analyse: Inhalt visuell verbessern",
+  "naechster_schritt": "Noch nicht definiert",
+  "prompt": "",
+  "prompt_suggestion": "Arbeite an: Session-Analyse: Inhalt visuell verbessern.",
+  "risiko": "",
+  "checks": [
+    "Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen"
+  ],
+  "last_session": "b93370a6-b1b6-4c4b-b3fd-37d4720e7f2f",
+  "updated_at": "2026-04-15T09:33:47.423183+00:00",
+  "execution_score": null,
+  "execution_comment": "",
+  "last_execution_at": "",
+  "sprint_tag": "",
+  "spec_tag": "",
+  "sprint_plan_id": null,
+  "spec_id": null,
+  "source_line": null,
+  "rating_skipped": false
+}
+-->
+
+## Session-Analyse: Inhalt visuell verbessern · done
+
+**Ziel:** Session-Analyse: Inhalt visuell verbessern
+**Naechster Schritt:** Noch nicht definiert
+**Risiko:** -
+**Execution Score:** -
+**Execution Comment:** -
+**Last Execution:** -
+**Sprint Tag:** -
+**Spec Tag:** -
+
+**Prompt:**
+_(noch nicht gesetzt)_
+
+**Checks:**
+- Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen
+
+---
+
+<!-- MARKER:11069
+{
+  "marker_id": "11069",
+  "titel": "Sprint: Agent-Orchestrator Copilot-Chat — Prompt-Buildup und Review-Chat #sprint-sprint-agent-orchestrator-copilot-chat",
+  "plan_id": "11069",
+  "status": "todo",
+  "ziel": "Sprint: Agent-Orchestrator Copilot-Chat — Prompt-Buildup und Review-Chat #sprint-sprint-agent-orchestrator-copilot-chat",
+  "naechster_schritt": "Noch nicht definiert",
+  "prompt": "",
+  "prompt_suggestion": "Arbeite an: Sprint: Agent-Orchestrator Copilot-Chat — Prompt-Buildup und Review-Chat #sprint-sprint-agent-orchestrator-copilot-chat.",
+  "risiko": "",
+  "checks": [
+    "Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen"
+  ],
+  "last_session": "",
+  "updated_at": "",
+  "execution_score": null,
+  "execution_comment": "",
+  "last_execution_at": "",
+  "sprint_tag": "",
+  "spec_tag": "",
+  "sprint_plan_id": null,
+  "spec_id": null,
+  "source_line": null,
+  "rating_skipped": false
+}
+-->
+
+## Sprint: Agent-Orchestrator Copilot-Chat — Prompt-Buildup und Review-Chat #sprint-sprint-agent-orchestrator-copilot-chat · todo
+
+**Ziel:** Sprint: Agent-Orchestrator Copilot-Chat — Prompt-Buildup und Review-Chat #sprint-sprint-agent-orchestrator-copilot-chat
+**Naechster Schritt:** Noch nicht definiert
+**Risiko:** -
+**Execution Score:** -
+**Execution Comment:** -
+**Last Execution:** -
+**Sprint Tag:** -
+**Spec Tag:** -
+
+**Prompt:**
+_(noch nicht gesetzt)_
+
+**Checks:**
+- Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen
+
+---
+
 <!-- MARKER:127
 {
   "marker_id": "127",
@@ -3067,22 +4054,22 @@ _(noch nicht gesetzt)_
 
 ---
 
-<!-- MARKER:115
+<!-- MARKER:10487
 {
-  "marker_id": "115",
-  "titel": "Session-Analyse: Inhalt visuell verbessern",
-  "plan_id": "115",
-  "status": "done",
-  "ziel": "Session-Analyse: Inhalt visuell verbessern",
+  "marker_id": "10487",
+  "titel": "Sprint: Agent-Orchestrator Executor-Adapter — erste konkrete Bruecke zum Executor #sprint-sprint-agent-orchestrator-executor-adapter",
+  "plan_id": "10487",
+  "status": "todo",
+  "ziel": "Sprint: Agent-Orchestrator Executor-Adapter — erste konkrete Bruecke zum Executor #sprint-sprint-agent-orchestrator-executor-adapter",
   "naechster_schritt": "Noch nicht definiert",
   "prompt": "",
-  "prompt_suggestion": "Arbeite an: Session-Analyse: Inhalt visuell verbessern.",
+  "prompt_suggestion": "Arbeite an: Sprint: Agent-Orchestrator Executor-Adapter — erste konkrete Bruecke zum Executor #sprint-sprint-agent-orchestrator-executor-adapter.",
   "risiko": "",
   "checks": [
     "Marker vor Ausfuehrung kurz gegen Plan-Kontext pruefen"
   ],
-  "last_session": "b93370a6-b1b6-4c4b-b3fd-37d4720e7f2f",
-  "updated_at": "2026-04-15T09:33:47.423183+00:00",
+  "last_session": "",
+  "updated_at": "",
   "execution_score": null,
   "execution_comment": "",
   "last_execution_at": "",
@@ -3095,9 +4082,9 @@ _(noch nicht gesetzt)_
 }
 -->
 
-## Session-Analyse: Inhalt visuell verbessern · done
+## Sprint: Agent-Orchestrator Executor-Adapter — erste konkrete Bruecke zum Executor #sprint-sprint-agent-orchestrator-executor-adapter · todo
 
-**Ziel:** Session-Analyse: Inhalt visuell verbessern
+**Ziel:** Sprint: Agent-Orchestrator Executor-Adapter — erste konkrete Bruecke zum Executor #sprint-sprint-agent-orchestrator-executor-adapter
 **Naechster Schritt:** Noch nicht definiert
 **Risiko:** -
 **Execution Score:** -
