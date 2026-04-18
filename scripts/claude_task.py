@@ -4,6 +4,7 @@ Sprint sprint-agent-orchestrator-executor-handoff Commit 2 (2026-04-18):
 CLI-Helper fuer den Agent-Orchestrator Executor-Handoff (Modell B).
 
 Subcommands:
+  create        - Neuen Agent-Task anlegen (Titel, Ziel, erlaubte Dateien)
   pull   <id>  - Task-Contract + Prompt herunterladen
   finish <id>  - Git-Diff sammeln und Execution-Result uebertragen
   verify <id>  - Verify-Gate aufrufen
@@ -187,6 +188,55 @@ def _compute_out_of_scope(changed_files: List[str], allowed_files: List[str]) ->
 # Subcommands
 # ---------------------------------------------------------------------------
 
+def cmd_create(
+    url: str,
+    token: str,
+    title: str,
+    goal: Optional[str] = None,
+    allowed_files: Optional[List[str]] = None,
+    mode: str = "executor",
+    project_id: Optional[int] = None,
+    marker_id: Optional[str] = None,
+) -> None:
+    """Legt einen neuen Agent-Task an (ohne vorherigen Marker noetig)."""
+    payload: Dict[str, Any] = {
+        "title": title,
+        "mode": mode,
+    }
+    if goal:
+        payload["goal"] = goal
+    if allowed_files:
+        payload["allowed_files"] = list(allowed_files)
+    if project_id is not None:
+        payload["project_id"] = project_id
+    if marker_id:
+        payload["marker_id"] = marker_id
+
+    status, resp = _request("POST", f"{url}/api/agent-tasks", token, body=payload)
+    if status in (200, 201):
+        task_id = resp.get("task_id") if isinstance(resp, dict) else None
+        if not task_id:
+            print(f"Fehler: Keine task_id in der Antwort: {resp}", file=sys.stderr)
+            sys.exit(1)
+        print(f"Task {task_id} angelegt: {title}")
+        if allowed_files:
+            print("Erlaubte Dateien:")
+            for f in allowed_files:
+                print(f"  - {f}")
+        else:
+            print("Erlaubte Dateien: keine (reiner Read-Task)")
+        print()
+        print(f"Naechster Schritt: claude-task pull {task_id}")
+    elif status == 400:
+        err = resp.get("error") if isinstance(resp, dict) else str(resp)
+        print(f"Fehler: Ungueltige Eingabe: {err}", file=sys.stderr)
+        sys.exit(1)
+    else:
+        err = resp.get("error") if isinstance(resp, dict) else str(resp)
+        print(f"Fehler beim Anlegen (Status {status}): {err}", file=sys.stderr)
+        sys.exit(1)
+
+
 def cmd_pull(task_id: int, url: str, token: str) -> None:
     """Laedt Task-Prompt und schreibt .agent-task-<id>.md."""
     prompt_url = f"{url}/api/agent-tasks/{task_id}/prompt"
@@ -354,6 +404,23 @@ def build_parser() -> argparse.ArgumentParser:
 
     sub = parser.add_subparsers(dest="command", required=True)
 
+    p_create = sub.add_parser(
+        "create",
+        help="Neuen Agent-Task anlegen (ohne Marker-Bindung).",
+    )
+    p_create.add_argument("--title", required=True, help="Task-Titel (Pflicht)")
+    p_create.add_argument("--goal", help="Ziel-Beschreibung (was soll Claude tun?)")
+    p_create.add_argument(
+        "--allowed", action="append", default=[], metavar="FILE",
+        help="Erlaubte Datei (mehrfach verwendbar: --allowed a.py --allowed b.py)",
+    )
+    p_create.add_argument(
+        "--mode", default="executor",
+        help="Task-Modus (Default: executor — Server validiert den Wert)",
+    )
+    p_create.add_argument("--project", type=int, metavar="ID", help="Optional: project_id")
+    p_create.add_argument("--marker", metavar="MARKER_ID", help="Optional: marker_id")
+
     p_pull = sub.add_parser("pull", help="Task-Prompt herunterladen.")
     p_pull.add_argument("task_id", type=int)
 
@@ -391,7 +458,17 @@ def main(argv: Optional[List[str]] = None) -> None:
         )
         sys.exit(1)
 
-    if args.command == "pull":
+    if args.command == "create":
+        cmd_create(
+            url, token,
+            title=args.title,
+            goal=args.goal,
+            allowed_files=args.allowed or [],
+            mode=args.mode,
+            project_id=args.project,
+            marker_id=args.marker,
+        )
+    elif args.command == "pull":
         cmd_pull(args.task_id, url, token)
     elif args.command == "finish":
         cmd_finish(
