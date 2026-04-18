@@ -85,6 +85,7 @@ function _agentHandoffShowTask(task) {
     // Manuelle Felder zuruecksetzen
     document.getElementById('agentHandoffChangedFiles').value = '';
     document.getElementById('agentHandoffSummary').value = '';
+    document.getElementById('agentHandoffDiffStat').value = '';
     document.getElementById('agentHandoffCopyHint').style.display = 'none';
     document.getElementById('agentHandoffResultError').style.display = 'none';
 
@@ -165,6 +166,7 @@ function agentHandoffSubmitResult() {
     if (!_agentHandoffTaskId) return;
     var changedRaw = (document.getElementById('agentHandoffChangedFiles').value || '').trim();
     var summary    = (document.getElementById('agentHandoffSummary').value || '').trim();
+    var diffStat   = (document.getElementById('agentHandoffDiffStat').value || '').trim();
     var errEl      = document.getElementById('agentHandoffResultError');
 
     var changedFiles = changedRaw
@@ -172,8 +174,10 @@ function agentHandoffSubmitResult() {
         : [];
 
     var payload = {
+        agent: 'dashboard-ui',
         changed_files: changedFiles,
         summary: summary || null,
+        diff_stat_text: diffStat || null,
     };
 
     errEl.style.display = 'none';
