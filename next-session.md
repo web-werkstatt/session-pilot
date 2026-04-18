@@ -1,9 +1,9 @@
 # Projekt-Dashboard - Naechste Session
 
-<!-- DASHBOARD-GENERATED:START source=session-handoff updated=2026-04-17 -->
-> **Letzte Aktualisierung:** 2026-04-17
-> **Status:** Drei neue Sprint-Plaene fuer Multi-Projekt-Einsatz entworfen; Executor-Adapter-Sprint (Modell A, Dashboard startet Claude selbst) zurueckgestellt. Operativer Pfad: Project-Config → Executor-Handoff (Modell B) → Copilot-Chat. Code unveraendert, 44 Orchestrator-Tests weiter gruen. Phase 1-3 Stand: DONE (siehe Historien-Block am Ende der Datei).
-> **Naechste Aufgabe:** Sprint 1 Project-Config implementieren.
+<!-- DASHBOARD-GENERATED:START source=session-handoff updated=2026-04-18 -->
+> **Letzte Aktualisierung:** 2026-04-18
+> **Status:** Sprint 1 DONE; Sprint 2 Commit 1 (Prompt-Export) + Commit 2 (CLI-Helper) DONE. 87 Agent-Orchestrator-Tests gruen. NOW: Sprint 2 Commit 3 — UI-Minimum.
+> **Naechste Aufgabe:** Sprint 2 Commit 3 — UI-Minimum (Copy-Prompt-Button + Execution-Result-Textarea) implementieren.
 
 ---
 
@@ -11,38 +11,31 @@
 
 Der aktuelle Critical Path:
 
-- **NOW:** Sprint 1 — Project-Config (`sprints/sprint-agent-orchestrator-project-config.md`)
-- **NEXT:** Sprint 2 — Executor-Handoff Modell B (`sprints/sprint-agent-orchestrator-executor-handoff.md`)
-- **LATER:** Sprint 3 — Copilot-Chat inkl. `during_task` + versionierbare System-Prompts (`sprints/sprint-agent-orchestrator-copilot-chat.md`); Modell A spaeter als eigenes Modul (`sprints/sprint-agent-orchestrator-executor-adapter.md`, zurueckgestellt); Scanner-Tuning-Folgepunkte nur bei echtem Bedarf
+- **NOW:** Sprint 2 Commit 3 — UI-Minimum (`sprints/sprint-agent-orchestrator-executor-handoff.md §spec-commit-3-ui`)
+- **NEXT:** Sprint 2 Commit 4 — Doku + Smoke-Test (`sprints/sprint-agent-orchestrator-executor-handoff.md §spec-commit-4-doku`)
+- **LATER:** Sprint 3 Copilot-Chat; Modell A bei Bedarf; Scanner-Tuning nur bei Bedarf
 
-Referenz dafuer:
-
-- `sprints/NOW-next-critical-path.md`
-- `sprints/sprint-agent-orchestrator-project-config.md`
-- `sprints/sprint-agent-orchestrator-executor-handoff.md`
-- `sprints/sprint-agent-orchestrator-copilot-chat.md`
+Referenz: `sprints/NOW-next-critical-path.md`
 
 ## Naechste Aufgaben
 
 ### NOW
 
-- [ ] Sprint 1 Project-Config umsetzen (6 Commits, AC1-AC5, siehe Sprint-Datei)
+- [ ] Sprint 2 Commit 3: `templates/agent_task_detail.html` + `static/js/agent_task_detail.js` — Copy-Prompt-Button + Execution-Result-Textarea (AC3)
 
 ### NEXT
 
-- [ ] Sprint 2 Executor-Handoff Modell B umsetzen (4 Commits, AC1-AC5)
+- [ ] Sprint 2 Commit 4: `docs/agent-orchestrator-executor-handoff.md` + manueller Smoke-Test (AC4)
 
 ### LATER
 
-- [ ] Sprint 3 Copilot-Chat inkl. `during_task` und versionierbare System-Prompts (10 Commits insg.)
-- [ ] Modell A (Dashboard startet Executor) reaktivieren bei echtem Bedarf (autonome/getriggerte Runs, API-Key-Pfad)
-- [ ] Scanner-Tuning-Folgepunkte nur bei echtem Bedarf
+- [ ] Sprint 3 Copilot-Chat (10 Commits, `sprints/sprint-agent-orchestrator-copilot-chat.md`)
+- [ ] Modell A (Executor-Adapter) bei echtem Bedarf reaktivieren
+- [ ] Scanner-Tuning nur bei echtem Bedarf
 
 ### DONE (diese Session)
 
-- [x] Drei neue Sprint-Plaene entworfen: Project-Config, Executor-Handoff (Modell B), Copilot-Chat (inkl. `during_task`-Modus und versionierbare, file-geseedete, DB-gepflegte System-Prompts)
-- [x] Executor-Adapter-Sprint (Modell A) zurueckgestellt mit Nachtrag (Max-Policy, synchroner HTTP-Block, tatsaechlicher Workflow interaktiv)
-- [x] `next-session.md`, `NOW-next-critical-path.md`, `plan-directory.md` auf neuen Critical Path ausgerichtet
+- [x] Sprint 2 Commit 2: `scripts/claude_task.py` (`pull|finish|verify|close`), `tests/test_claude_task_cli.py` (24 Tests), `scripts/README-claude-task.md` — 87 Tests gruen. Commit `1a36388`.
 <!-- DASHBOARD-GENERATED:END -->
 
 ## Was funktioniert (= Bestand)
@@ -166,4 +159,10 @@ Dashboard laeuft als systemd-Service auf Port 5055, Backup taeglich 12:30.
 - Files: `services/agent_prompt_export_service.py` (neu), `services/agent_task_auth.py` (neu), `routes/agent_orchestrator_routes.py`, `tests/test_agent_prompt_export.py` (neu)
 - Verify: `python3 -m py_compile services/agent_prompt_export_service.py services/agent_task_auth.py routes/agent_orchestrator_routes.py tests/test_agent_prompt_export.py` -> `ALL_OK`; `pytest tests/test_agent_prompt_export.py tests/test_agent_orchestrator.py tests/test_agent_orchestrator_resolver.py tests/test_agent_verify.py tests/test_agent_verify_project_config.py tests/test_agent_append_only_diff.py tests/test_agent_recovery.py tests/test_agent_project_config.py` -> `83 passed in 2.09s` (69 Bestands-Tests unveraendert gruen + 14 neue Prompt-Export-Tests: 8 Service-Tests fuer alle Kombinationen [mit/ohne Handoff, mit/ohne Marker, mit/ohne Plan, leere Listen, 50-Zeilen-Default, ValueError bei leerem Task] + 6 Route-Tests [401 ohne Token, 401 bei falschem Token, 401 wenn Token-Datei fehlt, 200 mit korrektem Token, 404 fuer unbekannten Task, Query-Param-Durchreichung an Resolver]); `from app import app` listet `/api/agent-tasks/<int:task_id>/prompt` (GET). AC1 aus `sprint-agent-orchestrator-executor-handoff.md §spec-akzeptanz` belegt durch `test_prompt_has_all_eight_sections_with_full_context` + Varianten-Tests. AC5 belegt: 69 Bestands-Tests unveraendert gruen.
 - Next: Commit 2 (CLI-Helper `scripts/claude_task.py` mit `pull|finish|verify|close`) angehen.
+
+## Update 2026-04-18 — Sprint 2 Commit 2 (CLI-Helper claude-task) umgesetzt
+- Changed: `scripts/claude_task.py` mit Subcommands `pull|finish|verify|close`. Config-Prioritaet: env > `~/.agent-task.toml` > `~/.agent-task-token`. `finish` sammelt `git status --porcelain` + `git diff --stat HEAD`, berechnet Out-of-Scope clientseitig. `README-claude-task.md` als Kurzanleitung. 24 neue Tests (Config-Prioritaet, alle 4 Subcommands, echtes Git-Repo fuer finish, Out-of-Scope-Units).
+- Files: `scripts/claude_task.py` (neu), `scripts/README-claude-task.md` (neu), `tests/test_claude_task_cli.py` (neu)
+- Verify: `python3 -m py_compile scripts/claude_task.py tests/test_claude_task_cli.py` -> `ALL_OK`; `pytest tests/test_claude_task_cli.py ...` -> `87 passed in 1.20s` (83 Bestand + 24 neu). Commit `1a36388`.
+- Next: Sprint 2 Commit 3 — UI-Minimum (`templates/agent_task_detail.html`, Copy-Prompt-Button + Execution-Result-Textarea).
 
