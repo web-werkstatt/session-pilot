@@ -198,8 +198,26 @@ und die Claims werden im selben Modal angezeigt.
 | Symptom | Ursache | Fix |
 |---|---|---|
 | `Task <id> nicht gefunden (kein Execution-Result?)` | `finish` wurde uebersprungen | Erst `finish` aufrufen |
-| `status=blocked` mit `tests_passed` blocked | `command_runner` nicht uebergeben (Server-Default) | Test-Run lokal nachweisen, Result via API mit `claims=[…]` ergaenzen |
+| `status=blocked` mit Detail `command '<cmd>' not executed (no runner)` | Projekt hat **keine** `allowed_verify_commands`-Whitelist konfiguriert (Default) | Entweder `claims=[…]` manuell via API nachreichen ODER Projekt-Config um eine Whitelist ergaenzen (siehe unten) |
+| `status=blocked` mit Detail `command '<cmd>' not in project whitelist` | Whitelist ist gesetzt, aber der Befehl ist nicht exakt darin enthalten (Session L3) | Whitelist anpassen: `PUT /api/agent-projects/<pid>/config` mit `{"allowed_verify_commands": ["<exakter Befehl>"]}` — kein Glob, exakter String-Match |
 | `status=fail` mit `out_of_scope_files` | `changed_files` ausserhalb `allowed_files` | Aenderungen wegnehmen oder Scope erweitern und neu starten |
+
+**Tests auf Knopfdruck (opt-in, Session L3):** Per Default fuehrt der
+Server **keine** Befehle aus. Wer `command_exit_zero`-Claims wirklich
+ausfuehren lassen will, konfiguriert pro Projekt eine Whitelist:
+
+```bash
+curl -X PUT -H 'Content-Type: application/json' \
+    -H "X-Agent-Task-Token: $(cat ~/.agent-task-token)" \
+    -d '{"allowed_verify_commands": ["pytest -q"]}' \
+    http://localhost:5055/api/agent-projects/<project_id>/config
+```
+
+Danach fuehrt `POST /api/agent-tasks/<id>/verify` fuer
+`{"type":"command_exit_zero","command":"pytest -q"}` den Befehl aus —
+PASS bei Exit 0, FAIL bei Exit != 0. Befehle ausserhalb der Whitelist
+bleiben BLOCKED mit o.g. Detail. Leere Whitelist = explizit nichts
+erlaubt.
 
 ---
 

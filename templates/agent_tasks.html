@@ -5,6 +5,9 @@
 {% block breadcrumb %}Agent Tasks{% endblock %}
 
 {% block topbar_actions %}
+<button class="btn btn-primary btn-sm" onclick="openAgentTaskCreateModal()">
+    <i data-lucide="plus" class="icon icon-sm"></i> Neuer Task
+</button>
 <button class="btn btn-secondary btn-sm" onclick="loadAgentTasks()">
     <i data-lucide="refresh-cw" class="icon icon-sm"></i> Refresh
 </button>
@@ -48,9 +51,74 @@
         </table>
     </div>
 </section>
+
+{# Modal: Neuer Task (Sprint Soll-Workflow-Luecken Session L2) #}
+<div class="modal-overlay" id="agentTaskCreateModal">
+    <div class="modal-content" style="max-width:640px;">
+        <div class="modal-header">
+            <h2>Neuer Agent-Task</h2>
+            <button class="modal-close" onclick="closeModal('agentTaskCreateModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group" style="margin-bottom:12px;">
+                <label style="font-size:13px;font-weight:600;display:block;margin-bottom:4px;">Titel <span style="color:var(--status-error);">*</span></label>
+                <input type="text" id="agentTaskCreateTitle" class="filter-select" style="width:100%;padding:8px;" placeholder="z.B. Services refactorn">
+            </div>
+            <div class="form-group" style="margin-bottom:12px;">
+                <label style="font-size:13px;font-weight:600;display:block;margin-bottom:4px;">Ziel <span style="font-weight:400;color:var(--text-faint);">(optional)</span></label>
+                <textarea id="agentTaskCreateGoal" class="filter-select" style="width:100%;padding:8px;min-height:64px;resize:vertical;font-family:inherit;" placeholder="Was soll Claude tun?"></textarea>
+            </div>
+            <div class="form-group" style="margin-bottom:12px;">
+                <label style="font-size:13px;font-weight:600;display:block;margin-bottom:4px;">Erlaubte Dateien <span style="font-weight:400;color:var(--text-faint);">(eine pro Zeile)</span></label>
+                <textarea id="agentTaskCreateAllowed" class="filter-select" style="width:100%;padding:8px;min-height:60px;resize:vertical;font-family:var(--font-mono);font-size:12px;" placeholder="services/foo.py&#10;tests/test_foo.py"></textarea>
+                <div style="font-size:11px;color:var(--text-faint);margin-top:4px;">Leer = reiner Read-Task.</div>
+            </div>
+            <div class="form-group" style="margin-bottom:12px;">
+                <label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px;">Required Verifications <span style="font-weight:400;color:var(--text-faint);">(optional)</span></label>
+                <div style="display:flex;flex-direction:column;gap:4px;font-size:13px;">
+                    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+                        <input type="checkbox" class="agent-task-create-verify" id="agentTaskCreateVerifyTests" value="tests_passed" onchange="_agentTaskCreateToggleTestsCommand()">
+                        <span>tests_passed <span style="color:var(--text-faint);font-size:11px;">(command_exit_zero)</span></span>
+                    </label>
+                    <div id="agentTaskCreateTestsCommandWrap" style="display:none;margin-left:22px;">
+                        <input type="text" id="agentTaskCreateTestsCommand" class="filter-select" style="width:100%;padding:6px;font-family:var(--font-mono);font-size:12px;" value="pytest -q" placeholder="pytest -q">
+                    </div>
+                    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+                        <input type="checkbox" class="agent-task-create-verify" id="agentTaskCreateVerifyAppendOnly" value="append_only_respected">
+                        <span>append_only_respected <span style="color:var(--text-faint);font-size:11px;">(append_only_diff)</span></span>
+                    </label>
+                    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+                        <input type="checkbox" class="agent-task-create-verify" id="agentTaskCreateVerifyDocs" value="docs_updated">
+                        <span>docs_updated</span>
+                    </label>
+                    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+                        <input type="checkbox" class="agent-task-create-verify" id="agentTaskCreateVerifyFeature" value="feature_complete">
+                        <span>feature_complete</span>
+                    </label>
+                </div>
+            </div>
+            <div style="display:flex;gap:12px;margin-bottom:12px;">
+                <div class="form-group" style="flex:1;">
+                    <label style="font-size:13px;font-weight:600;display:block;margin-bottom:4px;">Project ID <span style="font-weight:400;color:var(--text-faint);">(opt.)</span></label>
+                    <input type="number" id="agentTaskCreateProjectId" class="filter-select" style="width:100%;padding:8px;" min="1" placeholder="z.B. 3">
+                </div>
+                <div class="form-group" style="flex:1;">
+                    <label style="font-size:13px;font-weight:600;display:block;margin-bottom:4px;">Marker ID <span style="font-weight:400;color:var(--text-faint);">(opt.)</span></label>
+                    <input type="text" id="agentTaskCreateMarkerId" class="filter-select" style="width:100%;padding:8px;" placeholder="z.B. spec-xy">
+                </div>
+            </div>
+            <div id="agentTaskCreateError" style="display:none;font-size:12px;color:var(--status-error);margin-bottom:8px;"></div>
+        </div>
+        <div class="modal-actions" style="padding:0 24px 20px;justify-content:flex-end;gap:8px;">
+            <button class="btn btn-secondary" onclick="closeModal('agentTaskCreateModal')">Abbrechen</button>
+            <button id="agentTaskCreateSubmitBtn" class="btn btn-primary" onclick="agentTaskCreateSubmit()">Task anlegen</button>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
+<script src="/static/js/agent-tasks-create.js"></script>
 <script>
 function _agentTasksStatusBadge(task) {
     var label, color, bg;

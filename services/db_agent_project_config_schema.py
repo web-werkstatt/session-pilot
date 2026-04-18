@@ -36,4 +36,14 @@ def ensure_agent_project_config_schema_impl(execute):
             )
         """)
 
+        # Sprint sprint-agent-orchestrator-soll-workflow-luecken Session L3
+        # (2026-04-18): optionale Whitelist fuer Verify-Commands. Bewusst
+        # NULLABLE (nicht `NOT NULL DEFAULT '[]'`), damit ein NULL-Wert den
+        # Fall "nicht konfiguriert" von "leere Whitelist = nichts erlaubt"
+        # unterscheidbar haelt.
+        execute("""
+            ALTER TABLE agent_project_configs
+            ADD COLUMN IF NOT EXISTS allowed_verify_commands_json JSONB
+        """)
+
         _agent_project_config_ready = True

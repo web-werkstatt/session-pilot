@@ -108,13 +108,16 @@ function _agentHandoffRefreshVerifyBlock() {
     // Sprint Workflow-Finalization Session 1: Verify-Block nur sichtbar, wenn
     // zu diesem Task bereits ein execution_result existiert. Danach letzten
     // Verify-Status laden, um Close-Button aktiv/inaktiv zu setzen.
+    // Session L2 (Soll-Workflow-Luecken): Execution-Form/Readonly-Toggle
+    // wird im gleichen Fetch-Durchgang aktualisiert.
     if (!_agentHandoffTaskId) return;
     var taskId = _agentHandoffTaskId;
     var block = document.getElementById('agentHandoffVerifyBlock');
     if (!block) return;
     api.get('/api/agent-tasks/' + taskId + '/execution')
-        .then(function() {
+        .then(function(execution) {
             if (_agentHandoffTaskId !== taskId) return;
+            _agentHandoffRenderExecutionReadonly(execution);
             block.style.display = '';
             return api.get('/api/agent-tasks/' + taskId + '/verify')
                 .then(function(v) {
@@ -128,11 +131,65 @@ function _agentHandoffRefreshVerifyBlock() {
         })
         .catch(function(err) {
             if (err && err.status === 404) {
+                _agentHandoffShowExecutionForm();
                 block.style.display = 'none';
                 return;
             }
             console.warn('agent-handoff: verify block refresh failed', err);
         });
+}
+
+function _agentHandoffShowExecutionForm() {
+    var form = document.getElementById('agentHandoffExecutionForm');
+    var ro = document.getElementById('agentHandoffExecutionReadonly');
+    if (form) form.style.display = '';
+    if (ro) ro.style.display = 'none';
+}
+
+function _agentHandoffRenderExecutionReadonly(execution) {
+    var form = document.getElementById('agentHandoffExecutionForm');
+    var ro = document.getElementById('agentHandoffExecutionReadonly');
+    if (!ro) return;
+    if (form) form.style.display = 'none';
+    ro.style.display = '';
+
+    var files = (execution && execution.changed_files) || [];
+    var filesEl = document.getElementById('agentHandoffExecFiles');
+    if (filesEl) {
+        filesEl.textContent = files.length ? files.join(', ') : '\u2014';
+    }
+    var agentEl = document.getElementById('agentHandoffExecAgent');
+    if (agentEl) agentEl.textContent = (execution && execution.agent) || '\u2014';
+
+    var summary = execution && execution.summary;
+    var summaryWrap = document.getElementById('agentHandoffExecSummaryWrap');
+    var summaryEl = document.getElementById('agentHandoffExecSummary');
+    if (summary && summaryWrap && summaryEl) {
+        summaryEl.textContent = summary;
+        summaryWrap.style.display = '';
+    } else if (summaryWrap) {
+        summaryWrap.style.display = 'none';
+    }
+
+    var diff = execution && execution.diff_stat_text;
+    var diffWrap = document.getElementById('agentHandoffExecDiffStatWrap');
+    var diffEl = document.getElementById('agentHandoffExecDiffStat');
+    if (diff && diffWrap && diffEl) {
+        diffEl.textContent = diff;
+        diffWrap.style.display = '';
+    } else if (diffWrap) {
+        diffWrap.style.display = 'none';
+    }
+
+    var oos = (execution && execution.out_of_scope_files) || [];
+    var oosWrap = document.getElementById('agentHandoffExecOutOfScopeWrap');
+    var oosEl = document.getElementById('agentHandoffExecOutOfScope');
+    if (oos.length && oosWrap && oosEl) {
+        oosEl.textContent = oos.join(', ');
+        oosWrap.style.display = '';
+    } else if (oosWrap) {
+        oosWrap.style.display = 'none';
+    }
 }
 
 function _agentHandoffRenderVerify(v) {
@@ -302,12 +359,13 @@ function agentHandoffCopyPrompt() {
         });
 }
 
-function agentHandoffSubmitResult() {
+function agentHandoffSubmitExecution() {
     if (!_agentHandoffTaskId) return;
     var changedRaw = (document.getElementById('agentHandoffChangedFiles').value || '').trim();
     var summary    = (document.getElementById('agentHandoffSummary').value || '').trim();
     var diffStat   = (document.getElementById('agentHandoffDiffStat').value || '').trim();
     var errEl      = document.getElementById('agentHandoffResultError');
+    var submitBtn  = document.getElementById('agentHandoffExecutionSubmitBtn');
 
     var changedFiles = changedRaw
         ? changedRaw.split(/\r?\n/).map(function(s){return s.trim();}).filter(Boolean)
@@ -320,18 +378,31 @@ function agentHandoffSubmitResult() {
         diff_stat_text: diffStat || null,
     };
 
-    errEl.style.display = 'none';
+    if (errEl) errEl.style.display = 'none';
+    if (submitBtn) submitBtn.disabled = true;
     api.post('/api/agent-tasks/' + _agentHandoffTaskId + '/execution', payload)
         .then(function() {
             _showToast('Execution-Result eingereicht.');
-            // Verify-Block einblenden und Status laden — Modal bleibt offen,
-            // damit der User direkt auf Verify + Close weitergehen kann.
+            // Sprint Soll-Workflow-Luecken Session L2: Form ausblenden,
+            // Readonly einblenden, dann Verify-Block refreshen.
             _agentHandoffRefreshVerifyBlock();
         })
         .catch(function(err) {
-            errEl.textContent = 'Fehler: ' + (err.message || err);
-            errEl.style.display = '';
-        });
+            if (errEl) {
+                var body = err && err.body;
+                var code = body && body.code;
+                var msg;
+                if (code === 'execution_already_recorded') {
+                    msg = 'Execution bereits gespeichert. Aktualisiere Ansicht.';
+                    _agentHandoffRefreshVerifyBlock();
+                } else {
+                    msg = (body && body.error) || err.message || String(err);
+                }
+                errEl.textContent = 'Fehler: ' + msg;
+                errEl.style.display = '';
+            }
+        })
+        .then(function() { if (submitBtn) submitBtn.disabled = false; });
 }
 
 function agentHandoffLinkExisting() {

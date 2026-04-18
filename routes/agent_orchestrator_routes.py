@@ -273,12 +273,15 @@ def api_get_execution(task_id):
 @agent_orchestrator_bp.route("/api/agent-tasks/<int:task_id>/verify", methods=["POST"])
 @api_route
 def api_run_verify_gate(task_id):
-    # In Phase 2 gibt es API-seitig keinen Default-command_runner, damit die
-    # Route nie unbeabsichtigt Subprocess-Checks auf dem Server ausloest. Wer
-    # echte Commands laufen lassen will, muss das ueber den Service mit
-    # explizitem command_runner anstossen.
+    # Sprint sprint-agent-orchestrator-soll-workflow-luecken Session L3
+    # (2026-04-18): optional einen Default-Runner injizieren, wenn das Projekt
+    # eine `allowed_verify_commands`-Whitelist konfiguriert hat. Ohne Whitelist
+    # bleibt das Verhalten wie in Phase 2: kein Runner, command_exit_zero-Checks
+    # laufen als BLOCKED. Damit hat der Projekt-Owner einen expliziten Opt-in
+    # statt eines unsichtbaren Default-Subprocess-Runners.
+    runner = _resolve_verify_command_runner(task_id)
     try:
-        result = agent_verify_service.run_verify_gate(task_id)
+        result = agent_verify_service.run_verify_gate(task_id, command_runner=runner)
     except ValueError as err:
         return jsonify({
             "error": str(err),
@@ -286,6 +289,29 @@ def api_run_verify_gate(task_id):
             "details": {"task_id": task_id},
         }), 404
     return jsonify(result), 201
+
+
+def _resolve_verify_command_runner(task_id):
+    """Liefert `default_command_runner`, wenn die Project-Config eine
+    Whitelist gesetzt hat (auch wenn diese leer ist -- der Gate entscheidet
+    dann per exaktem String-Match). Liefert `None`, wenn keine Whitelist
+    konfiguriert ist, damit das Verhalten unveraendert zu Phase 2 bleibt.
+    Fehler im Lookup werden verschluckt und fuehren zu `None`.
+    """
+    try:
+        contract = agent_orchestrator_service.get_task(task_id)
+        if not contract:
+            return None
+        project_id = contract.get("project_id")
+        if project_id is None:
+            return None
+        from services.agent_project_config_service import get_config
+        cfg = get_config(project_id) or {}
+        if cfg.get("allowed_verify_commands") is None:
+            return None
+        return agent_verify_service.default_command_runner
+    except Exception:
+        return None
 
 
 @agent_orchestrator_bp.route("/api/agent-tasks/<int:task_id>/verify", methods=["GET"])

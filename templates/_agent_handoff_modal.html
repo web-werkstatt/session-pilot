@@ -98,9 +98,9 @@
                 </div>
             </div>
 
-            {# Schritt 2: Result einreichen #}
-            <div style="padding:12px;background:var(--bg-card);border-radius:var(--radius-md);border:1px solid var(--border-subtle);">
-                <div style="font-size:13px;font-weight:600;margin-bottom:8px;">Schritt 2: Ergebnis einreichen</div>
+            {# Schritt 2: Execution melden (Sprint Soll-Workflow-Luecken Session L2) #}
+            <div id="agentHandoffExecutionForm" style="padding:12px;background:var(--bg-card);border-radius:var(--radius-md);border:1px solid var(--border-subtle);">
+                <div style="font-size:13px;font-weight:600;margin-bottom:8px;">Schritt 2: Execution melden</div>
 
                 {# Empfohlen: CLI #}
                 <div style="background:var(--bg-input);border-radius:var(--radius-sm);padding:8px 10px;margin-bottom:10px;">
@@ -109,42 +109,60 @@
                         style="font-family:var(--font-mono);font-size:12px;color:var(--accent-light);"></code>
                 </div>
 
-                {# Manuell (collapsible) #}
-                <details>
-                    <summary style="cursor:pointer;font-size:12px;color:var(--text-muted);">Oder manuell einreichen</summary>
-                    <div style="margin-top:10px;">
-                        <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">
-                            Ge&auml;nderte Dateien
-                            <span style="font-weight:400;color:var(--text-faint);">(eine pro Zeile)</span>
-                        </label>
-                        <textarea id="agentHandoffChangedFiles" class="filter-select"
-                            style="width:100%;padding:6px;min-height:60px;resize:vertical;font-family:var(--font-mono);font-size:11px;"
-                            placeholder="services/foo.py&#10;tests/test_foo.py"></textarea>
+                <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px;">Oder hier direkt eintragen:</div>
 
-                        <label style="font-size:12px;font-weight:600;display:block;margin:10px 0 4px;">
-                            Zusammenfassung
-                            <span style="font-weight:400;color:var(--text-faint);">(optional)</span>
-                        </label>
-                        <textarea id="agentHandoffSummary" class="filter-select"
-                            style="width:100%;padding:6px;min-height:50px;resize:vertical;font-family:inherit;font-size:12px;"
-                            placeholder="Was hat Claude gemacht?"></textarea>
+                <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">
+                    Ge&auml;nderte Dateien
+                    <span style="font-weight:400;color:var(--text-faint);">(eine pro Zeile)</span>
+                </label>
+                <textarea id="agentHandoffChangedFiles" class="filter-select"
+                    style="width:100%;padding:6px;min-height:60px;resize:vertical;font-family:var(--font-mono);font-size:11px;"
+                    placeholder="services/foo.py&#10;tests/test_foo.py"></textarea>
 
-                        <label style="font-size:12px;font-weight:600;display:block;margin:10px 0 4px;">
-                            git diff --stat
-                            <span style="font-weight:400;color:var(--text-faint);">(optional)</span>
-                        </label>
-                        <textarea id="agentHandoffDiffStat" class="filter-select"
-                            style="width:100%;padding:6px;min-height:50px;resize:vertical;font-family:var(--font-mono);font-size:11px;"
-                            placeholder=" services/foo.py | 12 ++++++++----&#10; 1 file changed, 8 insertions(+), 4 deletions(-)"></textarea>
+                <label style="font-size:12px;font-weight:600;display:block;margin:10px 0 4px;">
+                    Zusammenfassung
+                    <span style="font-weight:400;color:var(--text-faint);">(optional)</span>
+                </label>
+                <textarea id="agentHandoffSummary" class="filter-select"
+                    style="width:100%;padding:6px;min-height:50px;resize:vertical;font-family:inherit;font-size:12px;"
+                    placeholder="Was hat Claude gemacht?"></textarea>
 
-                        <div id="agentHandoffResultError"
-                            style="display:none;font-size:12px;color:var(--status-error);margin-top:6px;"></div>
+                <label style="font-size:12px;font-weight:600;display:block;margin:10px 0 4px;">
+                    git diff --stat
+                    <span style="font-weight:400;color:var(--text-faint);">(optional)</span>
+                </label>
+                <textarea id="agentHandoffDiffStat" class="filter-select"
+                    style="width:100%;padding:6px;min-height:50px;resize:vertical;font-family:var(--font-mono);font-size:11px;"
+                    placeholder=" services/foo.py | 12 ++++++++----&#10; 1 file changed, 8 insertions(+), 4 deletions(-)"></textarea>
 
-                        <button class="btn btn-primary" onclick="agentHandoffSubmitResult()" style="margin-top:10px;">
-                            Manuell einreichen
-                        </button>
-                    </div>
-                </details>
+                <div id="agentHandoffResultError"
+                    style="display:none;font-size:12px;color:var(--status-error);margin-top:6px;"></div>
+
+                <button id="agentHandoffExecutionSubmitBtn" class="btn btn-primary" onclick="agentHandoffSubmitExecution()" style="margin-top:10px;">
+                    Execution speichern
+                </button>
+            </div>
+
+            {# Read-only-Anzeige des persistierten Execution-Result #}
+            <div id="agentHandoffExecutionReadonly" style="display:none;padding:12px;background:var(--bg-card);border-radius:var(--radius-md);border:1px solid var(--border-subtle);">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                    <div style="font-size:13px;font-weight:600;">Schritt 2: Execution gespeichert</div>
+                    <span style="font-size:11px;color:var(--text-faint);">Agent: <span id="agentHandoffExecAgent">&mdash;</span></span>
+                </div>
+                <div style="font-size:11px;color:var(--text-faint);margin-bottom:2px;">Ge&auml;nderte Dateien</div>
+                <div id="agentHandoffExecFiles" style="font-family:var(--font-mono);font-size:11px;color:var(--text-primary);margin-bottom:8px;">&mdash;</div>
+                <div id="agentHandoffExecSummaryWrap" style="display:none;margin-bottom:8px;">
+                    <div style="font-size:11px;color:var(--text-faint);margin-bottom:2px;">Zusammenfassung</div>
+                    <div id="agentHandoffExecSummary" style="font-size:12px;color:var(--text-primary);white-space:pre-wrap;"></div>
+                </div>
+                <div id="agentHandoffExecDiffStatWrap" style="display:none;">
+                    <div style="font-size:11px;color:var(--text-faint);margin-bottom:2px;">git diff --stat</div>
+                    <pre id="agentHandoffExecDiffStat" style="font-family:var(--font-mono);font-size:11px;color:var(--text-primary);white-space:pre-wrap;margin:0;"></pre>
+                </div>
+                <div id="agentHandoffExecOutOfScopeWrap" style="display:none;margin-top:8px;">
+                    <div style="font-size:11px;color:var(--status-warning,#d89a4a);margin-bottom:2px;">Out-of-Scope Dateien</div>
+                    <div id="agentHandoffExecOutOfScope" style="font-family:var(--font-mono);font-size:11px;color:var(--status-warning,#d89a4a);"></div>
+                </div>
             </div>
 
             {# Schritt 3: Verify + Close — nur sichtbar wenn execution_result existiert #}

@@ -130,6 +130,31 @@ def default_command_runner(command, *, timeout=30, cwd=None):
         return 1, f"command_runner_error: {exc}"
 
 
+def whitelisted_command_runner(whitelist, *, inner_runner=None):
+    """Sprint sprint-agent-orchestrator-soll-workflow-luecken Session L3:
+    Runner-Factory mit exaktem String-Match gegen eine Whitelist.
+
+    * `whitelist` None oder leer -> jeder Befehl wird geblockt (Sentinel -1,
+      damit der Gate den BLOCKED-Zweig waehlt).
+    * `whitelist=["pytest -q"]` + `command="pytest -q"` -> inner_runner laeuft.
+    * `whitelist=["pytest -q"]` + `command="pytest --cov"` -> geblockt.
+
+    Die eigentliche BLOCKED/FAIL/PASS-Entscheidung trifft `agent_verify_gate`
+    auf Basis des Runner-Results; dieser Helper ist primaer ein defensiver
+    Zusatz fuer Unit-Tests und fuer Caller, die den Gate-Check umgehen
+    wollen (z.B. CLI-Tools).
+    """
+    runner = inner_runner or default_command_runner
+    wl = list(whitelist or [])
+
+    def _run(command, *, timeout=30, cwd=None):
+        if command not in wl:
+            return -1, f"command_runner_blocked: '{command}' not in project whitelist"
+        return runner(command, timeout=timeout, cwd=cwd)
+
+    return _run
+
+
 def _truncate(text, limit=200):
     if text is None:
         return ""

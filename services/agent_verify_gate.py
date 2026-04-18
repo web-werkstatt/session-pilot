@@ -214,6 +214,18 @@ def _check_required_verification(req, execution_claims, runner,
 
     if rtype == "command_exit_zero":
         command = req.get("command") or ""
+        # Sprint sprint-agent-orchestrator-soll-workflow-luecken Session L3:
+        # Wenn das Projekt eine Whitelist konfiguriert hat, darf nur ein exakt
+        # aufgefuehrter Befehl ausgefuehrt werden. None = nicht konfiguriert
+        # = altes Verhalten. Leere Liste = explizit "nichts erlaubt".
+        allowed = project_config.get("allowed_verify_commands")
+        if allowed is not None and command not in allowed:
+            return ({
+                "type": "required_verification",
+                "status": VERIFY_STATUS_BLOCKED,
+                "claim": claim,
+                "details": f"command '{command}' not in project whitelist",
+            }, claim)
         if runner is None:
             return ({
                 "type": "required_verification",

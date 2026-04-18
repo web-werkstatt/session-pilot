@@ -8,6 +8,7 @@ Haupt-Modul, damit die bestehenden Tests (`monkeypatch.setattr(claude_task,
 """
 from __future__ import annotations
 
+import argparse
 import json
 import socket
 import subprocess
@@ -18,6 +19,74 @@ from typing import Any, Dict, List, Optional, Tuple
 
 
 TOKEN_HEADER = "X-Agent-Task-Token"
+
+
+# ---------------------------------------------------------------------------
+# Required-Verification (Session L1 sprint-agent-orchestrator-soll-workflow-luecken)
+# ---------------------------------------------------------------------------
+
+ALLOWED_VERIFY_CLAIMS = (
+    "tests_passed",
+    "append_only_respected",
+    "docs_updated",
+    "feature_complete",
+)
+CLAIM_TO_VERIFY_TYPE = {
+    "tests_passed": "command_exit_zero",
+    "append_only_respected": "append_only_diff",
+    "docs_updated": "docs_updated",
+    "feature_complete": "feature_complete",
+}
+
+
+class VerifyEntryAction(argparse.Action):
+    """Sammelt --required-verify und --required-verify-command in CLI-Reihenfolge."""
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        entries = getattr(namespace, "_verify_entries", None)
+        if entries is None:
+            entries = []
+            setattr(namespace, "_verify_entries", entries)
+        kind = "claim" if option_string == "--required-verify" else "command"
+        entries.append((kind, values))
+
+
+def build_required_verification(
+    entries: List[Tuple[str, str]],
+) -> List[Dict[str, Any]]:
+    """Baut die `required_verification`-Liste aus CLI-Eintraegen.
+
+    Regeln (siehe Sprint §spec-session-l1-cli):
+      * Jeder Claim erzeugt einen neuen Eintrag mit `type` gemaess
+        `CLAIM_TO_VERIFY_TYPE`.
+      * `--required-verify-command` wird an den zuletzt genannten
+        command_exit_zero-Eintrag gehaengt (paarweise).
+      * Unbekannter Claim -> ValueError.
+      * Command ohne vorheriges tests_passed -> ValueError.
+    """
+    result: List[Dict[str, Any]] = []
+    last_cmd_idx: Optional[int] = None
+    for kind, value in entries:
+        if kind == "claim":
+            if value not in ALLOWED_VERIFY_CLAIMS:
+                raise ValueError(
+                    f"Unbekannter Typ '{value}'. "
+                    f"Erlaubt: {', '.join(ALLOWED_VERIFY_CLAIMS)}"
+                )
+            vtype = CLAIM_TO_VERIFY_TYPE[value]
+            result.append({"type": vtype, "claim": value})
+            last_cmd_idx = (
+                len(result) - 1 if vtype == "command_exit_zero" else None
+            )
+        else:  # "command"
+            if last_cmd_idx is None:
+                raise ValueError(
+                    "--required-verify-command ohne vorheriges "
+                    "--required-verify tests_passed"
+                )
+            result[last_cmd_idx]["command"] = value
+            last_cmd_idx = None
+    return result
 
 
 # ---------------------------------------------------------------------------

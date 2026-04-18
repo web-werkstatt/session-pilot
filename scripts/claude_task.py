@@ -35,6 +35,9 @@ from claude_task_io import (  # noqa: E402
     get_changed_files as _get_changed_files,
     get_diff_stat as _get_diff_stat,
     compute_out_of_scope as _compute_out_of_scope,
+    ALLOWED_VERIFY_CLAIMS,
+    VerifyEntryAction as _VerifyEntryAction,
+    build_required_verification,
 )
 
 # ---------------------------------------------------------------------------
@@ -117,6 +120,7 @@ def cmd_create(
     mode: str = "executor",
     project_id: Optional[int] = None,
     marker_id: Optional[str] = None,
+    required_verification: Optional[List[Dict[str, Any]]] = None,
 ) -> None:
     """Legt einen neuen Agent-Task an (ohne vorherigen Marker noetig)."""
     payload: Dict[str, Any] = {
@@ -131,6 +135,8 @@ def cmd_create(
         payload["project_id"] = project_id
     if marker_id:
         payload["marker_id"] = marker_id
+    if required_verification:
+        payload["required_verification"] = list(required_verification)
 
     status, resp = _request("POST", f"{url}/api/agent-tasks", token, body=payload)
     _maybe_exit_on_auth_error(status, resp)
@@ -359,6 +365,22 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p_create.add_argument("--project", type=int, metavar="ID", help="Optional: project_id")
     p_create.add_argument("--marker", metavar="MARKER_ID", help="Optional: marker_id")
+    p_create.add_argument(
+        "--required-verify", action=_VerifyEntryAction,
+        default=argparse.SUPPRESS, metavar="TYPE",
+        help=(
+            "Pflicht-Verify-Claim (mehrfach verwendbar). Erlaubte Werte: "
+            + ", ".join(ALLOWED_VERIFY_CLAIMS)
+        ),
+    )
+    p_create.add_argument(
+        "--required-verify-command", action=_VerifyEntryAction,
+        default=argparse.SUPPRESS, metavar="CMD",
+        help=(
+            "Shell-Kommando fuer den zuvor genannten tests_passed-Eintrag "
+            "(paarweise Zuordnung)."
+        ),
+    )
 
     p_pull = sub.add_parser("pull", help="Task-Prompt herunterladen.")
     p_pull.add_argument("task_id", type=int)
@@ -398,6 +420,12 @@ def main(argv: Optional[List[str]] = None) -> None:
         sys.exit(1)
 
     if args.command == "create":
+        verify_entries = getattr(args, "_verify_entries", []) or []
+        try:
+            required_verification = build_required_verification(verify_entries)
+        except ValueError as exc:
+            print(f"Fehler: {exc}", file=sys.stderr)
+            sys.exit(1)
         cmd_create(
             url, token,
             title=args.title,
@@ -406,6 +434,7 @@ def main(argv: Optional[List[str]] = None) -> None:
             mode=args.mode,
             project_id=args.project,
             marker_id=args.marker,
+            required_verification=required_verification,
         )
     elif args.command == "pull":
         cmd_pull(args.task_id, url, token)

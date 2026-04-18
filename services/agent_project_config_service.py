@@ -34,6 +34,7 @@ ALLOWED_FIELDS = (
     "append_only_block_end_regex",
     "handoff_path_relative",
     "docs_paths",
+    "allowed_verify_commands",
 )
 
 
@@ -61,6 +62,7 @@ def get_config(project_id):
                append_only_block_end_regex,
                handoff_path_relative,
                docs_paths_json,
+               allowed_verify_commands_json,
                created_at,
                updated_at
         FROM agent_project_configs
@@ -85,6 +87,12 @@ def get_config(project_id):
             or DEFAULT_HANDOFF_PATH_RELATIVE,
         "docs_paths": _coerce_list(
             row.get("docs_paths_json"), DEFAULT_DOCS_PATHS
+        ),
+        # Sprint Soll-Workflow-Luecken Session L3: None = nicht konfiguriert
+        # (= kein Whitelist-Check); [] = leer konfiguriert (= alles blocked);
+        # Liste = exakte String-Matches erlaubt.
+        "allowed_verify_commands": _coerce_list_or_none(
+            row.get("allowed_verify_commands_json")
         ),
     }
 
@@ -119,9 +127,10 @@ def set_config(project_id, **fields):
             INSERT INTO agent_project_configs (
                 project_id, sensitive_files_json,
                 append_only_block_start_regex, append_only_block_end_regex,
-                handoff_path_relative, docs_paths_json
+                handoff_path_relative, docs_paths_json,
+                allowed_verify_commands_json
             )
-            VALUES (%s, %s::jsonb, %s, %s, %s, %s::jsonb)
+            VALUES (%s, %s::jsonb, %s, %s, %s, %s::jsonb, %s::jsonb)
             """,
             (
                 normalized_id,
@@ -130,6 +139,7 @@ def set_config(project_id, **fields):
                 fields.get("append_only_block_end_regex"),
                 fields.get("handoff_path_relative"),
                 _to_json_or_null(fields.get("docs_paths")),
+                _to_json_or_null(fields.get("allowed_verify_commands")),
             ),
         )
         return get_config(normalized_id)
@@ -151,6 +161,9 @@ def set_config(project_id, **fields):
     if "docs_paths" in fields:
         assignments.append("docs_paths_json = %s::jsonb")
         params.append(_to_json_or_null(fields.get("docs_paths")))
+    if "allowed_verify_commands" in fields:
+        assignments.append("allowed_verify_commands_json = %s::jsonb")
+        params.append(_to_json_or_null(fields.get("allowed_verify_commands")))
 
     if assignments:
         assignments.append("updated_at = NOW()")
@@ -186,7 +199,29 @@ def _default_config(project_id):
         "append_only_block_end_regex": DEFAULT_BLOCK_END_REGEX,
         "handoff_path_relative": DEFAULT_HANDOFF_PATH_RELATIVE,
         "docs_paths": list(DEFAULT_DOCS_PATHS),
+        # None = nicht konfiguriert -> im Gate kein Whitelist-Check.
+        "allowed_verify_commands": None,
     }
+
+
+def _coerce_list_or_none(value):
+    """Wie `_coerce_list`, unterscheidet aber NULL vom leer-Array:
+    * None / ungueltiger Wert -> None (= nicht konfiguriert)
+    * [] -> [] (= explizit leere Whitelist)
+    * [..] -> Liste
+    """
+    if value is None:
+        return None
+    if isinstance(value, list):
+        return value
+    if isinstance(value, str):
+        try:
+            parsed = json.loads(value)
+            if isinstance(parsed, list):
+                return parsed
+        except Exception:
+            return None
+    return None
 
 
 def _coerce_list(value, default):
