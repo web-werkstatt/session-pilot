@@ -2,8 +2,8 @@
 
 <!-- DASHBOARD-GENERATED:START source=session-handoff updated=2026-04-18 -->
 > **Letzte Aktualisierung:** 2026-04-18
-> **Status:** Sprint 1 DONE; Sprint 2 Commit 1 (Prompt-Export) + Commit 2 (CLI-Helper) DONE. 87 Agent-Orchestrator-Tests gruen. NOW: Sprint 2 Commit 3 — UI-Minimum.
-> **Naechste Aufgabe:** Sprint 2 Commit 3 — UI-Minimum (Copy-Prompt-Button + Execution-Result-Textarea) implementieren.
+> **Status:** Payload-Fix Commit 2 (CLI-Helper) DONE — 117 Tests gruen (115 Bestand + 2 neu). NOW: Payload-Fix Commit 3 — UI-Modal um diff_stat_text-Feld ergaenzen.
+> **Naechste Aufgabe:** Payload-Fix Commit 3 — `templates/_agent_handoff_modal.html` + `static/js/agent-handoff-modal.js` um optionales `diff_stat_text`-Textarea ergaenzen, `agent="dashboard-ui"` im Payload.
 
 ---
 
@@ -11,8 +11,8 @@
 
 Der aktuelle Critical Path:
 
-- **NOW:** Sprint 2 Commit 3 — UI-Minimum (`sprints/sprint-agent-orchestrator-executor-handoff.md §spec-commit-3-ui`)
-- **NEXT:** Sprint 2 Commit 4 — Doku + Smoke-Test (`sprints/sprint-agent-orchestrator-executor-handoff.md §spec-commit-4-doku`)
+- **NOW:** Payload-Fix Commit 3 — UI-Modal (`sprints/sprint-agent-orchestrator-execution-payload-fix.md §spec-commit-3-ui`)
+- **NEXT:** Payload-Fix Commit 4 (E2E-Roundtrip-Test) → Commit 5 (Sprint-Doku-Nachtrag)
 - **LATER:** Sprint 3 Copilot-Chat; Modell A bei Bedarf; Scanner-Tuning nur bei Bedarf
 
 Referenz: `sprints/NOW-next-critical-path.md`
@@ -21,11 +21,12 @@ Referenz: `sprints/NOW-next-critical-path.md`
 
 ### NOW
 
-- [ ] Sprint 2 Commit 3: `templates/agent_task_detail.html` + `static/js/agent_task_detail.js` — Copy-Prompt-Button + Execution-Result-Textarea (AC3)
+- [ ] Payload-Fix Commit 3: `templates/_agent_handoff_modal.html` + `static/js/agent-handoff-modal.js` — optionales `diff_stat_text`-Textarea im manuellen Einreichblock, `agent="dashboard-ui"` im Payload, Defaults bleiben leer.
 
 ### NEXT
 
-- [ ] Sprint 2 Commit 4: `docs/agent-orchestrator-executor-handoff.md` + manueller Smoke-Test (AC4)
+- [ ] Payload-Fix Commit 4: `tests/test_agent_execution_roundtrip.py` (neu) — echter Flask-test_client-Roundtrip CLI-Payload -> API -> DB -> `get_execution`, alle 9 Felder, voller + leerer Payload.
+- [ ] Payload-Fix Commit 5: Sprint-Doku-Nachtrag in `sprints/sprint-agent-orchestrator-executor-handoff.md` — §spec-execution-result-payload als ueberholt markieren, auf §spec-canonical-payload verweisen.
 
 ### LATER
 
@@ -33,9 +34,10 @@ Referenz: `sprints/NOW-next-critical-path.md`
 - [ ] Modell A (Executor-Adapter) bei echtem Bedarf reaktivieren
 - [ ] Scanner-Tuning nur bei echtem Bedarf
 
-### DONE (diese Session)
+### DONE (letzte Session 2026-04-18)
 
-- [x] Sprint 2 Commit 2: `scripts/claude_task.py` (`pull|finish|verify|close`), `tests/test_claude_task_cli.py` (24 Tests), `scripts/README-claude-task.md` — 87 Tests gruen. Commit `1a36388`.
+- [x] Payload-Fix Commit 1: Schema-Erweiterung `agent_execution_results.diff_stat_text` + `out_of_scope_files_json`, `record_execution` + `get_execution` + `_execution_row_to_dict` erweitert, beide Fake-DBs angepasst, 3 neue Tests. 115 Tests gruen.
+- [x] Payload-Fix Commit 2: `scripts/claude_task.py cmd_finish` auf kanonische Feldnamen (`changed_files`/`summary`/`diff_stat_text`/`out_of_scope_files`), `agent="claude-cli"`, optional `--started`/`--finished` CLI-Flags. 2 neue CLI-Tests. 117 Tests gruen.
 <!-- DASHBOARD-GENERATED:END -->
 
 ## Was funktioniert (= Bestand)
@@ -166,3 +168,21 @@ Dashboard laeuft als systemd-Service auf Port 5055, Backup taeglich 12:30.
 - Verify: `python3 -m py_compile scripts/claude_task.py tests/test_claude_task_cli.py` -> `ALL_OK`; `pytest tests/test_claude_task_cli.py ...` -> `87 passed in 1.20s` (83 Bestand + 24 neu). Commit `1a36388`.
 - Next: Sprint 2 Commit 3 — UI-Minimum (`templates/agent_task_detail.html`, Copy-Prompt-Button + Execution-Result-Textarea).
 
+
+## Update 2026-04-18 — Payload-Fix Commit 1 (Schema + record_execution) umgesetzt
+- Changed: `agent_execution_results` um `diff_stat_text TEXT` und `out_of_scope_files_json JSONB NOT NULL DEFAULT '[]'::jsonb` erweitert (zwei `ALTER TABLE ... ADD COLUMN IF NOT EXISTS` direkt nach dem `CREATE TABLE` im `ensure_agent_verify_schema_impl`; idempotent fuer Bestands- und neue Instanzen). `agent_verify_service.record_execution` liest `payload["diff_stat_text"]` + `payload["out_of_scope_files"]` und persistiert beide; `get_execution`-SELECT um beide Spalten erweitert; `_execution_row_to_dict` liefert `diff_stat_text` (Default `None`) und `out_of_scope_files` (Default `[]`) zurueck. Beide In-Memory-Fake-DBs (`tests/_agent_verify_fake.py` + lokaler Fake in `tests/test_agent_verify.py`) nehmen `p[9]`/`p[10]` defensiv auf, damit Bestandsaufrufer ohne die neuen Felder unveraendert funktionieren. Keine Legacy-Feldnamen, kein Re-Wording bestehender Keys.
+- Files: `services/db_agent_verify_schema.py`, `services/agent_verify_service.py`, `tests/_agent_verify_fake.py`, `tests/test_agent_verify.py`
+- Verify: `python3 -m py_compile services/db_agent_verify_schema.py services/agent_verify_service.py tests/test_agent_verify.py tests/_agent_verify_fake.py` -> `ALL_OK`; `pytest tests/test_agent_verify.py tests/test_agent_verify_project_config.py tests/test_agent_orchestrator.py tests/test_agent_append_only_diff.py tests/test_agent_recovery.py tests/test_agent_project_config.py tests/test_agent_prompt_export.py tests/test_claude_task_cli.py tests/test_agent_orchestrator_resolver.py -q` -> `115 passed in 3.47s` (112 Bestand + 3 neu). AC1 und AC5 aus `sprint-agent-orchestrator-execution-payload-fix.md §spec-akzeptanz` belegt durch `test_record_execution_persists_diff_stat_and_out_of_scope`, `test_record_execution_empty_payload_defaults_diff_stat_and_out_of_scope`, `test_get_execution_roundtrip_includes_diff_stat_and_out_of_scope` + unveraenderte Bestandstests.
+- Next: Commit 2 (CLI-Helper `scripts/claude_task.py` cmd_finish) — Payload auf kanonische Feldnamen (`changed_files`, `summary`, `diff_stat_text`, `out_of_scope_files`) umstellen, `agent="claude-cli"` setzen, CLI-Tests auf neue Namen anpassen, keine Backward-Compat-Shims.
+
+## Update 2026-04-18 — Sprint 2 Commit 3 (UI-Minimum) umgesetzt + Payload-Fix-Sprint eingeplant
+- Changed: Commit 3 DONE — Agent-Task-Modal in Cockpit integriert (Workflow-Ring-Card + Panel-Header-Button), `agent_task_contracts.marker_id`/`source_plan_id`, `GET /api/agent-tasks?marker_id=`, Same-Origin-Auth-Bypass, Clipboard-Fallback. 95 Tests gruen (87 + 8).
+- Bug entdeckt: CLI `claude-task finish` sendet falsche Feldnamen (`files_changed_json` statt `changed_files`, `notes_text` statt `summary`) → API ignoriert Payload, DB speichert leer. Test hat Mock statt Roundtrip.
+- Files: `services/db_agent_orchestrator_schema.py`, `services/agent_orchestrator_service.py`, `services/agent_git_utils.py` (neu), `services/agent_task_auth.py`, `routes/agent_orchestrator_routes.py`, `templates/_agent_handoff_modal.html` (neu), `templates/copilot_board.html`, `static/js/agent-handoff-modal.js` (neu), `static/js/cockpit-workflow.js`, `tests/test_agent_orchestrator.py`, `sprints/sprint-agent-orchestrator-execution-payload-fix.md` (neu)
+- Next: Neuer Sprint `sprint-agent-orchestrator-execution-payload-fix.md` — Schema-Erweiterung + CLI-Fix + E2E-Roundtrip-Test + Sprint-Doku-Nachtrag. Reihenfolge 5 Commits.
+
+## Update 2026-04-18 — Payload-Fix Commit 2 (CLI-Helper) umgesetzt
+- Changed: `scripts/claude_task.py cmd_finish` auf kanonische Payload-Feldnamen umgestellt (`changed_files`, `summary`, `diff_stat_text`, `out_of_scope_files`), `agent="claude-cli"` fest gesetzt, optional `--started`/`--finished` CLI-Flags fuer `started_at`/`finished_at`. Keine Backward-Compat-Shims, alte Namen (`files_changed_json`, `out_of_scope_files_json`, `notes_text`) sind raus.
+- Files: `scripts/claude_task.py`, `tests/test_claude_task_cli.py`
+- Verify: `python3 -m py_compile scripts/claude_task.py tests/test_claude_task_cli.py` -> `ALL_OK`; `pytest tests/test_claude_task_cli.py tests/test_agent_verify.py tests/test_agent_verify_project_config.py tests/test_agent_orchestrator.py tests/test_agent_append_only_diff.py tests/test_agent_recovery.py tests/test_agent_project_config.py tests/test_agent_prompt_export.py tests/test_agent_orchestrator_resolver.py -q` -> `117 passed in 3.18s` (115 Bestand + 2 neu: `test_finish_forwards_started_and_finished`, `test_finish_omits_timestamps_by_default`). AC2 aus `sprint-agent-orchestrator-execution-payload-fix.md §spec-akzeptanz` durch Payload-Asserts im echten-Git-Repo-Test `test_finish_posts_execution_payload` belegt (kanonische Keys + Negativ-Asserts gegen Alt-Namen + `agent="claude-cli"` + `diff_stat_text`).
+- Next: Commit 3 — UI-Modal (`templates/_agent_handoff_modal.html` + `static/js/agent-handoff-modal.js`) um optionales `diff_stat_text`-Textarea ergaenzen, `agent="dashboard-ui"` im Payload.

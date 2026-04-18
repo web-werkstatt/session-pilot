@@ -4,6 +4,54 @@
 
 ---
 
+## Session 2026-04-18 — Payload-Fix Commit 2 (CLI-Helper)
+
+### Was erledigt wurde
+
+Commit 2 des Sprints `sprint-agent-orchestrator-execution-payload-fix` umgesetzt. Der CLI-Helper `claude-task finish` sendet jetzt die kanonischen Payload-Feldnamen, die `agent_verify_service.record_execution` auch tatsaechlich liest — damit ist der stille Datenverlust zwischen CLI und API behoben.
+
+**CLI-Aenderungen (`scripts/claude_task.py`):**
+- `cmd_finish` Payload auf kanonische Namen: `changed_files` (statt `files_changed_json`), `summary` (statt `notes_text`), `diff_stat_text`, `out_of_scope_files` (statt `out_of_scope_files_json`).
+- `agent="claude-cli"` fest gesetzt (Audit-Signal, trennt CLI-Einreichungen von UI-Einreichungen).
+- Neue optionale CLI-Flags `--started ISO8601` / `--finished ISO8601` → optional `started_at`/`finished_at` im Payload.
+- Keine Backward-Compat-Shims, keine Dual-Names. Atomar umgestellt — Commit 2 des Executor-Handoff-Sprints ist erst seit 2026-04-18 in Betrieb und niemand hat produktiv Nutzen daraus gezogen (stiller Datenverlust).
+
+**Test-Aenderungen (`tests/test_claude_task_cli.py`):**
+- `test_finish_posts_execution_payload` pruefte vorher `files_changed_json` / `out_of_scope_files_json`; jetzt auf `changed_files` / `out_of_scope_files` umgestellt, zusaetzlich Negativ-Asserts gegen Alt-Namen, Assert auf `agent="claude-cli"` und `diff_stat_text` im Payload.
+- `test_finish_with_notes_file`: `summary` statt `notes_text`, zusaetzlicher `agent`-Assert und Negativ-Assert gegen `notes_text`.
+- 2 neue Tests: `test_finish_forwards_started_and_finished` (beide CLI-Flags landen im Payload), `test_finish_omits_timestamps_by_default` (ohne Flags keine Timestamps im Payload).
+
+### Git-Commits
+
+```
+<dieser Commit> docs: Session 2026-04-18 — Payload-Fix Commit 2 dokumentiert
+```
+
+### Betroffene Dateien
+
+| Datei | Aenderung |
+|-------|-----------|
+| `scripts/claude_task.py` | `cmd_finish` Payload-Keys kanonisch, `agent="claude-cli"`, `--started`/`--finished` CLI-Flags, `main()` reicht Flags durch |
+| `tests/test_claude_task_cli.py` | Alle `finish`-Tests auf neue Feldnamen, 2 neue Tests fuer Timestamps |
+| `next-session.md` | Kopfblock + Update-Block 2026-04-18 |
+| `next-session-archiv.md` | Dieser Eintrag |
+
+### Verify
+
+- `python3 -m py_compile scripts/claude_task.py tests/test_claude_task_cli.py` → `ALL_OK`
+- `pytest tests/test_claude_task_cli.py tests/test_agent_verify.py tests/test_agent_verify_project_config.py tests/test_agent_orchestrator.py tests/test_agent_append_only_diff.py tests/test_agent_recovery.py tests/test_agent_project_config.py tests/test_agent_prompt_export.py tests/test_agent_orchestrator_resolver.py -q` → **117 passed in 3.18s** (115 Bestand unveraendert gruen + 2 neue Tests)
+- AC2 aus `sprints/sprint-agent-orchestrator-execution-payload-fix.md §spec-akzeptanz` belegt durch Payload-Asserts im echten-Git-Repo-Test `test_finish_posts_execution_payload`.
+- AC5 belegt: 115 Bestandstests bleiben unveraendert gruen.
+
+### Offene Punkte fuer naechste Session
+
+- Payload-Fix Commit 3: UI-Modal (`templates/_agent_handoff_modal.html` + `static/js/agent-handoff-modal.js`) um optionales `diff_stat_text`-Textarea ergaenzen, `agent="dashboard-ui"` im Payload.
+- Payload-Fix Commit 4: E2E-Roundtrip-Test `tests/test_agent_execution_roundtrip.py`.
+- Payload-Fix Commit 5: Sprint-Doku-Nachtrag in `sprints/sprint-agent-orchestrator-executor-handoff.md`.
+- Lokal uncommitted: Arbeit aus Vorsessions (Payload-Fix Commit 1, Sprint 2 Commit 3 UI-Minimum inkl. `services/agent_git_utils.py`, `templates/_agent_handoff_modal.html`, `static/js/agent-handoff-modal.js`) liegt weiterhin unstaged im Repo. Vor Commit 3 klaeren, ob das in dieser oder separaten Commits gebuendelt wird.
+
+---
+
 ## Session 2026-04-17 — Sprint 2 Executor-Handoff Commit 1 (Prompt-Export)
 
 ### Was wurde erledigt

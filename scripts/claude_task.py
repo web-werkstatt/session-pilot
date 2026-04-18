@@ -237,6 +237,8 @@ def cmd_finish(
     token: str,
     notes_file: Optional[str] = None,
     repo_path: Optional[str] = None,
+    started_at: Optional[str] = None,
+    finished_at: Optional[str] = None,
 ) -> None:
     """Sammelt Git-Diff und uebertraegt Execution-Result."""
     cstatus, contract = _request("GET", f"{url}/api/agent-tasks/{task_id}", token)
@@ -249,19 +251,24 @@ def cmd_finish(
     diff_stat = _get_diff_stat(cwd=repo_path)
     out_of_scope = _compute_out_of_scope(changed, allowed_files)
 
-    notes_text = ""
+    summary = ""
     if notes_file:
         try:
-            notes_text = Path(notes_file).read_text(encoding="utf-8").strip()
+            summary = Path(notes_file).read_text(encoding="utf-8").strip()
         except OSError as e:
             print(f"Warnung: Notiz-Datei nicht lesbar: {e}", file=sys.stderr)
 
     payload: Dict[str, Any] = {
-        "files_changed_json": changed,
-        "out_of_scope_files_json": out_of_scope,
+        "agent": "claude-cli",
+        "changed_files": changed,
+        "out_of_scope_files": out_of_scope,
         "diff_stat_text": diff_stat,
-        "notes_text": notes_text,
+        "summary": summary,
     }
+    if started_at:
+        payload["started_at"] = started_at
+    if finished_at:
+        payload["finished_at"] = finished_at
 
     estatus, eresp = _request("POST", f"{url}/api/agent-tasks/{task_id}/execution", token, body=payload)
     if estatus == 201:
@@ -354,6 +361,8 @@ def build_parser() -> argparse.ArgumentParser:
     p_finish.add_argument("task_id", type=int)
     p_finish.add_argument("--notes", metavar="FILE", help="Optionale Notiz-Datei")
     p_finish.add_argument("--repo", metavar="PATH", help="Repo-Pfad fuer git (Default: CWD)")
+    p_finish.add_argument("--started", metavar="ISO8601", help="Optionaler started_at-Timestamp (ISO-8601)")
+    p_finish.add_argument("--finished", metavar="ISO8601", help="Optionaler finished_at-Timestamp (ISO-8601)")
 
     p_verify = sub.add_parser("verify", help="Verify-Gate aufrufen.")
     p_verify.add_argument("task_id", type=int)
@@ -385,7 +394,13 @@ def main(argv: Optional[List[str]] = None) -> None:
     if args.command == "pull":
         cmd_pull(args.task_id, url, token)
     elif args.command == "finish":
-        cmd_finish(args.task_id, url, token, notes_file=args.notes, repo_path=args.repo)
+        cmd_finish(
+            args.task_id, url, token,
+            notes_file=args.notes,
+            repo_path=args.repo,
+            started_at=args.started,
+            finished_at=args.finished,
+        )
     elif args.command == "verify":
         cmd_verify(args.task_id, url, token)
     elif args.command == "close":

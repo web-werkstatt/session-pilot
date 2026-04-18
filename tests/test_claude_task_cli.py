@@ -182,9 +182,15 @@ def test_finish_posts_execution_payload(tmp_path):
     with patch("urllib.request.urlopen", side_effect=fake_urlopen):
         claude_task.cmd_finish(7, "http://localhost:5055", "tok", repo_path=str(tmp_path))
 
-    assert "allowed.py" in captured["files_changed_json"]
-    assert "outside.py" in captured["files_changed_json"]
-    assert captured["out_of_scope_files_json"] == ["outside.py"]
+    assert "allowed.py" in captured["changed_files"]
+    assert "outside.py" in captured["changed_files"]
+    assert captured["out_of_scope_files"] == ["outside.py"]
+    assert captured["agent"] == "claude-cli"
+    assert "diff_stat_text" in captured
+    assert isinstance(captured["diff_stat_text"], str)
+    assert "files_changed_json" not in captured
+    assert "out_of_scope_files_json" not in captured
+    assert "notes_text" not in captured
 
 
 def test_finish_with_notes_file(tmp_path):
@@ -210,7 +216,58 @@ def test_finish_with_notes_file(tmp_path):
             notes_file=str(notes), repo_path=str(tmp_path),
         )
 
-    assert captured.get("notes_text") == "Meine Notizen"
+    assert captured.get("summary") == "Meine Notizen"
+    assert captured.get("agent") == "claude-cli"
+    assert "notes_text" not in captured
+
+
+def test_finish_forwards_started_and_finished(tmp_path):
+    _make_git_repo(tmp_path)
+
+    contract = {"task_id": 9, "allowed_files": []}
+    contract_resp = _FakeResp(200, contract)
+    exec_resp = _FakeResp(201, {"execution_id": 3})
+
+    captured: dict = {}
+
+    def fake_urlopen(req, **_):
+        if "execution" in req.get_full_url():
+            captured.update(json.loads(req.data.decode()))
+            return exec_resp
+        return contract_resp
+
+    with patch("urllib.request.urlopen", side_effect=fake_urlopen):
+        claude_task.cmd_finish(
+            9, "http://localhost:5055", "tok",
+            repo_path=str(tmp_path),
+            started_at="2026-04-18T10:00:00Z",
+            finished_at="2026-04-18T10:05:00Z",
+        )
+
+    assert captured["started_at"] == "2026-04-18T10:00:00Z"
+    assert captured["finished_at"] == "2026-04-18T10:05:00Z"
+
+
+def test_finish_omits_timestamps_by_default(tmp_path):
+    _make_git_repo(tmp_path)
+
+    contract = {"task_id": 10, "allowed_files": []}
+    contract_resp = _FakeResp(200, contract)
+    exec_resp = _FakeResp(201, {"execution_id": 4})
+
+    captured: dict = {}
+
+    def fake_urlopen(req, **_):
+        if "execution" in req.get_full_url():
+            captured.update(json.loads(req.data.decode()))
+            return exec_resp
+        return contract_resp
+
+    with patch("urllib.request.urlopen", side_effect=fake_urlopen):
+        claude_task.cmd_finish(10, "http://localhost:5055", "tok", repo_path=str(tmp_path))
+
+    assert "started_at" not in captured
+    assert "finished_at" not in captured
 
 
 def test_finish_404_exits(tmp_path):
