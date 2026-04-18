@@ -117,12 +117,33 @@ function _renderCockpitWfMarkers(workflow) {
             + '</button>';
     }
 
+    var AGENT_HANDOFF_CTA = {
+        gate_prompt: 'Task vorbereiten',
+        gate_checks: 'Task vorbereiten',
+        ready:       'Agent-Task anlegen',
+        running:     'Task oeffnen',
+        close:       'Verify/Close'
+    };
+
     var html = '';
     if (current.marker_id) {
         html += _card('current', current, 'Current · aktueller Fokus', 'cockpit-wf-card--current', true);
     }
     if (next.marker_id) {
         html += _card('next', next, 'Next · naechster Marker', 'cockpit-wf-card--next', !current.marker_id);
+    }
+    if (current.marker_id) {
+        var agentCta = AGENT_HANDOFF_CTA[activeStep && activeStep.id] || 'Agent Task';
+        html += '<button class="cockpit-wf-card cockpit-wf-card--agent" type="button"'
+            + ' onclick="openAgentHandoffModal(\'' + _escapeJsString(current.marker_id) + '\','
+            + '\'' + _escapeJsString(current.title || current.marker_id) + '\',\'\')"'
+            + ' title="Executor Handoff f\u00fcr diesen Marker">'
+            + '<span class="cockpit-wf-card-head">'
+            + '<i data-lucide="play-circle" class="icon icon-sm cockpit-wf-card-icon"></i>'
+            + '<span class="cockpit-wf-card-role">Executor</span>'
+            + '</span>'
+            + '<span class="cockpit-wf-card-title">' + escapeHtml(agentCta) + '</span>'
+            + '</button>';
     }
     if (!html) {
         html = '<div class="cockpit-wf-card cockpit-wf-card--empty"><span class="cockpit-wf-card-role">Keine aktiven Marker</span></div>';

@@ -53,7 +53,14 @@ def check_agent_task_token(token_path=None):
       * keine Token-Datei / nicht lesbar
       * fehlender Header
       * falscher Token
+
+    Ausnahme (Commit 3, 2026-04-18): Same-Origin-Browser-Requests aus der
+    Dashboard-UI. Sec-Fetch-Site ist ein moderner Browser-Header, kann von
+    fremden Origins nicht gesetzt werden. CLI-Tools (curl/urllib) senden ihn
+    nicht, dort gilt die Token-Pflicht weiter.
     """
+    if (request.headers.get("Sec-Fetch-Site") or "").lower() == "same-origin":
+        return None
     configured = _read_configured_token(token_path=token_path)
     if not configured:
         return jsonify({"error": "agent task token not configured"}), 401

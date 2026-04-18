@@ -119,7 +119,12 @@
                         <span class="board-panel-title" id="panelSectionTitle"></span>
                         <span id="panelStatusBadge"></span>
                     </div>
-                    <button class="board-panel-close" onclick="closeSectionPanel()" title="Schliessen">&times;</button>
+                    <div style="display:flex;gap:8px;align-items:center;">
+                        <button class="btn btn-sm btn-secondary" onclick="openAgentHandoffFromPanel()" title="Agent-Task anlegen oder oeffnen">
+                            <i data-lucide="play-circle" class="icon icon-xs"></i> Agent-Task
+                        </button>
+                        <button class="board-panel-close" onclick="closeSectionPanel()" title="Schliessen">&times;</button>
+                    </div>
                 </div>
 
                 <div class="panel-section-meta" id="panelSectionMeta"></div>
@@ -156,6 +161,7 @@
     {% include "_workflow_help_modal.html" %}
     {% include "_cockpit_close_modal.html" %}
     {% include "_task_backfill_modal.html" %}
+    {% include "_agent_handoff_modal.html" %}
 {% endblock %}
 {% block scripts %}
 <script src="/static/js/marked.min.js"></script>
@@ -175,4 +181,5 @@
 <script src="/static/js/dispatch.js?v={{ cache_bust }}"></script>
 <script src="/static/js/dispatch-settings.js?v={{ cache_bust }}"></script>
 <script src="/static/js/task-backfill-panel.js?v={{ cache_bust }}"></script>
+<script src="/static/js/agent-handoff-modal.js?v={{ cache_bust }}"></script>
 {% endblock %}

@@ -1,0 +1,220 @@
+/**
+ * Agent Handoff Modal - Sprint Executor-Handoff Commit 3 (2026-04-18)
+ * Entry point: openAgentHandoffModal(markerId, markerTitle, markerGoal)
+ * Abhaengigkeiten: openModal/closeModal + _showToast (base.js), api.* (api.js)
+ */
+
+var _agentHandoffMarkerId = null;
+var _agentHandoffTaskId = null;
+
+function _agentHandoffCleanTitle(title) {
+    if (!title) return '';
+    // Trailing Marker-Tags entfernen: #sprint-..., #spec-..., #task-..., #ac-..., #doc-...
+    return String(title).replace(/\s+#(sprint|spec|task|ac|doc|section)-[a-z0-9_\-]+$/i, '').trim();
+}
+
+function _agentHandoffTruncate(str, max) {
+    str = String(str || '');
+    if (str.length <= max) return str;
+    return str.substring(0, max - 1) + '\u2026';
+}
+
+function openAgentHandoffModal(markerId, markerTitle, markerGoal) {
+    var cleanTitle = _agentHandoffCleanTitle(markerTitle);
+    _agentHandoffMarkerId = markerId;
+    _agentHandoffTaskId = null;
+
+    // Modal-Header + Marker-Kontext
+    document.getElementById('agentHandoffTitle').textContent = 'Agent-Task anlegen';
+    document.getElementById('agentHandoffMarkerTitle').textContent =
+        cleanTitle + '  \u00B7  #' + markerId;
+
+    // Create-Form vorausfuellen
+    document.getElementById('agentHandoffNewTitle').value = cleanTitle || '';
+    document.getElementById('agentHandoffNewGoal').value = markerGoal || '';
+    document.getElementById('agentHandoffNewAllowed').value = '';
+
+    _agentHandoffShowView('create');
+    openModal('agentHandoffModal');
+
+    // Existierenden offenen Task suchen. markerId einfangen, damit spaete
+    // Responses nach Modal-Wechsel nicht in die neue Instanz hineinfunken.
+    var requestedMarker = markerId;
+    api.get('/api/agent-tasks?marker_id=' + encodeURIComponent(markerId))
+        .then(function(task) {
+            if (_agentHandoffMarkerId !== requestedMarker) return;
+            if (task && task.task_id) {
+                _agentHandoffShowTask(task);
+            }
+        })
+        .catch(function(err) {
+            if (_agentHandoffMarkerId !== requestedMarker) return;
+            if (!err || err.status !== 404) {
+                console.warn('agent-handoff: lookup failed', err);
+            }
+        });
+}
+
+function _agentHandoffShowView(view) {
+    document.getElementById('agentHandoffCreateView').style.display = view === 'create' ? '' : 'none';
+    document.getElementById('agentHandoffTaskView').style.display   = view === 'task'   ? '' : 'none';
+    document.getElementById('agentHandoffLinkView').style.display   = view === 'link'   ? '' : 'none';
+}
+
+function _agentHandoffShowTask(task) {
+    _agentHandoffTaskId = task.task_id;
+    var cleanTitle = _agentHandoffCleanTitle(task.title);
+
+    document.getElementById('agentHandoffTitle').textContent = 'Agent-Task #' + task.task_id;
+    document.getElementById('agentHandoffTaskTitle').textContent = _agentHandoffTruncate(cleanTitle, 100);
+    document.getElementById('agentHandoffTaskGoal').textContent = task.goal || '\u2014';
+
+    var allowed = task.allowed_files || [];
+    var allowedEl = document.getElementById('agentHandoffTaskAllowed');
+    allowedEl.textContent = allowed.length ? allowed.join(', ') : 'keine (reiner Read-Task)';
+
+    // State-Badge
+    var stateEl = document.getElementById('agentHandoffTaskState');
+    stateEl.textContent = 'offen';
+    stateEl.style.background = 'var(--info-bg, #2a3d56)';
+    stateEl.style.color = 'var(--text-heading, #fff)';
+
+    // CLI-Command
+    document.getElementById('agentHandoffCliCmd').textContent = 'claude-task finish ' + task.task_id;
+
+    // Manuelle Felder zuruecksetzen
+    document.getElementById('agentHandoffChangedFiles').value = '';
+    document.getElementById('agentHandoffSummary').value = '';
+    document.getElementById('agentHandoffCopyHint').style.display = 'none';
+    document.getElementById('agentHandoffResultError').style.display = 'none';
+
+    _agentHandoffShowView('task');
+}
+
+function agentHandoffCreate() {
+    var title = (document.getElementById('agentHandoffNewTitle').value || '').trim();
+    var goal  = (document.getElementById('agentHandoffNewGoal').value  || '').trim();
+    var allowedRaw = (document.getElementById('agentHandoffNewAllowed').value || '').trim();
+    if (!title) {
+        _showToast('Titel ist erforderlich.', true);
+        return;
+    }
+    var allowed = allowedRaw
+        ? allowedRaw.split(/\r?\n/).map(function(s){return s.trim();}).filter(Boolean)
+        : [];
+    api.post('/api/agent-tasks', {
+        title: title,
+        goal: goal,
+        marker_id: _agentHandoffMarkerId,
+        allowed_files: allowed,
+    })
+    .then(function(task) { _agentHandoffShowTask(task); })
+    .catch(function(err) { _showToast('Fehler: ' + (err.message || err), true); });
+}
+
+function _agentHandoffCopyToClipboard(text) {
+    // Moderne API bevorzugt (HTTPS / localhost)
+    if (navigator.clipboard && window.isSecureContext) {
+        return navigator.clipboard.writeText(text);
+    }
+    // Fallback fuer HTTP-LAN-Setups (execCommand ist deprecated, funktioniert aber ueberall)
+    return new Promise(function(resolve, reject) {
+        try {
+            var ta = document.createElement('textarea');
+            ta.value = text;
+            ta.setAttribute('readonly', '');
+            ta.style.position = 'fixed';
+            ta.style.left = '-9999px';
+            ta.style.top = '0';
+            document.body.appendChild(ta);
+            ta.focus();
+            ta.select();
+            ta.setSelectionRange(0, text.length);
+            var ok = document.execCommand('copy');
+            document.body.removeChild(ta);
+            if (ok) resolve();
+            else reject(new Error('execCommand copy returned false'));
+        } catch (e) { reject(e); }
+    });
+}
+
+function agentHandoffCopyPrompt() {
+    if (!_agentHandoffTaskId) return;
+    // Resolver-Kontext mitgeben: reichert den Prompt mit Handoff-Tail + aktivem Marker an
+    var url = '/api/agent-tasks/' + _agentHandoffTaskId + '/prompt';
+    var qs = [];
+    if (typeof COCKPIT_PROJECT !== 'undefined' && COCKPIT_PROJECT) {
+        qs.push('project=' + encodeURIComponent(COCKPIT_PROJECT));
+    }
+    if (_agentHandoffMarkerId) {
+        qs.push('marker=' + encodeURIComponent(_agentHandoffMarkerId));
+    }
+    if (qs.length) url += '?' + qs.join('&');
+    api.request(url, { raw: true })
+        .then(function(resp) { return resp.text(); })
+        .then(function(text) { return _agentHandoffCopyToClipboard(text); })
+        .then(function() {
+            document.getElementById('agentHandoffCopyHint').style.display = '';
+        })
+        .catch(function(err) {
+            _showToast('Kopieren fehlgeschlagen: ' + (err.message || err), true);
+        });
+}
+
+function agentHandoffSubmitResult() {
+    if (!_agentHandoffTaskId) return;
+    var changedRaw = (document.getElementById('agentHandoffChangedFiles').value || '').trim();
+    var summary    = (document.getElementById('agentHandoffSummary').value || '').trim();
+    var errEl      = document.getElementById('agentHandoffResultError');
+
+    var changedFiles = changedRaw
+        ? changedRaw.split(/\r?\n/).map(function(s){return s.trim();}).filter(Boolean)
+        : [];
+
+    var payload = {
+        changed_files: changedFiles,
+        summary: summary || null,
+    };
+
+    errEl.style.display = 'none';
+    api.post('/api/agent-tasks/' + _agentHandoffTaskId + '/execution', payload)
+        .then(function() {
+            _showToast('Execution-Result eingereicht.');
+            closeModal('agentHandoffModal');
+        })
+        .catch(function(err) {
+            errEl.textContent = 'Fehler: ' + (err.message || err);
+            errEl.style.display = '';
+        });
+}
+
+function agentHandoffLinkExisting() {
+    _agentHandoffShowView('link');
+}
+
+function agentHandoffShowCreate() {
+    document.getElementById('agentHandoffTitle').textContent = 'Agent-Task anlegen';
+    _agentHandoffShowView('create');
+}
+
+function agentHandoffDoLink() {
+    var idVal = parseInt((document.getElementById('agentHandoffLinkId').value || '').trim(), 10);
+    if (!idVal) return;
+    api.get('/api/agent-tasks/' + idVal)
+        .then(function(task) { _agentHandoffShowTask(task); })
+        .catch(function() { _showToast('Task nicht gefunden.', true); });
+}
+
+// Entry Point aus dem Marker-Panel (copilot-board-panel.js:_currentSection).
+// Fallback, wenn der Workflow-Ring fuer das Projekt nicht konfiguriert ist.
+function openAgentHandoffFromPanel() {
+    if (typeof _currentSection === 'undefined' || !_currentSection) {
+        _showToast('Kein Marker ausgewaehlt.', true);
+        return;
+    }
+    openAgentHandoffModal(
+        _currentSection.marker_id,
+        _currentSection.titel || _currentSection.title || _currentSection.marker_id,
+        _currentSection.goal || _currentSection.ziel || ''
+    );
+}

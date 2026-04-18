@@ -26,6 +26,19 @@ import services.agent_task_auth as agent_task_auth
 agent_orchestrator_bp = Blueprint("agent_orchestrator", __name__)
 
 
+@agent_orchestrator_bp.route("/api/agent-tasks", methods=["GET"])
+@api_route
+def api_query_agent_tasks():
+    """Sprint Executor-Handoff Commit 3: Suche nach Task per marker_id."""
+    marker_id = (request.args.get("marker_id") or "").strip()
+    if not marker_id:
+        return jsonify({"error": "marker_id required"}), 400
+    task = agent_orchestrator_service.get_task_for_marker(marker_id)
+    if not task:
+        return jsonify({"error": "no open task for marker"}), 404
+    return jsonify(task)
+
+
 @agent_orchestrator_bp.route("/api/agent-tasks", methods=["POST"])
 @api_route
 def api_create_agent_task():

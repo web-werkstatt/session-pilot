@@ -58,6 +58,8 @@ def fake_db(monkeypatch):
                 "required_outputs_json": _as_json(params[7]),
                 "stop_conditions_json": _as_json(params[8]),
                 "project_id": params[9] if len(params) > 9 else None,
+                "marker_id": params[10] if len(params) > 10 else None,
+                "source_plan_id": params[11] if len(params) > 11 else None,
                 "created_at": _now(),
             }
             return {"id": task_id, "created_at": contracts[task_id]["created_at"]}
@@ -67,6 +69,13 @@ def fake_db(monkeypatch):
             if not contract:
                 return None
             return dict(contract)
+
+        # get_task_for_marker: aliasierte SELECT-Query mit atc.-Prefix
+        if "select atc.id," in q and "from agent_task_contracts atc" in q and "where atc.marker_id = %s" in q:
+            mid = str(params[0])
+            matches = [c for c in contracts.values() if str(c.get("marker_id") or "") == mid]
+            matches.sort(key=lambda x: x["created_at"], reverse=True)
+            return dict(matches[0]) if matches else None
 
         if q.startswith("select session_id, state, previous_state") and "from agent_session_states" in q:
             state = states.get(params[0])
@@ -375,3 +384,82 @@ def test_bootstrap_task_without_plan_or_marker_produces_empty_scope(fake_db):
     )
     assert result["contract"]["allowed_files"] == []
     assert result["context"]["start_scope"] == []
+
+
+# ---------------------------------------------------------------------------
+# Marker-Lookup (Sprint Executor-Handoff Commit 3)
+# ---------------------------------------------------------------------------
+
+def test_create_task_stores_marker_id(fake_db):
+    contract = orchestrator.create_task({
+        "title": "Handoff-Task",
+        "marker_id": "spec-commit-3-ui",
+        "source_plan_id": 42,
+    })
+    assert contract["marker_id"] == "spec-commit-3-ui"
+    assert contract["source_plan_id"] == 42
+
+
+def test_get_task_for_marker_found(fake_db):
+    orchestrator.create_task({"title": "Task A", "marker_id": "marker-abc"})
+    result = orchestrator.get_task_for_marker("marker-abc")
+    assert result is not None
+    assert result["marker_id"] == "marker-abc"
+    assert result["title"] == "Task A"
+
+
+def test_get_task_for_marker_not_found(fake_db):
+    result = orchestrator.get_task_for_marker("nonexistent-marker")
+    assert result is None
+
+
+def test_get_task_for_marker_empty_id_returns_none(fake_db):
+    assert orchestrator.get_task_for_marker("") is None
+    assert orchestrator.get_task_for_marker(None) is None
+
+
+def test_create_task_without_marker_id_is_unchanged(fake_db):
+    contract = orchestrator.create_task({"title": "Kein Marker"})
+    assert contract["marker_id"] is None
+    assert contract["source_plan_id"] is None
+
+
+# ---------------------------------------------------------------------------
+# Route: GET /api/agent-tasks?marker_id=
+# ---------------------------------------------------------------------------
+
+def test_route_query_agent_tasks_by_marker(monkeypatch):
+    import services.agent_orchestrator_service as svc
+    monkeypatch.setattr(svc, "ensure_agent_orchestrator_schema", lambda: None)
+    monkeypatch.setattr(svc, "get_task_for_marker", lambda mid, **kw: {
+        "task_id": 7, "marker_id": mid, "title": "Gefunden"
+    } if mid == "marker-xyz" else None)
+
+    from app import app
+    client = app.test_client()
+    resp = client.get("/api/agent-tasks?marker_id=marker-xyz")
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert data["task_id"] == 7
+    assert data["marker_id"] == "marker-xyz"
+
+
+def test_route_query_agent_tasks_missing_marker_id(monkeypatch):
+    import services.agent_orchestrator_service as svc
+    monkeypatch.setattr(svc, "ensure_agent_orchestrator_schema", lambda: None)
+
+    from app import app
+    client = app.test_client()
+    resp = client.get("/api/agent-tasks")
+    assert resp.status_code == 400
+
+
+def test_route_query_agent_tasks_404(monkeypatch):
+    import services.agent_orchestrator_service as svc
+    monkeypatch.setattr(svc, "ensure_agent_orchestrator_schema", lambda: None)
+    monkeypatch.setattr(svc, "get_task_for_marker", lambda mid, **kw: None)
+
+    from app import app
+    client = app.test_client()
+    resp = client.get("/api/agent-tasks?marker_id=ghost-marker")
+    assert resp.status_code == 404

@@ -64,4 +64,9 @@ def ensure_agent_orchestrator_schema_impl(execute):
         execute("ALTER TABLE agent_task_contracts ADD COLUMN IF NOT EXISTS project_id INTEGER")
         execute("CREATE INDEX IF NOT EXISTS idx_agent_task_contracts_project ON agent_task_contracts(project_id)")
 
+        # Sprint Executor-Handoff Commit 3 (2026-04-18): Marker-Verknuepfung.
+        execute("ALTER TABLE agent_task_contracts ADD COLUMN IF NOT EXISTS marker_id VARCHAR(128)")
+        execute("ALTER TABLE agent_task_contracts ADD COLUMN IF NOT EXISTS source_plan_id INTEGER")
+        execute("CREATE INDEX IF NOT EXISTS idx_agent_task_contracts_marker ON agent_task_contracts(marker_id)")
+
         _agent_orchestrator_ready = True

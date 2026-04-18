@@ -1,0 +1,163 @@
+{# Agent Handoff Modal — Sprint Executor-Handoff Commit 3 (2026-04-18)
+   Oeffnen via: openAgentHandoffModal(markerId, markerTitle, markerGoal) #}
+<div class="modal-overlay" id="agentHandoffModal">
+    <div class="modal-content" style="max-width:620px;">
+        <div class="modal-header">
+            <h2 id="agentHandoffTitle">Agent-Task</h2>
+            <button class="modal-close" onclick="closeModal('agentHandoffModal')">&times;</button>
+        </div>
+
+        {# Marker-Kontext — immer sichtbar, egal welche View #}
+        <div class="modal-body" style="padding:0 24px;">
+            <div style="background:var(--bg-card);border:1px solid var(--border-subtle);border-radius:var(--radius-md);padding:10px 12px;margin-bottom:16px;">
+                <div style="font-size:10px;color:var(--text-faint);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px;">Marker</div>
+                <div id="agentHandoffMarkerTitle" style="font-size:13px;color:var(--text-heading);font-weight:500;line-height:1.3;"></div>
+            </div>
+        </div>
+
+        {# View A: Task erstellen #}
+        <div id="agentHandoffCreateView" class="modal-body" style="padding-top:0;">
+            <div class="form-group" style="margin-bottom:12px;">
+                <label style="font-size:13px;font-weight:600;">Task-Titel</label>
+                <input type="text" id="agentHandoffNewTitle" class="filter-select"
+                    style="width:100%;padding:8px;">
+            </div>
+            <div class="form-group" style="margin-bottom:12px;">
+                <label style="font-size:13px;font-weight:600;">Ziel
+                    <span style="font-weight:400;color:var(--text-faint);">(was soll Claude tun?)</span>
+                </label>
+                <textarea id="agentHandoffNewGoal" class="filter-select"
+                    style="width:100%;padding:8px;min-height:72px;resize:vertical;font-family:inherit;"
+                    placeholder="z.B. Tests schreiben fuer services/foo.py"></textarea>
+            </div>
+            <div class="form-group" style="margin-bottom:16px;">
+                <label style="font-size:13px;font-weight:600;">Erlaubte Dateien
+                    <span style="font-weight:400;color:var(--text-faint);">(optional, eine pro Zeile)</span>
+                </label>
+                <textarea id="agentHandoffNewAllowed" class="filter-select"
+                    style="width:100%;padding:8px;min-height:60px;resize:vertical;font-family:var(--font-mono);font-size:12px;"
+                    placeholder="services/foo.py&#10;tests/test_foo.py"></textarea>
+                <div style="font-size:11px;color:var(--text-faint);margin-top:4px;">
+                    Leer = Claude darf nichts schreiben (reiner Read-Task).
+                </div>
+            </div>
+            <div class="modal-actions" style="justify-content:space-between;">
+                <button class="btn btn-secondary" onclick="agentHandoffLinkExisting()">
+                    Bestehenden Task verkn&uuml;pfen
+                </button>
+                <button class="btn btn-primary" onclick="agentHandoffCreate()">
+                    Task anlegen &rarr;
+                </button>
+            </div>
+        </div>
+
+        {# View B: Task vorhanden — Prompt + Result #}
+        <div id="agentHandoffTaskView" class="modal-body" style="display:none;padding-top:0;">
+            {# Task-Titel + State #}
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:10px;">
+                <div style="min-width:0;flex:1;">
+                    <div style="font-size:10px;color:var(--text-faint);text-transform:uppercase;letter-spacing:0.05em;">Task</div>
+                    <div id="agentHandoffTaskTitle"
+                        style="font-size:14px;color:var(--text-heading);font-weight:600;line-height:1.3;"></div>
+                </div>
+                <span id="agentHandoffTaskState"
+                    style="padding:3px 10px;border-radius:10px;font-size:11px;font-weight:600;white-space:nowrap;"></span>
+            </div>
+
+            {# Task-Details (collapsible) #}
+            <details style="margin-bottom:16px;border:1px solid var(--border-subtle);border-radius:var(--radius-md);padding:8px 12px;">
+                <summary style="cursor:pointer;font-size:12px;color:var(--text-muted);">Task-Details</summary>
+                <div style="margin-top:10px;font-size:12px;line-height:1.5;">
+                    <div style="margin-bottom:8px;">
+                        <div style="color:var(--text-faint);font-size:11px;margin-bottom:2px;">Ziel</div>
+                        <div id="agentHandoffTaskGoal" style="color:var(--text-primary);"></div>
+                    </div>
+                    <div>
+                        <div style="color:var(--text-faint);font-size:11px;margin-bottom:2px;">Erlaubte Dateien</div>
+                        <div id="agentHandoffTaskAllowed"
+                            style="color:var(--text-primary);font-family:var(--font-mono);font-size:11px;"></div>
+                    </div>
+                </div>
+            </details>
+
+            {# Schritt 1: Prompt kopieren #}
+            <div style="margin-bottom:16px;padding:12px;background:var(--bg-card);border-radius:var(--radius-md);border:1px solid var(--border-subtle);">
+                <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;">
+                    <div style="min-width:0;flex:1;">
+                        <div style="font-size:13px;font-weight:600;margin-bottom:2px;">Schritt 1: Prompt in Claude pasten</div>
+                        <div style="font-size:11px;color:var(--text-muted);">
+                            Kopieren &rarr; Terminal &rarr; <code style="font-size:11px;">claude</code> starten &rarr; pasten &rarr; ausf&uuml;hren.
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" onclick="agentHandoffCopyPrompt()" style="white-space:nowrap;">
+                        Prompt kopieren
+                    </button>
+                </div>
+                <div id="agentHandoffCopyHint" style="display:none;font-size:12px;color:var(--success);margin-top:8px;">
+                    &#10003; In Zwischenablage kopiert.
+                </div>
+            </div>
+
+            {# Schritt 2: Result einreichen #}
+            <div style="padding:12px;background:var(--bg-card);border-radius:var(--radius-md);border:1px solid var(--border-subtle);">
+                <div style="font-size:13px;font-weight:600;margin-bottom:8px;">Schritt 2: Ergebnis einreichen</div>
+
+                {# Empfohlen: CLI #}
+                <div style="background:var(--bg-input);border-radius:var(--radius-sm);padding:8px 10px;margin-bottom:10px;">
+                    <div style="font-size:11px;color:var(--text-faint);margin-bottom:4px;">Empfohlen &mdash; im Terminal:</div>
+                    <code id="agentHandoffCliCmd"
+                        style="font-family:var(--font-mono);font-size:12px;color:var(--accent-light);"></code>
+                </div>
+
+                {# Manuell (collapsible) #}
+                <details>
+                    <summary style="cursor:pointer;font-size:12px;color:var(--text-muted);">Oder manuell einreichen</summary>
+                    <div style="margin-top:10px;">
+                        <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">
+                            Ge&auml;nderte Dateien
+                            <span style="font-weight:400;color:var(--text-faint);">(eine pro Zeile)</span>
+                        </label>
+                        <textarea id="agentHandoffChangedFiles" class="filter-select"
+                            style="width:100%;padding:6px;min-height:60px;resize:vertical;font-family:var(--font-mono);font-size:11px;"
+                            placeholder="services/foo.py&#10;tests/test_foo.py"></textarea>
+
+                        <label style="font-size:12px;font-weight:600;display:block;margin:10px 0 4px;">
+                            Zusammenfassung
+                            <span style="font-weight:400;color:var(--text-faint);">(optional)</span>
+                        </label>
+                        <textarea id="agentHandoffSummary" class="filter-select"
+                            style="width:100%;padding:6px;min-height:50px;resize:vertical;font-family:inherit;font-size:12px;"
+                            placeholder="Was hat Claude gemacht?"></textarea>
+
+                        <div id="agentHandoffResultError"
+                            style="display:none;font-size:12px;color:var(--status-error);margin-top:6px;"></div>
+
+                        <button class="btn btn-primary" onclick="agentHandoffSubmitResult()" style="margin-top:10px;">
+                            Manuell einreichen
+                        </button>
+                    </div>
+                </details>
+            </div>
+        </div>
+
+        {# View C: Bestehenden Task verknuepfen #}
+        <div id="agentHandoffLinkView" class="modal-body" style="display:none;padding-top:0;">
+            <p style="color:var(--text-muted);font-size:13px;margin-bottom:16px;">
+                Task-ID eines bestehenden Tasks eingeben:
+            </p>
+            <div class="form-group" style="margin-bottom:16px;">
+                <label style="font-size:13px;font-weight:600;">Task-ID</label>
+                <input type="number" id="agentHandoffLinkId" class="filter-select"
+                    style="width:100%;padding:8px;" min="1" placeholder="z.B. 42">
+            </div>
+            <div class="modal-actions" style="justify-content:space-between;">
+                <button class="btn btn-secondary" onclick="agentHandoffShowCreate()">
+                    &larr; Zur&uuml;ck
+                </button>
+                <button class="btn btn-primary" onclick="agentHandoffDoLink()">
+                    Verkn&uuml;pfen
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

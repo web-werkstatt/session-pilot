@@ -18,10 +18,13 @@ Die Persistenz ist schlank gehalten (zwei Tabellen, kein Verify/Recovery).
 Spaetere Phasen ergaenzen Verify-Gate, Claim-Modell, Close-Gate, Recovery.
 """
 import json
-import subprocess
 from pathlib import Path
 
-from services.db_service import execute, ensure_agent_orchestrator_schema
+from services.agent_git_utils import default_git_runner as _default_git_runner
+from services.agent_git_utils import git_branch as _git_branch
+from services.agent_git_utils import git_status as _git_status
+
+from services.db_service import execute, ensure_agent_orchestrator_schema, ensure_agent_verify_schema
 
 
 ALLOWED_STATES = {"inspect", "implement", "verify", "document", "done", "recovery"}
@@ -69,15 +72,25 @@ def create_task(payload):
     else:
         project_id = None
 
+    source_plan_id = payload.get("source_plan_id")
+    if source_plan_id is not None and str(source_plan_id).strip() != "":
+        try:
+            source_plan_id = int(source_plan_id)
+        except (TypeError, ValueError):
+            source_plan_id = None
+    else:
+        source_plan_id = None
+
     row = execute(
         """
         INSERT INTO agent_task_contracts (
             session_id, title, goal, mode,
             allowed_files_json, forbidden_actions_json,
             required_verification_json, required_outputs_json,
-            stop_conditions_json, project_id
+            stop_conditions_json, project_id,
+            marker_id, source_plan_id
         )
-        VALUES (%s, %s, %s, %s, %s::jsonb, %s::jsonb, %s::jsonb, %s::jsonb, %s::jsonb, %s)
+        VALUES (%s, %s, %s, %s, %s::jsonb, %s::jsonb, %s::jsonb, %s::jsonb, %s::jsonb, %s, %s, %s)
         RETURNING id, created_at
         """,
         (
@@ -91,6 +104,8 @@ def create_task(payload):
             json.dumps(payload.get("required_outputs") or []),
             json.dumps(payload.get("stop_conditions") or []),
             project_id,
+            payload.get("marker_id") or None,
+            source_plan_id,
         ),
         fetchone=True,
     )
@@ -108,7 +123,8 @@ def get_task(task_id):
         SELECT id, session_id, title, goal, mode,
                allowed_files_json, forbidden_actions_json,
                required_verification_json, required_outputs_json,
-               stop_conditions_json, project_id, created_at
+               stop_conditions_json, project_id,
+               marker_id, source_plan_id, created_at
         FROM agent_task_contracts
         WHERE id = %s
         """,
@@ -125,6 +141,8 @@ def _task_row_to_contract(row):
         "task_id": row["id"],
         "session_id": row.get("session_id"),
         "project_id": row.get("project_id"),
+        "marker_id": row.get("marker_id"),
+        "source_plan_id": row.get("source_plan_id"),
         "title": row.get("title"),
         "goal": row.get("goal") or "",
         "mode": row.get("mode") or DEFAULT_MODE,
@@ -345,29 +363,6 @@ def _resolve_sensitive_files(project_id):
     return set(SENSITIVE_FILES)
 
 
-def _default_git_runner(repo_path):
-    def _run(args):
-        try:
-            result = subprocess.run(
-                ["git", "-C", repo_path, *args],
-                capture_output=True,
-                text=True,
-                timeout=5,
-            )
-            return result.returncode, result.stdout
-        except Exception:
-            return 1, ""
-    return _run
-
-
-def _git_branch(runner):
-    rc, out = runner(["branch", "--show-current"])
-    if rc != 0:
-        return None
-    branch = out.strip()
-    return branch or None
-
-
 # ---------------------------------------------------------------------------
 # Handoff-/Marker-Resolver (Tag 3) — Thin Wrappers
 # ---------------------------------------------------------------------------
@@ -421,6 +416,8 @@ def bootstrap_task(project_id, title, goal="", plan_id=None, marker_id=None,
     payload = {
         "session_id": session_id,
         "project_id": contract_project_id,
+        "marker_id": marker_id or None,
+        "source_plan_id": plan_id or None,
         "title": title,
         "goal": goal or "",
         "mode": overrides.get("mode") or DEFAULT_MODE,
@@ -435,35 +432,34 @@ def bootstrap_task(project_id, title, goal="", plan_id=None, marker_id=None,
 
 
 # ---------------------------------------------------------------------------
-# Git-Helpers (Phase 1)
+# Marker-Lookup (Sprint Executor-Handoff Commit 3)
 # ---------------------------------------------------------------------------
 
-def _git_status(runner):
-    """Liefert (untracked, modified) Listen ohne Duplikate.
+def get_task_for_marker(marker_id, *, open_only=True):
+    """Aktuellster Task fuer einen Marker, oder None.
 
-    Interpretation von `git status --short`:
-      * '??' am Zeilenanfang -> untracked
-      * alles andere -> modified (inkl. staged 'M ' / 'A ' / ' M' / 'MM' etc.)
+    open_only=True (Default): nur Tasks ohne Verify-Pass (next_state='done').
     """
-    rc, out = runner(["status", "--short"])
-    if rc != 0:
-        return [], []
-    untracked = []
-    modified = []
-    for raw_line in out.splitlines():
-        if not raw_line.strip():
-            continue
-        status = raw_line[:2]
-        path = raw_line[3:].strip()
-        if not path:
-            continue
-        # Rename-Zeilen haben Format "R  old -> new": echten Zielpfad nehmen.
-        if "->" in path:
-            path = path.split("->", 1)[1].strip()
-        if status == "??":
-            if path not in untracked:
-                untracked.append(path)
-        else:
-            if path not in modified:
-                modified.append(path)
-    return untracked, modified
+    if not marker_id:
+        return None
+    ensure_agent_orchestrator_schema()
+    ensure_agent_verify_schema()
+    done_filter = (
+        "AND NOT EXISTS (SELECT 1 FROM agent_verify_results v "
+        "WHERE v.task_id = atc.id AND v.next_state = 'done')"
+        if open_only else ""
+    )
+    sql = f"""
+        SELECT atc.id, atc.session_id, atc.title, atc.goal, atc.mode,
+               atc.allowed_files_json, atc.forbidden_actions_json,
+               atc.required_verification_json, atc.required_outputs_json,
+               atc.stop_conditions_json, atc.project_id,
+               atc.marker_id, atc.source_plan_id, atc.created_at
+        FROM agent_task_contracts atc
+        WHERE atc.marker_id = %s {done_filter}
+        ORDER BY atc.created_at DESC LIMIT 1
+    """
+    row = execute(sql, (str(marker_id).strip(),), fetchone=True)
+    return _task_row_to_contract(row) if row else None
+
+
