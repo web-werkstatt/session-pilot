@@ -105,6 +105,14 @@ No API keys needed. No cloud service. Just point it at `~/.claude/` and go.
 - **Task Templates** — Pre-built templates for health checks, backup verification, and monitoring
 - **Enable/Disable** — Toggle tasks on/off without deleting them
 
+### Agent Orchestrator (production-ready)
+- **Five-Step Workflow** — `create -> pull -> finish -> verify -> close` against the running dashboard, fully usable via CLI (`scripts/claude_task.py`) or UI (`/agent-tasks`, Cockpit handoff modal)
+- **Token-Gated API** — `X-Agent-Task-Token` header (file `~/.agent-task-token` or `AGENT_TASK_TOKEN` env) protects all `/api/agent-tasks/*` endpoints; same-origin browser calls bypass cleanly
+- **Verify Gate** — Server checks `scope_enforcement` plus per-task `required_verification` (`command_exit_zero`, `smoke_test_evidence`, `append_only_diff`, `docs_updated`); close is blocked unless verify=pass
+- **Failure-Mode Hardening** — Connection-refused, timeout, 401/403/404/409 each produce explicit messages and exit codes; second `finish` returns 409 `execution_already_recorded`; post-insert errors roll the row back
+- **Reproducible Smoke** — `scripts/e2e_smoke.py` exercises every step end-to-end against the live dashboard (exit 0 = pass)
+- **User Guide** — `docs/agent-workflow-anleitung.md` walks through setup, every step's CLI + UI path, and every documented failure case
+
 ### Code Quality
 - **Quality Dashboard** — Score overview (A–F) for all scanned projects, drill-down into issues by category
 - **7 Automated Checks** — File sizes, code duplication (jscpd), cyclomatic complexity (radon), CSS quality, JS duplicates, architecture rules, test detection

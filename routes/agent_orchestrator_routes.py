@@ -13,7 +13,7 @@ Tag 3 (2026-04-17) ergaenzt den Handoff-/Marker-Resolver:
   POST /api/agent-tasks/resolve-context -> Resolver (read-only)
   POST /api/agent-tasks/bootstrap       -> Resolver + Task-Contract anlegen
 """
-from flask import Blueprint, jsonify, make_response, request
+from flask import Blueprint, jsonify, make_response, render_template, request
 
 from routes.api_utils import api_route
 import services.agent_orchestrator_service as agent_orchestrator_service
@@ -39,6 +39,38 @@ def api_query_agent_tasks():
     return jsonify(task)
 
 
+@agent_orchestrator_bp.route("/api/agent-tasks/list", methods=["GET"])
+@api_route
+def api_list_agent_tasks():
+    """Sprint Workflow-Finalization Session 1:
+    Listet Tasks fuer die Uebersichtsseite `/agent-tasks`.
+
+    Query-Params:
+      * status: "open" | "closed" | None (Default None = alle)
+      * limit:  max. Anzahl Zeilen, Default 50, Max 500
+    """
+    status = (request.args.get("status") or "").strip().lower() or None
+    if status not in (None, "open", "closed"):
+        return jsonify({"error": "status must be 'open' or 'closed'"}), 400
+    limit_raw = request.args.get("limit")
+    limit_val = 50
+    if limit_raw is not None and str(limit_raw).strip():
+        try:
+            limit_val = int(limit_raw)
+        except ValueError:
+            return jsonify({"error": "limit must be an integer"}), 400
+    tasks = agent_orchestrator_service.list_tasks(status=status, limit=limit_val)
+    return jsonify({"tasks": tasks, "count": len(tasks)})
+
+
+@agent_orchestrator_bp.route("/agent-tasks", methods=["GET"])
+def view_agent_tasks():
+    """Sprint Workflow-Finalization Session 1:
+    Uebersichtsseite aller Agent-Tasks mit Filter "nur offen".
+    """
+    return render_template("agent_tasks.html", active_page="agent_tasks")
+
+
 @agent_orchestrator_bp.route("/api/agent-tasks", methods=["POST"])
 @api_route
 def api_create_agent_task():
@@ -55,7 +87,11 @@ def api_create_agent_task():
 def api_get_agent_task(task_id):
     contract = agent_orchestrator_service.get_task(task_id)
     if not contract:
-        return jsonify({"error": "task not found"}), 404
+        return jsonify({
+            "error": "task not found",
+            "code": "task_not_found",
+            "details": {"task_id": task_id},
+        }), 404
     return jsonify(contract)
 
 
@@ -153,7 +189,11 @@ def api_run_agent_preflight(task_id):
     try:
         result = agent_orchestrator_service.run_preflight(task_id, repo_path=repo_path)
     except ValueError as err:
-        return jsonify({"error": str(err)}), 404
+        return jsonify({
+            "error": str(err),
+            "code": "task_not_found",
+            "details": {"task_id": task_id},
+        }), 404
     return jsonify(result)
 
 
@@ -196,8 +236,24 @@ def api_record_execution(task_id):
     payload = request.get_json(silent=True) or {}
     try:
         result = agent_verify_service.record_execution(task_id, payload)
+    except agent_verify_service.ExecutionAlreadyRecordedError as err:
+        # Sprint Workflow-Finalization Session 2 AC2-2: zweites finish
+        # liefert 409 mit maschinenlesbarem `code` und Verweis auf die
+        # bestehende Execution-Zeile, damit der Client nicht raten muss.
+        return jsonify({
+            "error": str(err),
+            "code": err.code,
+            "details": {
+                "task_id": err.task_id,
+                "existing_execution_id": err.existing_execution_id,
+            },
+        }), 409
     except ValueError as err:
-        return jsonify({"error": str(err)}), 404
+        return jsonify({
+            "error": str(err),
+            "code": "task_not_found",
+            "details": {"task_id": task_id},
+        }), 404
     return jsonify(result), 201
 
 
@@ -206,7 +262,11 @@ def api_record_execution(task_id):
 def api_get_execution(task_id):
     result = agent_verify_service.get_execution(task_id)
     if not result:
-        return jsonify({"error": "no execution_result for task"}), 404
+        return jsonify({
+            "error": "no execution_result for task",
+            "code": "execution_not_found",
+            "details": {"task_id": task_id},
+        }), 404
     return jsonify(result)
 
 
@@ -220,7 +280,11 @@ def api_run_verify_gate(task_id):
     try:
         result = agent_verify_service.run_verify_gate(task_id)
     except ValueError as err:
-        return jsonify({"error": str(err)}), 404
+        return jsonify({
+            "error": str(err),
+            "code": "task_not_found",
+            "details": {"task_id": task_id},
+        }), 404
     return jsonify(result), 201
 
 
@@ -229,7 +293,11 @@ def api_run_verify_gate(task_id):
 def api_get_verify_gate(task_id):
     result = agent_verify_service.get_verify_gate(task_id)
     if not result:
-        return jsonify({"error": "no verify_gate_result for task"}), 404
+        return jsonify({
+            "error": "no verify_gate_result for task",
+            "code": "verify_not_found",
+            "details": {"task_id": task_id},
+        }), 404
     return jsonify(result)
 
 
@@ -303,7 +371,11 @@ def api_close_task(task_id):
             session_id=payload.get("session_id"),
         )
     except ValueError as err:
-        return jsonify({"error": str(err)}), 404
+        return jsonify({
+            "error": str(err),
+            "code": "task_not_found",
+            "details": {"task_id": task_id},
+        }), 404
     decision = result["decision"]
     status_code = 200 if decision.get("can_close") else 409
     return jsonify(result), status_code

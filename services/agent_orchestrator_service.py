@@ -432,34 +432,15 @@ def bootstrap_task(project_id, title, goal="", plan_id=None, marker_id=None,
 
 
 # ---------------------------------------------------------------------------
-# Marker-Lookup (Sprint Executor-Handoff Commit 3)
+# Task-Lookup / Marker-Lookup — ausgelagert nach services/agent_task_lookup.py
 # ---------------------------------------------------------------------------
+# Re-Exporte halten die oeffentlichen Importpfade stabil. Lookup-Funktionen
+# dereferenzieren `execute` / `ensure_*` ueber dieses Modul, damit Test-
+# Monkeypatches auf `orchestrator.execute` weiterhin wirken.
 
-def get_task_for_marker(marker_id, *, open_only=True):
-    """Aktuellster Task fuer einen Marker, oder None.
-
-    open_only=True (Default): nur Tasks ohne Verify-Pass (next_state='done').
-    """
-    if not marker_id:
-        return None
-    ensure_agent_orchestrator_schema()
-    ensure_agent_verify_schema()
-    done_filter = (
-        "AND NOT EXISTS (SELECT 1 FROM agent_verify_results v "
-        "WHERE v.task_id = atc.id AND v.next_state = 'done')"
-        if open_only else ""
-    )
-    sql = f"""
-        SELECT atc.id, atc.session_id, atc.title, atc.goal, atc.mode,
-               atc.allowed_files_json, atc.forbidden_actions_json,
-               atc.required_verification_json, atc.required_outputs_json,
-               atc.stop_conditions_json, atc.project_id,
-               atc.marker_id, atc.source_plan_id, atc.created_at
-        FROM agent_task_contracts atc
-        WHERE atc.marker_id = %s {done_filter}
-        ORDER BY atc.created_at DESC LIMIT 1
-    """
-    row = execute(sql, (str(marker_id).strip(),), fetchone=True)
-    return _task_row_to_contract(row) if row else None
+from services.agent_task_lookup import (  # noqa: E402,F401
+    list_tasks,
+    get_task_for_marker,
+)
 
 

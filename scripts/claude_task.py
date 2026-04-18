@@ -22,15 +22,20 @@ Konfiguration (Prioritaet: CLI-Argument > env > TOML-Datei > token-file > defaul
 from __future__ import annotations
 
 import argparse
-import json
 import os
 import re
-import subprocess
 import sys
-import urllib.error
-import urllib.request
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from claude_task_io import (  # noqa: E402
+    http_request as _request,
+    maybe_exit_on_auth_error as _maybe_exit_on_auth_error,
+    get_changed_files as _get_changed_files,
+    get_diff_stat as _get_diff_stat,
+    compute_out_of_scope as _compute_out_of_scope,
+)
 
 # ---------------------------------------------------------------------------
 # Pfade & Konstanten
@@ -38,7 +43,6 @@ from typing import Any, Dict, List, Optional, Tuple
 
 TOML_PATH = Path.home() / ".agent-task.toml"
 TOKEN_FILE_PATH = Path.home() / ".agent-task-token"
-TOKEN_HEADER = "X-Agent-Task-Token"
 DEFAULT_URL = "http://localhost:5055"
 
 
@@ -101,90 +105,6 @@ def load_config() -> Tuple[str, str]:
 
 
 # ---------------------------------------------------------------------------
-# HTTP-Helper
-# ---------------------------------------------------------------------------
-
-def _request(
-    method: str,
-    url: str,
-    token: str,
-    body: Optional[Dict[str, Any]] = None,
-    accept: str = "application/json",
-) -> Tuple[int, Any]:
-    """HTTP-Request mit X-Agent-Task-Token Auth.
-
-    Rueckgabe: (status_code, body). body ist str bei text/*, sonst dict/None.
-    Wirft SystemExit bei Verbindungsfehler.
-    """
-    data = json.dumps(body).encode("utf-8") if body is not None else None
-    headers = {
-        TOKEN_HEADER: token,
-        "Content-Type": "application/json",
-        "Accept": accept,
-    }
-    req = urllib.request.Request(url, data=data, headers=headers, method=method)
-    try:
-        with urllib.request.urlopen(req, timeout=30) as resp:
-            raw = resp.read().decode("utf-8")
-            ct = resp.headers.get("Content-Type", "")
-            if "markdown" in ct or ct.startswith("text/"):
-                return resp.status, raw
-            try:
-                return resp.status, json.loads(raw)
-            except (json.JSONDecodeError, ValueError):
-                return resp.status, raw
-    except urllib.error.HTTPError as e:
-        raw = e.read().decode("utf-8", errors="replace") if e.fp else ""
-        try:
-            return e.code, json.loads(raw)
-        except (json.JSONDecodeError, ValueError):
-            return e.code, {"error": raw[:500]}
-    except urllib.error.URLError as e:
-        print(f"Verbindungsfehler: {e.reason}", file=sys.stderr)
-        sys.exit(1)
-
-
-# ---------------------------------------------------------------------------
-# Git-Helpers
-# ---------------------------------------------------------------------------
-
-def _git(*args: str, cwd: Optional[str] = None) -> str:
-    """Fuehrt git aus und gibt stdout zurueck."""
-    result = subprocess.run(
-        ["git"] + list(args),
-        cwd=cwd,
-        capture_output=True,
-        text=True,
-    )
-    if result.returncode != 0 and result.stderr:
-        print(f"git Warnung: {result.stderr.strip()}", file=sys.stderr)
-    return result.stdout
-
-
-def _get_changed_files(cwd: Optional[str] = None) -> List[str]:
-    """git status --porcelain -> Liste geaenderter Dateipfade."""
-    out = _git("status", "--porcelain", cwd=cwd)
-    files = []
-    for line in out.splitlines():
-        if len(line) > 3:
-            files.append(line[3:].strip())
-    return files
-
-
-def _get_diff_stat(cwd: Optional[str] = None) -> str:
-    """git diff --stat HEAD."""
-    return _git("diff", "--stat", "HEAD", cwd=cwd).strip()
-
-
-def _compute_out_of_scope(changed_files: List[str], allowed_files: List[str]) -> List[str]:
-    """Dateien aus changed_files, die nicht in allowed_files vorkommen."""
-    if not allowed_files:
-        return []
-    allowed_set = set(allowed_files)
-    return [f for f in changed_files if f not in allowed_set]
-
-
-# ---------------------------------------------------------------------------
 # Subcommands
 # ---------------------------------------------------------------------------
 
@@ -213,6 +133,7 @@ def cmd_create(
         payload["marker_id"] = marker_id
 
     status, resp = _request("POST", f"{url}/api/agent-tasks", token, body=payload)
+    _maybe_exit_on_auth_error(status, resp)
     if status in (200, 201):
         task_id = resp.get("task_id") if isinstance(resp, dict) else None
         if not task_id:
@@ -241,15 +162,9 @@ def cmd_pull(task_id: int, url: str, token: str) -> None:
     """Laedt Task-Prompt und schreibt .agent-task-<id>.md."""
     prompt_url = f"{url}/api/agent-tasks/{task_id}/prompt"
     status, body = _request("GET", prompt_url, token, accept="text/markdown")
-    if status == 401:
-        print(
-            "Fehler: Ungültiger Token (401). "
-            "Bitte ~/.agent-task-token oder AGENT_TASK_TOKEN prüfen.",
-            file=sys.stderr,
-        )
-        sys.exit(1)
+    _maybe_exit_on_auth_error(status, body)
     if status == 404:
-        print(f"Fehler: Task {task_id} nicht gefunden (404).", file=sys.stderr)
+        print(f"Fehler: Task {task_id} nicht gefunden (HTTP 404).", file=sys.stderr)
         sys.exit(1)
     if status != 200:
         err = body.get("error") if isinstance(body, dict) else str(body)
@@ -292,6 +207,10 @@ def cmd_finish(
 ) -> None:
     """Sammelt Git-Diff und uebertraegt Execution-Result."""
     cstatus, contract = _request("GET", f"{url}/api/agent-tasks/{task_id}", token)
+    _maybe_exit_on_auth_error(cstatus, contract)
+    if cstatus == 404:
+        print(f"Fehler: Task {task_id} nicht gefunden (HTTP 404).", file=sys.stderr)
+        sys.exit(1)
     if cstatus != 200 or not isinstance(contract, dict):
         print(f"Fehler: Task {task_id} nicht erreichbar (Status {cstatus}).", file=sys.stderr)
         sys.exit(1)
@@ -321,6 +240,7 @@ def cmd_finish(
         payload["finished_at"] = finished_at
 
     estatus, eresp = _request("POST", f"{url}/api/agent-tasks/{task_id}/execution", token, body=payload)
+    _maybe_exit_on_auth_error(estatus, eresp)
     if estatus == 201:
         print(f"Execution-Result gespeichert (Task {task_id}).")
         if out_of_scope:
@@ -328,8 +248,25 @@ def cmd_finish(
             for f in out_of_scope:
                 print(f"  - {f}")
         print(f"Naechster Schritt: claude-task verify {task_id}")
+    elif estatus == 409:
+        # Sprint Workflow-Finalization Session 2 AC2-2: zweites finish.
+        code = eresp.get("code") if isinstance(eresp, dict) else None
+        err = eresp.get("error") if isinstance(eresp, dict) else str(eresp)
+        existing_id = None
+        if isinstance(eresp, dict):
+            details = eresp.get("details") or {}
+            existing_id = details.get("existing_execution_id")
+        hint = (
+            f" (execution_id={existing_id})" if existing_id else ""
+        )
+        print(
+            f"Fehler: Execution-Result bereits vorhanden{hint}. "
+            f"Zweites finish ist nicht erlaubt ({code or 'conflict'}): {err}",
+            file=sys.stderr,
+        )
+        sys.exit(1)
     elif estatus == 404:
-        print(f"Fehler: Task {task_id} nicht gefunden.", file=sys.stderr)
+        print(f"Fehler: Task {task_id} nicht gefunden (HTTP 404).", file=sys.stderr)
         sys.exit(1)
     else:
         err = eresp.get("error") if isinstance(eresp, dict) else str(eresp)
@@ -340,6 +277,7 @@ def cmd_finish(
 def cmd_verify(task_id: int, url: str, token: str) -> None:
     """Ruft das Verify-Gate auf."""
     vstatus, vresp = _request("POST", f"{url}/api/agent-tasks/{task_id}/verify", token)
+    _maybe_exit_on_auth_error(vstatus, vresp)
     if vstatus in (200, 201):
         decision = vresp.get("decision") if isinstance(vresp, dict) else {}
         passed = decision.get("passed") if isinstance(decision, dict) else None
@@ -368,6 +306,7 @@ def cmd_close(task_id: int, url: str, token: str, session_id: Optional[str] = No
         "POST", f"{url}/api/agent-tasks/{task_id}/close",
         token, body=body if body else None,
     )
+    _maybe_exit_on_auth_error(cstatus, cresp)
     if cstatus == 200:
         decision = cresp.get("decision") if isinstance(cresp, dict) else {}
         can_close = decision.get("can_close") if isinstance(decision, dict) else None

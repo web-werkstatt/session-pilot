@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block title %}Agent Tasks - Dashboard{% endblock %}
+
+{% block breadcrumb %}Agent Tasks{% endblock %}
+
+{% block topbar_actions %}
+<button class="btn btn-secondary btn-sm" onclick="loadAgentTasks()">
+    <i data-lucide="refresh-cw" class="icon icon-sm"></i> Refresh
+</button>
+{% endblock %}
+
+{% block content %}
+<section class="content-area" style="padding:20px;">
+    <header style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <div>
+            <h1 style="margin:0;font-size:20px;">Agent-Tasks</h1>
+            <p style="margin:4px 0 0;color:var(--text-muted);font-size:13px;">
+                Uebersicht aller ueber den Orchestrator angelegten Tasks (create &rarr; pull &rarr; finish &rarr; verify &rarr; close).
+            </p>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;">
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;">
+                <input type="checkbox" id="agentTasksOpenOnly" checked onchange="loadAgentTasks()">
+                nur offen
+            </label>
+            <span id="agentTasksCount"
+                style="font-size:12px;color:var(--text-faint);padding:4px 10px;border-radius:10px;background:var(--bg-card);">
+                0 Tasks
+            </span>
+        </div>
+    </header>
+
+    <div style="background:var(--bg-card);border:1px solid var(--border-subtle);border-radius:var(--radius-md);overflow:hidden;">
+        <table id="agentTasksTable" style="width:100%;border-collapse:collapse;font-size:13px;">
+            <thead>
+                <tr style="background:var(--bg-elevated);">
+                    <th style="text-align:left;padding:10px 12px;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-faint);">#</th>
+                    <th style="text-align:left;padding:10px 12px;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-faint);">Titel</th>
+                    <th style="text-align:left;padding:10px 12px;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-faint);">Status</th>
+                    <th style="text-align:left;padding:10px 12px;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-faint);">Erstellt</th>
+                    <th style="text-align:left;padding:10px 12px;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-faint);">Marker</th>
+                </tr>
+            </thead>
+            <tbody id="agentTasksBody">
+                <tr><td colspan="5" style="padding:20px;text-align:center;color:var(--text-faint);">Laden&hellip;</td></tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function _agentTasksStatusBadge(task) {
+    var label, color, bg;
+    if (task.is_closed) {
+        label = 'closed'; color = 'var(--text-heading, #fff)'; bg = 'var(--success-bg, #2a4d2a)';
+    } else if (task.verify_status === 'fail' || task.verify_status === 'blocked') {
+        label = task.verify_status; color = 'var(--text-heading, #fff)'; bg = 'var(--status-error-bg, #5a2a2a)';
+    } else if (task.has_execution) {
+        label = 'review'; color = 'var(--text-heading, #fff)'; bg = 'var(--info-bg, #2a3d56)';
+    } else {
+        label = 'offen'; color = 'var(--text-muted)'; bg = 'var(--bg-elevated)';
+    }
+    return '<span style="padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;background:' + bg + ';color:' + color + ';">' + label + '</span>';
+}
+
+function _agentTasksMarkerCell(task) {
+    if (!task.marker_id) return '<span style="color:var(--text-faint);">&mdash;</span>';
+    return '<code style="font-family:var(--font-mono);font-size:11px;color:var(--accent-light);">' + escapeHtml(task.marker_id) + '</code>';
+}
+
+function loadAgentTasks() {
+    var openOnly = document.getElementById('agentTasksOpenOnly').checked;
+    var url = '/api/agent-tasks/list' + (openOnly ? '?status=open' : '');
+    var body = document.getElementById('agentTasksBody');
+    var counter = document.getElementById('agentTasksCount');
+
+    api.get(url)
+        .then(function(data) {
+            var tasks = (data && data.tasks) || [];
+            counter.textContent = tasks.length + ' Task' + (tasks.length === 1 ? '' : 's');
+            if (!tasks.length) {
+                body.innerHTML = '<tr><td colspan="5" style="padding:20px;text-align:center;color:var(--text-faint);">Keine Tasks.</td></tr>';
+                return;
+            }
+            body.innerHTML = tasks.map(function(t) {
+                return '<tr style="border-top:1px solid var(--border-subtle);">' +
+                    '<td style="padding:8px 12px;color:var(--text-faint);font-family:var(--font-mono);font-size:12px;">#' + t.task_id + '</td>' +
+                    '<td style="padding:8px 12px;color:var(--text-heading);font-weight:500;">' + escapeHtml(t.title || '') + '</td>' +
+                    '<td style="padding:8px 12px;">' + _agentTasksStatusBadge(t) + '</td>' +
+                    '<td style="padding:8px 12px;color:var(--text-muted);font-size:12px;">' + (t.created_at ? escapeHtml(formatDateTime(t.created_at)) : '&mdash;') + '</td>' +
+                    '<td style="padding:8px 12px;">' + _agentTasksMarkerCell(t) + '</td>' +
+                    '</tr>';
+            }).join('');
+        })
+        .catch(function(err) {
+            body.innerHTML = '<tr><td colspan="5" style="padding:20px;text-align:center;color:var(--status-error);">Fehler: ' + escapeHtml(err.message || String(err)) + '</td></tr>';
+        });
+}
+
+document.addEventListener('DOMContentLoaded', loadAgentTasks);
+</script>
+{% endblock %}

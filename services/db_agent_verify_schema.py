@@ -51,6 +51,21 @@ def ensure_agent_verify_schema_impl(execute):
         execute("ALTER TABLE agent_execution_results ADD COLUMN IF NOT EXISTS diff_stat_text TEXT")
         execute("ALTER TABLE agent_execution_results ADD COLUMN IF NOT EXISTS out_of_scope_files_json JSONB NOT NULL DEFAULT '[]'::jsonb")
 
+        # Sprint sprint-agent-orchestrator-workflow-finalization Session 2
+        # (2026-04-18): ein Task darf nur genau EIN Execution-Result haben.
+        # Zwei parallele `finish`-Calls ergeben so deterministisch einen
+        # Gewinner + eine UniqueViolation, die der Service in 409 uebersetzt
+        # (AC2-2). Idempotent via EXCEPTION-Catch.
+        execute("""
+            DO $$ BEGIN
+                ALTER TABLE agent_execution_results
+                    ADD CONSTRAINT uq_agent_execution_task UNIQUE (task_id);
+            EXCEPTION WHEN duplicate_table THEN NULL;
+                      WHEN duplicate_object THEN NULL;
+                      WHEN unique_violation THEN NULL;
+            END $$
+        """)
+
         execute("""
             CREATE TABLE IF NOT EXISTS agent_verify_results (
                 id SERIAL PRIMARY KEY,

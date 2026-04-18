@@ -89,7 +89,147 @@ function _agentHandoffShowTask(task) {
     document.getElementById('agentHandoffCopyHint').style.display = 'none';
     document.getElementById('agentHandoffResultError').style.display = 'none';
 
+    // Verify-Block initial verbergen; _agentHandoffRefreshVerifyBlock() blendet
+    // ihn ein, sobald ein execution_result vorhanden ist.
+    var verifyBlock = document.getElementById('agentHandoffVerifyBlock');
+    if (verifyBlock) verifyBlock.style.display = 'none';
+    var verifyResult = document.getElementById('agentHandoffVerifyResult');
+    if (verifyResult) { verifyResult.style.display = 'none'; verifyResult.innerHTML = ''; }
+    var closeError = document.getElementById('agentHandoffCloseError');
+    if (closeError) closeError.style.display = 'none';
+    var closeBtn = document.getElementById('agentHandoffCloseBtn');
+    if (closeBtn) closeBtn.disabled = true;
+
     _agentHandoffShowView('task');
+    _agentHandoffRefreshVerifyBlock();
+}
+
+function _agentHandoffRefreshVerifyBlock() {
+    // Sprint Workflow-Finalization Session 1: Verify-Block nur sichtbar, wenn
+    // zu diesem Task bereits ein execution_result existiert. Danach letzten
+    // Verify-Status laden, um Close-Button aktiv/inaktiv zu setzen.
+    if (!_agentHandoffTaskId) return;
+    var taskId = _agentHandoffTaskId;
+    var block = document.getElementById('agentHandoffVerifyBlock');
+    if (!block) return;
+    api.get('/api/agent-tasks/' + taskId + '/execution')
+        .then(function() {
+            if (_agentHandoffTaskId !== taskId) return;
+            block.style.display = '';
+            return api.get('/api/agent-tasks/' + taskId + '/verify')
+                .then(function(v) {
+                    if (_agentHandoffTaskId !== taskId) return;
+                    _agentHandoffRenderVerify(v);
+                })
+                .catch(function(err) {
+                    if (err && err.status === 404) return; // noch nie ausgefuehrt
+                    throw err;
+                });
+        })
+        .catch(function(err) {
+            if (err && err.status === 404) {
+                block.style.display = 'none';
+                return;
+            }
+            console.warn('agent-handoff: verify block refresh failed', err);
+        });
+}
+
+function _agentHandoffRenderVerify(v) {
+    var el = document.getElementById('agentHandoffVerifyResult');
+    var closeBtn = document.getElementById('agentHandoffCloseBtn');
+    if (!el) return;
+    if (!v) {
+        el.style.display = 'none';
+        el.innerHTML = '';
+        if (closeBtn) closeBtn.disabled = true;
+        return;
+    }
+    var status = String(v.status || '').toLowerCase();
+    var color;
+    if (status === 'pass') color = 'var(--success, #3a9a4a)';
+    else if (status === 'fail') color = 'var(--status-error, #d84a4a)';
+    else color = 'var(--text-warning, #d89a4a)';
+
+    var parts = ['<div><span style="font-weight:600;">Verify:</span> ' +
+        '<span style="color:' + color + ';font-weight:600;text-transform:uppercase;">' +
+        escapeHtml(status || 'unknown') + '</span></div>'];
+
+    var unverified = v.unverified_claims || [];
+    if (unverified.length) {
+        parts.push('<div style="margin-top:4px;"><span style="color:var(--text-faint);">Offene Claims:</span> ' +
+            unverified.map(escapeHtml).join(', ') + '</div>');
+    }
+    var checks = v.checks || [];
+    if (checks.length) {
+        var rows = checks.map(function(c) {
+            var t = escapeHtml(c.claim || c.type || '');
+            var s = escapeHtml(String(c.status || ''));
+            var d = c.details ? ' &mdash; ' + escapeHtml(String(c.details)) : '';
+            return '<div style="margin-left:10px;">&bull; ' + t + ': <em>' + s + '</em>' + d + '</div>';
+        });
+        parts.push('<div style="margin-top:4px;">' + rows.join('') + '</div>');
+    }
+    el.innerHTML = parts.join('');
+    el.style.display = '';
+    if (closeBtn) closeBtn.disabled = (status !== 'pass');
+}
+
+function agentHandoffRunVerify() {
+    if (!_agentHandoffTaskId) return;
+    var btn = document.getElementById('agentHandoffVerifyBtn');
+    if (btn) btn.disabled = true;
+    var errEl = document.getElementById('agentHandoffCloseError');
+    if (errEl) errEl.style.display = 'none';
+    api.post('/api/agent-tasks/' + _agentHandoffTaskId + '/verify', {})
+        .then(function(v) { _agentHandoffRenderVerify(v); })
+        .catch(function(err) {
+            var el = document.getElementById('agentHandoffVerifyResult');
+            if (el) {
+                el.innerHTML = '<span style="color:var(--status-error);">Verify-Fehler: ' +
+                    escapeHtml(err.message || String(err)) + '</span>';
+                el.style.display = '';
+            }
+        })
+        .then(function() { if (btn) btn.disabled = false; });
+}
+
+function agentHandoffDoClose() {
+    if (!_agentHandoffTaskId) return;
+    var errEl = document.getElementById('agentHandoffCloseError');
+    var btn = document.getElementById('agentHandoffCloseBtn');
+    if (errEl) errEl.style.display = 'none';
+    if (btn) btn.disabled = true;
+    api.post('/api/agent-tasks/' + _agentHandoffTaskId + '/close', {})
+        .then(function(res) {
+            var decision = (res && res.decision) || {};
+            if (decision.can_close) {
+                _showToast('Task geschlossen.');
+                closeModal('agentHandoffModal');
+            } else {
+                if (errEl) {
+                    errEl.textContent = 'Kann nicht schliessen: ' + (decision.reason || 'unbekannter Grund');
+                    errEl.style.display = '';
+                }
+                if (btn) btn.disabled = false;
+            }
+        })
+        .catch(function(err) {
+            var body = err && err.body;
+            var reason;
+            if (body && body.decision && body.decision.reason) {
+                reason = body.decision.reason;
+            } else if (body && body.error) {
+                reason = body.error;
+            } else {
+                reason = err.message || String(err);
+            }
+            if (errEl) {
+                errEl.textContent = 'Kann nicht schliessen: ' + reason;
+                errEl.style.display = '';
+            }
+            if (btn) btn.disabled = false;
+        });
 }
 
 function agentHandoffCreate() {
@@ -184,7 +324,9 @@ function agentHandoffSubmitResult() {
     api.post('/api/agent-tasks/' + _agentHandoffTaskId + '/execution', payload)
         .then(function() {
             _showToast('Execution-Result eingereicht.');
-            closeModal('agentHandoffModal');
+            // Verify-Block einblenden und Status laden — Modal bleibt offen,
+            // damit der User direkt auf Verify + Close weitergehen kann.
+            _agentHandoffRefreshVerifyBlock();
         })
         .catch(function(err) {
             errEl.textContent = 'Fehler: ' + (err.message || err);

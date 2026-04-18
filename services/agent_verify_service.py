@@ -2,26 +2,18 @@
 Sprint sprint-agent-orchestrator-phase-2-3-reshaped (Phase 2, 2026-04-17):
 Verify-Gate MVP fuer den Agent-Orchestrator.
 
-Kapselt:
-  * record_execution(task_id, payload)         -> speichert execution_result
-  * get_execution(task_id)                     -> letzter execution_result
-  * run_verify_gate(task_id, command_runner)   -> berechnet + speichert verify_gate_result
-  * get_verify_gate(task_id)                   -> letzter verify_gate_result
-  * close_task(task_id)                        -> close_decision + Session-State
+Dieses Modul haelt:
+  * ExecutionAlreadyRecordedError
+  * record_execution(task_id, payload)   -> speichert execution_result
+  * get_execution(task_id)               -> letzter execution_result
+  * evaluate_close / close_task          -> Close-Gate
 
-Claim-Typen v1 in diesem Service (ohne append_only_respected / docs_updated,
-die in Phase 3 folgen):
-  * tests_passed         -> Exit-Code-0-Check via command_runner
-  * syntax_check_passed  -> Exit-Code-0-Check via command_runner
-  * smoke_test_done      -> expliziter Beleg in execution.claims
-  * feature_complete     -> alle anderen Pflicht-Checks pass
-
-Command-Runner wird per Dependency-Injection uebergeben. Default ist ein
-subprocess-basierter Runner mit Timeout, damit der Service in Tests ohne
-echten Prozess laeuft.
+Die Verify-Gate-Logik (run_verify_gate / get_verify_gate / Claim-Typen /
+Status-Konstanten) wurde 2026-04-18 nach `agent_verify_gate.py` ausgelagert
+und wird hier re-exportiert, damit Aufrufer (Routes, Tests) unveraendert
+`verify_service.run_verify_gate` nutzen koennen.
 """
 import json
-from typing import Callable, Optional
 
 from services.db_service import execute, ensure_agent_verify_schema
 from services.agent_orchestrator_service import (
@@ -30,89 +22,179 @@ from services.agent_orchestrator_service import (
     _as_list,
     _iso,
 )
-from services.agent_append_only_diff import (
-    check_append_only_required_verification,
-    CLAIM_APPEND_ONLY_RESPECTED,
+from services.agent_verify_claim_checks import default_command_runner
+from services.agent_verify_gate import (
+    run_verify_gate,
+    get_verify_gate,
+    CLAIM_TYPES_COMMAND,
+    CLAIM_TYPE_SMOKE,
+    CLAIM_TYPE_FEATURE,
+    CLAIM_TYPE_APPEND_ONLY,
+    VERIFY_STATUS_PASS,
+    VERIFY_STATUS_BLOCKED,
+    VERIFY_STATUS_FAIL,
 )
-from services.agent_verify_claim_checks import (
-    check_docs_updated as _check_docs_updated,
-    default_command_runner,
-    load_project_config as _load_project_config,
-)
+
+
+__all__ = [
+    "ExecutionAlreadyRecordedError",
+    "record_execution",
+    "get_execution",
+    "evaluate_close",
+    "close_task",
+    "run_verify_gate",
+    "get_verify_gate",
+    "default_command_runner",
+    "CLAIM_TYPES_COMMAND",
+    "CLAIM_TYPE_SMOKE",
+    "CLAIM_TYPE_FEATURE",
+    "CLAIM_TYPE_APPEND_ONLY",
+    "VERIFY_STATUS_PASS",
+    "VERIFY_STATUS_BLOCKED",
+    "VERIFY_STATUS_FAIL",
+    "CLOSE_GATE_REASON_OK",
+    "CLOSE_GATE_REASON_NO_VERIFY",
+    "CLOSE_GATE_REASON_NOT_PASS",
+]
+
+
+class ExecutionAlreadyRecordedError(Exception):
+    """Sprint Workflow-Finalization Session 2 (AC2-2).
+
+    Wird geworfen, wenn `record_execution` fuer einen Task einen zweiten
+    INSERT versuchen wuerde. Route uebersetzt den Fehler in HTTP 409.
+    """
+
+    code = "execution_already_recorded"
+
+    def __init__(self, task_id, existing_execution_id=None):
+        super().__init__(
+            f"execution_result for task {task_id} already recorded"
+            + (f" (execution_id={existing_execution_id})" if existing_execution_id else "")
+        )
+        self.task_id = task_id
+        self.existing_execution_id = existing_execution_id
 
 
 CLOSE_GATE_REASON_OK = "verify_pass"
 CLOSE_GATE_REASON_NO_VERIFY = "verification_missing"
 CLOSE_GATE_REASON_NOT_PASS = "verify_not_pass"
 
-CLAIM_TYPES_COMMAND = ("tests_passed", "syntax_check_passed")
-CLAIM_TYPE_SMOKE = "smoke_test_done"
-CLAIM_TYPE_FEATURE = "feature_complete"
-CLAIM_TYPE_APPEND_ONLY = CLAIM_APPEND_ONLY_RESPECTED
-
-VERIFY_STATUS_PASS = "pass"
-VERIFY_STATUS_BLOCKED = "blocked"
-VERIFY_STATUS_FAIL = "fail"
-
 
 # ---------------------------------------------------------------------------
 # execution_result
 # ---------------------------------------------------------------------------
 
-def record_execution(task_id, payload):
+def record_execution(task_id, payload, *, _post_insert_hook=None):
     """Speichert ein execution_result gemaess Technical Spec §2.4.
 
-    Pflichtfelder: task_id. Alle Listen/Claims sind defensiv.
-    Rueckgabe: persistiertes execution_result als dict.
+    Sprint Workflow-Finalization Session 2 (2026-04-18) — Haertungen:
+      * AC2-2: Pro Task darf es nur ein Execution-Result geben. Zweiter
+        Aufruf (seriell oder nebenlaeufig) wirft `ExecutionAlreadyRecordedError`.
+        Nebenlaeufigkeit wird durch DB-UNIQUE(task_id)-Constraint gesichert;
+        UniqueViolation aus psycopg2 wird hier in denselben Fehlertyp
+        uebersetzt. Der App-Level-Check vor dem INSERT macht den Normalfall
+        billig.
+      * AC2-3: Der Post-Processing-Pfad nach dem INSERT ist mit einem
+        DELETE-Rollback abgesichert. Exceptions nach dem INSERT (z.B. vom
+        optionalen `_post_insert_hook`, der nur in Tests genutzt wird)
+        hinterlassen die DB im Pre-Insert-Zustand.
     """
     ensure_agent_verify_schema()
 
     if not get_task(task_id):
         raise ValueError(f"task {task_id} nicht gefunden")
 
+    existing = get_execution(task_id)
+    if existing is not None:
+        raise ExecutionAlreadyRecordedError(task_id, existing.get("id"))
+
     payload = payload or {}
-    row = execute(
-        """
-        INSERT INTO agent_execution_results (
-            task_id, agent, started_at, finished_at,
-            changed_files_json, created_files_json, deleted_files_json,
-            claims_json, summary, diff_stat_text, out_of_scope_files_json
+    try:
+        row = execute(
+            """
+            INSERT INTO agent_execution_results (
+                task_id, agent, started_at, finished_at,
+                changed_files_json, created_files_json, deleted_files_json,
+                claims_json, summary, diff_stat_text, out_of_scope_files_json
+            )
+            VALUES (%s, %s, %s, %s, %s::jsonb, %s::jsonb, %s::jsonb, %s::jsonb, %s, %s, %s::jsonb)
+            RETURNING id, created_at
+            """,
+            (
+                task_id,
+                payload.get("agent"),
+                payload.get("started_at"),
+                payload.get("finished_at"),
+                json.dumps(payload.get("changed_files") or []),
+                json.dumps(payload.get("created_files") or []),
+                json.dumps(payload.get("deleted_files") or []),
+                json.dumps(payload.get("claims") or []),
+                payload.get("summary"),
+                payload.get("diff_stat_text"),
+                json.dumps(payload.get("out_of_scope_files") or []),
+            ),
+            fetchone=True,
         )
-        VALUES (%s, %s, %s, %s, %s::jsonb, %s::jsonb, %s::jsonb, %s::jsonb, %s, %s, %s::jsonb)
-        RETURNING id, created_at
-        """,
-        (
-            task_id,
-            payload.get("agent"),
-            payload.get("started_at"),
-            payload.get("finished_at"),
-            json.dumps(payload.get("changed_files") or []),
-            json.dumps(payload.get("created_files") or []),
-            json.dumps(payload.get("deleted_files") or []),
-            json.dumps(payload.get("claims") or []),
-            payload.get("summary"),
-            payload.get("diff_stat_text"),
-            json.dumps(payload.get("out_of_scope_files") or []),
-        ),
-        fetchone=True,
-    )
+    except Exception as exc:
+        if _is_unique_violation(exc):
+            existing = get_execution(task_id)
+            raise ExecutionAlreadyRecordedError(
+                task_id, existing.get("id") if existing else None
+            ) from exc
+        raise
+
     if not row:
         raise RuntimeError("agent_execution_results insert lieferte keine Zeile zurueck")
-    return _execution_row_to_dict({
-        "id": row["id"],
-        "task_id": task_id,
-        "agent": payload.get("agent"),
-        "started_at": payload.get("started_at"),
-        "finished_at": payload.get("finished_at"),
-        "changed_files_json": payload.get("changed_files") or [],
-        "created_files_json": payload.get("created_files") or [],
-        "deleted_files_json": payload.get("deleted_files") or [],
-        "claims_json": payload.get("claims") or [],
-        "summary": payload.get("summary"),
-        "diff_stat_text": payload.get("diff_stat_text"),
-        "out_of_scope_files_json": payload.get("out_of_scope_files") or [],
-        "created_at": row["created_at"],
-    })
+
+    execution_id = row["id"]
+    try:
+        if _post_insert_hook is not None:
+            _post_insert_hook(execution_id)
+        return _execution_row_to_dict({
+            "id": execution_id,
+            "task_id": task_id,
+            "agent": payload.get("agent"),
+            "started_at": payload.get("started_at"),
+            "finished_at": payload.get("finished_at"),
+            "changed_files_json": payload.get("changed_files") or [],
+            "created_files_json": payload.get("created_files") or [],
+            "deleted_files_json": payload.get("deleted_files") or [],
+            "claims_json": payload.get("claims") or [],
+            "summary": payload.get("summary"),
+            "diff_stat_text": payload.get("diff_stat_text"),
+            "out_of_scope_files_json": payload.get("out_of_scope_files") or [],
+            "created_at": row["created_at"],
+        })
+    except Exception:
+        # AC2-3: Rollback per DELETE, damit die DB im Pre-Insert-Zustand bleibt.
+        try:
+            execute(
+                "DELETE FROM agent_execution_results WHERE id = %s",
+                (execution_id,),
+            )
+        except Exception:
+            pass
+        raise
+
+
+def _is_unique_violation(exc):
+    """Best-effort-Erkennung einer psycopg2 UniqueViolation.
+
+    Wir importieren psycopg2.errors nicht hart, damit der Service in Tests
+    ohne laufendes PostgreSQL importierbar bleibt.
+    """
+    try:
+        from psycopg2 import errors as pg_errors  # type: ignore
+        if isinstance(exc, pg_errors.UniqueViolation):
+            return True
+    except Exception:
+        pass
+    pgcode = getattr(exc, "pgcode", None)
+    if pgcode == "23505":
+        return True
+    msg = str(exc).lower()
+    return "unique constraint" in msg or "uq_agent_execution_task" in msg
 
 
 def get_execution(task_id):
@@ -153,275 +235,6 @@ def _execution_row_to_dict(row):
         "out_of_scope_files": _as_list(row.get("out_of_scope_files_json")),
         "created_at": _iso(row.get("created_at")),
     }
-
-
-# ---------------------------------------------------------------------------
-# verify_gate_result
-# ---------------------------------------------------------------------------
-
-def run_verify_gate(task_id, *, command_runner: Optional[Callable] = None):
-    """Fuehrt den Verify-Gate aus und persistiert das Ergebnis.
-
-    Ablauf:
-      1. Task-Contract laden (sonst ValueError)
-      2. Letztes execution_result lesen (None -> Gate laeuft gegen leere Fakten)
-      3. Checks ausfuehren:
-         - scope_enforcement gegen allowed_files
-         - pro required_verification-Eintrag (command_exit_zero / smoke_test_evidence)
-         - feature_complete, wenn vom Agenten behauptet
-      4. status aggregieren (fail > blocked > pass)
-      5. persistieren
-    """
-    ensure_agent_verify_schema()
-
-    contract = get_task(task_id)
-    if not contract:
-        raise ValueError(f"task {task_id} nicht gefunden")
-
-    execution = get_execution(task_id)
-    execution_claims = list((execution or {}).get("claims") or [])
-    changed_files = list((execution or {}).get("changed_files") or [])
-
-    checks = []
-    unverified = []
-
-    # scope_enforcement
-    allowed = list(contract.get("allowed_files") or [])
-    if allowed:
-        out_of_scope = [p for p in changed_files if p not in allowed]
-        if out_of_scope:
-            checks.append({
-                "type": "scope_enforcement",
-                "status": VERIFY_STATUS_FAIL,
-                "details": f"out_of_scope_files: {out_of_scope}",
-            })
-        else:
-            checks.append({
-                "type": "scope_enforcement",
-                "status": VERIFY_STATUS_PASS,
-                "details": "all changed files within allowed_files",
-            })
-    elif changed_files:
-        checks.append({
-            "type": "scope_enforcement",
-            "status": VERIFY_STATUS_FAIL,
-            "details": "allowed_files empty but execution has changed_files",
-        })
-    else:
-        checks.append({
-            "type": "scope_enforcement",
-            "status": VERIFY_STATUS_PASS,
-            "details": "no changed files, no allowed_files scope to enforce",
-        })
-
-    # required_verification pro Eintrag
-    runner = command_runner  # keine Default-Ausfuehrung bis explizit injiziert
-    project_config = _load_project_config(contract.get("project_id"))
-    for req in contract.get("required_verification") or []:
-        check, failing_claim = _check_required_verification(
-            req, execution_claims, runner,
-            changed_files=changed_files,
-            project_config=project_config,
-        )
-        checks.append(check)
-        if failing_claim and check["status"] != VERIFY_STATUS_PASS:
-            if failing_claim not in unverified:
-                unverified.append(failing_claim)
-
-    # feature_complete: nur falls der Agent das behauptet
-    if _claim_asserted(execution_claims, CLAIM_TYPE_FEATURE):
-        other_fail = any(
-            c.get("status") != VERIFY_STATUS_PASS and c.get("type") != CLAIM_TYPE_FEATURE
-            for c in checks
-        )
-        if other_fail:
-            checks.append({
-                "type": CLAIM_TYPE_FEATURE,
-                "status": VERIFY_STATUS_BLOCKED,
-                "details": "feature_complete claimed but other checks not all pass",
-            })
-            if CLAIM_TYPE_FEATURE not in unverified:
-                unverified.append(CLAIM_TYPE_FEATURE)
-        else:
-            checks.append({
-                "type": CLAIM_TYPE_FEATURE,
-                "status": VERIFY_STATUS_PASS,
-                "details": "all required checks pass",
-            })
-
-    # Aggregation: fail > blocked > pass
-    statuses = [c.get("status") for c in checks]
-    if VERIFY_STATUS_FAIL in statuses:
-        overall = VERIFY_STATUS_FAIL
-    elif VERIFY_STATUS_BLOCKED in statuses:
-        overall = VERIFY_STATUS_BLOCKED
-    else:
-        overall = VERIFY_STATUS_PASS
-
-    next_state = "done" if overall == VERIFY_STATUS_PASS else "implement"
-
-    exec_id = (execution or {}).get("id")
-    row = execute(
-        """
-        INSERT INTO agent_verify_results (
-            task_id, status, checks_json, unverified_claims_json,
-            next_state, execution_result_id
-        )
-        VALUES (%s, %s, %s::jsonb, %s::jsonb, %s, %s)
-        RETURNING id, created_at
-        """,
-        (
-            task_id,
-            overall,
-            json.dumps(checks),
-            json.dumps(unverified),
-            next_state,
-            exec_id,
-        ),
-        fetchone=True,
-    )
-    if not row:
-        raise RuntimeError("agent_verify_results insert lieferte keine Zeile zurueck")
-
-    return {
-        "id": row["id"],
-        "task_id": task_id,
-        "status": overall,
-        "checks": checks,
-        "unverified_claims": unverified,
-        "next_state": next_state,
-        "execution_result_id": exec_id,
-        "created_at": _iso(row["created_at"]),
-    }
-
-
-def get_verify_gate(task_id):
-    """Liefert das juengste verify_gate_result fuer einen Task oder None."""
-    ensure_agent_verify_schema()
-    row = execute(
-        """
-        SELECT id, task_id, status, checks_json, unverified_claims_json,
-               next_state, execution_result_id, created_at
-        FROM agent_verify_results
-        WHERE task_id = %s
-        ORDER BY created_at DESC, id DESC
-        LIMIT 1
-        """,
-        (task_id,),
-        fetchone=True,
-    )
-    if not row:
-        return None
-    return {
-        "id": row.get("id"),
-        "task_id": row.get("task_id"),
-        "status": row.get("status"),
-        "checks": _as_list(row.get("checks_json")),
-        "unverified_claims": _as_list(row.get("unverified_claims_json")),
-        "next_state": row.get("next_state"),
-        "execution_result_id": row.get("execution_result_id"),
-        "created_at": _iso(row.get("created_at")),
-    }
-
-
-def _check_required_verification(req, execution_claims, runner,
-                                 *, changed_files=None, project_config=None):
-    """Fuehrt einen einzelnen required_verification-Eintrag aus.
-
-    Unterstuetzte Typen:
-      * command_exit_zero  -> runner(command) muss Exit 0 liefern
-      * smoke_test_evidence -> expliziter Beleg in execution.claims
-      * append_only_diff   -> Append-only-Regel mit projekt-spezifischem Block-Regex
-      * docs_updated       -> Doku-Diff gegen docs_paths der Project-Config
-
-    Rueckgabe: (check_dict, claim_name_or_None)
-    """
-    claim = req.get("claim") or req.get("type")
-    rtype = req.get("type")
-    project_config = project_config or {}
-
-    if rtype == "command_exit_zero":
-        command = req.get("command") or ""
-        if runner is None:
-            return ({
-                "type": "required_verification",
-                "status": VERIFY_STATUS_BLOCKED,
-                "claim": claim,
-                "details": f"command '{command}' not executed (no runner)",
-            }, claim)
-        rc, out = runner(command)
-        if rc == 0:
-            return ({
-                "type": "required_verification",
-                "status": VERIFY_STATUS_PASS,
-                "claim": claim,
-                "details": f"exit=0 command='{command}'",
-            }, claim)
-        return ({
-            "type": "required_verification",
-            "status": VERIFY_STATUS_FAIL,
-            "claim": claim,
-            "details": f"exit={rc} command='{command}' output={_truncate(out)}",
-        }, claim)
-
-    if rtype == "append_only_diff":
-        # Phase 3 / Sprint Project-Config: Diff-Regelpruefung mit projekt-
-        # spezifischem Block-Regex-Paar. Default bleibt DASHBOARD-GENERATED:*.
-        return check_append_only_required_verification(
-            req,
-            block_start_regex=project_config.get("append_only_block_start_regex"),
-            block_end_regex=project_config.get("append_only_block_end_regex"),
-        )
-
-    if rtype == "docs_updated":
-        return _check_docs_updated(req, runner, changed_files or [], project_config)
-
-    if rtype == "smoke_test_evidence":
-        evidence_ok = any(
-            (
-                c.get("type") == CLAIM_TYPE_SMOKE
-                and c.get("value") is True
-                and (c.get("evidence") or c.get("details"))
-            )
-            for c in execution_claims
-        )
-        if evidence_ok:
-            return ({
-                "type": "required_verification",
-                "status": VERIFY_STATUS_PASS,
-                "claim": claim,
-                "details": "smoke_test_done claim with evidence present",
-            }, claim)
-        return ({
-            "type": "required_verification",
-            "status": VERIFY_STATUS_BLOCKED,
-            "claim": claim,
-            "details": "no smoke_test_done claim with evidence in execution_result",
-        }, claim)
-
-    # Unbekannter Typ -> blocked, damit unbekannte Checks nicht heimlich pass erzeugen
-    return ({
-        "type": "required_verification",
-        "status": VERIFY_STATUS_BLOCKED,
-        "claim": claim,
-        "details": f"unknown required_verification type: {rtype}",
-    }, claim)
-
-
-def _claim_asserted(execution_claims, claim_type):
-    for c in execution_claims:
-        if c.get("type") == claim_type and c.get("value") is True:
-            return True
-    return False
-
-
-def _truncate(text, limit=200):
-    if text is None:
-        return ""
-    text = str(text)
-    if len(text) <= limit:
-        return text
-    return text[:limit] + "..."
 
 
 # ---------------------------------------------------------------------------
