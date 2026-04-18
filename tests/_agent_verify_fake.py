@@ -100,6 +100,8 @@ def install_fake_db(monkeypatch):
                 "deleted_files_json": _as_json(p[6]),
                 "claims_json": _as_json(p[7]),
                 "summary": p[8],
+                "diff_stat_text": p[9] if len(p) > 9 else None,
+                "out_of_scope_files_json": _as_json(p[10]) if len(p) > 10 else [],
                 "created_at": _now(),
             }
             executions.append(row)

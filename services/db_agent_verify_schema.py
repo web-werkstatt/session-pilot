@@ -44,6 +44,13 @@ def ensure_agent_verify_schema_impl(execute):
         """)
         execute("CREATE INDEX IF NOT EXISTS idx_agent_execution_results_task ON agent_execution_results(task_id, created_at DESC)")
 
+        # Sprint sprint-agent-orchestrator-execution-payload-fix (2026-04-18):
+        # Zwei zusaetzliche Signale aus dem CLI-/UI-Handoff-Payload. ADD COLUMN
+        # IF NOT EXISTS haelt ensure_agent_verify_schema() idempotent fuer
+        # Bestands- und neue Instanzen.
+        execute("ALTER TABLE agent_execution_results ADD COLUMN IF NOT EXISTS diff_stat_text TEXT")
+        execute("ALTER TABLE agent_execution_results ADD COLUMN IF NOT EXISTS out_of_scope_files_json JSONB NOT NULL DEFAULT '[]'::jsonb")
+
         execute("""
             CREATE TABLE IF NOT EXISTS agent_verify_results (
                 id SERIAL PRIMARY KEY,

@@ -103,6 +103,8 @@ def fake_db(monkeypatch):
                 "deleted_files_json": _as_json(p[6]),
                 "claims_json": _as_json(p[7]),
                 "summary": p[8],
+                "diff_stat_text": p[9] if len(p) > 9 else None,
+                "out_of_scope_files_json": _as_json(p[10]) if len(p) > 10 else [],
                 "created_at": _now(),
             }
             executions.append(row)
@@ -186,6 +188,54 @@ def test_record_execution_persists_payload(fake_db):
 def test_record_execution_rejects_unknown_task(fake_db):
     with pytest.raises(ValueError):
         verify_service.record_execution(9999, {"summary": "nope"})
+
+
+# ---------------------------------------------------------------------------
+# Sprint sprint-agent-orchestrator-execution-payload-fix Commit 1:
+# Neue Felder diff_stat_text + out_of_scope_files im Execution-Payload.
+# ---------------------------------------------------------------------------
+
+def test_record_execution_persists_diff_stat_and_out_of_scope(fake_db):
+    task = _make_task(allowed_files=["tests/test_x.py"])
+    result = verify_service.record_execution(task["task_id"], {
+        "changed_files": ["tests/test_x.py", "services/secret.py"],
+        "diff_stat_text": " tests/test_x.py | 2 +-\n services/secret.py | 5 +++++",
+        "out_of_scope_files": ["services/secret.py"],
+    })
+    assert result["diff_stat_text"].startswith(" tests/test_x.py")
+    assert result["out_of_scope_files"] == ["services/secret.py"]
+
+    # Direkt aus dem Fake-Row-Store pruefen, dass beide Spalten persistiert sind.
+    stored = fake_db["executions"][-1]
+    assert stored["diff_stat_text"].startswith(" tests/test_x.py")
+    assert stored["out_of_scope_files_json"] == ["services/secret.py"]
+
+
+def test_record_execution_empty_payload_defaults_diff_stat_and_out_of_scope(fake_db):
+    task = _make_task()
+    result = verify_service.record_execution(task["task_id"], {})
+    assert result["diff_stat_text"] is None
+    assert result["out_of_scope_files"] == []
+
+    stored = fake_db["executions"][-1]
+    assert stored["diff_stat_text"] is None
+    assert stored["out_of_scope_files_json"] == []
+
+
+def test_get_execution_roundtrip_includes_diff_stat_and_out_of_scope(fake_db):
+    task = _make_task(allowed_files=["tests/test_x.py"])
+    verify_service.record_execution(task["task_id"], {
+        "changed_files": ["tests/test_x.py", "services/secret.py"],
+        "diff_stat_text": "diff --stat output",
+        "out_of_scope_files": ["services/secret.py"],
+        "summary": "roundtrip",
+    })
+
+    latest = verify_service.get_execution(task["task_id"])
+    assert latest is not None
+    assert latest["diff_stat_text"] == "diff --stat output"
+    assert latest["out_of_scope_files"] == ["services/secret.py"]
+    assert latest["summary"] == "roundtrip"
 
 
 # ---------------------------------------------------------------------------

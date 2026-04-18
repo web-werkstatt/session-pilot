@@ -76,9 +76,9 @@ def record_execution(task_id, payload):
         INSERT INTO agent_execution_results (
             task_id, agent, started_at, finished_at,
             changed_files_json, created_files_json, deleted_files_json,
-            claims_json, summary
+            claims_json, summary, diff_stat_text, out_of_scope_files_json
         )
-        VALUES (%s, %s, %s, %s, %s::jsonb, %s::jsonb, %s::jsonb, %s::jsonb, %s)
+        VALUES (%s, %s, %s, %s, %s::jsonb, %s::jsonb, %s::jsonb, %s::jsonb, %s, %s, %s::jsonb)
         RETURNING id, created_at
         """,
         (
@@ -91,6 +91,8 @@ def record_execution(task_id, payload):
             json.dumps(payload.get("deleted_files") or []),
             json.dumps(payload.get("claims") or []),
             payload.get("summary"),
+            payload.get("diff_stat_text"),
+            json.dumps(payload.get("out_of_scope_files") or []),
         ),
         fetchone=True,
     )
@@ -107,6 +109,8 @@ def record_execution(task_id, payload):
         "deleted_files_json": payload.get("deleted_files") or [],
         "claims_json": payload.get("claims") or [],
         "summary": payload.get("summary"),
+        "diff_stat_text": payload.get("diff_stat_text"),
+        "out_of_scope_files_json": payload.get("out_of_scope_files") or [],
         "created_at": row["created_at"],
     })
 
@@ -118,7 +122,8 @@ def get_execution(task_id):
         """
         SELECT id, task_id, agent, started_at, finished_at,
                changed_files_json, created_files_json, deleted_files_json,
-               claims_json, summary, created_at
+               claims_json, summary, diff_stat_text, out_of_scope_files_json,
+               created_at
         FROM agent_execution_results
         WHERE task_id = %s
         ORDER BY created_at DESC, id DESC
@@ -144,6 +149,8 @@ def _execution_row_to_dict(row):
         "deleted_files": _as_list(row.get("deleted_files_json")),
         "claims": _as_list(row.get("claims_json")),
         "summary": row.get("summary"),
+        "diff_stat_text": row.get("diff_stat_text"),
+        "out_of_scope_files": _as_list(row.get("out_of_scope_files_json")),
         "created_at": _iso(row.get("created_at")),
     }
 
